@@ -28,24 +28,29 @@ jobs:
   check_program_compilation:
     needs: check_valid_repo
     if: needs.check_valid_repo.outputs.run_action == 'true'
-    runs-on: ubuntu-latest
-    container:
-      image: epitechcontent/epitest-docker:latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: '0'
-      - name: Install toolchain
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '>=4.4'
+
+      - name: Check toolchain
         run: |
-          pip install --break-system-packages cmake
-          # install g++-14 and raylib here if the image lacks them
           cmake --version
+          g++-14 --version
+
       - name: Configure and build
-        timeout-minutes: 5
+        timeout-minutes: 10
         run: |
           cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
           cmake --build build -j
+
       - name: Check Binary
         run: |
           for file in $(echo "${{ env.BINARY }}" | sed "s/,/ /g"); do
