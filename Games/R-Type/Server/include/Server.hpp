@@ -9,7 +9,7 @@
 #define SERVER_HPP_
 
 namespace RType::Server {
-    
+
 }
 
 #endif /* !SERVER_HPP_ */

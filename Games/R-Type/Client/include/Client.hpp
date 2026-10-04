@@ -9,7 +9,7 @@
 #define CLIENT_HPP_
 
 namespace RType::Client {
-    
+
 }
 
 #endif /* !CLIENT_HPP_ */
