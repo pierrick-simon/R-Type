@@ -71,3 +71,10 @@ cmake --build build --target server_tests_run
 cmake --build build --target clean   # compiled objects only
 rm -rf build                          # reconfigure everything from scratch
 ```
+
+## Linter
+
+```sh
+./script/clang.sh     # for format error
+./script/lint.sh      # for codding style error
+```

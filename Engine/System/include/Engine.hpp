@@ -9,7 +9,7 @@
 #define ENGINE_HPP_
 
 namespace RType::Engine {
-    
+
 }
 
 #endif /* !ENGINE_HPP_ */
