@@ -60,8 +60,16 @@ jobs:
             fi
           done
 
+  linter:
+    name: "CPP Linter"
+    needs: check_valid_repo
+    uses: ./.github/workflows/linter.yml
+    permissions:
+      contents: write
+      pull-requests: write
+
   push_to_mirror:
-    needs: [check_valid_repo, check_program_compilation]
+    needs: [check_valid_repo, check_program_compilation, linter]
     if: needs.check_valid_repo.outputs.run_action == 'true'
     runs-on: ubuntu-latest
     steps:
