@@ -1,22 +1,42 @@
 name: "Linter"
+
 on:
   workflow_call:
   pull_request:
-    paths: ['**.c', '**.cpp', '**.h', '**.hpp', '**CMakeLists.txt']
+    paths:
+      - '**.c'
+      - '**.cpp'
+      - '**.h'
+      - '**.hpp'
+      - '**/CMakeLists.txt'
 
 jobs:
   linter:
-    runs-on: ubuntu-latest
-    container:
-      image: epitechcontent/epitest-docker:latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
       pull-requests: write
     steps:
       - uses: actions/checkout@v6
-      - name: "Generate compilation_command.json"
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '4.4.4'
+
+      - name: Check toolchain
         run: |
-          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1 . -G 'Unix Makefiles' -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+          cmake --version
+          clang++ --version
+
+      - name: Generate compile_commands.json
+        run: |
+          cmake -S . -B build \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++
+
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
         env:
@@ -26,12 +46,13 @@ jobs:
           tidy-checks: ''
           database: 'build'
           thread-comments: ${{ github.event_name == 'pull_request' && 'update' }}
-          extra-args: '-std=c++20 -Wall'
+          extra-args: '-std=c++2c -Wall'
           step-summary: 'true'
           tidy-review: 'true'
           format-review: 'true'
           ignore: '.github|tests|build'
           version: '22'
+
       - name: Fail fast?!
         if: steps.linter.outputs.checks-failed > 0
         run: exit 1
