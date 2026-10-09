@@ -90,11 +90,6 @@ jobs:
         timeout-minutes: 10
         run: cmake --build build -j --target server_tests_run
 
-      - name: Coverage summary
-        run: |
-          pip install gcovr
-          gcovr -r . --filter 'Games/' --exclude '.*/tests/.*' --txt-summary
-
   linter:
     name: "CPP Linter"
     needs: check_valid_repo
