@@ -23,6 +23,12 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v2
         with:
           cmake-version: '>=3.25'
+      
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libx11-dev libxrandr-dev \
+              libxi-dev libxcursor-dev libxinerama-dev
 
       - name: Check toolchain
         run: |
@@ -34,7 +40,8 @@ jobs:
           cmake -S . -B build \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER=clang++
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_COMPILER=clang
 
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter

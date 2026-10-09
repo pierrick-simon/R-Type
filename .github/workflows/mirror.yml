@@ -40,6 +40,12 @@ jobs:
         with:
           cmake-version: '>=3.25'
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libx11-dev libxrandr-dev \
+              libxi-dev libxcursor-dev libxinerama-dev
+
       - name: Check toolchain
         run: |
           cmake --version
@@ -48,7 +54,7 @@ jobs:
       - name: Configure and build
         timeout-minutes: 10
         run: |
-          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
           cmake --build build -j
 
       - name: Check Binary
@@ -74,10 +80,11 @@ jobs:
         with:
           cmake-version: '>=3.25'
 
-      - name: Install Criterion
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libcriterion-dev
+          sudo apt-get install -y libcriterion-dev libgl1-mesa-dev libx11-dev \
+              libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-14
