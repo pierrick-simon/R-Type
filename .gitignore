@@ -3,11 +3,16 @@
 *.so
 *.gcda
 *.gcno
+*.dll
+*.ilk
+*.pdb
+*.exe
 CMakeCache.txt
 cmake_install.cmake
 Makefile
 
 # Directories
+.vs/
 .vscode/
 CMakeFiles/
 build/

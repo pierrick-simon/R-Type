@@ -38,7 +38,7 @@ jobs:
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '>=4.4'
+          cmake-version: '>=3.25'
 
       - name: Check toolchain
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: Configure and build
         timeout-minutes: 10
         run: |
-          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14
           cmake --build build -j
 
       - name: Check Binary
@@ -59,6 +59,36 @@ jobs:
               exit 1
             fi
           done
+  
+  run_tests:
+    name: "Run tests"
+    needs: check_valid_repo
+    if: needs.check_valid_repo.outputs.run_action == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '>=3.25'
+
+      - name: Install Criterion
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcriterion-dev
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-14
+
+      - name: Run client tests
+        timeout-minutes: 10
+        run: cmake --build build -j --target client_tests_run
+
+      - name: Run server tests
+        timeout-minutes: 10
+        run: cmake --build build -j --target server_tests_run
 
   linter:
     name: "CPP Linter"
@@ -69,7 +99,7 @@ jobs:
       pull-requests: write
 
   push_to_mirror:
-    needs: [check_valid_repo, check_program_compilation, linter]
+    needs: [check_valid_repo, check_program_compilation, run_tests, linter]
     if: needs.check_valid_repo.outputs.run_action == 'true'
     runs-on: ubuntu-latest
     steps:

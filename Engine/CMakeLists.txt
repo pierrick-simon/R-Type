@@ -1,37 +1,31 @@
-cmake_minimum_required(VERSION 4.4)
-project(R-Type)
+cmake_minimum_required(VERSION 3.25...4.0)
+project(r-type_engine CXX)
 
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(INCLUDE_SHARED
-    Shared/include
-)
+set(INCLUDE_SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Shared/include)
 
 set(SRCS_SHARED
 )
 
-# Shared headers, exposed to consumers outside Engine (e.g. Games)
 add_library(shared INTERFACE)
 target_include_directories(shared INTERFACE ${INCLUDE_SHARED})
 
-# System
-set(SYSTEM_LIB_NAME
-    engine-system
-)
-
-set(SYSTEM
-    System
-)
+set(SYSTEM_LIB_NAME engine-system)
+set(SYSTEM System)
 
 set(SRCS_SYSTEM
     ${SYSTEM}/src/Empty.cpp
 )
 
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
-target_include_directories(${SYSTEM_LIB_NAME} PRIVATE ${INCLUDE_SHARED} ${SYSTEM}/include/)
+target_include_directories(${SYSTEM_LIB_NAME} PRIVATE ${SYSTEM}/include)
+target_link_libraries(${SYSTEM_LIB_NAME} PRIVATE shared)
+
 set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES PREFIX "")
 
-add_custom_target(move ALL
-    DEPENDS ${SYSTEM_LIB_NAME}
+set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
 )
