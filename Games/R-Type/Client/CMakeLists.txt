@@ -16,23 +16,7 @@ target_include_directories(r-type_client PRIVATE include)
 target_link_libraries(r-type_client PRIVATE shared)
 
 # criterion
-# Tests (Criterion is Unix-only: use Linux, macOS or WSL)
-if (NOT WIN32)
-    find_library(CRITERION_LIBRARY criterion)
-    find_path(CRITERION_INCLUDE_DIR criterion/criterion.h)
-endif()
-
-if (NOT WIN32 AND CRITERION_LIBRARY AND CRITERION_INCLUDE_DIR)
-    add_library(criterion UNKNOWN IMPORTED)
-    if (NOT (CRITERION_LIBRARY AND CRITERION_INCLUDE_DIR))
-        message(FATAL_ERROR "Criterion not found: install it (e.g. apt install libcriterion-dev)")
-    endif ()
-
-    add_library(criterion UNKNOWN IMPORTED)
-    set_target_properties(criterion PROPERTIES
-            IMPORTED_LOCATION ${CRITERION_LIBRARY}
-            INTERFACE_INCLUDE_DIRECTORIES ${CRITERION_INCLUDE_DIR})
-
+if (TARGET criterion)
     set(SRCS_TESTS tests/tests_init.cpp)
 
     add_executable(client_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS})
@@ -47,6 +31,4 @@ if (NOT WIN32 AND CRITERION_LIBRARY AND CRITERION_INCLUDE_DIR)
             DEPENDS client_tests_run_bin
             WORKING_DIRECTORY $<TARGET_FILE_DIR:client_tests_run_bin>
     )
-else ()
-    message(STATUS "Criterion not found or unsupported: tests disabled")
 endif ()

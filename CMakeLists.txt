@@ -15,5 +15,20 @@ if (MSVC)
     add_compile_options(/utf-8 /permissive- /Zc:__cplusplus)
 endif ()
 
+# Criterion (optional, Unix only): defined once for the whole project
+if (NOT WIN32 AND NOT TARGET criterion)
+    find_library(CRITERION_LIBRARY criterion)
+    find_path(CRITERION_INCLUDE_DIR criterion/criterion.h)
+
+    if (CRITERION_LIBRARY AND CRITERION_INCLUDE_DIR)
+        add_library(criterion UNKNOWN IMPORTED GLOBAL)
+        set_target_properties(criterion PROPERTIES
+                IMPORTED_LOCATION ${CRITERION_LIBRARY}
+                INTERFACE_INCLUDE_DIRECTORIES ${CRITERION_INCLUDE_DIR})
+    else ()
+        message(STATUS "Criterion not found or unsupported: tests disabled")
+    endif ()
+endif ()
+
 add_subdirectory(Engine)
 add_subdirectory(Games)
