@@ -20,7 +20,10 @@ target_link_libraries(r-type_client PRIVATE shared)
 if (NOT WIN32)
     find_library(CRITERION_LIBRARY criterion)
     find_path(CRITERION_INCLUDE_DIR criterion/criterion.h)
+endif()
 
+if (NOT WIN32 AND CRITERION_LIBRARY AND CRITERION_INCLUDE_DIR)
+    add_library(criterion UNKNOWN IMPORTED)
     if (NOT (CRITERION_LIBRARY AND CRITERION_INCLUDE_DIR))
         message(FATAL_ERROR "Criterion not found: install it (e.g. apt install libcriterion-dev)")
     endif ()
@@ -44,4 +47,6 @@ if (NOT WIN32)
             DEPENDS client_tests_run_bin
             WORKING_DIRECTORY $<TARGET_FILE_DIR:client_tests_run_bin>
     )
+else ()
+    message(STATUS "Criterion not found or unsupported: tests disabled")
 endif ()
