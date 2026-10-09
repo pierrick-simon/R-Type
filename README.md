@@ -44,7 +44,7 @@ R-Type/
 
 ```sh
 # linux
-cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14
+cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
 cmake --build build -j
 
 #windows
