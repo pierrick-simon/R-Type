@@ -38,7 +38,7 @@ jobs:
       - name: Setup CMake
         uses: jwlawson/actions-setup-cmake@v2
         with:
-          cmake-version: '>=4.4'
+          cmake-version: '>=3.25'
 
       - name: Check toolchain
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: Configure and build
         timeout-minutes: 10
         run: |
-          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
+          cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14
           cmake --build build -j
 
       - name: Check Binary

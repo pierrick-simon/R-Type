@@ -43,8 +43,13 @@ R-Type/
 ## Installation
 
 ```sh
-cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
+# linux
+cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14
 cmake --build build -j
+
+#windows
+cmake -S . -B build
+cmake --build build --config Release
 ```
 
 > [!WARNING]
