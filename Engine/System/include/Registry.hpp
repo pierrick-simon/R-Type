@@ -1,10 +1,11 @@
 #ifndef REGISTRY_HPP
     #define REGISTRY_HPP
-    #include "ComponentManager.hpp"
+    #include "Components/ComponentManager.hpp"
     #include "Entity.hpp"
 
 namespace ECS {
 
+    //Agit comme le chef d'orchestre
     class Registry {
         public:
             Entity createEntity(void);
@@ -28,6 +29,7 @@ namespace ECS {
         private:
             EntityManager mEntityManager;
             ComponentManager mComponentManager;
+            //System manager ici
     };
 
 }
