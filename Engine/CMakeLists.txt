@@ -11,9 +11,18 @@ FetchContent_Declare(asio
 )
 FetchContent_MakeAvailable(asio)
 
+FetchContent_Declare(plf-colony
+    GIT_REPOSITORY https://github.com/mattreecebentley/plf_colony.git
+    GIT_TAG        899f576280cd038cabb15935edd7304866e93501
+    GIT_SHALLOW    TRUE
+)
+FetchContent_MakeAvailable(plf-colony)
+
 add_library(asio INTERFACE)
+add_library(plf-colony INTERFACE)
 add_library(asio::asio ALIAS asio)
 target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
+target_include_directories(plf-colony SYSTEM INTERFACE ${plf-colony_SOURCE_DIR})
 target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
 target_link_libraries(asio INTERFACE Threads::Threads)
 if (WIN32)
@@ -56,7 +65,7 @@ set(SRCS_SYSTEM
 
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
 target_include_directories(${SYSTEM_LIB_NAME} PRIVATE ${SYSTEM}/include)
-target_link_libraries(${SYSTEM_LIB_NAME} PRIVATE shared)
+target_link_libraries(${SYSTEM_LIB_NAME} PRIVATE shared plf-colony)
 
 set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES PREFIX "")
 

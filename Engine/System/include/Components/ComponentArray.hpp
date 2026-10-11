@@ -11,7 +11,7 @@
 #include "Entity.hpp"
 #include "IComponentArray.hpp"
 #include <cstddef>
-#include <plf_hive.h>
+#include <plf_colony.h>
 #include <vector>
 
 namespace RType {
@@ -19,7 +19,7 @@ namespace RType {
     template<typename Component>
     class ComponentArray : public IComponentArray {
         public:
-            using Dense = plf::hive<std::pair<Entity, Component>>;
+            using Dense = plf::colony<std::pair<Entity, Component>>;
 
             template<typename... Args>
             Component &addComponent(Entity entity, Args &&...args);

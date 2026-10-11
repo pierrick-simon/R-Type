@@ -11,13 +11,13 @@
 #include "ISystem.hpp"
 #include <functional>
 #include <memory>
-#include <plf_hive.h>
+#include <plf_colony.h>
 
 namespace RType {
 
     class ComponentManager;
 
-    using SystemList = plf::hive<std::unique_ptr<ISystem>>;
+    using SystemList = plf::colony<std::unique_ptr<ISystem>>;
 
     class SystemManager {
         public:
