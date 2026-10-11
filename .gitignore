@@ -1,0 +1,25 @@
+# Files
+*.o
+*.so
+*.gcda
+*.gcno
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Directories
+.vscode/
+CMakeFiles/
+build/
+
+# Build outputs
+r-type_client
+r-type_server
+client_tests_run_bin
+server_tests_run_bin
+
+# AI agents
+.agents/
+skills-lock.json
+CLAUDE.md
+AGENTS.md
