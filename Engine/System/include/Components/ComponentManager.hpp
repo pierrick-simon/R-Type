@@ -1,33 +1,46 @@
-#ifndef COMPONENTMANAGER_HPP
-    #define COMPONENTMANAGER_HPP
-    #include "ComponentArray.hpp"
-    #include <memory>
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** ComponentManager
+*/
 
-namespace ECS {
+#ifndef COMPONENTMANAGER_HPP_
+#define COMPONENTMANAGER_HPP_
+
+#include "ComponentArray.hpp"
+#include "Entity.hpp"
+#include <memory>
+#include <typeindex>
+#include <unordered_map>
+
+namespace RType {
+
+    using ComponentList = std::unordered_map<std::type_index, std::unique_ptr<IComponentArray>>;
+
     class ComponentManager {
         public:
-            template<typename Component>
-            Component &addComponent(Entity entity, Component component);
+            template<typename Component, typename... Args>
+            Component &addComponent(Entity entity, Args &&...args);
 
             template<typename Component>
             void removeComponent(Entity entity);
-            
+
+            void removeComponent(Entity entity);
+
             template<typename Component>
             Component &getComponent(Entity entity);
 
             template<typename Component>
-            bool hasComponent(Entity entity);
+            bool hasComponent(Entity entity) const;
 
-            void entityDestroyed(Entity entity);
-            
             template<typename Component>
-            ComponentArray<Component> &getArray(void);
+            ComponentArray<Component> &getComponentArray();
 
         private:
-            std::vector<std::unique_ptr<IComponentArray>> _componentArrays;
+            ComponentList _components;
     };
-    
-    #include "ComponentManager.tpp"
+
 }
 
-#endif
+#endif /* !COMPONENTMANAGER_HPP_ */

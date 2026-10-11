@@ -1,36 +1,41 @@
-#ifndef COMPONENTARRAY_HPP
-    #define COMPONENTARRAY_HPP
-    #include "Entity.hpp"
-    #include <vector>
-    #include <cstdint>
-    #define NULL_INDEX UINT32_MAX
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** ComponentArray
+*/
 
-namespace ECS {
-    class IComponentArray {
-        public:
-            virtual ~IComponentArray() = default;
-            virtual bool hasData(Entity entity) const = 0;
-            virtual void destroyEntity(Entity entity) = 0;
-    };
+#ifndef COMPONENTARRAY_HPP_
+#define COMPONENTARRAY_HPP_
+
+#include "Entity.hpp"
+#include "IComponentArray.hpp"
+#include <cstddef>
+#include <plf_hive.h>
+#include <vector>
+
+namespace RType {
 
     template<typename Component>
     class ComponentArray : public IComponentArray {
         public:
-            Component &insertData(Entity entity, Component component);
-            void removeData(Entity entity);
-            bool hasData(Entity entity) const override;
-            Component &getData(Entity entity);
-            void destroyEntity(Entity entity) override;
-            std::size_t size(void) const;
-            const std::vector<Entity> &entities(void) const;
+            using Dense = plf::hive<std::pair<Entity, Component>>;
+
+            template<typename... Args>
+            Component &addComponent(Entity entity, Args &&...args);
+
+            void removeComponent(Entity entity) override;
+            Component &getComponent(Entity entity);
+            bool hasComponent(Entity entity) const override;
+            std::size_t nbComponent() const override;
+
+            Dense &getDense();
 
         private:
-            std::vector<Component> mComponentArray;
-            std::vector<Entity> mDenseToEntity;
-            std::vector<std::uint32_t> mSparse;
+            Dense _dense;
+            std::vector<typename Dense::iterator> _sparse;
     };
+
 }
 
-#include "ComponentArray.tpp"
-
-#endif
+#endif /* !COMPONENTARRAY_HPP_ */

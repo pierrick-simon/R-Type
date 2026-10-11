@@ -1,31 +1,35 @@
-#ifndef ENTITY_HPP
-    #define ENTITY_HPP
-    #include <cstdint>
-    #include <vector>
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** Entity
+*/
 
-namespace ECS {
+#ifndef ENTITY_HPP_
+#define ENTITY_HPP_
 
-    using Entity = std::uint32_t;
+#include <cstddef>
+#include <vector>
 
-    /*
-    struct Entity
-    {
-        std::uint32_t entity;
-        std::uint32_t generation;
-    }
-    */
+namespace RType {
+
+    class ComponentManager;
+
+    using Entity = std::size_t;
+    using EntityList = std::vector<Entity>;
 
     class EntityManager {
         public:
-            Entity create(void);
-            void release(Entity entity);
-            //getComponents(Entity entity);
+            explicit EntityManager(ComponentManager &cm);
+
+            Entity createEntity();
+            void destroyEntity(Entity entity);
 
         private:
-            std::vector<Entity> mFree;
-            Entity mNextEntity;
+            EntityList _entities;
+            ComponentManager &_cm;
     };
 
 }
 
-#endif
+#endif /* !ENTITY_HPP_ */
