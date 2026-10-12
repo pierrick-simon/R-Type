@@ -16,20 +16,20 @@ namespace RType {
      * @brief Type-erased base class for System<Component>.
      */
     class ISystem {
-        public:
-            /**
-             * @brief Default virtual destructor.
-             */
-            virtual ~ISystem() = default;
+    public:
+        /**
+         * @brief Default virtual destructor.
+         */
+        virtual ~ISystem() = default;
 
-            /**
-             * @brief Runs this system once over every relevant component.
-             * @param cm Component manager providing access to the relevant
-             * ComponentArray.
-             */
-            virtual void update(ComponentManager &cm) = 0;
+        /**
+         * @brief Runs this system once over every relevant component.
+         * @param cm Component manager providing access to the relevant
+         * ComponentArray.
+         */
+        virtual void update(ComponentManager &cm) = 0;
     };
 
-}
+} // namespace RType
 
 #endif /* !ISYSTEM_HPP_ */

@@ -29,31 +29,31 @@ namespace RType {
      * @brief Creates and destroys entities.
      */
     class EntityManager {
-        public:
-            /**
-             * @brief Constructs an EntityManager bound to a ComponentManager.
-             * @param cm Component manager used to clean up an entity's
-             * components on destruction.
-             */
-            explicit EntityManager(ComponentManager &cm);
+    public:
+        /**
+         * @brief Constructs an EntityManager bound to a ComponentManager.
+         * @param cm Component manager used to clean up an entity's
+         * components on destruction.
+         */
+        explicit EntityManager(ComponentManager &cm);
 
-            /**
-             * @brief Creates a new entity.
-             * @return The newly created entity's identifier.
-             */
-            Entity createEntity();
+        /**
+         * @brief Creates a new entity.
+         * @return The newly created entity's identifier.
+         */
+        Entity createEntity();
 
-            /**
-             * @brief Destroys an entity and all of its components.
-             * @param entity The entity to destroy.
-             */
-            void destroyEntity(Entity entity);
+        /**
+         * @brief Destroys an entity and all of its components.
+         * @param entity The entity to destroy.
+         */
+        void destroyEntity(Entity entity);
 
-        private:
-            EntityList _entities;
-            ComponentManager &_cm;
+    private:
+        EntityList _entities;
+        ComponentManager &_cm;
     };
 
-}
+} // namespace RType
 
 #endif /* !ENTITY_HPP_ */

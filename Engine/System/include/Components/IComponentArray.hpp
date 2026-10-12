@@ -8,8 +8,8 @@
 #ifndef ICOMPONENTARRAY_HPP_
 #define ICOMPONENTARRAY_HPP_
 
-#include "Entity.hpp"
 #include <cstddef>
+#include "Entity.hpp"
 
 namespace RType {
 
@@ -17,33 +17,33 @@ namespace RType {
      * @brief Type-erased base class for ComponentArray<Component>.
      */
     class IComponentArray {
-        public:
-            /**
-             * @brief Default virtual destructor.
-             */
-            virtual ~IComponentArray() = default;
+    public:
+        /**
+         * @brief Default virtual destructor.
+         */
+        virtual ~IComponentArray() = default;
 
-            /**
-             * @brief Returns the number of components stored.
-             * @return Number of components currently stored.
-             */
-            virtual std::size_t nbComponent() const = 0;
+        /**
+         * @brief Returns the number of components stored.
+         * @return Number of components currently stored.
+         */
+        [[nodiscard]] virtual std::size_t nbComponent() const = 0;
 
-            /**
-             * @brief Removes the component associated with an entity, if any.
-             * @param entity The entity whose component should be removed.
-             */
-            virtual void removeComponent(Entity entity) = 0;
+        /**
+         * @brief Removes the component associated with an entity, if any.
+         * @param entity The entity whose component should be removed.
+         */
+        virtual void removeComponent(Entity entity) = 0;
 
-            /**
-             * @brief Checks whether an entity has a component in this array.
-             * @param entity The entity to check.
-             * @return true if the entity has a component here, false
-             * otherwise.
-             */
-            virtual bool hasComponent(Entity entity) const = 0;
+        /**
+         * @brief Checks whether an entity has a component in this array.
+         * @param entity The entity to check.
+         * @return true if the entity has a component here, false
+         * otherwise.
+         */
+        [[nodiscard]] virtual bool hasComponent(Entity entity) const = 0;
     };
 
-}
+} // namespace RType
 
 #endif /* !ICOMPONENTARRAY_HPP_ */

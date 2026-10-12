@@ -8,8 +8,8 @@
 #ifndef SYSTEM_HPP_
 #define SYSTEM_HPP_
 
-#include "ISystem.hpp"
 #include <functional>
+#include "ISystem.hpp"
 
 namespace RType {
 
@@ -21,26 +21,26 @@ namespace RType {
      */
     template<typename Component>
     class System : public ISystem {
-        public:
-            /**
-             * @brief Constructs a system from a callback.
-             * @param func Callback applied to each Component instance during
-             * update().
-             */
-            explicit System(std::function<void(Component &)> func);
+    public:
+        /**
+         * @brief Constructs a system from a callback.
+         * @param func Callback applied to each Component instance during
+         * update().
+         */
+        explicit System(std::function<void(Component &)> func);
 
-            /**
-             * @brief Applies the stored callback to every Component
-             * instance.
-             * @param cm Component manager providing access to the
-             * ComponentArray<Component>.
-             */
-            void update(ComponentManager &cm) override;
+        /**
+         * @brief Applies the stored callback to every Component
+         * instance.
+         * @param cm Component manager providing access to the
+         * ComponentArray<Component>.
+         */
+        void update(ComponentManager &cm) override;
 
-        private:
-            std::function<void(Component &)> _func;
+    private:
+        std::function<void(Component &)> _func;
     };
 
-}
+} // namespace RType
 
 #endif /* !SYSTEM_HPP_ */
