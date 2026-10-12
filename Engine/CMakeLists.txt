@@ -63,8 +63,14 @@ set(SRCS_SYSTEM
     ${SYSTEM}/src/Empty.cpp
 )
 
+set(INCLUDE_SYSTEM
+    ${SYSTEM}/include
+    ${SYSTEM}/include/Components
+    ${SYSTEM}/include/System
+)
+
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
-target_include_directories(${SYSTEM_LIB_NAME} PRIVATE ${SYSTEM}/include)
+target_include_directories(${SYSTEM_LIB_NAME} PRIVATE ${INCLUDE_SYSTEM})
 target_link_libraries(${SYSTEM_LIB_NAME} PRIVATE shared plf-colony)
 
 set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES PREFIX "")
