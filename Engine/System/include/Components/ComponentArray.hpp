@@ -76,7 +76,7 @@ namespace RType {
 
     private:
         Dense _dense;
-        std::vector<Dense::iterator> _sparse;
+        std::vector<typename Dense::iterator> _sparse;
     };
 
 } // namespace RType
