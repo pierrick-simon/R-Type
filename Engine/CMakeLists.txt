@@ -6,6 +6,8 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 include(FetchContent)
 find_package(Threads REQUIRED)
 
@@ -29,18 +31,18 @@ FetchContent_Declare(raylib-cpp
     SOURCE_SUBDIR  _no_cmake
 )
 
-# raylib itself is a real CMake project and gets built
-set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 FetchContent_Declare(raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
     GIT_TAG        5.5
     GIT_SHALLOW    TRUE
-    FIND_PACKAGE_ARGS 5.5 CONFIG
 )
 
-FetchContent_MakeAvailable(asio plf-colony raylib-cpp raylib)
+FetchContent_MakeAvailable(asio plf-colony raylib-cpp)
+
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(raylib)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 # --- Asio ---
 add_library(asio INTERFACE)
@@ -83,20 +85,14 @@ set(SRCS_SYSTEM
 )
 
 set(INCLUDE_SYSTEM
-    ${SYSTEM}/include
-    ${SYSTEM}/include/Components
-    ${SYSTEM}/include/System
+    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/Components
+    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/System
 )
 
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
-target_include_directories(${SYSTEM_LIB_NAME} PRIVATE ${INCLUDE_SYSTEM})
-target_link_libraries(${SYSTEM_LIB_NAME} PRIVATE shared plf-colony)
-
-set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES
-    PREFIX ""
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
-)
+target_include_directories(${SYSTEM_LIB_NAME} PUBLIC ${INCLUDE_SYSTEM})
+target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC shared plf-colony)
 
 # Create Network engine lib
 
@@ -108,14 +104,10 @@ set(SRCS_NETWORK
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
-target_include_directories(${NETWORK_LIB_NAME} PRIVATE ${NETWORK}/include)
-target_link_libraries(${NETWORK_LIB_NAME} PRIVATE shared asio::asio)
-
-set_target_properties(${NETWORK_LIB_NAME} PROPERTIES
-    PREFIX ""
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
+target_include_directories(${NETWORK_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
 )
+target_link_libraries(${NETWORK_LIB_NAME} PUBLIC shared asio::asio)
 
 # Create Graphical engine lib
 
@@ -127,11 +119,11 @@ set(SRCS_GRAPHICAL
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
-target_include_directories(${GRAPHICAL_LIB_NAME} PRIVATE ${GRAPHICAL}/include)
-target_link_libraries(${GRAPHICAL_LIB_NAME} PRIVATE shared raylib-cpp::raylib-cpp)
-
-set_target_properties(${GRAPHICAL_LIB_NAME} PROPERTIES
-    PREFIX ""
-    CXX_VISIBILITY_PRESET hidden
-    VISIBILITY_INLINES_HIDDEN ON
+target_include_directories(${GRAPHICAL_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL}/include
 )
+target_link_libraries(${GRAPHICAL_LIB_NAME} PUBLIC shared raylib-cpp::raylib-cpp)
+
+if (MSVC)
+    target_compile_options(${GRAPHICAL_LIB_NAME} PRIVATE /wd4251)
+endif ()
