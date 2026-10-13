@@ -15,6 +15,10 @@ namespace RType {
         auto height = float(texture.height);
         Rectangle source = {0.0f, 0.0f, width, height};
         Rectangle dest = {s.pos.x, s.pos.y, width * s.scale, height * s.scale};
+        if (s.flip) {
+            source.x += width;
+            source.width *= -1;
+        }
         ::DrawTexturePro(texture,
             source,
             dest,

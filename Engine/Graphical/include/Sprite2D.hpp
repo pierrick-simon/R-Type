@@ -17,9 +17,10 @@ namespace RType {
     struct Sprite2D {
         Texture2D &texture;
         Position2D &pos;
-        Origin2D &origin;
+        Origin2D origin;
         float scale = 1;
         float rotation = 0;
+        bool flip = false;
         raylib::Color color = raylib::Color::White();
 
         static void systemSprite2D(Sprite2D &s);

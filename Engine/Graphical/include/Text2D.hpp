@@ -18,12 +18,12 @@ namespace RType {
     struct Text2D {
         Font &font;
         Position2D &pos;
-        Origin2D &origin;
         float fontSize = 10;
         std::string str = "Hello World";
         raylib::Color color = raylib::Color::White();
         float rotation = 0;
         float spacing = 0;
+        Origin2D origin;
 
         static void systemText2D(Text2D &t);
     };

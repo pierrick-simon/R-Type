@@ -7,7 +7,6 @@
 
 #include "SpriteSheet2D.hpp"
 #include <cmath>
-#include <iostream>
 
 namespace RType {
     void SpriteSheet2D::systemSpriteSheet2D(SpriteSheet2D &s)
@@ -17,7 +16,6 @@ namespace RType {
             s.currentTile++;
             s.sleep = std::chrono::milliseconds(0);
         }
-        std::cout << s.sleep << ":" << s.clock.getElapsed() << "\n";
         auto &texture = s.texture.texture;
         auto width = float(texture.width) / float(s.recNb.width);
         auto height = float(texture.height) / float(s.recNb.height);
@@ -28,6 +26,10 @@ namespace RType {
         auto top = float(row) * height;
         Rectangle source = {left, top, width, height};
         Rectangle dest = {s.pos.x, s.pos.y, width * s.scale, height * s.scale};
+        if (s.flip) {
+            source.x += width;
+            source.width *= -1;
+        }
         ::DrawTexturePro(texture,
             source,
             dest,
