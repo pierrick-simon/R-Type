@@ -117,6 +117,7 @@ set(GRAPHICAL Graphical)
 set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Window.cpp
     ${GRAPHICAL}/src/Text2D.cpp
+    ${GRAPHICAL}/src/Sprite2D.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
