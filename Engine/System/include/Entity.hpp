@@ -38,6 +38,16 @@ namespace RType {
         explicit EntityManager(ComponentManager &cm);
 
         /**
+         * @brief Copy construction is disabled.
+         */
+        EntityManager(const EntityManager &) = delete;
+
+        /**
+         * @brief Copy assignment is disabled.
+         */
+        EntityManager &operator=(const EntityManager &) = delete;
+
+        /**
          * @brief Creates a new entity.
          * @return The newly created entity's identifier.
          */
@@ -51,6 +61,7 @@ namespace RType {
 
     private:
         EntityList _entities;
+        Entity _nextID = 0;
         ComponentManager &_cm;
     };
 

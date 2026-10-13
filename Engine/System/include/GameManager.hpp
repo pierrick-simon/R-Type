@@ -123,8 +123,7 @@ namespace RType {
          * destroySystem.
          */
         template<typename Component>
-        SystemList::iterator createSystem(
-            std::function<void(Component &)> func)
+        SystemList::iterator createSystem(std::function<void(Component &)> func)
         {
             return _sm.createSystem<Component>(func);
         }

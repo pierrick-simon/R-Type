@@ -9,7 +9,10 @@
 
 namespace RType {
 
-    GameManager::GameManager(): _cm(), _em(_cm), _sm() {}
+    GameManager::GameManager() :
+        _cm(), _em(_cm), _sm()
+    {
+    }
 
     void GameManager::update()
     {
@@ -31,4 +34,4 @@ namespace RType {
         _sm.destroySystem(system);
     }
 
-}
+} // namespace RType
