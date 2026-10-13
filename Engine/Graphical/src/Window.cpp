@@ -14,4 +14,4 @@ namespace RType {
         ClearBackground(w.clearScreenColor);
         w.window.EndDrawing();
     }
-}
+} // namespace RType

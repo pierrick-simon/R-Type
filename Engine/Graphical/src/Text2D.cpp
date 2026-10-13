@@ -17,7 +17,6 @@ namespace RType {
             t.rotation,
             t.fontSize,
             t.spacing,
-            t.color
-        );
-    }    
-}
+            t.color);
+    }
+} // namespace RType

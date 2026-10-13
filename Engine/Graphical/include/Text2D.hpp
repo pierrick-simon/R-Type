@@ -10,13 +10,12 @@
 
 #include <raylib-cpp.hpp>
 #include "Font.hpp"
-#include "Position2D.hpp"
 #include "Origin2D.hpp"
+#include "Position2D.hpp"
 
 namespace RType {
-    
-    struct Text2D
-    {
+
+    struct Text2D {
         Font &font;
         Position2D &pos;
         Origin2D &origin;
@@ -25,10 +24,10 @@ namespace RType {
         raylib::Color color = raylib::Color::White();
         float rotation = 0;
         float spacing = 0;
-        
+
         static void systemText2D(Text2D &t);
     };
 
-}
+} // namespace RType
 
 #endif /* !TEXT2D_HPP_ */

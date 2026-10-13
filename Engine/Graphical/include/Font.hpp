@@ -11,12 +11,11 @@
     #include <raylib-cpp.hpp>
 
 namespace RType {
-    
-    struct Font
-    {
-        std::string path = "";
+
+    struct Font {
+        std::string path;
         raylib::Font font = raylib::Font(path);
     };
 
-}
+} // namespace RType
 #endif /* !FONT_HPP_ */
