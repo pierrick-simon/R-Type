@@ -62,6 +62,7 @@ set(SYSTEM System)
 set(SRCS_SYSTEM
     ${SYSTEM}/src/GameManager.cpp
     ${SYSTEM}/src/Entity.cpp
+    ${SYSTEM}/src/ComponentManager.cpp
 )
 
 set(INCLUDE_SYSTEM

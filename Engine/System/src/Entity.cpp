@@ -26,7 +26,7 @@ namespace RType {
 
     void EntityManager::destroyEntity(Entity entity)
     {
-        _cm.removeComponent(entity);
+        _cm.removeComponents(entity);
         _entities.erase(std::find(_entities.begin(), _entities.end(), entity));
     }
 

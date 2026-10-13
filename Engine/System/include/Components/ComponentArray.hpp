@@ -31,6 +31,16 @@ namespace RType {
         using Dense = plf::colony<std::pair<Entity, Component>>;
 
         /**
+         * @brief Copy construction is disabled.
+         */
+        ComponentArray(const ComponentArray &) = delete;
+
+        /**
+         * @brief Copy assignment is disabled.
+         */
+        ComponentArray &operator=(const ComponentArray &) = delete;
+
+        /**
          * @brief Constructs and stores a component for an entity.
          * @tparam Args Constructor argument types forwarded to Component.
          * @param entity The entity to attach the component to.
@@ -38,13 +48,13 @@ namespace RType {
          * @return Reference to the newly created component.
          */
         template<typename... Args>
-        Component &addComponent(Entity entity, Args &&...args);
+        Component &addEntity(Entity entity, Args &&...args);
 
         /**
          * @brief Removes the component associated with an entity.
          * @param entity The entity whose component should be removed.
          */
-        void removeComponent(Entity entity) override;
+        void removeEntity(Entity entity) override;
 
         /**
          * @brief Retrieves the component associated with an entity.

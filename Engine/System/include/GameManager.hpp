@@ -63,7 +63,7 @@ namespace RType {
         template<typename Component, typename... Args>
         Component &addComponent(Entity entity, Args &&...args)
         {
-            _cm.addComponent<Component, Args...>(entity, args...);
+            return _cm.addComponent<Component>(entity, args...);
         }
 
         /**

@@ -33,7 +33,7 @@ namespace RType {
          * @brief Removes the component associated with an entity, if any.
          * @param entity The entity whose component should be removed.
          */
-        virtual void removeComponent(Entity entity) = 0;
+        virtual void removeEntity(Entity entity) = 0;
 
         /**
          * @brief Checks whether an entity has a component in this array.

@@ -13,8 +13,11 @@
 #include <unordered_map>
 #include "ComponentArray.hpp"
 #include "Entity.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
+
+    class NoSuchComponent;
 
     /**
      * @brief Maps each component type to its ComponentArray.
@@ -28,6 +31,21 @@ namespace RType {
     class ComponentManager {
     public:
         /**
+         * @brief Default constructor
+         */
+        ComponentManager();
+
+        /**
+         * @brief Copy construction is disabled.
+         */
+        ComponentManager(const ComponentManager &) = delete;
+
+        /**
+         * @brief Copy assignment is disabled.
+         */
+        ComponentManager &operator=(const ComponentManager &) = delete;
+
+        /**
          * @brief Constructs and stores a component of the given type for
          * an entity.
          * @tparam Component The component type to add.
@@ -37,7 +55,18 @@ namespace RType {
          * @return Reference to the newly created component.
          */
         template<typename Component, typename... Args>
-        Component &addComponent(Entity entity, Args &&...args);
+        Component &addComponent(Entity entity, Args &&...args)
+        {
+            auto index = std::type_index(typeid(Component));
+            if (_components.contains(index)) {
+                auto &array = static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(index));
+                return array->addEntity(entity, args...);
+            }
+            ComponentArray<Component> array;
+            auto &tmp = array->addEntity(entity, args...);
+            _components.emplace(index, array);
+            return tmp;
+        }
 
         /**
          * @brief Removes a component of the given type from an entity.
@@ -45,14 +74,20 @@ namespace RType {
          * @param entity The entity to remove the component from.
          */
         template<typename Component>
-        void removeComponent(Entity entity);
+        void removeComponent(Entity entity)
+        {
+            auto index = std::type_index(typeid(Component));
+            if (!_components.contains(index))
+                throw NoSuchComponent("Could not remove link between entity and component.");
+            _components.at(index)->removeEntity(entity);
+        }
 
         /**
          * @brief Removes every component of every type for an entity.
          * @param entity The entity whose components should all be
          * removed.
          */
-        void removeComponent(Entity entity);
+        void removeComponents(Entity entity);
 
         /**
          * @brief Retrieves a component of the given type for an entity.
@@ -61,7 +96,13 @@ namespace RType {
          * @return Reference to the component.
          */
         template<typename Component>
-        Component &getComponent(Entity entity);
+        [[nodiscard]] Component &getComponent(Entity entity)
+        {
+            auto index = std::type_index(typeid(Component));
+            if (!_components.contains(index))
+                throw NoSuchComponent();
+            return static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(index))->getComponent(entity);
+        }
 
         /**
          * @brief Checks whether an entity has a component of the given
@@ -72,7 +113,13 @@ namespace RType {
          * otherwise.
          */
         template<typename Component>
-        [[nodiscard]] bool hasComponent(Entity entity) const;
+        [[nodiscard]] bool hasComponent(Entity entity) const
+        {
+            auto index = std::type_index(typeid(Component));
+            if (!_components.contains(index))
+                throw NoSuchComponent();
+            return _components.at(index)->hasComponent(entity);
+        }
 
         /**
          * @brief Retrieves the ComponentArray storing every instance of
@@ -81,10 +128,20 @@ namespace RType {
          * @return Reference to the corresponding ComponentArray.
          */
         template<typename Component>
-        ComponentArray<Component> &getComponentArray();
+        [[nodiscard]] ComponentArray<Component> &getComponentArray()
+        {
+            return *static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(std::type_index(typeid(Component))));
+        }
 
     private:
         ComponentList _components;
+    };
+
+    class NoSuchComponent: public EngineException {
+        public:
+            NoSuchComponent(): EngineException("No such component.") {}
+            
+            NoSuchComponent(const std::string &msg): EngineException(msg + " No such component.") {}
     };
 
 } // namespace RType
