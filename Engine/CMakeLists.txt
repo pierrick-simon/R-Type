@@ -115,7 +115,7 @@ set(GRAPHICAL_LIB_NAME engine-graphical)
 set(GRAPHICAL Graphical)
 
 set(SRCS_GRAPHICAL
-    ${GRAPHICAL}/src/Empty.cpp
+    ${GRAPHICAL}/src/Window.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
