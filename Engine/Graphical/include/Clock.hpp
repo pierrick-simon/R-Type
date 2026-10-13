@@ -24,7 +24,7 @@ namespace RType {
         static void systemClock(Clock &c);
 
     private:
-        std::chrono::_V2::steady_clock::time_point _clock =
+        std::chrono::steady_clock::time_point _clock =
             std::chrono::steady_clock::now();
         std::chrono::milliseconds _elapsed = std::chrono::milliseconds(0);
     };
