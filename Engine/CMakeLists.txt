@@ -60,7 +60,7 @@ set(SYSTEM_LIB_NAME engine-system)
 set(SYSTEM System)
 
 set(SRCS_SYSTEM
-    ${SYSTEM}/src/Empty.cpp
+    ${SYSTEM}/src/GameManager.cpp
 )
 
 set(INCLUDE_SYSTEM

@@ -61,7 +61,10 @@ namespace RType {
          * @return Reference to the newly created component.
          */
         template<typename Component, typename... Args>
-        Component &addComponent(Entity entity, Args &&...args);
+        Component &addComponent(Entity entity, Args &&...args)
+        {
+            _cm.addComponent<Component, Args...>(entity, args...);
+        }
 
         /**
          * @brief Removes a component of the given type from an entity.
@@ -69,7 +72,10 @@ namespace RType {
          * @param entity The entity to remove the component from.
          */
         template<typename Component>
-        void removeComponent(Entity entity);
+        void removeComponent(Entity entity)
+        {
+            _cm.removeComponent<Component>(entity);
+        }
 
         /**
          * @brief Retrieves a component of the given type for an entity.
@@ -78,7 +84,10 @@ namespace RType {
          * @return Reference to the component.
          */
         template<typename Component>
-        Component &getComponent(Entity entity);
+        [[nodiscard]] Component &getComponent(Entity entity)
+        {
+            return _cm.getComponent<Component>(entity);
+        }
 
         /**
          * @brief Checks whether an entity has a component of the given
@@ -89,7 +98,10 @@ namespace RType {
          * otherwise.
          */
         template<typename Component>
-        [[nodiscard]] bool hasComponent(Entity entity) const;
+        [[nodiscard]] bool hasComponent(Entity entity) const
+        {
+            return _cm.hasComponent<Component>(entity);
+        }
 
         /**
          * @brief Retrieves the ComponentArray storing every instance of
@@ -98,7 +110,10 @@ namespace RType {
          * @return Reference to the corresponding ComponentArray.
          */
         template<typename Component>
-        ComponentArray<Component> &getArray();
+        ComponentArray<Component> &getArray()
+        {
+            return _cm.getComponentArray<Component>();
+        }
 
         /**
          * @brief Creates and registers a new system.
@@ -109,7 +124,10 @@ namespace RType {
          */
         template<typename Component>
         SystemList::iterator createSystem(
-            std::function<void(Component &)> func);
+            std::function<void(Component &)> func)
+        {
+            return _sm.createSystem<Component>(func);
+        }
 
         /**
          * @brief Removes a previously created system.
