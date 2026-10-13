@@ -11,6 +11,8 @@
 #include <memory>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
+
 #include "ComponentArray.hpp"
 #include "Entity.hpp"
 #include "Exceptions.hpp"
@@ -60,10 +62,10 @@ namespace RType {
             auto index = std::type_index(typeid(Component));
             if (_components.contains(index)) {
                 auto &array = static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(index));
-                return array->addEntity(entity, args...);
+                return array->addEntity(entity, std::forward<Args>(args)...);
             }
             ComponentArray<Component> array;
-            auto &tmp = array->addEntity(entity, args...);
+            auto &tmp = array->addEntity(entity, std::forward<Args>(args)...);
             _components.emplace(index, array);
             return tmp;
         }
@@ -135,13 +137,6 @@ namespace RType {
 
     private:
         ComponentList _components;
-    };
-
-    class NoSuchComponent: public EngineException {
-        public:
-            NoSuchComponent(): EngineException("No such component.") {}
-            
-            NoSuchComponent(const std::string &msg): EngineException(msg + " No such component.") {}
     };
 
 } // namespace RType

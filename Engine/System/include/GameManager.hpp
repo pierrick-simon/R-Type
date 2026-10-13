@@ -8,6 +8,8 @@
 #ifndef GAMEMANAGER_HPP_
 #define GAMEMANAGER_HPP_
 
+#include <utility>
+
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
 #include "SystemManager.hpp"
@@ -63,7 +65,7 @@ namespace RType {
         template<typename Component, typename... Args>
         Component &addComponent(Entity entity, Args &&...args)
         {
-            return _cm.addComponent<Component>(entity, args...);
+            return _cm.addComponent<Component>(entity, std::forward<Args>(args)...);
         }
 
         /**
