@@ -9,8 +9,8 @@
 #define SYSTEM_HPP_
 
 #include <functional>
-#include "ISystem.hpp"
 #include "ComponentManager.hpp"
+#include "ISystem.hpp"
 
 namespace RType {
 
@@ -26,7 +26,8 @@ namespace RType {
          * @param func Callback applied to each Component instance during
          * update().
          */
-        explicit System(std::function<void(Component &)> func): _func(func)
+        explicit System(std::function<void(Component &)> func) :
+            _func(func)
         {
         }
 
@@ -41,7 +42,7 @@ namespace RType {
             if (!cm.isComponent<Component>())
                 return;
             auto &dense = cm.getComponentArray<Component>().getDense();
-            for (auto &component: dense)
+            for (auto &component : dense)
                 _func(component);
         }
 

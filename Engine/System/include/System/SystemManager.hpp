@@ -9,8 +9,8 @@
 #define SYSTEMMANAGER_HPP_
 
 #include <functional>
-#include <memory>
 #include <list>
+#include <memory>
 #include "ISystem.hpp"
 #include "System.hpp"
 
@@ -47,8 +47,7 @@ namespace RType {
          * destroySystem.
          */
         template<typename Component>
-        SystemList::iterator createSystem(
-            std::function<void(Component &)> func)
+        SystemList::iterator createSystem(std::function<void(Component &)> func)
         {
             auto system = std::make_unique<System<Component>>(func);
             return _systems.emplace(_systems.end(), std::move(system));

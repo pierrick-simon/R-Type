@@ -12,8 +12,8 @@
 
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
-#include "SystemManager.hpp"
 #include "Exceptions.hpp"
+#include "SystemManager.hpp"
 
 namespace RType {
 
@@ -76,7 +76,8 @@ namespace RType {
         {
             if (!hasEntity(entity))
                 throw NoSuchEntity();
-            return _cm.addComponent<Component>(entity, std::forward<Args>(args)...);
+            return _cm.addComponent<Component>(
+                entity, std::forward<Args>(args)...);
         }
 
         /**
@@ -159,9 +160,12 @@ namespace RType {
         SystemManager _sm;
     };
 
-    class NoSuchEntity: public EngineException {
-        public:
-            NoSuchEntity(): EngineException("No such entity.") {}
+    class NoSuchEntity : public EngineException {
+    public:
+        NoSuchEntity() :
+            EngineException("No such entity.")
+        {
+        }
     };
 
 } // namespace RType

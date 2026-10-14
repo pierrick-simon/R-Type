@@ -27,7 +27,6 @@ namespace RType {
         std::string _str;
     };
 
-}
-
+} // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

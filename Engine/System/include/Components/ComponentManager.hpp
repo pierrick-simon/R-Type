@@ -61,7 +61,8 @@ namespace RType {
         {
             auto index = std::type_index(typeid(Component));
             if (isComponent<Component>()) {
-                auto &array = static_cast<ComponentArray<Component> &>(*_components.at(index));
+                auto &array = static_cast<ComponentArray<Component> &>(
+                    *_components.at(index));
                 return array.addEntity(entity, std::forward<Args>(args)...);
             }
             auto array = std::make_unique<ComponentArray<Component>>();
@@ -80,7 +81,8 @@ namespace RType {
         {
             auto index = std::type_index(typeid(Component));
             if (!isComponent<Component>())
-                throw NoSuchComponent("Could not remove link between entity and component.");
+                throw NoSuchComponent(
+                    "Could not remove link between entity and component.");
             _components.at(index)->removeEntity(entity);
         }
 
@@ -103,7 +105,9 @@ namespace RType {
             auto index = std::type_index(typeid(Component));
             if (!isComponent<Component>())
                 throw NoSuchComponent();
-            return static_cast<ComponentArray<Component> &>(*_components.at(index)).getComponent(entity);
+            return static_cast<ComponentArray<Component> &>(
+                *_components.at(index))
+                .getComponent(entity);
         }
 
         /**
@@ -118,7 +122,8 @@ namespace RType {
             auto index = std::type_index(typeid(Component));
             if (!isComponent<Component>())
                 throw NoSuchComponent();
-            return static_cast<ComponentArray<Component> &>(*_components.at(index));
+            return static_cast<ComponentArray<Component> &>(
+                *_components.at(index));
         }
 
         /**

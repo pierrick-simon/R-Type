@@ -10,17 +10,17 @@
 
 #include <cstddef>
 #include <plf_colony.h>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include "Entity.hpp"
-#include "IComponentArray.hpp"
 #include "Exceptions.hpp"
+#include "IComponentArray.hpp"
 
 namespace RType {
 
     class AlreadyExistingComponent;
-    
+
     class NoSuchComponent;
 
     /**
@@ -82,7 +82,7 @@ namespace RType {
             if (!hasComponent(entity))
                 throw NoSuchComponent();
             _dense.erase(_sparse[entity]);
-            _sparse[entity] = typename Dense::iterator{};
+            _sparse[entity] = typename Dense::iterator {};
         }
 
         /**
@@ -105,7 +105,8 @@ namespace RType {
          */
         [[nodiscard]] bool hasComponent(Entity entity) const override
         {
-            return (_sparse.size() > entity && _sparse[entity] != typename Dense::iterator{});
+            return (_sparse.size() > entity &&
+                _sparse[entity] != typename Dense::iterator {});
         }
 
         /**
@@ -132,16 +133,26 @@ namespace RType {
         std::vector<typename Dense::iterator> _sparse;
     };
 
-    class AlreadyExistingComponent: public EngineException {
-        public:
-            AlreadyExistingComponent(): EngineException("Already an existing component linked to this entity") {}
+    class AlreadyExistingComponent : public EngineException {
+    public:
+        AlreadyExistingComponent() :
+            EngineException(
+                "Already an existing component linked to this entity")
+        {
+        }
     };
 
-    class NoSuchComponent: public EngineException {
-        public:
-            NoSuchComponent(): EngineException("No such component.") {}
-            
-            NoSuchComponent(const std::string &msg): EngineException(msg + " No such component.") {}
+    class NoSuchComponent : public EngineException {
+    public:
+        NoSuchComponent() :
+            EngineException("No such component.")
+        {
+        }
+
+        NoSuchComponent(const std::string &msg) :
+            EngineException(msg + " No such component.")
+        {
+        }
     };
 
 } // namespace RType

@@ -15,7 +15,7 @@ namespace RType {
 
     void SystemManager::process(ComponentManager &cm)
     {
-        for (auto &system: _systems)
+        for (auto &system : _systems)
             system->update(cm);
     }
 
@@ -24,4 +24,4 @@ namespace RType {
         _systems.erase(system);
     }
 
-}
+} // namespace RType
