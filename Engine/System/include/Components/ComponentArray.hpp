@@ -37,9 +37,9 @@ namespace RType {
         using Dense = plf::colony<Component>;
 
         /**
-         * @brief Default constructor.
+         * @brief Constructs an empty ComponentArray.
          */
-        ComponentArray()
+        explicit ComponentArray()
         {
         }
 

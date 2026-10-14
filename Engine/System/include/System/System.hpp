@@ -10,10 +10,9 @@
 
 #include <functional>
 #include "ISystem.hpp"
+#include "ComponentManager.hpp"
 
 namespace RType {
-
-    class ComponentManager;
 
     /**
      * @brief Applies a callback to every instance of a given Component type.
@@ -27,7 +26,9 @@ namespace RType {
          * @param func Callback applied to each Component instance during
          * update().
          */
-        explicit System(std::function<void(Component &)> func);
+        explicit System(std::function<void(Component &)> func): _func(func)
+        {
+        }
 
         /**
          * @brief Applies the stored callback to every Component
@@ -35,7 +36,14 @@ namespace RType {
          * @param cm Component manager providing access to the
          * ComponentArray<Component>.
          */
-        void update(ComponentManager &cm) override;
+        void update(ComponentManager &cm) override
+        {
+            if (!cm.isComponent<Component>())
+                return;
+            auto &dense = cm.getComponentArray<Component>().getDense();
+            for (auto &component: dense)
+                _func(component);
+        }
 
     private:
         std::function<void(Component &)> _func;

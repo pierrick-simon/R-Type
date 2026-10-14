@@ -33,9 +33,9 @@ namespace RType {
     class ComponentManager {
     public:
         /**
-         * @brief Default constructor
+         * @brief Constructs an empty ComponentManager.
          */
-        ComponentManager();
+        explicit ComponentManager();
 
         /**
          * @brief Copy construction is disabled.
@@ -60,7 +60,7 @@ namespace RType {
         Component &addComponent(Entity entity, Args &&...args)
         {
             auto index = std::type_index(typeid(Component));
-            if (_components.contains(index)) {
+            if (isComponent<Component>()) {
                 auto &array = static_cast<ComponentArray<Component> &>(*_components.at(index));
                 return array.addEntity(entity, std::forward<Args>(args)...);
             }
@@ -79,7 +79,7 @@ namespace RType {
         void removeComponent(Entity entity)
         {
             auto index = std::type_index(typeid(Component));
-            if (!_components.contains(index))
+            if (!isComponent<Component>())
                 throw NoSuchComponent("Could not remove link between entity and component.");
             _components.at(index)->removeEntity(entity);
         }
@@ -101,9 +101,24 @@ namespace RType {
         [[nodiscard]] Component &getComponent(Entity entity)
         {
             auto index = std::type_index(typeid(Component));
-            if (!_components.contains(index))
+            if (!isComponent<Component>())
                 throw NoSuchComponent();
             return static_cast<ComponentArray<Component> &>(*_components.at(index)).getComponent(entity);
+        }
+
+        /**
+         * @brief Retrieves the ComponentArray storing every instance of
+         * the given type.
+         * @tparam Component The component type.
+         * @return Reference to the corresponding ComponentArray.
+         */
+        template<typename Component>
+        [[nodiscard]] ComponentArray<Component> &getComponentArray()
+        {
+            auto index = std::type_index(typeid(Component));
+            if (!isComponent<Component>())
+                throw NoSuchComponent();
+            return static_cast<ComponentArray<Component> &>(*_components.at(index));
         }
 
         /**
@@ -118,24 +133,23 @@ namespace RType {
         [[nodiscard]] bool hasComponent(Entity entity) const
         {
             auto index = std::type_index(typeid(Component));
-            if (!_components.contains(index))
+            if (!isComponent<Component>())
                 return false;
             return _components.at(index)->hasComponent(entity);
         }
 
         /**
-         * @brief Retrieves the ComponentArray storing every instance of
-         * the given type.
-         * @tparam Component The component type.
-         * @return Reference to the corresponding ComponentArray.
+         * @brief Checks whether an entity has a component of the given
+         * type.
+         * @tparam Component The component type to check.
+         * @param entity The entity to check.
+         * @return true if the entity has that component, false
+         * otherwise.
          */
         template<typename Component>
-        [[nodiscard]] ComponentArray<Component> &getComponentArray()
+        [[nodiscard]] bool isComponent() const
         {
-            auto index = std::type_index(typeid(Component));
-            if (!_components.contains(index))
-                throw NoSuchComponent();
-            return static_cast<ComponentArray<Component> &>(*_components.at(index));
+            return _components.contains(std::type_index(typeid(Component)));
         }
 
     private:

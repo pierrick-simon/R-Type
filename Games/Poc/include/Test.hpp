@@ -40,6 +40,7 @@ namespace Poc {
 
     TestList edgeCaseTests();
     TestList simulationTests();
+    TestList systemTests();
 
     int runTests(const TestList &tests);
 

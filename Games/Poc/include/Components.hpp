@@ -11,6 +11,8 @@
 #include <memory>
 #include <string>
 
+#include "Entity.hpp"
+
 namespace Poc {
 
     struct Position {
@@ -40,6 +42,23 @@ namespace Poc {
     struct Enemy {};
 
     struct Bullet {};
+
+    struct Owned {
+        RType::Entity owner;
+        int value;
+    };
+
+    struct Body {
+        float x;
+        float y;
+        float vx;
+        float vy;
+    };
+
+    struct Lifetime {
+        RType::Entity owner;
+        int ticks;
+    };
 
     struct MoveOnly {
         std::unique_ptr<int> ptr;

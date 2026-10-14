@@ -31,11 +31,9 @@ namespace RType {
     class EntityManager {
     public:
         /**
-         * @brief Constructs an EntityManager bound to a ComponentManager.
-         * @param cm Component manager used to clean up an entity's
-         * components on destruction.
+         * @brief Constructs an empty EntityManager.
          */
-        explicit EntityManager(ComponentManager &cm);
+        explicit EntityManager();
 
         /**
          * @brief Copy construction is disabled.
@@ -68,7 +66,6 @@ namespace RType {
     private:
         EntityList _entities;
         Entity _nextID = 0;
-        ComponentManager &_cm;
     };
 
 } // namespace RType

@@ -27,7 +27,7 @@ namespace RType {
         /**
          * @brief Constructs an empty GameManager.
          */
-        GameManager();
+        explicit GameManager();
 
         /**
          * @brief Copy construction is disabled.
@@ -89,6 +89,12 @@ namespace RType {
         {
             _cm.removeComponent<Component>(entity);
         }
+
+        /**
+         * @brief Removes all the components from an entity.
+         * @param entity The entity to remove the components from.
+         */
+        void removeComponents(Entity entity);
 
         /**
          * @brief Retrieves a component of the given type for an entity.

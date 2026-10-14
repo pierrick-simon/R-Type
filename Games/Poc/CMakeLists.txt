@@ -11,6 +11,7 @@ set(SRCS
         src/Runner.cpp
         src/EdgeCases.cpp
         src/Simulation.cpp
+        src/Systems.cpp
 )
 
 add_executable(r-type_poc ${SRCS})
@@ -19,10 +20,6 @@ target_include_directories(r-type_poc PRIVATE
         $<TARGET_PROPERTY:engine-system,INCLUDE_DIRECTORIES>
 )
 target_link_libraries(r-type_poc PRIVATE engine-system shared plf-colony)
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_options(r-type_poc PRIVATE -Wl,--allow-shlib-undefined -Wl,-z,lazy)
-endif ()
 
 # if (POC_SANITIZE AND NOT MSVC)
 #     target_compile_options(r-type_poc PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)

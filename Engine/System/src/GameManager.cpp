@@ -10,7 +10,7 @@
 namespace RType {
 
     GameManager::GameManager() :
-        _cm(), _em(_cm), _sm()
+        _cm(), _em(), _sm()
     {
     }
 
@@ -26,12 +26,18 @@ namespace RType {
 
     void GameManager::destroyEntity(Entity entity)
     {
+        _cm.removeComponents(entity);
         _em.destroyEntity(entity);
     }
 
     bool GameManager::hasEntity(Entity entity)
     {
         return _em.hasEntity(entity);
+    }
+
+    void GameManager::removeComponents(Entity entity)
+    {
+        _cm.removeComponents(entity);
     }
 
     void GameManager::destroySystem(SystemList::iterator system)

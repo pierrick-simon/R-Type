@@ -10,8 +10,9 @@
 
 #include <functional>
 #include <memory>
-#include <plf_colony.h>
+#include <list>
 #include "ISystem.hpp"
+#include "System.hpp"
 
 namespace RType {
 
@@ -20,13 +21,18 @@ namespace RType {
     /**
      * @brief Collection of every registered system.
      */
-    using SystemList = plf::colony<std::unique_ptr<ISystem>>;
+    using SystemList = std::list<std::unique_ptr<ISystem>>;
 
     /**
      * @brief Owns and runs every registered system.
      */
     class SystemManager {
     public:
+        /**
+         * @brief Constructs an empty SystemManager.
+         */
+        explicit SystemManager();
+
         /**
          * @brief Runs every registered system once.
          * @param cm Component manager passed to each system's update().
@@ -42,7 +48,11 @@ namespace RType {
          */
         template<typename Component>
         SystemList::iterator createSystem(
-            std::function<void(Component &)> func);
+            std::function<void(Component &)> func)
+        {
+            auto system = std::make_unique<System<Component>>(func);
+            return _systems.emplace(_systems.end(), std::move(system));
+        }
 
         /**
          * @brief Removes a previously created system.
