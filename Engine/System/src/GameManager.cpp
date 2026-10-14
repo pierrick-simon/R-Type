@@ -29,6 +29,11 @@ namespace RType {
         _em.destroyEntity(entity);
     }
 
+    bool GameManager::hasEntity(Entity entity)
+    {
+        return _em.hasEntity(entity);
+    }
+
     void GameManager::destroySystem(SystemList::iterator system)
     {
         _sm.destroySystem(system);

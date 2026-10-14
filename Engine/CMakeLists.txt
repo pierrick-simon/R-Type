@@ -78,7 +78,6 @@ target_link_libraries(${SYSTEM_LIB_NAME} PRIVATE shared plf-colony)
 set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES PREFIX "")
 
 set_target_properties(${SYSTEM_LIB_NAME} PROPERTIES
-    CXX_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON
 )
 

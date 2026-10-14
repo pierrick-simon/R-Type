@@ -79,7 +79,7 @@ namespace RType {
          */
         void removeEntity(Entity entity) override
         {
-            if (hasComponent(entity))
+            if (!hasComponent(entity))
                 throw NoSuchComponent();
             _dense.erase(_sparse[entity]);
             _sparse[entity] = typename Dense::iterator{};
@@ -92,9 +92,9 @@ namespace RType {
          */
         Component &getComponent(Entity entity)
         {
-            if (hasComponent(entity))
+            if (!hasComponent(entity))
                 throw NoSuchComponent();
-            return _sparse[entity];
+            return *_sparse[entity];
         }
 
         /**

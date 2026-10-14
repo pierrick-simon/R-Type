@@ -61,12 +61,12 @@ namespace RType {
         {
             auto index = std::type_index(typeid(Component));
             if (_components.contains(index)) {
-                auto &array = static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(index));
-                return array->addEntity(entity, std::forward<Args>(args)...);
+                auto &array = static_cast<ComponentArray<Component> &>(*_components.at(index));
+                return array.addEntity(entity, std::forward<Args>(args)...);
             }
-            ComponentArray<Component> array;
+            auto array = std::make_unique<ComponentArray<Component>>();
             auto &tmp = array->addEntity(entity, std::forward<Args>(args)...);
-            _components.emplace(index, array);
+            _components.emplace(index, std::move(array));
             return tmp;
         }
 
@@ -103,7 +103,7 @@ namespace RType {
             auto index = std::type_index(typeid(Component));
             if (!_components.contains(index))
                 throw NoSuchComponent();
-            return static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(index))->getComponent(entity);
+            return static_cast<ComponentArray<Component> &>(*_components.at(index)).getComponent(entity);
         }
 
         /**
@@ -119,7 +119,7 @@ namespace RType {
         {
             auto index = std::type_index(typeid(Component));
             if (!_components.contains(index))
-                throw NoSuchComponent();
+                return false;
             return _components.at(index)->hasComponent(entity);
         }
 
@@ -132,7 +132,10 @@ namespace RType {
         template<typename Component>
         [[nodiscard]] ComponentArray<Component> &getComponentArray()
         {
-            return *static_cast<std::unique_ptr<ComponentArray<Component>>>(_components.at(std::type_index(typeid(Component))));
+            auto index = std::type_index(typeid(Component));
+            if (!_components.contains(index))
+                throw NoSuchComponent();
+            return static_cast<ComponentArray<Component> &>(*_components.at(index));
         }
 
     private:

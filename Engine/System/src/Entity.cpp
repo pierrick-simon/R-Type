@@ -30,4 +30,9 @@ namespace RType {
         _entities.erase(std::find(_entities.begin(), _entities.end(), entity));
     }
 
+    bool EntityManager::hasEntity(Entity entity)
+    {
+        return std::count(_entities.begin(), _entities.end(), entity) > 0;
+    }
+
 } // namespace RType

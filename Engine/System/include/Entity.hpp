@@ -59,6 +59,12 @@ namespace RType {
          */
         void destroyEntity(Entity entity);
 
+        /**
+         * @brief Checks whether an entity exist or not.
+         * @param entity The entity to check.
+         */
+        bool hasEntity(Entity entity);
+
     private:
         EntityList _entities;
         Entity _nextID = 0;

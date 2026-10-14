@@ -13,8 +13,11 @@
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
 #include "SystemManager.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
+
+    class NoSuchEntity;
 
     /**
      * @brief Facade exposing entity, component and system management.
@@ -54,6 +57,12 @@ namespace RType {
         void destroyEntity(Entity entity);
 
         /**
+         * @brief Checks whether an entity exist or not.
+         * @param entity The entity to check.
+         */
+        bool hasEntity(Entity entity);
+
+        /**
          * @brief Constructs and stores a component of the given type for
          * an entity.
          * @tparam Component The component type to add.
@@ -65,6 +74,8 @@ namespace RType {
         template<typename Component, typename... Args>
         Component &addComponent(Entity entity, Args &&...args)
         {
+            if (!hasEntity(entity))
+                throw NoSuchEntity();
             return _cm.addComponent<Component>(entity, std::forward<Args>(args)...);
         }
 
@@ -140,6 +151,11 @@ namespace RType {
         ComponentManager _cm;
         EntityManager _em;
         SystemManager _sm;
+    };
+
+    class NoSuchEntity: public EngineException {
+        public:
+            NoSuchEntity(): EngineException("No such entity.") {}
     };
 
 } // namespace RType
