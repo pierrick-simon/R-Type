@@ -8,21 +8,23 @@
 #include "Sprite2D.hpp"
 
 namespace RType {
-    void Sprite2D::systemSprite2D(Sprite2D &s)
+    void Sprite2D::systemSprite2D(
+        Sprite2D &sprite, Texture2D &texture, Position2D &pos)
     {
-        auto width = float(s.texture.width);
-        auto height = float(s.texture.height);
+        auto width = float(texture.width);
+        auto height = float(texture.height);
         Rectangle source = {0.0f, 0.0f, width, height};
-        Rectangle dest = {s.pos.x, s.pos.y, width * s.scale, height * s.scale};
-        if (s.flip) {
+        Rectangle dest = {
+            pos.x, pos.y, width * sprite.scale, height * sprite.scale};
+        if (sprite.flip) {
             source.x += width;
             source.width *= -1;
         }
-        ::DrawTexturePro(s.texture,
+        ::DrawTexturePro(texture,
             source,
             dest,
-            {s.origin.x, s.origin.y},
-            s.rotation,
-            s.color);
+            {sprite.origin.x, sprite.origin.y},
+            sprite.rotation,
+            sprite.color);
     }
 }; // namespace RType

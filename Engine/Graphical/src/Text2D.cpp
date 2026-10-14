@@ -8,15 +8,15 @@
 #include "Text2D.hpp"
 
 namespace RType {
-    void Text2D::systemText2D(Text2D &t)
+    void Text2D::systemText2D(Text2D &text, Font &font, Position2D &pos)
     {
-        ::DrawTextPro(t.font,
-            t.str.c_str(),
-            {t.pos.x, t.pos.y},
-            {t.origin.x, t.origin.y},
-            t.rotation,
-            t.fontSize,
-            t.spacing,
-            t.color);
+        ::DrawTextPro(font,
+            text.str.c_str(),
+            {pos.x, pos.y},
+            {text.origin.x, text.origin.y},
+            text.rotation,
+            text.fontSize,
+            text.spacing,
+            text.color);
     }
 } // namespace RType

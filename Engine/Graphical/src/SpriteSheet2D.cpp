@@ -9,31 +9,33 @@
 #include <cmath>
 
 namespace RType {
-    void SpriteSheet2D::systemSpriteSheet2D(SpriteSheet2D &s)
+    void SpriteSheet2D::systemSpriteSheet2D(SpriteSheet2D &sprite,
+        Texture2D &texture, Position2D &pos, Clock &clock)
     {
-        s.sleep += s.clock.getElapsed();
-        if (s.sleep > s.frameDuration) {
-            s.currentTile++;
-            s.sleep = std::chrono::milliseconds(0);
+        sprite.sleep += clock.getElapsed();
+        if (sprite.sleep > sprite.frameDuration) {
+            sprite.currentTile++;
+            sprite.sleep = std::chrono::milliseconds(0);
         }
-        auto width = float(s.texture.width) / float(s.recNb.width);
-        auto height = float(s.texture.height) / float(s.recNb.height);
-        std::size_t nbTile = s.recNb.width * s.recNb.height;
-        s.currentTile %= nbTile;
-        std::size_t row = s.currentTile / s.recNb.width;
-        auto left = float(s.currentTile % s.recNb.width) * width;
+        auto width = float(texture.width) / float(sprite.recNb.width);
+        auto height = float(texture.height) / float(sprite.recNb.height);
+        std::size_t nbTile = sprite.recNb.width * sprite.recNb.height;
+        sprite.currentTile %= nbTile;
+        std::size_t row = sprite.currentTile / sprite.recNb.width;
+        auto left = float(sprite.currentTile % sprite.recNb.width) * width;
         auto top = float(row) * height;
         Rectangle source = {left, top, width, height};
-        Rectangle dest = {s.pos.x, s.pos.y, width * s.scale, height * s.scale};
-        if (s.flip) {
+        Rectangle dest = {
+            pos.x, pos.y, width * sprite.scale, height * sprite.scale};
+        if (sprite.flip) {
             source.x += width;
             source.width *= -1;
         }
-        ::DrawTexturePro(s.texture,
+        ::DrawTexturePro(texture,
             source,
             dest,
-            {s.origin.x, s.origin.y},
-            s.rotation,
-            s.color);
+            {sprite.origin.x, sprite.origin.y},
+            sprite.rotation,
+            sprite.color);
     }
 }; // namespace RType

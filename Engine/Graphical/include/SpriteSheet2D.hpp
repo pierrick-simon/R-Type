@@ -17,9 +17,6 @@
 namespace RType {
 
     struct SpriteSheet2D {
-        Texture2D &texture;
-        Position2D &pos;
-        Clock &clock;
         Size2D recNb = {1, 1};
         std::size_t currentTile = 0;
         std::chrono::milliseconds frameDuration =
@@ -31,7 +28,8 @@ namespace RType {
         bool flip = false;
         raylib::Color color = raylib::Color::White();
 
-        static void systemSpriteSheet2D(SpriteSheet2D &s);
+        static void systemSpriteSheet2D(SpriteSheet2D &sprite,
+            Texture2D &texture, Position2D &pos, Clock &clock);
     };
 
 } // namespace RType
