@@ -16,9 +16,8 @@ namespace RType {
             s.currentTile++;
             s.sleep = std::chrono::milliseconds(0);
         }
-        auto &texture = s.texture.texture;
-        auto width = float(texture.width) / float(s.recNb.width);
-        auto height = float(texture.height) / float(s.recNb.height);
+        auto width = float(s.texture.width) / float(s.recNb.width);
+        auto height = float(s.texture.height) / float(s.recNb.height);
         std::size_t nbTile = s.recNb.width * s.recNb.height;
         s.currentTile %= nbTile;
         std::size_t row = s.currentTile / s.recNb.width;
@@ -30,7 +29,7 @@ namespace RType {
             source.x += width;
             source.width *= -1;
         }
-        ::DrawTexturePro(texture,
+        ::DrawTexturePro(s.texture,
             source,
             dest,
             {s.origin.x, s.origin.y},

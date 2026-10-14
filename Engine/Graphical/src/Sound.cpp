@@ -6,36 +6,41 @@
 */
 
 #include "Sound.hpp"
+#include "Exception.hpp"
 
 namespace RType {
     Sound::Sound(const std::string &path, bool loop)
     {
         this->loop = loop;
-        _sound.Load(path);
+        try {
+            this->Load(path);
+        } catch (raylib::RaylibException &e) {
+            throw EngineException(e.what());
+        }
     }
 
     void Sound::systemSound(Sound &s)
     {
-        if (s._sound.IsPlaying()) {
+        if (s.IsPlaying()) {
             if (s.state == State::STOP)
-                s._sound.Stop();
+                s.Stop();
             if (s.state == State::PAUSED)
-                s._sound.Pause();
+                s.Pause();
             if (s.state == State::PLAY) {
-                s._sound.Play();
+                s.Play();
                 s.state = State::PLAYING;
             }
         } else {
             if (s.state == State::PLAYING && s.loop)
-                s._sound.Play();
+                s.Play();
             if (s.state == State::PLAYING && !s.loop)
                 s.state = State::STOP;
             if (s.state == State::START) {
-                s._sound.Resume();
+                s.Resume();
                 s.state = State::PLAYING;
             }
             if (s.state == State::PLAY) {
-                s._sound.Play();
+                s.Play();
                 s.state = State::PLAYING;
             }
         }

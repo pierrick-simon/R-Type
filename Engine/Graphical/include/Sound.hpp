@@ -12,8 +12,7 @@
 
 namespace RType {
 
-    class Sound {
-    public:
+    struct Sound : raylib::Sound {
         enum class State {
             PLAY,
             PLAYING,
@@ -28,9 +27,6 @@ namespace RType {
         State state = State::STOP;
 
         static void systemSound(Sound &s);
-
-    private:
-        raylib::Sound _sound;
     };
 
 } // namespace RType

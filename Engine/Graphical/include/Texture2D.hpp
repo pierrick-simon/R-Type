@@ -12,9 +12,8 @@
 
 namespace RType {
 
-    struct Texture2D {
-        std::string path;
-        raylib::Texture2D texture = raylib::Texture2D(path);
+    struct Texture2D : raylib::Texture2D {
+        Texture2D(const std::string &path);
     };
 
 } // namespace RType

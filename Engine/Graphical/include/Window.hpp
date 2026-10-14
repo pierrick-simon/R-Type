@@ -12,14 +12,17 @@
 
 namespace RType {
 
-    struct Window {
-        int width = 800;
-        int height = 600;
-        std::string name = "Raylib Window";
+    class Window : public raylib::Window {
+    public:
+        Window(int width = 800, int height = 600,
+            const std::string &name = "Raylib Window",
+            raylib::Color clearScreenColor = raylib::Color::Black());
         raylib::Color clearScreenColor = raylib::Color::Black();
-        raylib::Window window = raylib::Window(width, height, name);
 
         static void systemWindow(Window &w);
+
+    private:
+        raylib::AudioDevice _audioDevice;
     };
 
 } // namespace RType

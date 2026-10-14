@@ -12,9 +12,8 @@
 
 namespace RType {
 
-    struct Font {
-        std::string path;
-        raylib::Font font = raylib::Font(path);
+    struct Font : public raylib::Font {
+        Font(const std::string &path);
     };
 
 } // namespace RType

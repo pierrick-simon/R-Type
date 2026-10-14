@@ -121,6 +121,8 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Clock.cpp
     ${GRAPHICAL}/src/SpriteSheet2D.cpp
     ${GRAPHICAL}/src/Sound.cpp
+    ${GRAPHICAL}/src/Font.cpp
+    ${GRAPHICAL}/src/Texture2D.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
