@@ -13,7 +13,7 @@ namespace RType {
         Texture2D &texture, Position2D &pos, Clock &clock)
     {
         sprite.sleep += clock.getElapsed();
-        if (sprite.sleep > sprite.frameDuration) {
+        if (sprite.sleep > sprite.frameDuration && sprite.animation) {
             sprite.currentTile++;
             sprite.sleep = std::chrono::milliseconds(0);
         }

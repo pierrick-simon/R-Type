@@ -23,6 +23,7 @@ namespace RType {
             std::chrono::milliseconds(100);
         std::chrono::milliseconds sleep = std::chrono::milliseconds(0);
         Origin2D origin;
+        bool animation = true;
         float scale = 1;
         float rotation = 0;
         bool flip = false;
