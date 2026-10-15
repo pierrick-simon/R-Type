@@ -19,6 +19,7 @@ namespace RType {
             raylib::Color clearScreenColor = raylib::Color::Black());
         raylib::Color clearScreenColor = raylib::Color::Black();
 
+        int fps = 120;
         static void systemWindow(Window &w);
 
     private:

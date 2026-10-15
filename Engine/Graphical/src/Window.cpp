@@ -26,6 +26,12 @@ namespace RType {
 
     void Window::systemWindow(Window &w)
     {
+        static int fps = w.GetFPS();
+
+        if (fps != w.fps) {
+            fps = w.fps;
+            w.SetTargetFPS(w.fps);
+        }
         w.BeginDrawing();
         w.ClearBackground(w.clearScreenColor);
         w.EndDrawing();
