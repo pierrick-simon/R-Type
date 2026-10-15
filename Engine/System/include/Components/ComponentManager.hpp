@@ -32,19 +32,10 @@ namespace RType {
      */
     class ComponentManager {
     public:
-        /**
-         * @brief Constructs an empty ComponentManager.
-         */
         explicit ComponentManager() = default;
 
-        /**
-         * @brief Copy construction is disabled.
-         */
         ComponentManager(const ComponentManager &) = delete;
 
-        /**
-         * @brief Copy assignment is disabled.
-         */
         ComponentManager &operator=(const ComponentManager &) = delete;
 
         /**
@@ -161,9 +152,6 @@ namespace RType {
         }
 
     private:
-        /**
-         * @brief Every ComponentArray, by component type.
-         */
         ComponentList _components;
     };
 

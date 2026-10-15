@@ -38,19 +38,10 @@ namespace RType {
          */
         using Dense = plf::colony<Component>;
 
-        /**
-         * @brief Constructs an empty ComponentArray.
-         */
         explicit ComponentArray() = default;
 
-        /**
-         * @brief Copy construction is disabled.
-         */
         ComponentArray(const ComponentArray &) = delete;
 
-        /**
-         * @brief Copy assignment is disabled.
-         */
         ComponentArray &operator=(const ComponentArray &) = delete;
 
         /**
@@ -118,10 +109,7 @@ namespace RType {
                 _sparse[entity.index()] != typename Dense::iterator {});
         }
 
-        /**
-         * @brief Returns the number of components stored.
-         * @return Number of components currently stored.
-         */
+        /** @brief Returns the number of components stored. */
         [[nodiscard]] std::size_t nbComponent() const override
         {
             return _dense.size();
@@ -139,15 +127,7 @@ namespace RType {
         }
 
     private:
-        /**
-         * @brief Every component, packed.
-         */
         Dense _dense;
-
-        /**
-         * @brief Iterator to each entity's component in _dense, indexed by
-         * Entity::index(). A default iterator means no component.
-         */
         std::vector<typename Dense::iterator> _sparse;
     };
 

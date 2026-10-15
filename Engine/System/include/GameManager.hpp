@@ -17,8 +17,6 @@
 
 namespace RType {
 
-    class NoSuchEntity;
-
     /**
      * @brief A deferred structural change (add, remove, destroy...),
      * executed when the CommandQueue is flushed.
@@ -49,19 +47,10 @@ namespace RType {
      */
     class GameManager {
     public:
-        /**
-         * @brief Constructs an empty GameManager.
-         */
         explicit GameManager();
 
-        /**
-         * @brief Copy construction is disabled.
-         */
         GameManager(const GameManager &) = delete;
 
-        /**
-         * @brief Copy assignment is disabled.
-         */
         GameManager &operator=(const GameManager &) = delete;
 
         /**
@@ -249,30 +238,11 @@ namespace RType {
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
     private:
-        /**
-         * @brief Storage of every component.
-         */
         ComponentManager _cm;
-
-        /**
-         * @brief Entity allocation and liveness.
-         */
         EntityManager _em;
-
-        /**
-         * @brief Registered systems.
-         */
         SystemManager _sm;
-
-        /**
-         * @brief Structural changes waiting to be applied.
-         */
         CommandQueue _cq;
 
-        /**
-         * @brief true while systems are running, so that structural
-         * changes are queued instead of applied.
-         */
         bool _updating = false;
 
         /**

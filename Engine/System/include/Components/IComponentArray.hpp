@@ -18,15 +18,9 @@ namespace RType {
      */
     class IComponentArray {
     public:
-        /**
-         * @brief Default virtual destructor.
-         */
         virtual ~IComponentArray() = default;
 
-        /**
-         * @brief Returns the number of components stored.
-         * @return Number of components currently stored.
-         */
+        /** @brief Returns the number of components stored. */
         [[nodiscard]] virtual std::size_t nbComponent() const = 0;
 
         /**

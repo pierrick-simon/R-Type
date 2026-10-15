@@ -17,9 +17,6 @@ namespace RType {
      */
     class ISystem {
     public:
-        /**
-         * @brief Default virtual destructor.
-         */
         virtual ~ISystem() = default;
 
         /**

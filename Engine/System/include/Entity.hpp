@@ -42,28 +42,14 @@ namespace RType {
          */
         [[nodiscard]] bool operator==(const Entity &entity) const;
 
-        /**
-         * @brief Returns the entity's slot, used to index the arrays.
-         * @return The entity's index.
-         */
+        /** @brief Returns the entity's slot, used to index the arrays. */
         [[nodiscard]] std::size_t index() const;
 
-        /**
-         * @brief Returns how many times the entity's slot has been
-         * reused.
-         * @return The entity's generation.
-         */
+        /** @brief Returns how many times the entity's slot has been reused. */
         [[nodiscard]] std::size_t generation() const;
 
     private:
-        /**
-         * @brief The entity's slot.
-         */
         std::size_t _index;
-
-        /**
-         * @brief How many times the slot has been reused.
-         */
         std::size_t _generation;
     };
 
@@ -71,22 +57,8 @@ namespace RType {
      * @brief State of an entity slot.
      */
     struct EntityInfo {
-        /**
-         * @brief true if an entity currently lives in this slot.
-         */
         bool isActive = true;
-
-        /**
-         * @brief Generation of the entity living, or that last lived, in
-         * this slot.
-         */
         std::size_t generation = 0;
-
-        /**
-         * @brief Deleted: an EntityInfo cannot be indexed.
-         */
-        template<typename T>
-        auto operator[](T index) = delete;
     };
 
     /**
@@ -104,19 +76,10 @@ namespace RType {
      */
     class EntityManager {
     public:
-        /**
-         * @brief Constructs an empty EntityManager.
-         */
         explicit EntityManager() = default;
 
-        /**
-         * @brief Copy construction is disabled.
-         */
         EntityManager(const EntityManager &) = delete;
 
-        /**
-         * @brief Copy assignment is disabled.
-         */
         EntityManager &operator=(const EntityManager &) = delete;
 
         /**
@@ -144,14 +107,7 @@ namespace RType {
         [[nodiscard]] bool hasEntity(Entity entity) const;
 
     private:
-        /**
-         * @brief State of every slot ever created.
-         */
         EntityList _entities;
-
-        /**
-         * @brief Destroyed entities whose slot can be reused.
-         */
         RecycleQueue _toRecycle;
     };
 

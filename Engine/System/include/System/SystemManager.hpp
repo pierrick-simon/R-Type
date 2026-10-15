@@ -29,14 +29,7 @@ namespace RType {
      * @brief A registered system and its id.
      */
     struct SystemEntry {
-        /**
-         * @brief The system's id.
-         */
         SystemId id;
-
-        /**
-         * @brief The system itself.
-         */
         std::unique_ptr<ISystem> system;
     };
 
@@ -50,9 +43,6 @@ namespace RType {
      */
     class SystemManager {
     public:
-        /**
-         * @brief Constructs an empty SystemManager.
-         */
         explicit SystemManager() = default;
 
         /**
@@ -93,14 +83,7 @@ namespace RType {
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
     private:
-        /**
-         * @brief Every registered system, in execution order.
-         */
         SystemList _systems;
-
-        /**
-         * @brief Id given to the next created system.
-         */
         SystemId _nextId = 0;
     };
 

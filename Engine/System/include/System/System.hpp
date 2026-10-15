@@ -48,9 +48,6 @@ namespace RType {
         }
 
     private:
-        /**
-         * @brief Callback applied to each Component instance.
-         */
         std::function<void(Component &)> _func;
     };
 
