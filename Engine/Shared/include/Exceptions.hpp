@@ -49,6 +49,14 @@ namespace RType {
         }
     };
 
+    class NoSuchEntity : public EngineException {
+    public:
+        NoSuchEntity() :
+            EngineException("No such entity.")
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

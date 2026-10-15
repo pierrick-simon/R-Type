@@ -10,14 +10,11 @@
 
 #include <cstddef>
 #include <vector>
+#include <queue>
 
 #include "Exceptions.hpp"
 
 namespace RType {
-
-    class ComponentManager;
-
-    class NoSuchEntity;
 
     /**
      * @brief Unique identifier for an entity.
@@ -69,14 +66,6 @@ namespace RType {
 
     private:
         EntityList _entities;
-    };
-
-    class NoSuchEntity : public EngineException {
-    public:
-        NoSuchEntity() :
-            EngineException("No such entity.")
-        {
-        }
     };
 
 } // namespace RType
