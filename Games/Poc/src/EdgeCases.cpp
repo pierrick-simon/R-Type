@@ -27,12 +27,13 @@ namespace {
         int unused;
     };
 
-    void addReturnsStoredComponent()
+    void addIsImmediateOutsideUpdate()
     {
         GameManager gm;
         Entity e = gm.createEntity();
-        Position &pos = gm.addComponent<Position>(e, 1.f, 2.f);
 
+        gm.addComponent<Position>(e, 1.f, 2.f);
+        Position &pos = gm.getComponent<Position>(e);
         POC_CHECK(pos.x == 1.f && pos.y == 2.f);
         pos.x = 10.f;
         POC_CHECK(gm.getComponent<Position>(e).x == 10.f);
@@ -43,9 +44,33 @@ namespace {
     {
         GameManager gm;
         Entity e = gm.createEntity();
-        Position &pos = gm.addComponent<Position>(e);
 
+        gm.addComponent<Position>(e);
+        const Position &pos = gm.getComponent<Position>(e);
         POC_CHECK(pos.x == 0.f && pos.y == 0.f);
+    }
+
+    void failedCommandDoesNotReplay()
+    {
+        GameManager gm;
+        Entity e = gm.createEntity();
+
+        gm.addComponent<Health>(e, 1);
+        POC_CHECK_THROWS(
+            gm.addComponent<Health>(e, 2), RType::AlreadyExistingComponent);
+        POC_CHECK_NOTHROW(gm.addComponent<Position>(e, 3.f, 3.f));
+        POC_CHECK_NOTHROW(gm.removeComponent<Health>(e));
+        POC_CHECK(!gm.hasComponent<Health>(e));
+        POC_CHECK(gm.getComponent<Position>(e).x == 3.f);
+    }
+
+    void addWithTemporaryArguments()
+    {
+        GameManager gm;
+        Entity e = gm.createEntity();
+
+        gm.addComponent<Name>(e, std::string(64, 'a') + "b");
+        POC_CHECK(gm.getComponent<Name>(e).value == std::string(64, 'a') + "b");
     }
 
     void firstEntityIdZeroWorks()
@@ -235,6 +260,8 @@ namespace {
             gm.destroyEntity(a);
         } catch (const RType::EngineException &) {
         }
+        POC_CHECK(!gm.hasEntity(a));
+        POC_CHECK(gm.hasEntity(b));
         POC_CHECK(gm.getComponent<Health>(b).hp == 5);
     }
 
@@ -279,7 +306,8 @@ namespace {
     {
         GameManager gm;
         Entity first = gm.createEntity();
-        Position *ptr = &gm.addComponent<Position>(first, 1.f, 2.f);
+        gm.addComponent<Position>(first, 1.f, 2.f);
+        Position *ptr = &gm.getComponent<Position>(first);
         std::vector<Entity> others;
 
         for (int i = 0; i < 10000; i++) {
@@ -303,8 +331,8 @@ namespace {
         for (int i = 0; i < 5000; i++) {
             Entity e = gm.createEntity();
             entities.push_back(e);
-            ptrs.push_back(
-                &gm.addComponent<Position>(e, static_cast<float>(i), 0.f));
+            gm.addComponent<Position>(e, static_cast<float>(i), 0.f);
+            ptrs.push_back(&gm.getComponent<Position>(e));
         }
         for (std::size_t i = 0; i < entities.size(); i += 2)
             gm.destroyEntity(entities[i]);
@@ -552,8 +580,12 @@ namespace Poc {
     TestList edgeCaseTests()
     {
         return {
-            {"addComponent returns the stored component",
-                addReturnsStoredComponent},
+            {"addComponent is immediate outside update",
+                addIsImmediateOutsideUpdate},
+            {"addComponent with temporary arguments",
+                addWithTemporaryArguments},
+            {"a failed command does not replay on later operations",
+                failedCommandDoesNotReplay},
             {"addComponent without arguments value-initializes",
                 addWithoutArgumentsValueInitializes},
             {"entity 0 behaves like any other entity", firstEntityIdZeroWorks},

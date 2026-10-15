@@ -11,9 +11,13 @@
 #include <cstddef>
 #include <vector>
 
+#include "Exceptions.hpp"
+
 namespace RType {
 
     class ComponentManager;
+
+    class NoSuchEntity;
 
     /**
      * @brief Unique identifier for an entity.
@@ -23,7 +27,7 @@ namespace RType {
     /**
      * @brief Collection of entity identifiers.
      */
-    using EntityList = std::vector<Entity>;
+    using EntityList = std::vector<bool>;
 
     /**
      * @brief Creates and destroys entities.
@@ -61,11 +65,18 @@ namespace RType {
          * @brief Checks whether an entity exist or not.
          * @param entity The entity to check.
          */
-        bool hasEntity(Entity entity);
+        bool hasEntity(Entity entity) const;
 
     private:
         EntityList _entities;
-        Entity _nextID = 0;
+    };
+
+    class NoSuchEntity : public EngineException {
+    public:
+        NoSuchEntity() :
+            EngineException("No such entity.")
+        {
+        }
     };
 
 } // namespace RType

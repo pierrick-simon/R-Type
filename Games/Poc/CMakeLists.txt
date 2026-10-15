@@ -21,7 +21,7 @@ target_include_directories(r-type_poc PRIVATE
 )
 target_link_libraries(r-type_poc PRIVATE engine-system shared plf-colony)
 
-# if (POC_SANITIZE AND NOT MSVC)
-#     target_compile_options(r-type_poc PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
-#     target_link_options(r-type_poc PRIVATE -fsanitize=address,undefined)
-# endif ()
+if (POC_SANITIZE AND NOT MSVC)
+    target_compile_options(r-type_poc PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)
+    target_link_options(r-type_poc PRIVATE -fsanitize=address,undefined)
+endif ()

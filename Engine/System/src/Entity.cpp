@@ -18,19 +18,20 @@ namespace RType {
 
     Entity EntityManager::createEntity()
     {
-        _entities.push_back(_nextID);
-        _nextID += 1;
-        return _nextID - 1;
+        _entities.push_back(true);
+        return _entities.size() - 1;
     }
 
     void EntityManager::destroyEntity(Entity entity)
     {
-        _entities.erase(std::find(_entities.begin(), _entities.end(), entity));
+        if (!hasEntity(entity))
+            throw NoSuchEntity();
+        _entities[entity] = false;
     }
 
-    bool EntityManager::hasEntity(Entity entity)
+    bool EntityManager::hasEntity(Entity entity) const
     {
-        return std::count(_entities.begin(), _entities.end(), entity) > 0;
+        return (_entities.size() > entity && _entities[entity]);
     }
 
 } // namespace RType

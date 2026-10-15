@@ -8,16 +8,20 @@
 #ifndef GAMEMANAGER_HPP_
 #define GAMEMANAGER_HPP_
 
+#include <memory>
 #include <utility>
 
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
-#include "Exceptions.hpp"
 #include "SystemManager.hpp"
 
 namespace RType {
 
     class NoSuchEntity;
+
+    using Command = std::function<void ()>;
+
+    using CommandQueue = std::vector<Command>;
 
     /**
      * @brief Facade exposing entity, component and system management.
@@ -60,7 +64,7 @@ namespace RType {
          * @brief Checks whether an entity exist or not.
          * @param entity The entity to check.
          */
-        bool hasEntity(Entity entity);
+        bool hasEntity(Entity entity) const;
 
         /**
          * @brief Constructs and stores a component of the given type for
@@ -69,15 +73,19 @@ namespace RType {
          * @tparam Args Constructor argument types forwarded to Component.
          * @param entity The entity to attach the component to.
          * @param args Arguments forwarded to Component's constructor.
-         * @return Reference to the newly created component.
          */
         template<typename Component, typename... Args>
-        Component &addComponent(Entity entity, Args &&...args)
+        void addComponent(Entity entity, Args &&...args)
         {
-            if (!hasEntity(entity))
-                throw NoSuchEntity();
-            return _cm.addComponent<Component>(
-                entity, std::forward<Args>(args)...);
+            auto component =
+                std::make_shared<Component>(std::forward<Args>(args)...);
+
+            _cq.emplace_back([this, entity, component] () {
+                if (!hasEntity(entity))
+                    throw NoSuchEntity();
+                _cm.addComponent<Component>(entity, std::move(*component));
+            });
+            tryFlush();
         }
 
         /**
@@ -88,7 +96,10 @@ namespace RType {
         template<typename Component>
         void removeComponent(Entity entity)
         {
-            _cm.removeComponent<Component>(entity);
+            _cq.emplace_back([this, entity] () {
+                _cm.removeComponent<Component>(entity);
+            });
+            tryFlush();
         }
 
         /**
@@ -158,14 +169,11 @@ namespace RType {
         ComponentManager _cm;
         EntityManager _em;
         SystemManager _sm;
-    };
+        CommandQueue _cq;
+        bool _updating = false;
 
-    class NoSuchEntity : public EngineException {
-    public:
-        NoSuchEntity() :
-            EngineException("No such entity.")
-        {
-        }
+        void flush();
+        void tryFlush();
     };
 
 } // namespace RType

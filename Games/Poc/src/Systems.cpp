@@ -6,6 +6,9 @@
 */
 
 #include <map>
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "Components.hpp"
@@ -265,6 +268,31 @@ namespace {
             POC_CHECK(gm.hasComponent<Health>(spawned[i]));
     }
 
+    void systemAddsWithTemporaryArguments()
+    {
+        GameManager gm;
+        std::vector<std::pair<Entity, int>> spawned;
+
+        for (int i = 0; i < 20; i++) {
+            Entity e = gm.createEntity();
+            gm.addComponent<Owned>(e, e, i);
+        }
+        gm.createSystem<Owned>([&gm, &spawned](Owned &o) {
+            Entity e = gm.createEntity();
+            gm.addComponent<Name>(
+                e, std::string(64, 'x') + std::to_string(o.value));
+            gm.addComponent<Health>(e, o.value * 10);
+            spawned.emplace_back(e, o.value);
+        });
+        gm.update();
+        POC_CHECK(spawned.size() == 20);
+        for (const auto &[e, value] : spawned) {
+            POC_CHECK(gm.getComponent<Name>(e).value ==
+                std::string(64, 'x') + std::to_string(value));
+            POC_CHECK(gm.getComponent<Health>(e).hp == value * 10);
+        }
+    }
+
     void systemModifiesOtherTypeThroughOwner()
     {
         GameManager gm;
@@ -305,7 +333,7 @@ namespace {
         gm.update();
         gm.update();
         POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
-        POC_CHECK((order == std::vector<char> {'A', 'B', 'A', 'B'}));
+        POC_CHECK((order == std::vector<char> {'A', 'B', 'C', 'A', 'B'}));
     }
 
     void systemAddsOwnTypeDuringUpdate()
@@ -377,6 +405,47 @@ namespace {
         gm.update();
         gm.update();
         POC_CHECK(runs == 21);
+    }
+
+    void throwingSystemDoesNotLockQueue()
+    {
+        GameManager gm;
+        Entity e = gm.createEntity();
+        bool thrown = false;
+
+        gm.addComponent<Health>(e, 1);
+        gm.createSystem<Health>([&thrown](Health &) {
+            if (!thrown) {
+                thrown = true;
+                throw std::runtime_error("system failure");
+            }
+        });
+        try {
+            gm.update();
+        } catch (const std::runtime_error &) {
+        }
+        gm.addComponent<Position>(e, 1.f, 1.f);
+        POC_CHECK(gm.hasComponent<Position>(e));
+    }
+
+    void sameEntityDestroyedTwiceInOneUpdate()
+    {
+        GameManager gm;
+        Entity enemy = gm.createEntity();
+        Entity other = gm.createEntity();
+
+        for (int i = 0; i < 2; i++) {
+            Entity bullet = gm.createEntity();
+            gm.addComponent<Owned>(bullet, enemy, i);
+        }
+        gm.createSystem<Owned>([&gm, other](Owned &o) {
+            gm.destroyEntity(o.owner);
+            if (o.value == 1)
+                gm.addComponent<Health>(other, 7);
+        });
+        POC_CHECK_NOTHROW(gm.update());
+        POC_CHECK(!gm.hasEntity(enemy));
+        POC_CHECK(gm.hasComponent<Health>(other));
     }
 
     void particlesWithSystems()
@@ -471,6 +540,8 @@ namespace Poc {
             {"two systems on different types", twoSystemsOnDifferentTypes},
             {"a system creates entities of another type during update",
                 systemAddsOtherTypeDuringUpdate},
+            {"a system adds components with temporary arguments",
+                systemAddsWithTemporaryArguments},
             {"a system modifies another type through an owner id",
                 systemModifiesOtherTypeThroughOwner},
             {"a system destroys a later system during update",
@@ -483,6 +554,10 @@ namespace Poc {
                 systemDestroysEveryEntity},
             {"[design] a system destroys itself during update",
                 systemDestroysItself},
+            {"a throwing system does not leave the queue locked",
+                throwingSystemDoesNotLockQueue},
+            {"[design] two bullets destroy the same enemy in one update",
+                sameEntityDestroyedTwiceInOneUpdate},
             {"300 ticks of particles driven by systems", particlesWithSystems},
         };
     }
