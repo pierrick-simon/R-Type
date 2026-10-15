@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "Components.hpp"
+#include "EntityUtils.hpp"
 #include "GameManager.hpp"
 #include "Test.hpp"
 
@@ -78,7 +79,7 @@ namespace {
         GameManager gm;
         Entity e = gm.createEntity();
 
-        POC_CHECK(e == 0);
+        POC_CHECK(indexOf(e) == 0);
         gm.addComponent<Health>(e, 3);
         POC_CHECK(gm.hasComponent<Health>(e));
         gm.removeComponent<Health>(e);
@@ -269,7 +270,7 @@ namespace {
     {
         GameManager gm;
         std::vector<Entity> created;
-        std::set<Entity> alive;
+        EntitySet alive;
 
         created.reserve(100);
         for (int i = 0; i < 100; i++)
@@ -494,18 +495,22 @@ namespace {
         std::mt19937 rng(42);
         std::vector<Entity> alive;
         std::vector<Entity> dead;
-        std::map<Entity, int> health;
-        std::map<Entity, float> position;
+        std::map<std::size_t, int> health;
+        std::map<std::size_t, float> position;
 
         auto verify = [&]() {
             int sum = 0;
             for (Entity e : alive) {
-                POC_CHECK(gm.hasComponent<Health>(e) == health.contains(e));
-                POC_CHECK(gm.hasComponent<Position>(e) == position.contains(e));
-                if (health.contains(e))
-                    POC_CHECK(gm.getComponent<Health>(e).hp == health[e]);
-                if (position.contains(e))
-                    POC_CHECK(gm.getComponent<Position>(e).x == position[e]);
+                POC_CHECK(
+                    gm.hasComponent<Health>(e) == health.contains(indexOf(e)));
+                POC_CHECK(gm.hasComponent<Position>(e) ==
+                    position.contains(indexOf(e)));
+                if (health.contains(indexOf(e)))
+                    POC_CHECK(
+                        gm.getComponent<Health>(e).hp == health[indexOf(e)]);
+                if (position.contains(indexOf(e)))
+                    POC_CHECK(
+                        gm.getComponent<Position>(e).x == position[indexOf(e)]);
             }
             for (Entity e : dead) {
                 POC_CHECK(!gm.hasComponent<Health>(e));
@@ -523,7 +528,11 @@ namespace {
         for (int i = 0; i < 20000; i++) {
             unsigned op = rng() % 100;
             if (alive.empty() || op < 15) {
-                alive.push_back(gm.createEntity());
+                Entity e = gm.createEntity();
+                POC_CHECK(!gm.hasComponent<Health>(e));
+                POC_CHECK(!gm.hasComponent<Position>(e));
+                std::erase(dead, e);
+                alive.push_back(e);
                 continue;
             }
             std::size_t idx = rng() % alive.size();
@@ -533,37 +542,37 @@ namespace {
                 gm.destroyEntity(e);
                 alive.erase(alive.begin() + static_cast<std::ptrdiff_t>(idx));
                 dead.push_back(e);
-                health.erase(e);
-                position.erase(e);
+                health.erase(indexOf(e));
+                position.erase(indexOf(e));
             } else if (op < 45) {
-                if (health.contains(e)) {
+                if (health.contains(indexOf(e))) {
                     POC_CHECK_THROWS(gm.addComponent<Health>(e, value),
                         RType::AlreadyExistingComponent);
                 } else {
                     gm.addComponent<Health>(e, value);
-                    health[e] = value;
+                    health[indexOf(e)] = value;
                 }
             } else if (op < 60) {
-                if (health.contains(e)) {
+                if (health.contains(indexOf(e))) {
                     gm.removeComponent<Health>(e);
-                    health.erase(e);
+                    health.erase(indexOf(e));
                 } else {
                     POC_CHECK_THROWS(
                         gm.removeComponent<Health>(e), RType::NoSuchComponent);
                 }
             } else if (op < 75) {
-                if (position.contains(e)) {
+                if (position.contains(indexOf(e))) {
                     gm.removeComponent<Position>(e);
-                    position.erase(e);
+                    position.erase(indexOf(e));
                 } else {
                     gm.addComponent<Position>(
                         e, static_cast<float>(value), 0.f);
-                    position[e] = static_cast<float>(value);
+                    position[indexOf(e)] = static_cast<float>(value);
                 }
             } else {
-                if (health.contains(e)) {
+                if (health.contains(indexOf(e))) {
                     gm.getComponent<Health>(e).hp += 1;
-                    health[e] += 1;
+                    health[indexOf(e)] += 1;
                 } else {
                     POC_CHECK_THROWS(
                         gm.getComponent<Health>(e), RType::NoSuchComponent);

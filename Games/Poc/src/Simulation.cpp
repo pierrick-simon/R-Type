@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "Components.hpp"
+#include "EntityUtils.hpp"
 #include "GameManager.hpp"
 #include "Test.hpp"
 
@@ -199,7 +200,7 @@ namespace {
 
         GameManager _gm;
         std::vector<Entity> _entities;
-        std::set<Entity> _dead;
+        EntitySet _dead;
         Entity _player;
         int _tick = 0;
     };

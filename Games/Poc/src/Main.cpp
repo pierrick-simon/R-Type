@@ -11,9 +11,11 @@ int main()
 {
     Poc::TestList tests = Poc::edgeCaseTests();
     Poc::TestList systems = Poc::systemTests();
+    Poc::TestList recycling = Poc::recyclingTests();
     Poc::TestList simulation = Poc::simulationTests();
 
     tests.insert(tests.end(), systems.begin(), systems.end());
+    tests.insert(tests.end(), recycling.begin(), recycling.end());
     tests.insert(tests.end(), simulation.begin(), simulation.end());
     return Poc::runTests(tests) == 0 ? 0 : 84;
 }

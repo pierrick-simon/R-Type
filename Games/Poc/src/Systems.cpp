@@ -126,8 +126,7 @@ namespace {
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 0);
-        auto sys =
-            gm.createSystem<Health>([](Health &h) { h.hp += 1; });
+        auto sys = gm.createSystem<Health>([](Health &h) { h.hp += 1; });
         gm.update();
         gm.destroySystem(sys);
         gm.update();
@@ -196,6 +195,7 @@ namespace {
         visits = 0;
         gm.removeComponent<Health>(entities[0]);
         gm.destroyEntity(entities[5]);
+        entities.erase(entities.begin() + 5);
         gm.addComponent<Health>(gm.createEntity(), 99);
         gm.update();
         POC_CHECK(visits == 9);
@@ -264,7 +264,7 @@ namespace {
         gm.update();
         POC_CHECK(spawned.size() == 20);
         POC_CHECK(gm.getArray<Health>().nbComponent() == 20);
-        for (auto &s: spawned)
+        for (auto &s : spawned)
             POC_CHECK(gm.hasComponent<Health>(s));
     }
 
@@ -458,7 +458,7 @@ namespace {
         };
 
         GameManager gm;
-        std::map<Entity, Expected> particles;
+        std::vector<std::pair<Entity, Expected>> particles;
         int moveVisits = 0;
         int ageVisits = 0;
         int destroyed = 0;
@@ -479,7 +479,8 @@ namespace {
                 int lifetime = 5 + (tick * 3 + i) % 40;
                 gm.addComponent<Body>(e, static_cast<float>(i), 0.f, vx, 1.f);
                 gm.addComponent<Lifetime>(e, e, lifetime);
-                particles[e] = {static_cast<float>(i), vx, tick, lifetime};
+                particles.emplace_back(
+                    e, Expected {static_cast<float>(i), vx, tick, lifetime});
             }
             moveVisits = 0;
             ageVisits = 0;
@@ -492,7 +493,8 @@ namespace {
                     expired.push_back(l.owner);
             for (Entity e : expired) {
                 gm.destroyEntity(e);
-                particles.erase(e);
+                std::erase_if(
+                    particles, [e](const auto &p) { return p.first == e; });
                 destroyed++;
             }
             for (const auto &[e, p] : particles) {

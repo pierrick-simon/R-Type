@@ -12,6 +12,7 @@ set(SRCS
         src/EdgeCases.cpp
         src/Simulation.cpp
         src/Systems.cpp
+        src/Recycling.cpp
 )
 
 add_executable(r-type_poc ${SRCS})
