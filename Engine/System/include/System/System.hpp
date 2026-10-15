@@ -24,7 +24,7 @@ namespace RType {
         /**
          * @brief Constructs a system from a callback.
          * @param func Callback applied to each Component instance during
-         * update().
+         * update(). It is moved from.
          */
         explicit System(std::function<void(Component &)> &func) :
             _func(std::move(func))
@@ -35,7 +35,8 @@ namespace RType {
          * @brief Applies the stored callback to every Component
          * instance.
          * @param cm Component manager providing access to the
-         * ComponentArray<Component>.
+         * ComponentArray<Component>. Does nothing if no Component has
+         * ever been added.
          */
         void update(ComponentManager &cm) override
         {
@@ -47,6 +48,9 @@ namespace RType {
         }
 
     private:
+        /**
+         * @brief Callback applied to each Component instance.
+         */
         std::function<void(Component &)> _func;
     };
 

@@ -21,14 +21,20 @@ namespace RType {
 
     /**
      * @brief Stores every instance of a given Component type, indexed by
-     * Entity.
+     * Entity (sparse set).
+     *
+     * The dense storage holds the components themselves and is fast to
+     * iterate. The sparse storage maps each entity index to its component
+     * in the dense storage, for O(1) access. A component never moves in
+     * memory until it is removed.
      * @tparam Component The component type stored by this array.
      */
     template<typename Component>
     class ComponentArray : public IComponentArray {
     public:
         /**
-         * @brief Packed storage type with every composents.
+         * @brief Packed storage type holding every component. Iteration
+         * order is unspecified.
          */
         using Dense = plf::colony<Component>;
 
@@ -53,6 +59,8 @@ namespace RType {
          * @param entity The entity to attach the component to.
          * @param args Arguments forwarded to Component's constructor.
          * @return Reference to the newly created component.
+         * @throw AlreadyExistingComponent If the entity already has a
+         * component in this array.
          */
         template<typename... Args>
         Component &addEntity(Entity entity, Args &&...args)
@@ -71,6 +79,8 @@ namespace RType {
         /**
          * @brief Removes the component associated with an entity.
          * @param entity The entity whose component should be removed.
+         * @throw NoSuchComponent If the entity has no component in this
+         * array.
          */
         void removeEntity(Entity entity) override
         {
@@ -84,6 +94,8 @@ namespace RType {
          * @brief Retrieves the component associated with an entity.
          * @param entity The entity whose component is requested.
          * @return Reference to the component.
+         * @throw NoSuchComponent If the entity has no component in this
+         * array.
          */
         Component &getComponent(Entity entity)
         {
@@ -97,6 +109,8 @@ namespace RType {
          * @param entity The entity to check.
          * @return true if the entity has a component here, false
          * otherwise.
+         * @note Only the index is checked, not the generation: the
+         * caller must check that the entity is alive.
          */
         [[nodiscard]] bool hasComponent(Entity entity) const override
         {
@@ -115,8 +129,9 @@ namespace RType {
 
         /**
          * @brief Provides direct access to the packed storage.
-         * @return Reference to the dense container of Component
-         * pairs.
+         * @return Reference to the dense container of components.
+         * @warning Removing a component while iterating over it
+         * invalidates the iteration.
          */
         Dense &getDense()
         {
@@ -124,7 +139,15 @@ namespace RType {
         }
 
     private:
+        /**
+         * @brief Every component, packed.
+         */
         Dense _dense;
+
+        /**
+         * @brief Iterator to each entity's component in _dense, indexed by
+         * Entity::index(). A default iterator means no component.
+         */
         std::vector<typename Dense::iterator> _sparse;
     };
 

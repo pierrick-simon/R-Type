@@ -55,6 +55,8 @@ namespace RType {
          * @param entity The entity to attach the component to.
          * @param args Arguments forwarded to Component's constructor.
          * @return Reference to the newly created component.
+         * @throw AlreadyExistingComponent If the entity already has a
+         * Component.
          */
         template<typename Component, typename... Args>
         Component &addComponent(Entity entity, Args &&...args)
@@ -75,6 +77,7 @@ namespace RType {
          * @brief Removes a component of the given type from an entity.
          * @tparam Component The component type to remove.
          * @param entity The entity to remove the component from.
+         * @throw NoSuchComponent If the entity has no Component.
          */
         template<typename Component>
         void removeComponent(Entity entity)
@@ -98,6 +101,7 @@ namespace RType {
          * @tparam Component The component type requested.
          * @param entity The entity whose component is requested.
          * @return Reference to the component.
+         * @throw NoSuchComponent If the entity has no Component.
          */
         template<typename Component>
         [[nodiscard]] Component &getComponent(Entity entity)
@@ -115,6 +119,7 @@ namespace RType {
          * the given type.
          * @tparam Component The component type.
          * @return Reference to the corresponding ComponentArray.
+         * @throw NoSuchComponent If no Component has ever been added.
          */
         template<typename Component>
         [[nodiscard]] ComponentArray<Component> &getComponentArray()
@@ -144,12 +149,10 @@ namespace RType {
         }
 
         /**
-         * @brief Checks whether an entity has a component of the given
-         * type.
+         * @brief Checks whether a ComponentArray exists for the given
+         * type, i.e. whether a Component has ever been added.
          * @tparam Component The component type to check.
-         * @param entity The entity to check.
-         * @return true if the entity has that component, false
-         * otherwise.
+         * @return true if the ComponentArray exists, false otherwise.
          */
         template<typename Component>
         [[nodiscard]] bool isComponent() const
@@ -158,6 +161,9 @@ namespace RType {
         }
 
     private:
+        /**
+         * @brief Every ComponentArray, by component type.
+         */
         ComponentList _components;
     };
 

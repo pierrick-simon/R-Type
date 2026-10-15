@@ -29,7 +29,14 @@ namespace RType {
      * @brief A registered system and its id.
      */
     struct SystemEntry {
+        /**
+         * @brief The system's id.
+         */
         SystemId id;
+
+        /**
+         * @brief The system itself.
+         */
         std::unique_ptr<ISystem> system;
     };
 
@@ -49,7 +56,7 @@ namespace RType {
         explicit SystemManager() = default;
 
         /**
-         * @brief Runs every registered system once.
+         * @brief Runs every registered system once, in creation order.
          * @param cm Component manager passed to each system's update().
          */
         void process(ComponentManager &cm);
@@ -57,7 +64,8 @@ namespace RType {
         /**
          * @brief Creates and registers a new system.
          * @tparam Component The component type the system operates on.
-         * @param func Callback applied to each Component instance.
+         * @param func Callback applied to each Component instance. It is
+         * moved from.
          * @return Id identifying the created system, usable with
          * destroySystem.
          */
@@ -80,11 +88,19 @@ namespace RType {
         /**
          * @brief Checks whether a system exists or not.
          * @param id The id to check.
+         * @return true if the system exists, false otherwise.
          */
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
     private:
+        /**
+         * @brief Every registered system, in execution order.
+         */
         SystemList _systems;
+
+        /**
+         * @brief Id given to the next created system.
+         */
         SystemId _nextId = 0;
     };
 

@@ -30,8 +30,10 @@ namespace RType {
         [[nodiscard]] virtual std::size_t nbComponent() const = 0;
 
         /**
-         * @brief Removes the component associated with an entity, if any.
+         * @brief Removes the component associated with an entity.
          * @param entity The entity whose component should be removed.
+         * @throw NoSuchComponent If the entity has no component in this
+         * array.
          */
         virtual void removeEntity(Entity entity) = 0;
 
