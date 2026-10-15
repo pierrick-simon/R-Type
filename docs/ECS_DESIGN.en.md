@@ -1,6 +1,6 @@
 # ECS Design Notes
 
-> 🌐 **Language:** [Français](ECS_DESIGN.md) · English
+> 🌐 **Language:** [Français](ECS_DESIGN.fr.md) · English
 
 This document describes the architecture of the engine's ECS (`Engine/System`) and, above all, **the reasons** behind its design choices.
 

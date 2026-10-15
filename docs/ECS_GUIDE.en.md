@@ -1,6 +1,6 @@
 # ECS User Guide
 
-> 🌐 **Language:** [Français](ECS_GUIDE.md) · English
+> 🌐 **Language:** [Français](ECS_GUIDE.fr.md) · English
 
 This guide explains how to **use** the engine's ECS (`Engine/System`) day to day: creating entities, attaching components to them, writing systems and, above all, **avoiding the most common pitfalls**.
 
