@@ -13,6 +13,8 @@ set(SRCS
         src/Simulation.cpp
         src/Systems.cpp
         src/Recycling.cpp
+        src/Tricky.cpp
+        src/ThrowTrace.cpp
 )
 
 add_executable(r-type_poc ${SRCS})
@@ -21,6 +23,17 @@ target_include_directories(r-type_poc PRIVATE
         $<TARGET_PROPERTY:engine-system,INCLUDE_DIRECTORIES>
 )
 target_link_libraries(r-type_poc PRIVATE engine-system shared plf-colony)
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+        AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
+    set_target_properties(r-type_poc PROPERTIES CXX_STANDARD 23)
+    target_compile_definitions(r-type_poc PRIVATE
+            POC_STACKTRACE
+            POC_SOURCE_ROOT="${CMAKE_SOURCE_DIR}/"
+    )
+    target_compile_options(r-type_poc PRIVATE -g)
+    target_link_libraries(r-type_poc PRIVATE stdc++exp ${CMAKE_DL_LIBS})
+endif ()
 
 if (POC_SANITIZE AND NOT MSVC)
     target_compile_options(r-type_poc PRIVATE -fsanitize=address,undefined -fno-omit-frame-pointer)

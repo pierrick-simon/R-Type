@@ -19,7 +19,7 @@ namespace {
 
     using RType::Entity;
     using RType::GameManager;
-    using RType::SystemList;
+    using RType::SystemId;
     using namespace Poc;
 
     void updateWithoutSystems()
@@ -153,7 +153,7 @@ namespace {
     {
         GameManager gm;
         std::vector<char> order;
-        std::vector<SystemList::iterator> handles;
+        std::vector<SystemId> handles;
 
         gm.addComponent<Health>(gm.createEntity(), 0);
         for (char c = 'A'; c <= 'E'; c++)
@@ -317,7 +317,7 @@ namespace {
     {
         GameManager gm;
         std::vector<char> order;
-        SystemList::iterator c;
+        SystemId c = 0;
         bool destroyed = false;
 
         gm.addComponent<Health>(gm.createEntity(), 0);
@@ -393,7 +393,7 @@ namespace {
     void systemDestroysItself()
     {
         GameManager gm;
-        SystemList::iterator self;
+        SystemId self = 0;
         int runs = 0;
 
         gm.addComponent<Health>(gm.createEntity(), 0);

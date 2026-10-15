@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <string_view>
 
 #include "Test.hpp"
 
@@ -20,6 +21,7 @@ namespace {
 
     constexpr int PASSED = 0;
     constexpr int FAILED = 3;
+    constexpr std::string_view UNSUPPORTED = "[unsupported]";
 
     int runInProcess(const Poc::Test &test)
     {
@@ -33,7 +35,7 @@ namespace {
         } catch (const std::exception &e) {
             std::cout << "[ FAIL ] " << test.name
                       << "\n         unexpected exception: " << e.what()
-                      << std::endl;
+                      << Poc::throwSite(e) << std::endl;
         } catch (...) {
             std::cout << "[ FAIL ] " << test.name
                       << "\n         unknown exception" << std::endl;
@@ -78,8 +80,14 @@ namespace Poc {
     int runTests(const TestList &tests)
     {
         std::size_t failed = 0;
+        std::size_t skipped = 0;
 
         for (const auto &test : tests) {
+            if (test.name.starts_with(UNSUPPORTED)) {
+                std::cout << "[ SKIP ] " << test.name << std::endl;
+                skipped++;
+                continue;
+            }
 #ifndef _WIN32
             if (runIsolated(test) != PASSED)
                 failed++;
@@ -89,8 +97,9 @@ namespace Poc {
 #endif
         }
         std::cout << "\n"
-                  << tests.size() - failed << "/" << tests.size()
-                  << " tests passed" << std::endl;
+                  << tests.size() - failed - skipped << "/"
+                  << tests.size() - skipped << " tests passed, " << skipped
+                  << " unsupported skipped" << std::endl;
         return failed == 0 ? 0 : 1;
     }
 

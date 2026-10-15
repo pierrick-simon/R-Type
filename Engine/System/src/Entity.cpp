@@ -35,21 +35,27 @@ namespace RType {
 
     bool EntityManager::hasEntity(Entity entity) const
     {
-        return (_entities.size() > entity.index() && _entities[entity.index()].isActive && _entities[entity.index()].generation == entity.generation());
+        return (_entities.size() > entity.index() &&
+            _entities[entity.index()].isActive &&
+            _entities[entity.index()].generation == entity.generation());
     }
 
-    Entity::Entity(std::size_t index, std::size_t generation): _index(index), _generation(generation) {}
+    Entity::Entity(std::size_t index, std::size_t generation) :
+        _index(index), _generation(generation)
+    {
+    }
 
     bool Entity::operator==(const Entity &entity) const
     {
-        return (this->index() == entity.index() && this->generation() == entity.generation());
+        return (this->index() == entity.index() &&
+            this->generation() == entity.generation());
     }
 
     std::size_t Entity::index() const
     {
         return _index;
     }
-    
+
     std::size_t Entity::generation() const
     {
         return _generation;

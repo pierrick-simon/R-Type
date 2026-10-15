@@ -56,16 +56,27 @@ namespace RType {
 
     void GameManager::removeComponents(Entity entity)
     {
-        if (!hasEntity(entity))
-            throw NoSuchEntity();
-        _cq.emplace_back([this, entity]() { _cm.removeComponents(entity); });
+        _cq.emplace_back([this, entity]() {
+            if (!hasEntity(entity))
+                throw NoSuchEntity();
+            _cm.removeComponents(entity);
+        });
         tryFlush();
     }
 
-    void GameManager::destroySystem(SystemList::iterator system)
+    void GameManager::destroySystem(SystemId id)
     {
-        _cq.emplace_back([this, system]() { _sm.destroySystem(system); });
+        _cq.emplace_back([this, id]() {
+            if (!hasSystem(id))
+                return;
+            _sm.destroySystem(id);
+        });
         tryFlush();
+    }
+
+    bool GameManager::hasSystem(SystemId id) const
+    {
+        return _sm.hasSystem(id);
     }
 
     void GameManager::flush()

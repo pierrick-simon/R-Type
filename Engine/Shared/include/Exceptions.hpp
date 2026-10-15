@@ -27,7 +27,7 @@ namespace RType {
         std::string _str;
     };
 
-        class AlreadyExistingComponent : public EngineException {
+    class AlreadyExistingComponent : public EngineException {
     public:
         AlreadyExistingComponent() :
             EngineException(
@@ -53,6 +53,14 @@ namespace RType {
     public:
         NoSuchEntity() :
             EngineException("No such entity.")
+        {
+        }
+    };
+
+    class NoSuchSystem : public EngineException {
+    public:
+        NoSuchSystem() :
+            EngineException("No such system.")
         {
         }
     };

@@ -42,8 +42,11 @@ namespace Poc {
     TestList simulationTests();
     TestList systemTests();
     TestList recyclingTests();
+    TestList trickyTests();
 
     int runTests(const TestList &tests);
+
+    std::string throwSite(const std::exception &exception);
 
 } // namespace Poc
 
@@ -63,7 +66,7 @@ namespace Poc {
             throw ::Poc::Failure(__FILE__,                                     \
                 __LINE__,                                                      \
                 #expr " threw something else than " #Type ": " +               \
-                    std::string(e.what()));                                    \
+                    std::string(e.what()) + ::Poc::throwSite(e));              \
         }                                                                      \
         throw ::Poc::Failure(                                                  \
             __FILE__, __LINE__, #expr " did not throw " #Type);                \
@@ -74,8 +77,10 @@ namespace Poc {
         try {                                                                  \
             static_cast<void>(expr);                                           \
         } catch (const std::exception &e) {                                    \
-            throw ::Poc::Failure(                                              \
-                __FILE__, __LINE__, #expr " threw: " + std::string(e.what())); \
+            throw ::Poc::Failure(__FILE__,                                     \
+                __LINE__,                                                      \
+                #expr " threw: " + std::string(e.what()) +                     \
+                    ::Poc::throwSite(e));                                      \
         }                                                                      \
     } while (0)
 

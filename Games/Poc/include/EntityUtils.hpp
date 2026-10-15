@@ -22,13 +22,15 @@ namespace Poc {
     {
         if constexpr (std::is_integral_v<E>)
             return static_cast<std::size_t>(entity);
+        else if constexpr (requires { entity.index(); })
+            return static_cast<std::size_t>(entity.index());
         else
             return static_cast<std::size_t>(entity.index);
     }
 
     class EntitySet {
     public:
-        bool contains(const RType::Entity &entity) const
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
         {
             return std::find(_entities.begin(), _entities.end(), entity) !=
                 _entities.end();

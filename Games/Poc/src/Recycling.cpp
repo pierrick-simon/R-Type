@@ -42,6 +42,7 @@ namespace {
         std::set<std::size_t> destroyed;
         std::set<std::size_t> created;
 
+        entities.reserve(10);
         for (int i = 0; i < 10; i++)
             entities.push_back(gm.createEntity());
         for (int i = 0; i < 10; i += 3) {
@@ -232,17 +233,17 @@ namespace {
 
     struct Recycled {
         GameManager gm;
-        Entity stale;
-        Entity fresh;
+        Entity stale = gm.createEntity();
+        Entity fresh = recycle();
 
-        Recycled()
+        Entity recycle()
         {
-            stale = gm.createEntity();
             gm.addComponent<Health>(stale, 1);
             gm.addComponent<Position>(stale, 1.f, 1.f);
             gm.destroyEntity(stale);
-            fresh = gm.createEntity();
-            gm.addComponent<Health>(fresh, 99);
+            Entity e = gm.createEntity();
+            gm.addComponent<Health>(e, 99);
+            return e;
         }
     };
 

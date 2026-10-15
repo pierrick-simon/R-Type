@@ -9,31 +9,32 @@
 #define ENTITY_HPP_
 
 #include <cstddef>
-#include <vector>
 #include <queue>
+#include <vector>
 
 #include "Exceptions.hpp"
 
 namespace RType {
 
     class Entity {
-        public:
-            explicit Entity(std::size_t index, std::size_t generation = 0);
+    public:
+        explicit Entity(std::size_t index, std::size_t generation = 0);
 
-            [[nodiscard]] bool operator==(const Entity &entity) const;
+        [[nodiscard]] bool operator==(const Entity &entity) const;
 
-            [[nodiscard]] std::size_t index() const;
-            [[nodiscard]] std::size_t generation() const;
-        private:
-            std::size_t _index;
-            std::size_t _generation;
+        [[nodiscard]] std::size_t index() const;
+        [[nodiscard]] std::size_t generation() const;
+
+    private:
+        std::size_t _index;
+        std::size_t _generation;
     };
 
     /**
      * @brief Collection of entity identifiers.
      */
     struct EntityInfo {
-        bool isActive;
+        bool isActive = true;
         std::size_t generation = 0;
 
         template<typename T>

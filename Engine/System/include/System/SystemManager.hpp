@@ -8,9 +8,11 @@
 #ifndef SYSTEMMANAGER_HPP_
 #define SYSTEMMANAGER_HPP_
 
+#include <cstddef>
 #include <functional>
 #include <list>
 #include <memory>
+#include "Exceptions.hpp"
 #include "ISystem.hpp"
 #include "System.hpp"
 
@@ -19,9 +21,22 @@ namespace RType {
     class ComponentManager;
 
     /**
-     * @brief Collection of every registered system.
+     * @brief Id of a system. Ids are never reused.
      */
-    using SystemList = std::list<std::unique_ptr<ISystem>>;
+    using SystemId = std::size_t;
+
+    /**
+     * @brief A registered system and its id.
+     */
+    struct SystemEntry {
+        SystemId id;
+        std::unique_ptr<ISystem> system;
+    };
+
+    /**
+     * @brief Collection of every registered system, in execution order.
+     */
+    using SystemList = std::list<SystemEntry>;
 
     /**
      * @brief Owns and runs every registered system.
@@ -43,24 +58,34 @@ namespace RType {
          * @brief Creates and registers a new system.
          * @tparam Component The component type the system operates on.
          * @param func Callback applied to each Component instance.
-         * @return Handle identifying the created system, usable with
+         * @return Id identifying the created system, usable with
          * destroySystem.
          */
         template<typename Component>
-        SystemList::iterator createSystem(std::function<void(Component &)> &func)
+        SystemId createSystem(std::function<void(Component &)> &func)
         {
-            auto system = std::make_unique<System<Component>>(func);
-            return _systems.emplace(_systems.end(), std::move(system));
+            SystemId id = _nextId++;
+
+            _systems.push_back({id, std::make_unique<System<Component>>(func)});
+            return id;
         }
 
         /**
          * @brief Removes a previously created system.
-         * @param system Handle returned by createSystem.
+         * @param id Id returned by createSystem.
+         * @throw NoSuchSystem if no system has this id.
          */
-        void destroySystem(SystemList::iterator system);
+        void destroySystem(SystemId id);
+
+        /**
+         * @brief Checks whether a system exists or not.
+         * @param id The id to check.
+         */
+        [[nodiscard]] bool hasSystem(SystemId id) const;
 
     private:
         SystemList _systems;
+        SystemId _nextId = 0;
     };
 
 } // namespace RType

@@ -99,7 +99,7 @@ namespace RType {
             _cq.emplace_back([this, entity]() {
                 if (!hasEntity(entity))
                     throw NoSuchEntity();
-                _cm.removeComponent<Component>(entity); 
+                _cm.removeComponent<Component>(entity);
             });
             tryFlush();
         }
@@ -156,20 +156,27 @@ namespace RType {
          * @brief Creates and registers a new system.
          * @tparam Component The component type the system operates on.
          * @param func Callback applied to each Component instance.
-         * @return Handle identifying the created system, usable with
+         * @return Id identifying the created system, usable with
          * destroySystem.
          */
         template<typename Component>
-        SystemList::iterator createSystem(std::function<void(Component &)> func)
+        SystemId createSystem(std::function<void(Component &)> func)
         {
             return _sm.createSystem<Component>(func);
         }
 
         /**
-         * @brief Removes a previously created system.
-         * @param system Handle returned by createSystem.
+         * @brief Removes a previously created system. Does nothing if
+         * the system no longer exists.
+         * @param id Id returned by createSystem.
          */
-        void destroySystem(SystemList::iterator system);
+        void destroySystem(SystemId id);
+
+        /**
+         * @brief Checks whether a system exists or not.
+         * @param id The id to check.
+         */
+        [[nodiscard]] bool hasSystem(SystemId id) const;
 
     private:
         ComponentManager _cm;
@@ -177,6 +184,7 @@ namespace RType {
         SystemManager _sm;
         CommandQueue _cq;
         bool _updating = false;
+        bool _flushing = false;
 
         void flush();
         void tryFlush();

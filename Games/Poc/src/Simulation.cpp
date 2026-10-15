@@ -28,9 +28,9 @@ namespace {
 
     class World {
     public:
-        World()
+        World() :
+            _player(spawn(10.f, 50.f, 0.f, 1.f))
         {
-            _player = spawn(10.f, 50.f, 0.f, 1.f);
             _gm.addComponent<Health>(_player, 3);
             _gm.addComponent<Name>(_player, "player");
             _gm.addComponent<Player>(_player);
