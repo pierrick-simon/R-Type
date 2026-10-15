@@ -27,6 +27,11 @@ namespace RType {
     using EntityList = std::vector<bool>;
 
     /**
+     * @brief Collection of entity's id to recycle.
+     */
+    using RecycleQueue = std::queue<Entity>;
+
+    /**
      * @brief Creates and destroys entities.
      */
     class EntityManager {
@@ -66,6 +71,7 @@ namespace RType {
 
     private:
         EntityList _entities;
+        RecycleQueue _toRecycle;
     };
 
 } // namespace RType

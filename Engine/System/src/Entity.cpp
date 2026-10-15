@@ -14,6 +14,12 @@ namespace RType {
 
     Entity EntityManager::createEntity()
     {
+        if (!_toRecycle.empty()) {
+            auto e = _toRecycle.front();
+            _entities[e] = true;
+            _toRecycle.pop();
+            return e;
+        }
         _entities.push_back(true);
         return _entities.size() - 1;
     }
@@ -23,6 +29,7 @@ namespace RType {
         if (!hasEntity(entity))
             throw NoSuchEntity();
         _entities[entity] = false;
+        _toRecycle.push(entity);
     }
 
     bool EntityManager::hasEntity(Entity entity) const
