@@ -104,7 +104,7 @@ namespace {
                 if (!_gm.hasComponent<Position>(e) ||
                     !_gm.hasComponent<Velocity>(e))
                     continue;
-                Position &pos = _gm.getComponent<Position>(e);
+                auto &pos = _gm.getComponent<Position>(e);
                 const Velocity &vel = _gm.getComponent<Velocity>(e);
                 pos.x += vel.x;
                 pos.y += vel.y;
@@ -116,7 +116,7 @@ namespace {
             if (!_gm.hasComponent<Player>(_player))
                 return;
             const Position &pos = _gm.getComponent<Position>(_player);
-            Velocity &vel = _gm.getComponent<Velocity>(_player);
+            auto &vel = _gm.getComponent<Velocity>(_player);
             if (pos.y <= 0.f || pos.y >= SCREEN_HEIGHT)
                 vel.y = -vel.y;
         }
@@ -138,7 +138,7 @@ namespace {
                     if (std::abs(bpos.x - epos.x) > 3.f ||
                         std::abs(bpos.y - epos.y) > 3.f)
                         continue;
-                    Health &hp = _gm.getComponent<Health>(enemy);
+                    auto &hp = _gm.getComponent<Health>(enemy);
                     hp.hp -= _gm.getComponent<Damage>(bullet).value;
                     if (hp.hp <= 0 && !_dead.contains(enemy)) {
                         _dead.insert(enemy);

@@ -33,7 +33,7 @@ namespace {
         Entity e = gm.createEntity();
 
         gm.addComponent<Position>(e, 1.f, 2.f);
-        Position &pos = gm.getComponent<Position>(e);
+        auto &pos = gm.getComponent<Position>(e);
         POC_CHECK(pos.x == 1.f && pos.y == 2.f);
         pos.x = 10.f;
         POC_CHECK(gm.getComponent<Position>(e).x == 10.f);
@@ -271,6 +271,7 @@ namespace {
         std::vector<Entity> created;
         std::set<Entity> alive;
 
+        created.reserve(100);
         for (int i = 0; i < 100; i++)
             created.push_back(gm.createEntity());
         for (std::size_t i = 0; i < created.size(); i++) {
@@ -348,6 +349,7 @@ namespace {
         GameManager gm;
         std::vector<Entity> entities;
 
+        entities.reserve(5000);
         for (int i = 0; i < 5000; i++)
             entities.push_back(gm.createEntity());
         gm.addComponent<Health>(entities.back(), 42);

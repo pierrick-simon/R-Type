@@ -126,7 +126,7 @@ namespace {
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 0);
-        SystemList::iterator sys =
+        auto sys =
             gm.createSystem<Health>([](Health &h) { h.hp += 1; });
         gm.update();
         gm.destroySystem(sys);
@@ -141,7 +141,7 @@ namespace {
 
         gm.addComponent<Health>(gm.createEntity(), 0);
         gm.createSystem<Health>([&order](Health &) { order.push_back('A'); });
-        SystemList::iterator b = gm.createSystem<Health>(
+        auto b = gm.createSystem<Health>(
             [&order](Health &) { order.push_back('B'); });
         gm.createSystem<Health>([&order](Health &) { order.push_back('C'); });
         gm.destroySystem(b);
@@ -264,8 +264,8 @@ namespace {
         gm.update();
         POC_CHECK(spawned.size() == 20);
         POC_CHECK(gm.getArray<Health>().nbComponent() == 20);
-        for (std::size_t i = 0; i < spawned.size(); i++)
-            POC_CHECK(gm.hasComponent<Health>(spawned[i]));
+        for (auto &s: spawned)
+            POC_CHECK(gm.hasComponent<Health>(s));
     }
 
     void systemAddsWithTemporaryArguments()
