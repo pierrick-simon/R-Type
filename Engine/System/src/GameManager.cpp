@@ -56,6 +56,8 @@ namespace RType {
 
     void GameManager::removeComponents(Entity entity)
     {
+        if (!hasEntity(entity))
+            throw NoSuchEntity();
         _cq.emplace_back([this, entity]() { _cm.removeComponents(entity); });
         tryFlush();
     }

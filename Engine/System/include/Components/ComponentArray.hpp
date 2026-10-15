@@ -61,9 +61,10 @@ namespace RType {
                 throw AlreadyExistingComponent();
             auto iter = _dense.emplace(std::forward<Args>(args)...);
             auto sSize = _sparse.size();
-            if (sSize <= entity)
-                _sparse.resize(entity + (entity / 2) + 1);
-            _sparse[entity] = iter;
+            auto eIndex = entity.index();
+            if (sSize <= eIndex)
+                _sparse.resize(eIndex + (eIndex / 2) + 1);
+            _sparse[eIndex] = iter;
             return *iter;
         }
 
@@ -75,8 +76,8 @@ namespace RType {
         {
             if (!hasComponent(entity))
                 throw NoSuchComponent();
-            _dense.erase(_sparse[entity]);
-            _sparse[entity] = typename Dense::iterator {};
+            _dense.erase(_sparse[entity.index()]);
+            _sparse[entity.index()] = typename Dense::iterator {};
         }
 
         /**
@@ -88,7 +89,7 @@ namespace RType {
         {
             if (!hasComponent(entity))
                 throw NoSuchComponent();
-            return *_sparse[entity];
+            return *_sparse[entity.index()];
         }
 
         /**
@@ -99,8 +100,8 @@ namespace RType {
          */
         [[nodiscard]] bool hasComponent(Entity entity) const override
         {
-            return (_sparse.size() > entity &&
-                _sparse[entity] != typename Dense::iterator {});
+            return (_sparse.size() > entity.index() &&
+                _sparse[entity.index()] != typename Dense::iterator {});
         }
 
         /**

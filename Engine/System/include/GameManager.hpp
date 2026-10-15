@@ -96,8 +96,11 @@ namespace RType {
         template<typename Component>
         void removeComponent(Entity entity)
         {
-            _cq.emplace_back(
-                [this, entity]() { _cm.removeComponent<Component>(entity); });
+            _cq.emplace_back([this, entity]() {
+                if (!hasEntity(entity))
+                    throw NoSuchEntity();
+                _cm.removeComponent<Component>(entity); 
+            });
             tryFlush();
         }
 
@@ -116,6 +119,8 @@ namespace RType {
         template<typename Component>
         [[nodiscard]] Component &getComponent(Entity entity)
         {
+            if (!hasEntity(entity))
+                throw NoSuchEntity();
             return _cm.getComponent<Component>(entity);
         }
 
@@ -130,6 +135,8 @@ namespace RType {
         template<typename Component>
         [[nodiscard]] bool hasComponent(Entity entity) const
         {
+            if (!hasEntity(entity))
+                return false;
             return _cm.hasComponent<Component>(entity);
         }
 
