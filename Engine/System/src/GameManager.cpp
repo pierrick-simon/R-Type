@@ -25,7 +25,8 @@ namespace RType {
             _updating = false;
             try {
                 flush();
-            } catch (...) {};
+            } catch (...) {
+            };
             throw;
         }
         _updating = false;
@@ -39,7 +40,7 @@ namespace RType {
 
     void GameManager::destroyEntity(Entity entity)
     {
-        _cq.emplace_back([this, entity] () {
+        _cq.emplace_back([this, entity]() {
             if (!hasEntity(entity))
                 return;
             _cm.removeComponents(entity);
@@ -55,31 +56,27 @@ namespace RType {
 
     void GameManager::removeComponents(Entity entity)
     {
-        _cq.emplace_back([this, entity] () {
-            _cm.removeComponents(entity);
-        });
+        _cq.emplace_back([this, entity]() { _cm.removeComponents(entity); });
         tryFlush();
     }
 
     void GameManager::destroySystem(SystemList::iterator system)
     {
-        _cq.emplace_back([this, system] () {
-            _sm.destroySystem(system);
-        });
+        _cq.emplace_back([this, system]() { _sm.destroySystem(system); });
         tryFlush();
     }
 
     void GameManager::flush()
     {
         std::exception_ptr error = nullptr;
-  
+
         for (auto &command : _cq) {
             try {
                 command();
             } catch (...) {
                 if (!error)
                     error = std::current_exception();
-            } 
+            }
         }
         _cq.clear();
         if (error)

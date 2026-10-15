@@ -12,10 +12,6 @@
 
 namespace RType {
 
-    EntityManager::EntityManager()
-    {
-    }
-
     Entity EntityManager::createEntity()
     {
         _entities.push_back(true);

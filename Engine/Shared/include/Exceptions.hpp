@@ -27,6 +27,28 @@ namespace RType {
         std::string _str;
     };
 
+        class AlreadyExistingComponent : public EngineException {
+    public:
+        AlreadyExistingComponent() :
+            EngineException(
+                "Already an existing component linked to this entity")
+        {
+        }
+    };
+
+    class NoSuchComponent : public EngineException {
+    public:
+        NoSuchComponent() :
+            EngineException("No such component.")
+        {
+        }
+
+        NoSuchComponent(const std::string &msg) :
+            EngineException(msg + " No such component.")
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

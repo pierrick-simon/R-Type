@@ -26,8 +26,8 @@ namespace RType {
          * @param func Callback applied to each Component instance during
          * update().
          */
-        explicit System(std::function<void(Component &)> func) :
-            _func(func)
+        explicit System(std::function<void(Component &)> &func) :
+            _func(std::move(func))
         {
         }
 

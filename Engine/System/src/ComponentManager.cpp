@@ -9,8 +9,6 @@
 
 namespace RType {
 
-    ComponentManager::ComponentManager() {};
-
     void ComponentManager::removeComponents(Entity entity)
     {
         for (auto &[_, componentArray] : _components)

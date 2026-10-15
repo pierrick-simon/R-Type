@@ -19,7 +19,7 @@ namespace RType {
 
     class NoSuchEntity;
 
-    using Command = std::function<void ()>;
+    using Command = std::function<void()>;
 
     using CommandQueue = std::vector<Command>;
 
@@ -80,7 +80,7 @@ namespace RType {
             auto component =
                 std::make_shared<Component>(std::forward<Args>(args)...);
 
-            _cq.emplace_back([this, entity, component] () {
+            _cq.emplace_back([this, entity, component]() {
                 if (!hasEntity(entity))
                     throw NoSuchEntity();
                 _cm.addComponent<Component>(entity, std::move(*component));
@@ -96,9 +96,8 @@ namespace RType {
         template<typename Component>
         void removeComponent(Entity entity)
         {
-            _cq.emplace_back([this, entity] () {
-                _cm.removeComponent<Component>(entity);
-            });
+            _cq.emplace_back(
+                [this, entity]() { _cm.removeComponent<Component>(entity); });
             tryFlush();
         }
 

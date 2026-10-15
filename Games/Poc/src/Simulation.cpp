@@ -81,7 +81,7 @@ namespace {
 
         void spawnEnemy(int tick)
         {
-            float y = static_cast<float>((tick * 13) % 100);
+            auto y = static_cast<float>((tick * 13) % 100);
             Entity e = spawn(SCREEN_WIDTH, y, -1.5f, 0.f);
 
             _gm.addComponent<Health>(e, 2);

@@ -9,10 +9,6 @@
 
 namespace RType {
 
-    SystemManager::SystemManager()
-    {
-    }
-
     void SystemManager::process(ComponentManager &cm)
     {
         for (auto &system : _systems)

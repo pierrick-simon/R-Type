@@ -35,7 +35,7 @@ namespace RType {
         /**
          * @brief Constructs an empty ComponentManager.
          */
-        explicit ComponentManager();
+        explicit ComponentManager() = default;
 
         /**
          * @brief Copy construction is disabled.

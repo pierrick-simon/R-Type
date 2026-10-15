@@ -31,7 +31,7 @@ namespace RType {
         /**
          * @brief Constructs an empty SystemManager.
          */
-        explicit SystemManager();
+        explicit SystemManager() = default;
 
         /**
          * @brief Runs every registered system once.
@@ -47,7 +47,7 @@ namespace RType {
          * destroySystem.
          */
         template<typename Component>
-        SystemList::iterator createSystem(std::function<void(Component &)> func)
+        SystemList::iterator createSystem(std::function<void(Component &)> &func)
         {
             auto system = std::make_unique<System<Component>>(func);
             return _systems.emplace(_systems.end(), std::move(system));

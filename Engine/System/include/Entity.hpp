@@ -37,7 +37,7 @@ namespace RType {
         /**
          * @brief Constructs an empty EntityManager.
          */
-        explicit EntityManager();
+        explicit EntityManager() = default;
 
         /**
          * @brief Copy construction is disabled.
@@ -65,7 +65,7 @@ namespace RType {
          * @brief Checks whether an entity exist or not.
          * @param entity The entity to check.
          */
-        bool hasEntity(Entity entity) const;
+        [[nodiscard]] bool hasEntity(Entity entity) const;
 
     private:
         EntityList _entities;

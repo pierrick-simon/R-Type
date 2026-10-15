@@ -19,10 +19,6 @@
 
 namespace RType {
 
-    class AlreadyExistingComponent;
-
-    class NoSuchComponent;
-
     /**
      * @brief Stores every instance of a given Component type, indexed by
      * Entity.
@@ -39,9 +35,7 @@ namespace RType {
         /**
          * @brief Constructs an empty ComponentArray.
          */
-        explicit ComponentArray()
-        {
-        }
+        explicit ComponentArray() = default;
 
         /**
          * @brief Copy construction is disabled.
@@ -131,28 +125,6 @@ namespace RType {
     private:
         Dense _dense;
         std::vector<typename Dense::iterator> _sparse;
-    };
-
-    class AlreadyExistingComponent : public EngineException {
-    public:
-        AlreadyExistingComponent() :
-            EngineException(
-                "Already an existing component linked to this entity")
-        {
-        }
-    };
-
-    class NoSuchComponent : public EngineException {
-    public:
-        NoSuchComponent() :
-            EngineException("No such component.")
-        {
-        }
-
-        NoSuchComponent(const std::string &msg) :
-            EngineException(msg + " No such component.")
-        {
-        }
     };
 
 } // namespace RType
