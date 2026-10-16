@@ -38,11 +38,19 @@ namespace RType {
     {
         k.keyPressed.clear();
         k.keyDown.clear();
+        k.keyReleased.clear();
+
         for (auto it = k._held.begin(); it != k._held.end();) {
-            if (!raylib::Keyboard::IsKeyDown(*it))
+            if (!raylib::Keyboard::IsKeyDown(*it)) {
+                Key::Value v = Key::getValue(
+                    *it); // can't throw: only mapped keys are in _held
+                if (std::find(k.keyReleased.begin(), k.keyReleased.end(), v) ==
+                    k.keyReleased.end())
+                    k.keyReleased.push_back(v);
                 it = k._held.erase(it);
-            else
+            } else {
                 ++it;
+            }
         }
         for (int key = raylib::Keyboard::GetKeyPressed(); key != KEY_NULL;
             key = raylib::Keyboard::GetKeyPressed()) {

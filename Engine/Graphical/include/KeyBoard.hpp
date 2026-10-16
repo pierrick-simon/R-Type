@@ -137,6 +137,7 @@ namespace RType {
 
         std::vector<Key::Value> keyPressed;
         std::vector<Key::Value> keyDown;
+        std::vector<Key::Value> keyReleased;
 
         static void systemKeyBoard(KeyBoard &k);
 

@@ -40,6 +40,7 @@ namespace RType {
 
         std::vector<MouseButton::Value> buttonPressed;
         std::vector<MouseButton::Value> buttonDown;
+        std::vector<MouseButton::Value> buttonReleased;
 
         static void systemMouse(Mouse &m);
 

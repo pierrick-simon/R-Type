@@ -38,6 +38,7 @@ namespace RType {
     {
         m.buttonPressed.clear();
         m.buttonDown.clear();
+        m.buttonReleased.clear();
         for (int button = MOUSE_BUTTON_LEFT; button <= MOUSE_BUTTON_BACK;
             button++) {
             MouseButton::Value v;
@@ -50,6 +51,8 @@ namespace RType {
                 m.buttonPressed.push_back(v);
             if (raylib::Mouse::IsButtonDown(button))
                 m.buttonDown.push_back(v);
+            if (raylib::Mouse::IsButtonReleased(button))
+                m.buttonReleased.push_back(v);
         }
         m._wheel = raylib::Mouse::GetWheelMove();
         m._pos.x = float(raylib::Mouse::GetX());
