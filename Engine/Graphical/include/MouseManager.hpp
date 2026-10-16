@@ -55,7 +55,7 @@ namespace RType {
          * @throw std::out_of_range If @p value has no mapping
          *        (if the implementation uses at()).
          */
-        static int getKeyCode(Value value);
+        static int getMouseButtonCode(Value value);
 
     private:
         static const std::unordered_map<int, Value> _mouseButtonMap;

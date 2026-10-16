@@ -18,7 +18,7 @@ namespace RType {
         return tmp->second;
     }
 
-    int MouseButton::getKeyCode(Value value)
+    int MouseButton::getMouseButtonCode(Value value)
     {
         for (const auto &box : _mouseButtonMap) {
             if (box.second == value)

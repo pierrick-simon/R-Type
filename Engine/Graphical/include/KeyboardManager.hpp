@@ -20,6 +20,11 @@ namespace RType {
     class Key {
     public:
         /**
+         * @brief Keyboard Layout.
+         */
+        enum class Layout { AZERTY, QWERTY };
+
+        /**
          * @brief Keyboard keys.
          */
         enum class Value {
@@ -134,6 +139,7 @@ namespace RType {
          * @brief Convert a raylib key code to a Value.
          *
          * @param keyCode The raylib key code.
+         * @param layout The layout.
          * @return The corresponding Value.
          *
          * @throw std::out_of_range If @p keyCode is not a known key
@@ -141,12 +147,14 @@ namespace RType {
          *
          * @warning Only raylib codes are accepted, not Value integers.
          */
-        static Value getValue(int keyCode);
+        static Value getValue(
+            int keyCode, Key::Layout layout = Key::Layout::AZERTY);
 
         /**
          * @brief Convert a Value to the raylib key code.
          *
          * @param value The key.
+         * @param layout The layout.
          * @return The corresponding raylib key code.
          *
          * @throw std::out_of_range If @p value has no mapping
@@ -154,10 +162,15 @@ namespace RType {
          *
          * @warning Value::KeyCount is not a real key and must not be passed.
          */
-        static int getKeyCode(Value value);
+        static int getKeyCode(
+            Value value, Key::Layout layout = Key::Layout::AZERTY);
 
     private:
-        static const std::unordered_map<int, Value> _keyMap;
+        using KeyMap = std::unordered_map<int, Value>;
+
+        static const KeyMap _keyMapAzerty;
+        static const KeyMap _keyMapQwerty;
+        static const std::unordered_map<Layout, const KeyMap &> _layout;
     };
 
     /**
@@ -170,11 +183,13 @@ namespace RType {
         /**
          * @brief Create a keyboardManager with an empty state.
          */
-        KeyboardManager();
+        KeyboardManager(Key::Layout layout = Key::Layout::AZERTY);
 
         std::vector<Key::Value> keyPressed;
         std::vector<Key::Value> keyDown;
         std::vector<Key::Value> keyReleased;
+
+        Key::Layout layout;
 
         /**
          * @brief System refreshing the keyboard state.
