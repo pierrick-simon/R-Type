@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** KeyBoard
+** Keyboard
 */
 
 #ifndef KEYBOARD_HPP_
@@ -163,14 +163,14 @@ namespace RType {
     /**
      * @brief Keyboard state component.
      *
-     * The state is refreshed once per frame by systemKeyBoard().
+     * The state is refreshed once per frame by systemKeyboard().
      */
-    class KeyBoard {
+    class Keyboard {
     public:
         /**
          * @brief Create a keyboard with an empty state.
          */
-        KeyBoard();
+        Keyboard();
 
         std::vector<Key::Value> keyPressed;
         std::vector<Key::Value> keyDown;
@@ -184,7 +184,7 @@ namespace RType {
          * @warning Must be called once per frame, after the window has been
          *          created, otherwise the state will be stale.
          */
-        static void systemKeyBoard(KeyBoard &k);
+        static void systemKeyboard(Keyboard &k);
 
     private:
         std::unordered_set<int> _held;

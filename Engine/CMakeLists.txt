@@ -118,7 +118,7 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Sound.cpp
     ${GRAPHICAL}/src/Font.cpp
     ${GRAPHICAL}/src/Texture2D.cpp
-    ${GRAPHICAL}/src/KeyBoard.cpp
+    ${GRAPHICAL}/src/Keyboard.cpp
     ${GRAPHICAL}/src/Mouse.cpp
 )
 
