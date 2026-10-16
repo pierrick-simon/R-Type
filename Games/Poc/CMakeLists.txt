@@ -23,7 +23,7 @@ target_include_directories(r-type_poc PRIVATE
         include
         $<TARGET_PROPERTY:engine-system,INCLUDE_DIRECTORIES>
 )
-target_link_libraries(r-type_poc PRIVATE engine-system shared plf-colony)
+target_link_libraries(r-type_poc PRIVATE engine-system engine-system plf-colony)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
         AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)

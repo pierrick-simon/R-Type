@@ -31,5 +31,7 @@ if (NOT WIN32 AND NOT TARGET criterion)
     endif ()
 endif ()
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 add_subdirectory(Engine)
 add_subdirectory(Games)
