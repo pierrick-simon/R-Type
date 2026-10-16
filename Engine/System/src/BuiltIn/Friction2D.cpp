@@ -9,7 +9,7 @@
 #include <iostream>
 
 namespace RType {
-    void systemFriction2D(
+    void Friction2D::systemFriction2D(
         Friction2D &friction, Velocity2D &velocity, const Clock &clock)
     {
         auto elapsedSec = float(clock.getElapsed().count()) / MILLI_IN_SEC;
