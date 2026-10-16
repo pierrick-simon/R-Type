@@ -23,7 +23,8 @@ namespace RType {
      * @tparam Components The types to search in.
      */
     template<typename Component, typename... Components>
-    constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
+    constexpr std::size_t duplicateCheck =
+        (std::is_same_v<Component, Components> + ...);
 
     /**
      * @brief Applies a callback to every entity that has all the given
@@ -46,7 +47,8 @@ namespace RType {
         {
         }
 
-        static_assert(((duplicateCheck<Components, Components...> == 1) && ...), "System: each component type must appear only once");
+        static_assert(((duplicateCheck<Components, Components...> == 1) && ...),
+            "System: each component type must appear only once");
 
         /**
          * @brief Applies the stored callback to every entity that has all
