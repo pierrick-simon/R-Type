@@ -88,16 +88,26 @@ void UDPClient::receive()
 
 void UDPClient::manageCommands(const Header& head, const std::vector<uint8_t>& payload)
 {
-    std::string text(payload.begin(), payload.end());
-    std::cout << "Réponse: " << text << std::endl;
-    
-    if (head.type == Opcode::LOGIN && payload.size() >= 2) {
-        myId_ = (payload[0] << 8) | payload[1];
-        std::cout << "My id = " << myId_ << std::endl;
-    } else if (head.type == Opcode::HEALTH) {
-        std::cout << "Health check from server" << std::endl;
-        sendNow(Opcode::HEALTH, {});   
+    for (const auto &[opcode, func] : protocolClient_) {
+        if (head.type == opcode) {
+            func(head, payload);
+            return;
+        }
     }
+}
+
+void UDPClient::manageLogin(Header header, std::vector<uint8_t> payload)
+{
+    if (payload.size() > 2)
+        return;
+    myId_ = (payload[0] << 8) | payload[1];
+    std::cout << "My id = " << myId_ << std::endl;
+}
+
+void UDPClient::manageHealth(Header header, std::vector<uint8_t> payload)
+{
+    std::cout << "Health check from server" << std::endl;
+    sendNow(Opcode::HEALTH, {});
 }
 
 

@@ -41,6 +41,14 @@ namespace RType {
         uint32_t seq_ = 0;
         std::atomic<uint16_t> myId_{0};
         std::thread thread_;
+
+        void manageLogin(Header header, std::vector<uint8_t> payload);
+        void manageHealth(Header header, std::vector<uint8_t> payload);
+
+        std::map<Opcode, std::function<void(const Header&, const std::vector<uint8_t>&)>> protocolClient_ = {
+            {Opcode::LOGIN,  [this](const Header& h, const std::vector<uint8_t>& p) {manageLogin(h, p);}},
+            {Opcode::HEALTH, [this](const Header& h, const std::vector<uint8_t>& p) {manageHealth(h, p);}},
+        };
     };
     
 }

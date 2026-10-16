@@ -70,7 +70,8 @@ void UDPServer::startReceive()
         {
             if (!ec && bytesRecvd > 0) {
                 if (auto header = parse(recvBuffer_, bytesRecvd)) {
-                    manageCommand(header.value(), std::vector<uint8_t>(recvBuffer_.begin() + Header::SIZE, recvBuffer_.begin() + bytesRecvd));
+                    manageCommand(header.value(), std::vector<uint8_t>(recvBuffer_.begin()
+                        + Header::SIZE, recvBuffer_.begin() + bytesRecvd));
                 }
             }
             startReceive();
@@ -79,8 +80,10 @@ void UDPServer::startReceive()
 
 void UDPServer::sendToClient(Client& client, Opcode op, const std::vector<uint8_t>& payload)
 {
-    client.sendBuffer_ = serialize(Header{op, static_cast<uint16_t>(payload.size()), client.seq++, serverId_}, payload);
-    socket_.async_send_to(asio::buffer(client.sendBuffer_), client.endpoint, [this](std::error_code, std::size_t) {});
+    client.sendBuffer = serialize(Header{op, static_cast<uint16_t>(payload.size()), client.seq++, serverId_}, payload);
+    socket_.async_send_to(asio::buffer(client.sendBuffer), client.endpoint, [this](std::error_code, std::size_t) {});
+    client.msgSentHistory.push_back("[" + std::to_string(static_cast<int>(op)) + "] "
+                            + std::string(payload.begin(), payload.end()));
 }
 
 void UDPServer::broadcast(Opcode op, const std::vector<uint8_t>& payload)
@@ -107,9 +110,8 @@ void UDPServer::manageCommand(Header header, std::vector<uint8_t> payload)
     auto it = clients_.find(header.senderId);
     if (it == clients_.end() || it->second.endpoint != remoteEndpoint_)
         return;
-    std::string text(payload.begin(), payload.end());
-    std::cout << "Reçu de ." << header.senderId << ". : " << text << std::endl;
     it->second.lastSeen = std::chrono::steady_clock::now();
+    it->second.lastMsgReceived = {header, payload};
     for (const auto &[opcode, func] : protocol_) {
         if (header.type == opcode) {
             func(header, payload);
@@ -131,13 +133,11 @@ void UDPServer::manageHealth(Header, std::vector<uint8_t>)
 
 void UDPServer::manageLogin(Header header, std::vector<uint8_t> payload)
 {
-    std::cout << "Login" << std::endl;
     nextId_ += 1;
     Client& c = clients_[nextId_];
-
+    
     c.id = nextId_;
     c.endpoint = remoteEndpoint_;
-    std::cout << "Total clients :" << nextId_ << std::endl;
     sendToClient(c, Opcode::LOGIN, {static_cast<uint8_t>(nextId_ >> 8), static_cast<uint8_t>(nextId_)});
 }
 
