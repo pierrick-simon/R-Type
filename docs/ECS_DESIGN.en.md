@@ -168,7 +168,7 @@ private:
 
 **How `sparse` represents a missing component.** A `sparse` slot holds either a valid iterator into `dense`, or a default-constructed iterator meaning "no component". `sparse` grows on demand, to about 1.5 times the requested index, to amortize resizes.
 
-**Why `dense` stores the entity with the component (`ComponentPack`).** A system over several components (`System<Position, Velocity>`) iterates over the `dense` of the first type, then has to find the other components **of the same entity**. But `sparse` only works in the entity → component direction: without a link from the element to its entity, the system cannot know who owns the component it is iterating over. A separate entity array parallel to `dense` (EnTT's choice) is not possible with `plf::colony`, which offers no stable index shared between two containers; the entity is therefore stored in the element itself. The overhead is at least 16 bytes per component, acceptable for the number of entities in an R-Type.
+**Why `dense` stores the entity with the component (`ComponentPack`).** A system over several components (`System<Position, Velocity>`) iterates over the `dense` of one of its types, then has to find the other components **of the same entity**. But `sparse` only works in the entity → component direction: without a link from the element to its entity, the system cannot know who owns the component it is iterating over. A separate entity array parallel to `dense` (EnTT's choice) is not possible with `plf::colony`, which offers no stable index shared between two containers; the entity is therefore stored in the element itself. The overhead is at least 16 bytes per component, acceptable for the number of entities in an R-Type.
 
 **Why the whole `Entity`, and not just its index.** The index would be enough to query the other arrays, but a handle rebuilt from the index alone would have a wrong generation: it would be considered stale as soon as it left the array (towards a system or towards `GameManager`). Storing the complete `Entity` guarantees that `pack.entity()` is always a real handle.
 
@@ -236,6 +236,10 @@ public:
 
 private:
     std::function<void(Components &...)> _func;
+
+    void iterateSmallest(ComponentArray<Components> &...arrays);
+    template<typename Array>
+    void iterate(Array &smallest, ComponentArray<Components> &...arrays);
 };
 
 using SystemId = std::size_t;
@@ -267,11 +271,13 @@ private:
 
 **How `System<Components...>` finds the entities (the join).**
 
-1. The `ComponentArray` of every type is fetched once, before the loop (`std::tie`).
-2. The `dense` of the **first** type is iterated over; each `ComponentPack` gives the element's entity.
-3. If the entity has all the other types, the function is called with one component of each type, obtained in O(1) through their `sparse`. Otherwise, the entity is skipped.
+1. `update` fetches the `ComponentArray` of every type once, then passes them to `iterateSmallest` as a parameter pack.
+2. `iterateSmallest` computes the smallest size (`std::min` over the `nbComponent()`), then calls `iterate` on the **first array of that size**, and on it only (fold over `||`, which stops at the first `true`).
+3. `iterate` iterates over the `dense` of that array; each `ComponentPack` gives the element's entity. If the entity has all the other types, the function is called with one component of each type, obtained in O(1) directly from the arrays it received (without going through `ComponentManager` again). Otherwise, the entity is skipped.
 
-Each lookup is O(1), but there is one per element of the **first** array: the cost of a frame therefore depends on the size of that array, not on the size of the others. This is why the user guide recommends putting the rarest type first. Automatically picking the smallest array on every `update()` is a possible improvement.
+**Why iterate over the smallest array.** Each lookup is O(1), but there is one per element of the iterated array: the cost of a frame therefore depends on the size of that array, not on the size of the others. For `System<Position, Player>` with 1000 positions and a single player, iterating over `Position` would cost 1000 lookups, 999 of them useless; iterating over `Player` costs only one. The choice is made again on every `update()`, since sizes change during the game.
+
+**Why `iterate` is a template.** The array to iterate over is only known at runtime, but its type (`ComponentArray<Position>` or `ComponentArray<Player>`) must be known at compile time: no variable can refer to "one or the other". The loop is therefore written once, as a template over the array type, and the fold instantiates it for each possible type; only the instance matching the smallest array is called.
 
 **Why `createSystem` returns a `SystemId` rather than a pointer or an iterator.**
 

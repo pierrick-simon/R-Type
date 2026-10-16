@@ -217,10 +217,10 @@ gm.createSystem<Position, Velocity>([](Position &pos, const Velocity &vel) {
 
 - An entity that only has some of the types is skipped, without error.
 - A parameter can be `const` if the system only reads that component.
-- The same type cannot appear twice: `createSystem<Position, Position>` does not compile.
+- **Never repeat a type** (`createSystem<Position, Position>`): the function would receive two references to the same component.
 
-> [!TIP]
-> The system iterates over the **first** type of the list, then looks up the other ones for each entity. Put the **rarest** type first: `createSystem<Player, Position>` only iterates over the players, whereas `createSystem<Position, Player>` iterates over every position to keep a single one.
+> [!NOTE]
+> The order of the types does not affect performance: on every `update()`, the system automatically iterates over the type that has **the fewest components**, then looks up the other ones for each entity. `createSystem<Position, Player>` therefore only iterates over the players, even though `Position` comes first.
 
 ### Accessing the entity from a system
 

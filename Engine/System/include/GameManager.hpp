@@ -214,7 +214,7 @@ namespace RType {
          * The callback is called once per entity that has all the
          * Components, with one reference per type, in the same order.
          * @tparam Components The component types the system operates on.
-         * The first one is iterated over: put the rarest one first.
+         * Their order does not matter: the smallest array is iterated over.
          * @param func Callback applied to each matching entity.
          * @return Id identifying the created system, usable with
          * destroySystem.

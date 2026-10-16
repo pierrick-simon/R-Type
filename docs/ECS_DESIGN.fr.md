@@ -168,7 +168,7 @@ private:
 
 **Comment `sparse` représente l'absence de composant.** Une case de `sparse` contient soit un itérateur valide vers `dense`, soit un itérateur construit par défaut, qui signifie « pas de composant ». `sparse` est agrandi à la demande, d'environ 1,5 fois l'index demandé, pour amortir les redimensionnements.
 
-**Pourquoi `dense` stocke l'entité avec le composant (`ComponentPack`).** Un système sur plusieurs composants (`System<Position, Velocity>`) parcourt le `dense` du premier type, puis doit retrouver les autres composants **de la même entité**. Or `sparse` ne fonctionne que dans le sens entité → composant : sans lien de l'élément vers son entité, le système ne peut pas savoir à qui appartient le composant qu'il parcourt. Un tableau d'entités séparé et parallèle à `dense` (le choix d'EnTT) n'est pas possible avec `plf::colony`, qui n'offre pas d'index stable partagé entre deux conteneurs ; l'entité est donc stockée dans l'élément lui-même. Le surcoût est d'au moins 16 octets par composant, acceptable pour le nombre d'entités d'un R-Type.
+**Pourquoi `dense` stocke l'entité avec le composant (`ComponentPack`).** Un système sur plusieurs composants (`System<Position, Velocity>`) parcourt le `dense` d'un de ses types, puis doit retrouver les autres composants **de la même entité**. Or `sparse` ne fonctionne que dans le sens entité → composant : sans lien de l'élément vers son entité, le système ne peut pas savoir à qui appartient le composant qu'il parcourt. Un tableau d'entités séparé et parallèle à `dense` (le choix d'EnTT) n'est pas possible avec `plf::colony`, qui n'offre pas d'index stable partagé entre deux conteneurs ; l'entité est donc stockée dans l'élément lui-même. Le surcoût est d'au moins 16 octets par composant, acceptable pour le nombre d'entités d'un R-Type.
 
 **Pourquoi l'`Entity` entière, et pas seulement son index.** L'index suffirait pour interroger les autres tableaux, mais un handle reconstruit à partir de l'index seul aurait une génération fausse : il serait considéré comme périmé dès qu'il sortirait du tableau (vers un système ou vers `GameManager`). Stocker l'`Entity` complète garantit que `pack.entity()` est toujours un vrai handle.
 
@@ -236,6 +236,10 @@ public:
 
 private:
     std::function<void(Components &...)> _func;
+
+    void iterateSmallest(ComponentArray<Components> &...arrays);
+    template<typename Array>
+    void iterate(Array &smallest, ComponentArray<Components> &...arrays);
 };
 
 using SystemId = std::size_t;
@@ -267,11 +271,13 @@ private:
 
 **Comment `System<Components...>` trouve les entités (la jointure).**
 
-1. Les `ComponentArray` de tous les types sont récupérés une seule fois, avant la boucle (`std::tie`).
-2. Le `dense` du **premier** type est parcouru ; chaque `ComponentPack` donne l'entité de l'élément.
-3. Si l'entité possède tous les autres types, la fonction est appelée avec un composant de chaque type, obtenus en O(1) via leurs `sparse`. Sinon, l'entité est ignorée.
+1. `update` récupère les `ComponentArray` de tous les types une seule fois, puis les passe à `iterateSmallest` sous forme de pack de paramètres.
+2. `iterateSmallest` calcule la plus petite taille (`std::min` sur les `nbComponent()`), puis appelle `iterate` sur le **premier tableau de cette taille**, et sur lui seul (fold sur `||`, qui s'arrête au premier `true`).
+3. `iterate` parcourt le `dense` de ce tableau ; chaque `ComponentPack` donne l'entité de l'élément. Si l'entité possède tous les autres types, la fonction est appelée avec un composant de chaque type, obtenus en O(1) directement sur les tableaux reçus (sans repasser par `ComponentManager`). Sinon, l'entité est ignorée.
 
-Chaque recherche est en O(1), mais il y en a une par élément du **premier** tableau : le coût d'une frame dépend donc de la taille de ce tableau, et non de celle des autres. C'est pourquoi le guide recommande de placer le type le plus rare en premier. Choisir automatiquement le plus petit tableau à chaque `update()` est une amélioration possible.
+**Pourquoi parcourir le plus petit tableau.** Chaque recherche est en O(1), mais il y en a une par élément du tableau parcouru : le coût d'une frame dépend donc de la taille de ce tableau, et non de celle des autres. Pour `System<Position, Player>` avec 1000 positions et un seul joueur, parcourir `Position` coûterait 1000 recherches, dont 999 inutiles ; parcourir `Player` n'en coûte qu'une. Le choix est refait à chaque `update()`, car les tailles évoluent en cours de partie.
+
+**Pourquoi `iterate` est un template.** Le tableau à parcourir n'est connu qu'à l'exécution, mais son type (`ComponentArray<Position>` ou `ComponentArray<Player>`) doit être connu à la compilation : aucune variable ne peut désigner « l'un ou l'autre ». La boucle est donc écrite une seule fois, sous forme de template sur le type du tableau, et le fold l'instancie pour chaque type possible ; seule l'instance correspondant au plus petit tableau est appelée.
 
 **Pourquoi `createSystem` renvoie un `SystemId` plutôt qu'un pointeur ou un itérateur.**
 

@@ -217,10 +217,10 @@ gm.createSystem<Position, Velocity>([](Position &pos, const Velocity &vel) {
 
 - Une entité qui ne possède qu'une partie des types est ignorée, sans erreur.
 - Un paramètre peut être `const` si le système ne fait que lire ce composant.
-- Un même type ne peut pas apparaître deux fois : `createSystem<Position, Position>` ne compile pas.
+- **Ne répétez jamais un type** (`createSystem<Position, Position>`) : la fonction recevrait deux références vers le même composant.
 
-> [!TIP]
-> Le système parcourt le **premier** type de la liste, puis cherche les autres pour chaque entité. Placez en premier le type **le plus rare** : `createSystem<Player, Position>` ne parcourt que les joueurs, alors que `createSystem<Position, Player>` parcourt toutes les positions pour n'en garder qu'une.
+> [!NOTE]
+> L'ordre des types ne change pas les performances : à chaque `update()`, le système parcourt automatiquement le type qui a **le moins de composants**, puis cherche les autres pour chaque entité. `createSystem<Position, Player>` ne parcourt donc que les joueurs, même si `Position` est écrit en premier.
 
 ### Accéder à l'entité depuis un système
 

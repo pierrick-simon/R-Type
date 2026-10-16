@@ -8,8 +8,8 @@
 #ifndef SYSTEM_HPP_
 #define SYSTEM_HPP_
 
+#include <algorithm>
 #include <functional>
-#include <tuple>
 #include "ComponentManager.hpp"
 #include "ISystem.hpp"
 
@@ -19,10 +19,9 @@ namespace RType {
      * @brief Applies a callback to every entity that has all the given
      * component types.
      *
-     * Iterates over the dense storage of the first type, and skips the
-     * entities missing one of the other types.
-     * @tparam Components The component types this system operates on. The
-     * first one is iterated over: put the rarest one first.
+     * Iterates over the dense storage of the smallest array, and skips
+     * the entities missing one of the other types.
+     * @tparam Components The component types this system operates on.
      */
     template<typename... Components>
     class System : public ISystem {
@@ -48,19 +47,43 @@ namespace RType {
         {
             if (!(cm.isComponent<Components>() && ...))
                 return;
-            auto componentArrayList =
-                std::tie(cm.getComponentArray<Components>()...);
-            auto &firstComponentArray = std::get<0>(componentArrayList);
-            for (auto &component : firstComponentArray.getDense()) {
-                if (!(cm.hasComponent<Components>(component.entity()) && ...))
-                    continue;
-                _func(std::get<ComponentArray<Components> &>(componentArrayList)
-                        .getComponent(component.entity())...);
-            }
+            iterateSmallest(cm.getComponentArray<Components>()...);
         }
 
     private:
         std::function<void(Components &...)> _func;
+
+        /**
+         * @brief Iterates over the smallest of the arrays.
+         * @param arrays The ComponentArray of each type, in the order of
+         * Components.
+         */
+        void iterateSmallest(ComponentArray<Components> &...arrays)
+        {
+            std::size_t min = std::min({arrays.nbComponent()...});
+
+            (void) ((arrays.nbComponent() == min &&
+                        (iterate(arrays, arrays...), true)) ||
+                ...);
+        }
+
+        /**
+         * @brief Calls the callback on every entity of an array that has
+         * all the Components.
+         * @tparam Array The type of the array iterated over.
+         * @param smallest The array iterated over.
+         * @param arrays The ComponentArray of each type, in the order of
+         * Components.
+         */
+        template<typename Array>
+        void iterate(Array &smallest, ComponentArray<Components> &...arrays)
+        {
+            for (auto &pack : smallest.getDense()) {
+                if (!(arrays.hasComponent(pack.entity()) && ...))
+                    continue;
+                _func(arrays.getComponent(pack.entity())...);
+            }
+        }
     };
 
 } // namespace RType
