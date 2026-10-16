@@ -12,6 +12,7 @@ set(SRCS
         src/EdgeCases.cpp
         src/Simulation.cpp
         src/Systems.cpp
+        src/MultiSystems.cpp
         src/Recycling.cpp
         src/Tricky.cpp
         src/ThrowTrace.cpp
