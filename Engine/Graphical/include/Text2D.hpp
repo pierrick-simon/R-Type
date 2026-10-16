@@ -38,7 +38,7 @@ namespace RType {
          * @warning @p font must stay valid for the whole call.
          */
         static void systemDrawText2D(
-            Text2D &text, const Font &font, const Position2D &pos);
+            const Text2D &text, const Font &font, const Position2D &pos);
     };
 
 } // namespace RType

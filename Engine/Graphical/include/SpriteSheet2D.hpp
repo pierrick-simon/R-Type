@@ -44,26 +44,29 @@ namespace RType {
         raylib::Color color = raylib::Color::White();
 
         /**
-         * @brief System animating and drawing a sprite sheet.
+         * @brief System drawing a sprite sheet.
          *
          * @param sprite  The sprite sheet parameters and animation state.
          * @param texture The texture containing all the tiles.
          * @param pos     The position where the current tile is drawn.
+         *
+         * @warning #recNb must not contain 0 (it would lead to a division by
+         *          zero when computing the tile size).
+         */
+        static void systemDrawSpriteSheet2D(SpriteSheet2D &sprite,
+            const Texture2D &texture, const Position2D &pos);
+
+        /**
+         * @brief System animating a sprite sheet.
+         *
+         * @param sprite  The sprite sheet parameters and animation state.
          * @param clock   The clock providing the elapsed time.
          *
          * @warning Clock::systemClock must have been called beforehand in the
          *          same frame, otherwise the animation will not progress.
-         * @warning #recNb must not contain 0 (it would lead to a division by
-         *          zero when computing the tile size).
-         * @warning Must be called between the beginning and the end of a
-         *          drawing frame (see Window::systemWindow).
          */
-        static void systemDrawSpriteSheet2D(SpriteSheet2D &sprite,
-            const Texture2D &texture, const Position2D &pos);
-        
-        static void systemAnimateSpriteSheet2D(SpriteSheet2D &sprite,
-            const Texture2D &texture, const Position2D &pos,
-            const Clock &clock);
+        static void systemAnimateSpriteSheet2D(
+            SpriteSheet2D &sprite, const Clock &clock);
     };
 
 } // namespace RType

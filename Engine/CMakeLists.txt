@@ -78,6 +78,7 @@ set(SRCS_SYSTEM
     ${SYSTEM}/src/BuiltIn/Clock.cpp
     ${SYSTEM}/src/BuiltIn/Velocity2D.cpp
     ${SYSTEM}/src/BuiltIn/Friction2D.cpp
+    ${SYSTEM}/src/BuiltIn/GravityField2D.cpp
 )
 
 set(INCLUDE_SYSTEM
@@ -119,8 +120,9 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Sound.cpp
     ${GRAPHICAL}/src/Font.cpp
     ${GRAPHICAL}/src/Texture2D.cpp
-    ${GRAPHICAL}/src/Keyboard.cpp
-    ${GRAPHICAL}/src/Mouse.cpp
+    ${GRAPHICAL}/src/KeyboardManager.cpp
+    ${GRAPHICAL}/src/MouseManager.cpp
+    ${GRAPHICAL}/src/Keybind.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})

@@ -26,7 +26,7 @@ namespace RType {
         onlyOne = false;
     }
 
-    void Window::systemWindow(Window &w)
+    void Window::systemClearWindow(const Window &w)
     {
         static int fps = w._window->GetFPS();
 

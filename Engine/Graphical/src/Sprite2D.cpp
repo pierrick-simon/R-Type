@@ -9,7 +9,7 @@
 
 namespace RType {
     void Sprite2D::systemDrawSprite2D(
-        Sprite2D &sprite, const Texture2D &texture, const Position2D &pos)
+        const Sprite2D &sprite, const Texture2D &texture, const Position2D &pos)
     {
         auto width = float(texture.width);
         auto height = float(texture.height);

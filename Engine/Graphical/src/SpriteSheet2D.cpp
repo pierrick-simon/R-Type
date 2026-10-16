@@ -9,8 +9,9 @@
 #include <cmath>
 
 namespace RType {
-    void SpriteSheet2D::systemDrawSpriteSheet2D(SpriteSheet2D &sprite,
-        const Texture2D &texture, const Position2D &pos)
+
+    void SpriteSheet2D::systemDrawSpriteSheet2D(
+        SpriteSheet2D &sprite, const Texture2D &texture, const Position2D &pos)
     {
         auto width = float(texture.width) / float(sprite.recNb.width);
         auto height = float(texture.height) / float(sprite.recNb.height);
@@ -34,8 +35,8 @@ namespace RType {
             sprite.color);
     }
 
-    void SpriteSheet2D::systemAnimateSpriteSheet2D(SpriteSheet2D &sprite,
-        const Texture2D &texture, const Position2D &pos, const Clock &clock)
+    void SpriteSheet2D::systemAnimateSpriteSheet2D(
+        SpriteSheet2D &sprite, const Clock &clock)
     {
         sprite.sleep += clock.getElapsed();
         if (sprite.sleep > sprite.frameDuration && sprite.animation) {
