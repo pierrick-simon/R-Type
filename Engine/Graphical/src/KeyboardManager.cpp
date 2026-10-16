@@ -5,7 +5,7 @@
 ** Keyboard
 */
 
-#include "Keyboard.hpp"
+#include "KeyboardManager.hpp"
 #include <algorithm>
 #include "Exceptions.hpp"
 
@@ -27,14 +27,14 @@ namespace RType {
         throw EngineException("Key not found in the key map");
     }
 
-    Keyboard::Keyboard()
+    KeyboardManager::KeyboardManager()
     {
         static bool onlyOne = true;
         if (!onlyOne)
             throw EngineException("You can only have one Keyboard Component");
     }
 
-    void Keyboard::systemKeyboard(Keyboard &k)
+    void KeyboardManager::systemKeyboardManager(KeyboardManager &k)
     {
         k.keyPressed.clear();
         k.keyDown.clear();
@@ -42,8 +42,7 @@ namespace RType {
 
         for (auto it = k._held.begin(); it != k._held.end();) {
             if (!raylib::Keyboard::IsKeyDown(*it)) {
-                Key::Value v = Key::getValue(
-                    *it); // can't throw: only mapped keys are in _held
+                Key::Value v = Key::getValue(*it);
                 if (std::find(k.keyReleased.begin(), k.keyReleased.end(), v) ==
                     k.keyReleased.end())
                     k.keyReleased.push_back(v);

@@ -62,16 +62,16 @@ namespace RType {
     };
 
     /**
-     * @brief Mouse state component.
+     * @brief MouseManager state component.
      *
      * The state is refreshed once per frame by systemMouse().
      */
-    class Mouse {
+    class MouseManager {
     public:
         /**
-         * @brief Create a mouse with an empty state.
+         * @brief Create a mouseManager with an empty state.
          */
-        Mouse();
+        MouseManager();
 
         std::vector<MouseButton::Value> buttonPressed;
         std::vector<MouseButton::Value> buttonDown;
@@ -85,7 +85,7 @@ namespace RType {
          * @warning Must be called once per frame, after the window has been
          *          created, otherwise the state will be stale.
          */
-        static void systemMouse(Mouse &m);
+        static void systemMouseManager(MouseManager &m);
 
         /**
          * @brief Get the mouse position.
@@ -112,6 +112,15 @@ namespace RType {
         std::unordered_set<int> _held;
         Position2D _pos;
         float _wheel = 0.f;
+    };
+
+    /**
+     * @brief Mouse component.
+     *
+     * Is link to the MouseManager to get the update input.
+     */
+    struct Mouse {
+        MouseManager &mouse;
     };
 
 } // namespace RType

@@ -161,16 +161,16 @@ namespace RType {
     };
 
     /**
-     * @brief Keyboard state component.
+     * @brief KeyboardManager state component.
      *
      * The state is refreshed once per frame by systemKeyboard().
      */
-    class Keyboard {
+    class KeyboardManager {
     public:
         /**
-         * @brief Create a keyboard with an empty state.
+         * @brief Create a keyboardManager with an empty state.
          */
-        Keyboard();
+        KeyboardManager();
 
         std::vector<Key::Value> keyPressed;
         std::vector<Key::Value> keyDown;
@@ -184,10 +184,19 @@ namespace RType {
          * @warning Must be called once per frame, after the window has been
          *          created, otherwise the state will be stale.
          */
-        static void systemKeyboard(Keyboard &k);
+        static void systemKeyboardManager(KeyboardManager &k);
 
     private:
         std::unordered_set<int> _held;
+    };
+
+    /**
+     * @brief Keyboard component.
+     *
+     * Is link to the KeyboardManager to get the update input.
+     */
+    struct Keyboard {
+        KeyboardManager &manager;
     };
 
 } // namespace RType
