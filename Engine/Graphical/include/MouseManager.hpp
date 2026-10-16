@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Mouse
+** MouseManager
 */
 
-#ifndef MOUSE_HPP_
-#define MOUSE_HPP_
+#ifndef MOUSMANAGER_HPP_
+#define MOUSMANAGER_HPP_
 
 #include <raylib-cpp.hpp>
 #include <unordered_map>
@@ -125,4 +125,4 @@ namespace RType {
 
 } // namespace RType
 
-#endif /* !MOUSE_HPP_ */
+#endif /* !MOUSEMANAGER_HPP_ */

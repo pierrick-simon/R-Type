@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Keyboard
+** KeyboardManager
 */
 
-#ifndef KEYBOARD_HPP_
-#define KEYBOARD_HPP_
+#ifndef KEYBOARDMANAGER_HPP_
+#define KEYBOARDMANAGER_HPP_
 
     #include <raylib-cpp.hpp>
     #include <unordered_map>
@@ -216,4 +216,4 @@ namespace RType {
 
 } // namespace RType
 
-#endif /* !KEYBOARD_HPP_ */
+#endif /* !KEYBOARDMANAGER_HPP_ */
