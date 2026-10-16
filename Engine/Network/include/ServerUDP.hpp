@@ -36,7 +36,8 @@ namespace RType {
 
     private:
         void startReceive();
-        void manageCommand(Header header, std::vector<uint8_t> payload);
+        void manageCommand(
+            const Header &header, const std::vector<uint8_t> &payload);
         void scheduleHealthCheck();
         void checkClients();
         void broadcastNow(Opcode op, const std::vector<uint8_t> &payload);
@@ -53,9 +54,12 @@ namespace RType {
         uint16_t nextId_ = 0;
         uint16_t serverId_ = 0;
 
-        void manageLogin(Header header, std::vector<uint8_t> payload);
-        void manageHealth(Header header, std::vector<uint8_t> payload);
-        void manageLogout(Header header, std::vector<uint8_t> payload);
+        void manageLogin(
+            const Header &header, const std::vector<uint8_t> &payload);
+        static void manageHealth(
+            const Header &header, const std::vector<uint8_t> &payload);
+        void manageLogout(
+            const Header &header, const std::vector<uint8_t> &payload);
 
         std::map<Opcode,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>

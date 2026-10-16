@@ -20,8 +20,8 @@ namespace RType {
         void stop();
 
         void send(Opcode op, const std::vector<uint8_t> &msg);
-        bool isConnected() const;
-        uint16_t getMyId() const;
+        [[nodiscard]] bool isConnected() const;
+        [[nodiscard]] uint16_t getMyId() const;
 
     private:
         void receive();
@@ -43,8 +43,10 @@ namespace RType {
         std::atomic<uint16_t> myId_ {0};
         std::thread thread_;
 
-        void manageLogin(Header header, std::vector<uint8_t> payload);
-        void manageHealth(Header header, std::vector<uint8_t> payload);
+        void manageLogin(
+            const Header &header, const std::vector<uint8_t> &payload);
+        void manageHealth(
+            const Header &header, const std::vector<uint8_t> &payload);
 
         std::map<Opcode,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>

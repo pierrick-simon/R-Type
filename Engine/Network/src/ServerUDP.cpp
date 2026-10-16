@@ -71,7 +71,7 @@ namespace RType {
                         manageCommand(header.value(),
                             std::vector<uint8_t>(
                                 recvBuffer_.begin() + Header::SIZE,
-                                recvBuffer_.begin() + bytesRecvd));
+                                recvBuffer_.begin() + long(bytesRecvd)));
                     }
                 }
                 startReceive();
@@ -108,7 +108,8 @@ namespace RType {
             sendToClient(client, op, payload);
     }
 
-    void UDPServer::manageCommand(Header header, std::vector<uint8_t> payload)
+    void UDPServer::manageCommand(
+        const Header &header, const std::vector<uint8_t> &payload)
     {
         if (header.type == Opcode::LOGIN) {
             manageLogin(header, payload);
@@ -127,18 +128,19 @@ namespace RType {
         }
     }
 
-    void UDPServer::manageLogout(Header header, std::vector<uint8_t>)
+    void UDPServer::manageLogout(
+        const Header &header, const std::vector<uint8_t> &)
     {
         std::cout << "Client " << header.senderId << " logged out" << std::endl;
         clients_.erase(header.senderId);
     }
 
-    void UDPServer::manageHealth(Header, std::vector<uint8_t>)
+    void UDPServer::manageHealth(const Header &, const std::vector<uint8_t> &)
     {
-        return;
     }
 
-    void UDPServer::manageLogin(Header header, std::vector<uint8_t> payload)
+    void UDPServer::manageLogin(
+        const Header &header, const std::vector<uint8_t> &payload)
     {
         nextId_ += 1;
         Client &c = clients_[nextId_];

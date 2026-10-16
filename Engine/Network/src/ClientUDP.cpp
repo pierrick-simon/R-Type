@@ -12,7 +12,7 @@ namespace RType {
     UDPClient::UDPClient(const std::string &host, short port) :
         socket_(context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0)),
         loginTimer_(context_),
-        serverEndpoint_(asio::ip::address::from_string(host), port)
+        serverEndpoint_(asio::ip::make_address(host), port)
     {
     }
 
@@ -70,7 +70,7 @@ namespace RType {
                         manageCommands(h.value(),
                             std::vector<uint8_t>(
                                 recvBuffer_.begin() + Header::SIZE,
-                                recvBuffer_.begin() + bytesRecvd));
+                                recvBuffer_.begin() + long(bytesRecvd)));
                     }
                 }
                 receive();
@@ -88,7 +88,8 @@ namespace RType {
         }
     }
 
-    void UDPClient::manageLogin(Header header, std::vector<uint8_t> payload)
+    void UDPClient::manageLogin(
+        const Header &header, const std::vector<uint8_t> &payload)
     {
         if (payload.size() > 2)
             return;
@@ -96,7 +97,8 @@ namespace RType {
         std::cout << "My id = " << myId_ << std::endl;
     }
 
-    void UDPClient::manageHealth(Header header, std::vector<uint8_t> payload)
+    void UDPClient::manageHealth(
+        const Header &header, const std::vector<uint8_t> &payload)
     {
         std::cout << "Health check from server" << std::endl;
         sendNow(Opcode::HEALTH, {});

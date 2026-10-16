@@ -98,7 +98,9 @@ set(NETWORK_LIB_NAME engine-network)
 set(NETWORK Network)
 
 set(SRCS_NETWORK
-    ${NETWORK}/src/Empty.cpp
+    ${NETWORK}/src/ClientUDP.cpp
+    ${NETWORK}/src/ServerUDP.cpp
+    ${NETWORK}/src/Utils.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
