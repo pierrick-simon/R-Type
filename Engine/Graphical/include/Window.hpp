@@ -55,7 +55,7 @@ namespace RType {
          *          frame in which the drawing systems (Sprite2D, SpriteSheet2D,
          *          Text2D) are expected to run.
          */
-        static void systemWindow(const Window &w);
+        static void systemClearWindow(const Window &w);
 
     private:
         std::unique_ptr<raylib::Window> _window;

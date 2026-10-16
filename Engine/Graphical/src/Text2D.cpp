@@ -8,7 +8,7 @@
 #include "Text2D.hpp"
 
 namespace RType {
-    void Text2D::systemText2D(
+    void Text2D::systemDrawText2D(
         const Text2D &text, const Font &font, const Position2D &pos)
     {
         ::DrawTextPro(font,
