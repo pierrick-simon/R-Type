@@ -25,15 +25,15 @@ namespace RType {
         /**
          * @brief System applying friction to a velocity.
          *
-         * Apply the velocity to a given position2D in second
+         * Apply the friction to a given velocity in second
          *
-         * @param velocity The velocity of the entity.
-         * @param pos The position to update.
+         * @param friction The friction of the entity.
+         * @param velocity The velocity to update.
          * @param clock The clock providing the elapsed time.
          *
          */
-        static void systemFriction2D(
-            Friction2D &friction, Velocity2D &velocity, const Clock &clock);
+        static void systemFriction2D(const Friction2D &friction,
+            Velocity2D &velocity, const Clock &clock);
     };
 
 } // namespace RType

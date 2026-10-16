@@ -10,7 +10,7 @@
 
 namespace RType {
     void Velocity2D::systemVelocity2D(
-        Velocity2D &velocity, Position2D &pos, const Clock &clock)
+        const Velocity2D &velocity, Position2D &pos, const Clock &clock)
     {
         auto elapsedSec = float(clock.getElapsed().count()) / MILLI_IN_SEC;
         pos.x += velocity.x * elapsedSec;

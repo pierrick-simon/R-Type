@@ -34,7 +34,7 @@ namespace RType {
          *
          */
         static void systemVelocity2D(
-            Velocity2D &velocity, Position2D &pos, const Clock &clock);
+            const Velocity2D &velocity, Position2D &pos, const Clock &clock);
     };
 
 } // namespace RType

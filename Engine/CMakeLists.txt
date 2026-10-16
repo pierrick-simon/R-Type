@@ -78,6 +78,7 @@ set(SRCS_SYSTEM
     ${SYSTEM}/src/BuiltIn/Clock.cpp
     ${SYSTEM}/src/BuiltIn/Velocity2D.cpp
     ${SYSTEM}/src/BuiltIn/Friction2D.cpp
+    ${SYSTEM}/src/BuiltIn/GravityField2D.cpp
 )
 
 set(INCLUDE_SYSTEM

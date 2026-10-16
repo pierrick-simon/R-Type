@@ -10,7 +10,7 @@
 
 namespace RType {
     void Friction2D::systemFriction2D(
-        Friction2D &friction, Velocity2D &velocity, const Clock &clock)
+        const Friction2D &friction, Velocity2D &velocity, const Clock &clock)
     {
         auto elapsedSec = float(clock.getElapsed().count()) / MILLI_IN_SEC;
         velocity.x *= elapsedSec * friction.f;
