@@ -228,9 +228,14 @@ public:
     virtual void update(ComponentManager &cm) = 0;
 };
 
+template<typename Component, typename... Components>
+constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
+
 template<typename... Components>
 class System : public ISystem {
 public:
+    static_assert(((duplicateCheck<Components, Components...> == 1) && ...));
+
     explicit System(std::function<void(Components &...)> &func);
     void update(ComponentManager &cm) override;   // appelle _func sur chaque entité qui a tous les Components
 
@@ -276,6 +281,8 @@ private:
 3. `iterate` parcourt le `dense` de ce tableau ; chaque `ComponentPack` donne l'entité de l'élément. Si l'entité possède tous les autres types, la fonction est appelée avec un composant de chaque type, obtenus en O(1) directement sur les tableaux reçus (sans repasser par `ComponentManager`). Sinon, l'entité est ignorée.
 
 **Pourquoi parcourir le plus petit tableau.** Chaque recherche est en O(1), mais il y en a une par élément du tableau parcouru : le coût d'une frame dépend donc de la taille de ce tableau, et non de celle des autres. Pour `System<Position, Player>` avec 1000 positions et un seul joueur, parcourir `Position` coûterait 1000 recherches, dont 999 inutiles ; parcourir `Player` n'en coûte qu'une. Le choix est refait à chaque `update()`, car les tailles évoluent en cours de partie.
+
+**Pourquoi interdire un type en double, et à la compilation.** Avec `System<Position, Position>`, la fonction recevrait deux références vers **le même** composant : une source de bogues silencieux (deux écritures qui s'écrasent), sans aucun cas d'usage légitime. Un `static_assert` transforme ce bogue en erreur de compilation, avec un message lisible. `duplicateCheck<T, Components...>` compte les occurrences de `T` dans le pack (un fold sur `+` de `std::is_same_v`) ; le fold externe sur `&&` exige que chaque type apparaisse exactement une fois. Comparer chaque type au seul premier ne suffirait pas : `<Position, Velocity, Velocity>` passerait.
 
 **Pourquoi `iterate` est un template.** Le tableau à parcourir n'est connu qu'à l'exécution, mais son type (`ComponentArray<Position>` ou `ComponentArray<Player>`) doit être connu à la compilation : aucune variable ne peut désigner « l'un ou l'autre ». La boucle est donc écrite une seule fois, sous forme de template sur le type du tableau, et le fold l'instancie pour chaque type possible ; seule l'instance correspondant au plus petit tableau est appelée.
 

@@ -228,9 +228,14 @@ public:
     virtual void update(ComponentManager &cm) = 0;
 };
 
+template<typename Component, typename... Components>
+constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
+
 template<typename... Components>
 class System : public ISystem {
 public:
+    static_assert(((duplicateCheck<Components, Components...> == 1) && ...));
+
     explicit System(std::function<void(Components &...)> &func);
     void update(ComponentManager &cm) override;   // calls _func on every entity that has all the Components
 
@@ -276,6 +281,8 @@ private:
 3. `iterate` iterates over the `dense` of that array; each `ComponentPack` gives the element's entity. If the entity has all the other types, the function is called with one component of each type, obtained in O(1) directly from the arrays it received (without going through `ComponentManager` again). Otherwise, the entity is skipped.
 
 **Why iterate over the smallest array.** Each lookup is O(1), but there is one per element of the iterated array: the cost of a frame therefore depends on the size of that array, not on the size of the others. For `System<Position, Player>` with 1000 positions and a single player, iterating over `Position` would cost 1000 lookups, 999 of them useless; iterating over `Player` costs only one. The choice is made again on every `update()`, since sizes change during the game.
+
+**Why forbid a duplicated type, and at compile time.** With `System<Position, Position>`, the function would receive two references to **the same** component: a source of silent bugs (two writes overwriting each other), with no legitimate use case. A `static_assert` turns this bug into a compile-time error, with a readable message. `duplicateCheck<T, Components...>` counts the occurrences of `T` in the pack (a fold over `+` of `std::is_same_v`); the outer fold over `&&` requires every type to appear exactly once. Comparing each type with the first one only would not be enough: `<Position, Velocity, Velocity>` would get through.
 
 **Why `iterate` is a template.** The array to iterate over is only known at runtime, but its type (`ComponentArray<Position>` or `ComponentArray<Player>`) must be known at compile time: no variable can refer to "one or the other". The loop is therefore written once, as a template over the array type, and the fold instantiates it for each possible type; only the instance matching the smallest array is called.
 
