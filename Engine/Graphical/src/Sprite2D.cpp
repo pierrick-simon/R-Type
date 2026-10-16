@@ -8,8 +8,8 @@
 #include "Sprite2D.hpp"
 
 namespace RType {
-    void Sprite2D::systemSprite2D(
-        Sprite2D &sprite, const Texture2D &texture, const Position2D &pos)
+    void Sprite2D::systemDrawSprite2D(
+        const Sprite2D &sprite, const Texture2D &texture, const Position2D &pos)
     {
         auto width = float(texture.width);
         auto height = float(texture.height);

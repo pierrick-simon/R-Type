@@ -5,7 +5,7 @@
 ** Mouse
 */
 
-#include "Mouse.hpp"
+#include "MouseManager.hpp"
 #include <algorithm>
 #include "Exceptions.hpp"
 
@@ -18,7 +18,7 @@ namespace RType {
         return tmp->second;
     }
 
-    int MouseButton::getKeyCode(Value value)
+    int MouseButton::getMouseButtonCode(Value value)
     {
         for (const auto &box : _mouseButtonMap) {
             if (box.second == value)
@@ -27,14 +27,14 @@ namespace RType {
         throw EngineException("Key not found in the key map");
     }
 
-    Mouse::Mouse()
+    MouseManager::MouseManager()
     {
         static bool onlyOne = true;
         if (!onlyOne)
             throw EngineException("You can only have one Mouse Component");
     }
 
-    void Mouse::systemMouse(Mouse &m)
+    void MouseManager::systemMouseManager(MouseManager &m)
     {
         m.buttonPressed.clear();
         m.buttonDown.clear();

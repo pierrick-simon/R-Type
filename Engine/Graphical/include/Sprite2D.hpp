@@ -35,8 +35,8 @@ namespace RType {
          *          drawing frame (see Window::systemWindow).
          * @warning @p texture must stay valid for the whole call.
          */
-        static void systemSprite2D(
-            Sprite2D &sprite, const Texture2D &texture, const Position2D &pos);
+        static void systemDrawSprite2D(const Sprite2D &sprite,
+            const Texture2D &texture, const Position2D &pos);
     };
 
 } // namespace RType

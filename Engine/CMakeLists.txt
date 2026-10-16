@@ -120,8 +120,9 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Sound.cpp
     ${GRAPHICAL}/src/Font.cpp
     ${GRAPHICAL}/src/Texture2D.cpp
-    ${GRAPHICAL}/src/KeyBoard.cpp
-    ${GRAPHICAL}/src/Mouse.cpp
+    ${GRAPHICAL}/src/KeyboardManager.cpp
+    ${GRAPHICAL}/src/MouseManager.cpp
+    ${GRAPHICAL}/src/KeyBind.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})

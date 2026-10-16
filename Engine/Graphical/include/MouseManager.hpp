@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Mouse
+** MouseManager
 */
 
-#ifndef MOUSE_HPP_
-#define MOUSE_HPP_
+#ifndef MOUSMANAGER_HPP_
+#define MOUSMANAGER_HPP_
 
 #include <raylib-cpp.hpp>
 #include <unordered_map>
@@ -55,23 +55,23 @@ namespace RType {
          * @throw std::out_of_range If @p value has no mapping
          *        (if the implementation uses at()).
          */
-        static int getKeyCode(Value value);
+        static int getMouseButtonCode(Value value);
 
     private:
         static const std::unordered_map<int, Value> _mouseButtonMap;
     };
 
     /**
-     * @brief Mouse state component.
+     * @brief MouseManager state component.
      *
      * The state is refreshed once per frame by systemMouse().
      */
-    class Mouse {
+    class MouseManager {
     public:
         /**
-         * @brief Create a mouse with an empty state.
+         * @brief Create a mouseManager with an empty state.
          */
-        Mouse();
+        MouseManager();
 
         std::vector<MouseButton::Value> buttonPressed;
         std::vector<MouseButton::Value> buttonDown;
@@ -85,7 +85,7 @@ namespace RType {
          * @warning Must be called once per frame, after the window has been
          *          created, otherwise the state will be stale.
          */
-        static void systemMouse(Mouse &m);
+        static void systemMouseManager(MouseManager &m);
 
         /**
          * @brief Get the mouse position.
@@ -114,6 +114,15 @@ namespace RType {
         float _wheel = 0.f;
     };
 
+    /**
+     * @brief Mouse component.
+     *
+     * Is link to the MouseManager to get the update input.
+     */
+    struct Mouse {
+        MouseManager &mouse;
+    };
+
 } // namespace RType
 
-#endif /* !MOUSE_HPP_ */
+#endif /* !MOUSEMANAGER_HPP_ */
