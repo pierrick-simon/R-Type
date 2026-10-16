@@ -9,10 +9,7 @@ This document describes the architecture of the engine's ECS (`Engine/System`) a
 
 Only signatures are shown, never function bodies: this document describes an architecture, not an implementation. Signatures are simplified (Doxygen comments, `[[nodiscard]]` and deleted copy constructors are omitted); the code in `Engine/System/include/` remains the reference.
 
-The document is split into two parts:
-
-- **[Part 1](#part-1--current-architecture)**: the architecture as currently implemented.
-- **[Part 2](#part-2--proposed-extension-per-entity-enable-and-disable)**: a proposed extension (per-entity enable/disable), **not implemented**, to be built only if a concrete need arises.
+Changes that are considered but not implemented are listed at the end, in [What is left to do](#what-is-left-to-do).
 
 ---
 
@@ -20,7 +17,7 @@ The document is split into two parts:
 
 - [Guiding principles](#guiding-principles)
 - [Overview](#overview)
-- [Part 1 — Current architecture](#part-1--current-architecture)
+- [Current architecture](#current-architecture)
   - [Entity and EntityManager](#entity-and-entitymanager)
   - [Components](#components)
   - [IComponentArray and ComponentArray](#icomponentarray-and-componentarray)
@@ -28,7 +25,7 @@ The document is split into two parts:
   - [ISystem, System and SystemManager](#isystem-system-and-systemmanager)
   - [GameManager (facade)](#gamemanager-facade)
   - [The command queue](#the-command-queue)
-- [Part 2 — Proposed extension: per-entity enable and disable](#part-2--proposed-extension-per-entity-enable-and-disable)
+- [What is left to do](#what-is-left-to-do)
 
 ---
 
@@ -65,7 +62,7 @@ Every class lives in the `RType` namespace.
 
 ---
 
-## Part 1 — Current architecture
+## Current architecture
 
 ### Entity and EntityManager
 
@@ -376,90 +373,19 @@ Non-structural operations (`createEntity`, reads) remain immediate. `createEntit
 
 ---
 
-## Part 2 — Proposed extension: per-entity enable and disable
+## What is left to do
 
-> [!IMPORTANT]
-> **Not implemented.** This extension must not be built ahead of time: it is better designed once the need is precisely known (freezing an enemy, a cutscene, a death animation…). A simpler alternative already covers most cases: adding and removing a "tag" component (see the "Pausing an entity" recipe in the user guide, section 8).
+These changes are **not implemented**. Only their principle is described here.
 
-If the need is confirmed, here is the proposed design.
+### A pointer instead of an iterator in `sparse`
 
-### Two levels of disabling
+`sparse` currently stores one `plf::colony::iterator` per entity index, that is 24 bytes per slot, for every component type, including for entities that do not have that component. A plain `ComponentPack *` (8 bytes, `nullptr` for "no component") would be enough: `plf::colony` guarantees that an element does not move as long as it is not removed. Only `removeEntity` needs an iterator, for `erase`: it can get it back with `_dense.get_iterator(pointer)`, an operation slower than a direct access, but rare and always deferred.
 
-```cpp
-struct Disabled {};   // disables ALL systems for this entity
+### Enabling and disabling an entity
 
-template<typename Component>
-struct DisabledSystem;   // declared but never defined by default: incomplete type
+Allow pausing an entity (freezing an enemy, a cutscene, a death animation…), for every system or for a single one, without removing its components. The prerequisite is met, since each `ComponentPack` knows its entity: a system can therefore check, for each entity it iterates over, whether a disabling "tag" component is present. Two points remain to be designed:
 
-// Explicit specialization, only for components whose system can be disabled
-template<>
-struct DisabledSystem<Gravity> {};
-```
+- **how to refer to a specific system**: `System<Component, Tag>` is no longer possible, since `System` is variadic and would read it as a system over two components. A distinct class will be needed, or the system will have to be referred to by its `SystemId`;
+- **filtering on the absence of a component**: a multi-component system already filters on the *presence* of a tag, but not yet on its *absence*.
 
-**Why leave `DisabledSystem<Component>` undefined by default.** It turns "this component has no system that can be disabled" into a compile-time error rather than a silent runtime bug: `addComponent<DisabledSystem<Velocity>>(entity)` does not compile until `DisabledSystem<Velocity>` has been explicitly specialized, because an incomplete type cannot be stored in a `ComponentArray`.
-
-### Prerequisite: knowing the entity during iteration
-
-To check whether an entity is disabled, a system must know the entity of the component it is processing. **This prerequisite is met**: each element of `dense` is a `ComponentPack` that holds its entity (see [IComponentArray and ComponentArray](#icomponentarray-and-componentarray)).
-
-### System\<Component, D\>
-
-> [!WARNING]
-> **Conflict with the current `System`.** Since `System` became variadic (`System<Components...>`), `System<Component, D>` would mean a system over **two components**, not a system paired with a tag. The same goes for `createSystem<Component, D>`. This design will have to be adapted before any implementation, for example with a class and a function under a distinct name. Note that a system over several components can already filter on the **presence** of a tag, but not on its **absence**.
-
-```cpp
-template<typename Component, typename D>
-class System : public ISystem {
-public:
-    explicit System(std::function<void(Component &)> &func);
-    void update(ComponentManager &cm) override;
-
-private:
-    std::function<void(Component &)> _func;
-};
-```
-
-`D` is the tag specific to this system (typically `DisabledSystem<Component>`). For each entity it iterates over, `update` checks:
-
-1. `hasComponent<Disabled>(entity)`: global disabling;
-2. `hasComponent<D>(entity)`: disabling of this specific system.
-
-**Why centralize the `Disabled` check in `ISystem`.** `System<Components...>` (without `D`) must *also* respect `Disabled`; otherwise, global disabling would have no effect on systems created without a specific tag. To avoid duplicating (or forgetting) this check in every variant:
-
-```cpp
-class ISystem {
-public:
-    virtual ~ISystem() = default;
-    virtual void update(ComponentManager &cm) = 0;
-
-protected:
-    bool isEntityActive(ComponentManager &cm, Entity entity) const;
-    // implementation: !cm.hasComponent<Disabled>(entity)
-};
-```
-
-### Proposed API on GameManager
-
-```cpp
-template<typename Component, typename D>
-SystemId createSystem(std::function<void(Component &)> func);
-
-template<typename Component>
-void enable(Entity entity);    // removeComponent<DisabledSystem<Component>>(entity)
-template<typename Component>
-void disable(Entity entity);   // addComponent<DisabledSystem<Component>>(entity)
-template<typename Component>
-bool isEnabled(Entity entity) const;
-
-void enable(Entity entity);    // removeComponent<Disabled>(entity)
-void disable(Entity entity);   // addComponent<Disabled>(entity)
-bool isEnabled(Entity entity) const;
-```
-
-### Known limitation
-
-`enable<Component>` and `disable<Component>` only tell systems apart **by component type**, not by instance. If two different systems ever process the same `Gravity` component (for example one for physics and one for a debug overlay), it will be **impossible** to disable them independently with this API: `disable<Gravity>` would turn both off. As long as there is only one system per component type, this is not a problem. Otherwise, disabling will have to be keyed by `SystemId` instead of by type.
-
-### Performance note
-
-In `System<Component, D>::update`, `getComponentArray<Disabled>()` and `getComponentArray<DisabledSystem<Component>>()` must be fetched **once before the loop**, not for every entity. Otherwise, every `hasComponent<T>` performs a new lookup in `ComponentManager`'s `type_index` table on every iteration, for every system, on every frame.
+In the meantime, adding and removing a "tag" component covers most cases (see the "Pausing an entity" recipe in the user guide, section 8).

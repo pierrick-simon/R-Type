@@ -9,10 +9,7 @@ Ce document présente l'architecture de l'ECS du moteur (`Engine/System`) et, su
 
 Seules les signatures sont présentées, jamais le corps des fonctions : ce document décrit une architecture, pas une implémentation. Les signatures sont simplifiées (commentaires Doxygen, `[[nodiscard]]` et constructeurs de copie supprimés omis) ; la référence reste le code dans `Engine/System/include/`.
 
-Le document est organisé en deux parties :
-
-- **[Partie 1](#partie-1--architecture-actuelle)** : l'architecture actuellement implémentée.
-- **[Partie 2](#partie-2--extension-envisagée--activation-et-désactivation-par-entité)** : une extension envisagée (activation/désactivation par entité), **non implémentée**, à ne construire que si un besoin concret apparaît.
+Les évolutions envisagées mais non implémentées sont listées à la fin, dans [Reste à faire](#reste-à-faire).
 
 ---
 
@@ -20,7 +17,7 @@ Le document est organisé en deux parties :
 
 - [Principes directeurs](#principes-directeurs)
 - [Vue d'ensemble](#vue-densemble)
-- [Partie 1 — Architecture actuelle](#partie-1--architecture-actuelle)
+- [Architecture actuelle](#architecture-actuelle)
   - [Entity et EntityManager](#entity-et-entitymanager)
   - [Composants](#composants)
   - [IComponentArray et ComponentArray](#icomponentarray-et-componentarray)
@@ -28,7 +25,7 @@ Le document est organisé en deux parties :
   - [ISystem, System et SystemManager](#isystem-system-et-systemmanager)
   - [GameManager (façade)](#gamemanager-façade)
   - [La file de commandes](#la-file-de-commandes)
-- [Partie 2 — Extension envisagée : activation et désactivation par entité](#partie-2--extension-envisagée--activation-et-désactivation-par-entité)
+- [Reste à faire](#reste-à-faire)
 
 ---
 
@@ -65,7 +62,7 @@ Toutes les classes sont dans l'espace de noms `RType`.
 
 ---
 
-## Partie 1 — Architecture actuelle
+## Architecture actuelle
 
 ### Entity et EntityManager
 
@@ -376,90 +373,19 @@ Les opérations qui ne modifient pas la structure (`createEntity`, les lectures)
 
 ---
 
-## Partie 2 — Extension envisagée : activation et désactivation par entité
+## Reste à faire
 
-> [!IMPORTANT]
-> **Non implémentée.** Cette extension ne doit pas être construite par anticipation : elle se conçoit mieux une fois le besoin précisément connu (gel d'un ennemi, cinématique, animation de mort…). Une alternative plus simple couvre déjà la plupart des cas : ajouter et retirer un composant « tag » (voir la recette « Mettre une entité en pause » dans le guide, section 8).
+Ces évolutions ne sont **pas implémentées**. Elles ne sont décrites ici que dans leur principe.
 
-Si le besoin se confirme, voici le design envisagé.
+### Un pointeur au lieu d'un itérateur dans `sparse`
 
-### Deux niveaux de désactivation
+`sparse` stocke aujourd'hui un `plf::colony::iterator` par index d'entité, soit 24 octets par case, pour chaque type de composant, y compris pour les entités qui n'ont pas ce composant. Un simple `ComponentPack *` (8 octets, `nullptr` pour « pas de composant ») suffirait : `plf::colony` garantit qu'un élément ne change pas d'adresse tant qu'il n'est pas supprimé. Seul `removeEntity` a besoin d'un itérateur, pour `erase` : il peut le retrouver avec `_dense.get_iterator(pointeur)`, une opération plus lente qu'un accès direct, mais rare et toujours différée.
 
-```cpp
-struct Disabled {};   // désactive TOUS les systèmes pour cette entité
+### Activer et désactiver une entité
 
-template<typename Component>
-struct DisabledSystem;   // déclarée mais jamais définie par défaut : type incomplet
+Permettre de mettre en pause une entité (gel d'un ennemi, cinématique, animation de mort…), pour tous les systèmes ou pour un seul, sans retirer ses composants. Le prérequis est rempli, puisque chaque `ComponentPack` connaît son entité : un système peut donc vérifier, pour chaque entité parcourue, la présence d'un composant « tag » de désactivation. Deux points restent à concevoir :
 
-// Spécialisation explicite, uniquement pour les composants dont le système est désactivable
-template<>
-struct DisabledSystem<Gravity> {};
-```
+- **comment désigner un système précis** : `System<Component, Tag>` n'est plus possible, car `System` est variadique et le lirait comme un système sur deux composants. Il faudra une classe distincte, ou désigner le système par son `SystemId` ;
+- **filtrer sur l'absence d'un composant** : un système multi-composants filtre déjà sur la *présence* d'un tag, mais pas encore sur son *absence*.
 
-**Pourquoi laisser `DisabledSystem<Component>` non définie par défaut.** Cela transforme « ce composant n'a pas de système désactivable » en erreur de compilation plutôt qu'en bogue silencieux à l'exécution : `addComponent<DisabledSystem<Velocity>>(entity)` ne compile pas tant que `DisabledSystem<Velocity>` n'a pas été explicitement spécialisée, car un type incomplet ne peut pas être stocké dans un `ComponentArray`.
-
-### Prérequis : connaître l'entité pendant le parcours
-
-Pour vérifier si une entité est désactivée, un système doit connaître l'entité du composant qu'il traite. **Ce prérequis est rempli** : chaque élément de `dense` est un `ComponentPack` qui contient son entité (voir [IComponentArray et ComponentArray](#icomponentarray-et-componentarray)).
-
-### System\<Component, D\>
-
-> [!WARNING]
-> **Conflit avec le `System` actuel.** Depuis que `System` est variadique (`System<Components...>`), `System<Component, D>` désignerait un système sur **deux composants**, et non un système accompagné d'un tag. Il en va de même pour `createSystem<Component, D>`. Ce design devra être adapté avant toute implémentation, par exemple avec une classe et une fonction au nom distinct. À noter : un système sur plusieurs composants permet déjà de filtrer sur la **présence** d'un tag, mais pas sur son **absence**.
-
-```cpp
-template<typename Component, typename D>
-class System : public ISystem {
-public:
-    explicit System(std::function<void(Component &)> &func);
-    void update(ComponentManager &cm) override;
-
-private:
-    std::function<void(Component &)> _func;
-};
-```
-
-`D` est le tag propre à ce système (typiquement `DisabledSystem<Component>`). Pour chaque entité parcourue, `update` vérifie :
-
-1. `hasComponent<Disabled>(entity)` : désactivation globale ;
-2. `hasComponent<D>(entity)` : désactivation de ce système précis.
-
-**Pourquoi centraliser la vérification de `Disabled` dans `ISystem`.** `System<Components...>` (sans `D`) doit *aussi* respecter `Disabled` ; sinon, la désactivation globale n'aurait aucun effet sur les systèmes créés sans tag spécifique. Pour ne pas dupliquer (ou oublier) cette vérification dans chaque variante :
-
-```cpp
-class ISystem {
-public:
-    virtual ~ISystem() = default;
-    virtual void update(ComponentManager &cm) = 0;
-
-protected:
-    bool isEntityActive(ComponentManager &cm, Entity entity) const;
-    // implémentation : !cm.hasComponent<Disabled>(entity)
-};
-```
-
-### API envisagée sur GameManager
-
-```cpp
-template<typename Component, typename D>
-SystemId createSystem(std::function<void(Component &)> func);
-
-template<typename Component>
-void enable(Entity entity);    // removeComponent<DisabledSystem<Component>>(entity)
-template<typename Component>
-void disable(Entity entity);   // addComponent<DisabledSystem<Component>>(entity)
-template<typename Component>
-bool isEnabled(Entity entity) const;
-
-void enable(Entity entity);    // removeComponent<Disabled>(entity)
-void disable(Entity entity);   // addComponent<Disabled>(entity)
-bool isEnabled(Entity entity) const;
-```
-
-### Limite connue
-
-`enable<Component>` et `disable<Component>` distinguent les systèmes uniquement **par type de composant**, pas par instance. Si deux systèmes différents traitent un jour le même composant `Gravity` (par exemple un pour la physique et un pour un affichage de débogage), il sera **impossible** de les désactiver indépendamment avec cette API : `disable<Gravity>` les couperait tous les deux. Tant qu'il n'existe qu'un seul système par type de composant, ce n'est pas un problème. Dans le cas contraire, il faudra indexer la désactivation par `SystemId` plutôt que par type.
-
-### Note de performance
-
-Dans `System<Component, D>::update`, il faut récupérer `getComponentArray<Disabled>()` et `getComponentArray<DisabledSystem<Component>>()` **une seule fois avant la boucle**, et non à chaque entité. Sinon, chaque `hasComponent<T>` refait une recherche dans la table `type_index` de `ComponentManager` à chaque itération, pour chaque système, à chaque frame.
+En attendant, ajouter et retirer un composant « tag » couvre la plupart des cas (voir la recette « Mettre une entité en pause » dans le guide, section 8).
