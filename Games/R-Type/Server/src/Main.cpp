@@ -16,13 +16,12 @@
 #include "Friction2D.hpp"
 
 struct Player {
-    float speed = 10;
+    float speed = 15;
 };
 
 void playerMovement(Player &p, RType::Velocity2D &v, RType::Keyboard &k)
 {
     for (auto &key : k.keyDown) {
-        std::cout << static_cast<int>(key) << std::endl;
         if (key == RType::Key::Value::Q)
             v.x -= p.speed;
         if (key == RType::Key::Value::D)
@@ -37,7 +36,7 @@ void playerMovement(Player &p, RType::Velocity2D &v, RType::Keyboard &k)
 RType::Entity createWindow(RType::GameManager &gm)
 {
     auto w = gm.createEntity();
-    gm.addComponent<RType::Window>(w);
+    gm.addComponent<RType::Window>(w, 1920, 1080, "R-type");
     gm.createSystem<RType::Window>(RType::Window::systemWindow);
     return w;
 }
@@ -48,7 +47,7 @@ RType::Entity createSpaceShip(RType::GameManager &gm)
     gm.addComponent<Player>(s);
     gm.addComponent<RType::Position2D>(s, 0, 100);
     gm.addComponent<RType::Velocity2D>(s);
-    gm.addComponent<RType::Friction2D>(s, 100);
+    gm.addComponent<RType::Friction2D>(s, 120);
     gm.addComponent<RType::Keyboard>(s);
     gm.addComponent<RType::Texture2D>(s, "R-Type/sprites/r-typesheet5.gif");
     gm.addComponent<RType::Clock>(s);
