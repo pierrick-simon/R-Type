@@ -30,7 +30,8 @@ namespace RType {
         raylib::Color color = raylib::Color::White();
 
         static void systemSpriteSheet2D(SpriteSheet2D &sprite,
-            Texture2D &texture, Position2D &pos, Clock &clock);
+            const Texture2D &texture, const Position2D &pos,
+            const Clock &clock);
     };
 
 } // namespace RType

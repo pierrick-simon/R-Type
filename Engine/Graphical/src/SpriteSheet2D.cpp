@@ -10,7 +10,7 @@
 
 namespace RType {
     void SpriteSheet2D::systemSpriteSheet2D(SpriteSheet2D &sprite,
-        Texture2D &texture, Position2D &pos, Clock &clock)
+        const Texture2D &texture, const Position2D &pos, const Clock &clock)
     {
         sprite.sleep += clock.getElapsed();
         if (sprite.sleep > sprite.frameDuration && sprite.animation) {

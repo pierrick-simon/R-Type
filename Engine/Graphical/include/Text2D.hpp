@@ -23,7 +23,8 @@ namespace RType {
         float spacing = 0;
         Origin2D origin;
 
-        static void systemText2D(Text2D &text, Font &font, Position2D &pos);
+        static void systemText2D(
+            Text2D &text, const Font &font, const Position2D &pos);
     };
 
 } // namespace RType
