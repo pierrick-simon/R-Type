@@ -7,7 +7,7 @@
 
 #include "Mouse.hpp"
 #include <algorithm>
-#include "Exception.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
     MouseButton::Value MouseButton::getValue(int keyCode)

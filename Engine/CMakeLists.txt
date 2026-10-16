@@ -65,16 +65,6 @@ add_library(raylib-cpp::raylib-cpp ALIAS raylib-cpp)
 target_include_directories(raylib-cpp SYSTEM INTERFACE ${raylib-cpp_SOURCE_DIR}/include)
 target_link_libraries(raylib-cpp INTERFACE raylib)
 
-# Shared headers
-
-set(INCLUDE_SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Shared/include)
-
-set(SRCS_SHARED
-)
-
-add_library(shared INTERFACE)
-target_include_directories(shared INTERFACE ${INCLUDE_SHARED})
-
 # Create System engine lib
 
 set(SYSTEM_LIB_NAME engine-system)
@@ -95,7 +85,7 @@ set(INCLUDE_SYSTEM
 
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
 target_include_directories(${SYSTEM_LIB_NAME} PUBLIC ${INCLUDE_SYSTEM})
-target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC shared plf-colony)
+target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC plf-colony)
 
 # Create Network engine lib
 
@@ -110,7 +100,7 @@ add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
 target_include_directories(${NETWORK_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
 )
-target_link_libraries(${NETWORK_LIB_NAME} PUBLIC shared asio::asio)
+target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system asio::asio)
 
 # Create Graphical engine lib
 
@@ -134,7 +124,7 @@ add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
 target_include_directories(${GRAPHICAL_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL}/include
 )
-target_link_libraries(${GRAPHICAL_LIB_NAME} PUBLIC shared raylib-cpp::raylib-cpp)
+target_link_libraries(${GRAPHICAL_LIB_NAME} PUBLIC engine-system raylib-cpp::raylib-cpp)
 
 if (MSVC)
     target_compile_options(${GRAPHICAL_LIB_NAME} PRIVATE /wd4251)

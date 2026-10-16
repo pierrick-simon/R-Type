@@ -6,7 +6,7 @@
 */
 
 #include "Texture2D.hpp"
-#include "Exception.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
     Texture2D::Texture2D(const std::string &path)

@@ -6,7 +6,7 @@
 */
 
 #include "Sound.hpp"
-#include "Exception.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
     Sound::Sound(const std::string &path, bool loop)

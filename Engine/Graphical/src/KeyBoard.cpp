@@ -7,7 +7,7 @@
 
 #include "KeyBoard.hpp"
 #include <algorithm>
-#include "Exception.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
     Key::Value Key::getValue(int keyCode)

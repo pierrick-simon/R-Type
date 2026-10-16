@@ -6,7 +6,7 @@
 */
 
 #include "Font.hpp"
-#include "Exception.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
     Font::Font(const std::string &path)

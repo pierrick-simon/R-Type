@@ -6,7 +6,7 @@
 */
 
 #include "Window.hpp"
-#include "Exception.hpp"
+#include "Exceptions.hpp"
 
 namespace RType {
     Window::Window(int width, int height, const std::string &name,
