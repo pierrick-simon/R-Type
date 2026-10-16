@@ -12,6 +12,8 @@
 
 namespace RType {
 
+    constexpr int64_t MILLI_IN_SEC = 1000;
+
     /**
      * @brief Component measuring the time elapsed between two updates.
      *

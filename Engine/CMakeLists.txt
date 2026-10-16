@@ -75,12 +75,15 @@ set(SRCS_SYSTEM
     ${SYSTEM}/src/Entity.cpp
     ${SYSTEM}/src/ComponentManager.cpp
     ${SYSTEM}/src/SystemManager.cpp
+    ${SYSTEM}/src/BuiltIn/Clock.cpp
+    ${SYSTEM}/src/BuiltIn/Velocity2D.cpp
 )
 
 set(INCLUDE_SYSTEM
     ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/Components
     ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/System
+    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/BuiltIn
 )
 
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
@@ -111,7 +114,6 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Window.cpp
     ${GRAPHICAL}/src/Text2D.cpp
     ${GRAPHICAL}/src/Sprite2D.cpp
-    ${GRAPHICAL}/src/Clock.cpp
     ${GRAPHICAL}/src/SpriteSheet2D.cpp
     ${GRAPHICAL}/src/Sound.cpp
     ${GRAPHICAL}/src/Font.cpp
