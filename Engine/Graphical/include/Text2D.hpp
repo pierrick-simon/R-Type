@@ -37,7 +37,7 @@ namespace RType {
          *          drawing frame (see Window::systemWindow).
          * @warning @p font must stay valid for the whole call.
          */
-        static void systemText2D(
+        static void systemDrawText2D(
             Text2D &text, const Font &font, const Position2D &pos);
     };
 

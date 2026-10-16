@@ -9,14 +9,9 @@
 #include <cmath>
 
 namespace RType {
-    void SpriteSheet2D::systemSpriteSheet2D(SpriteSheet2D &sprite,
-        const Texture2D &texture, const Position2D &pos, const Clock &clock)
+    void SpriteSheet2D::systemDrawSpriteSheet2D(SpriteSheet2D &sprite,
+        const Texture2D &texture, const Position2D &pos)
     {
-        sprite.sleep += clock.getElapsed();
-        if (sprite.sleep > sprite.frameDuration && sprite.animation) {
-            sprite.currentTile++;
-            sprite.sleep = std::chrono::milliseconds(0);
-        }
         auto width = float(texture.width) / float(sprite.recNb.width);
         auto height = float(texture.height) / float(sprite.recNb.height);
         std::size_t nbTile = sprite.recNb.width * sprite.recNb.height;
@@ -37,5 +32,15 @@ namespace RType {
             {sprite.origin.x, sprite.origin.y},
             sprite.rotation,
             sprite.color);
+    }
+
+    void SpriteSheet2D::systemAnimateSpriteSheet2D(SpriteSheet2D &sprite,
+        const Texture2D &texture, const Position2D &pos, const Clock &clock)
+    {
+        sprite.sleep += clock.getElapsed();
+        if (sprite.sleep > sprite.frameDuration && sprite.animation) {
+            sprite.currentTile++;
+            sprite.sleep = std::chrono::milliseconds(0);
+        }
     }
 }; // namespace RType

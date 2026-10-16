@@ -58,7 +58,10 @@ namespace RType {
          * @warning Must be called between the beginning and the end of a
          *          drawing frame (see Window::systemWindow).
          */
-        static void systemSpriteSheet2D(SpriteSheet2D &sprite,
+        static void systemDrawSpriteSheet2D(SpriteSheet2D &sprite,
+            const Texture2D &texture, const Position2D &pos);
+        
+        static void systemAnimateSpriteSheet2D(SpriteSheet2D &sprite,
             const Texture2D &texture, const Position2D &pos,
             const Clock &clock);
     };
