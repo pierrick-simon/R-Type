@@ -9,46 +9,58 @@
 #define SYSTEM_HPP_
 
 #include <functional>
+#include <tuple>
 #include "ComponentManager.hpp"
 #include "ISystem.hpp"
 
 namespace RType {
 
     /**
-     * @brief Applies a callback to every instance of a given Component type.
-     * @tparam Component The component type this system operates on.
+     * @brief Applies a callback to every entity that has all the given
+     * component types.
+     *
+     * Iterates over the dense storage of the first type, and skips the
+     * entities missing one of the other types.
+     * @tparam Components The component types this system operates on. The
+     * first one is iterated over: put the rarest one first.
      */
-    template<typename Component>
+    template<typename... Components>
     class System : public ISystem {
     public:
         /**
          * @brief Constructs a system from a callback.
-         * @param func Callback applied to each Component instance during
-         * update(). It is moved from.
+         * @param func Callback receiving one reference per component type,
+         * in the order of Components, during update(). It is moved from.
          */
-        explicit System(std::function<void(Component &)> &func) :
+        explicit System(std::function<void(Components &...)> &func) :
             _func(std::move(func))
         {
         }
 
         /**
-         * @brief Applies the stored callback to every Component
-         * instance.
+         * @brief Applies the stored callback to every entity that has all
+         * the Components.
          * @param cm Component manager providing access to the
-         * ComponentArray<Component>. Does nothing if no Component has
-         * ever been added.
+         * ComponentArray of each type. Does nothing if one of the types
+         * has never been added.
          */
         void update(ComponentManager &cm) override
         {
-            if (!cm.isComponent<Component>())
+            if (!(cm.isComponent<Components>() && ...))
                 return;
-            auto &dense = cm.getComponentArray<Component>().getDense();
-            for (auto &component : dense)
-                _func(component);
+            auto componentArrayList =
+                std::tie(cm.getComponentArray<Components>()...);
+            auto &firstComponentArray = std::get<0>(componentArrayList);
+            for (auto &component : firstComponentArray.getDense()) {
+                if (!(cm.hasComponent<Components>(component.entity()) && ...))
+                    break;
+                _func(std::get<ComponentArray<Components> &>(componentArrayList)
+                        .getComponent(component.entity())...);
+            }
         }
 
     private:
-        std::function<void(Component &)> _func;
+        std::function<void(Components &...)> _func;
     };
 
 } // namespace RType

@@ -381,8 +381,8 @@ namespace {
         }
         int sum = 0;
         std::size_t count = 0;
-        for (const Health &health : gm.getArray<Health>().getDense()) {
-            sum += health.hp;
+        for (const auto &pack : gm.getArray<Health>().getDense()) {
+            sum += pack.component.hp;
             count++;
         }
         POC_CHECK(sum == expected);
@@ -516,8 +516,8 @@ namespace {
                 POC_CHECK(!gm.hasComponent<Health>(e));
                 POC_CHECK(!gm.hasComponent<Position>(e));
             }
-            for (const Health &h : gm.getArray<Health>().getDense())
-                sum += h.hp;
+            for (const auto &pack : gm.getArray<Health>().getDense())
+                sum += pack.component.hp;
             for (const auto &[_, hp] : health)
                 sum -= hp;
             POC_CHECK(sum == 0);

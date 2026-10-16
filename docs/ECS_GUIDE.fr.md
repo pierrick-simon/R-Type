@@ -5,7 +5,7 @@
 Ce guide explique comment **utiliser** l'ECS du moteur (`Engine/System`) au quotidien : créer des entités, leur attacher des composants, écrire des systèmes et, surtout, **éviter les pièges les plus courants**.
 
 - **Public visé :** toute personne qui écrit du code de jeu au-dessus du moteur. Aucune connaissance préalable des ECS n'est nécessaire.
-- **Pour comprendre les choix d'architecture** (le *pourquoi*), consultez [les notes de conception de l'ECS](ECS_DESIGN.md).
+- **Pour comprendre les choix d'architecture** (le *pourquoi*), consultez [les notes de conception de l'ECS](ECS_DESIGN.fr.md).
 
 Toute l'API passe par une seule classe : **`RType::GameManager`**. Les classes internes (`EntityManager`, `ComponentManager`, `SystemManager`) sont des détails d'implémentation : le code de jeu ne doit jamais les utiliser directement.
 
@@ -32,7 +32,7 @@ Toute l'API passe par une seule classe : **`RType::GameManager`**. Les classes i
 |---|---|
 | **Entité** (`Entity`) | Un identifiant qui représente un objet du jeu (vaisseau, balle, ennemi…). Elle ne contient aucune donnée. |
 | **Composant** | Une struct de données attachée à une entité (position, vie…). Une entité a au plus un composant de chaque type. |
-| **Système** | Une fonction appelée sur chaque composant d'un type donné, une fois par `update()`. C'est là que vit la logique du jeu. |
+| **Système** | Une fonction appelée, une fois par `update()`, sur chaque entité qui possède tous les composants demandés. C'est là que vit la logique du jeu. |
 | **Frame** | Un appel à `gm.update()` : tous les systèmes s'exécutent une fois, dans l'ordre. |
 | **Handle** | La valeur `Entity` que vous conservez pour désigner une entité plus tard. |
 
@@ -66,7 +66,7 @@ Trois idées à retenir :
 
 - **Une entité n'est qu'un identifiant.** Elle ne contient rien : ce sont ses composants qui portent les données.
 - **Un composant est une simple struct de données.** Pas d'héritage, pas de logique.
-- **Un système est une fonction appelée sur chaque composant d'un type**, une fois par `update()`.
+- **Un système est une fonction appelée sur chaque entité qui possède les composants demandés**, une fois par `update()`.
 
 ---
 
@@ -158,11 +158,15 @@ gm.removeComponents(e);                    // retire TOUS les composants ; l'ent
 ### Parcourir tous les composants d'un type
 
 ```cpp
-for (Health &h : gm.getArray<Health>().getDense())
-    h.hp = std::min(h.hp, 100);
+for (auto &pack : gm.getArray<Health>().getDense()) {
+    pack.component.hp = std::min(pack.component.hp, 100);
+    RType::Entity owner = pack.entity();   // l'entité qui possède ce Health
+}
 
 std::size_t count = gm.getArray<Health>().nbComponent();
 ```
+
+Chaque élément de `getDense()` est un `ComponentPack` : `pack.component` est le composant, et `pack.entity()` l'entité qui le possède. L'entité est en lecture seule.
 
 `getArray<T>()` lance `NoSuchComponent` si **aucun composant de type `T` n'a jamais été ajouté**. Dès qu'un `T` a existé, le tableau existe définitivement (même s'il est vide).
 
@@ -198,31 +202,47 @@ RType::SystemId gravity = gm.createSystem<Velocity>([](Velocity &v) {
 - Le type du composant **doit être précisé** entre chevrons : `createSystem<Velocity>(...)`.
 - À chaque `gm.update()`, la fonction est appelée **une fois pour chaque `Velocity` existant**.
 - Les systèmes s'exécutent **dans leur ordre de création**. Un système voit les modifications faites par les systèmes précédents au cours de la même frame.
-- Un système créé avant qu'un seul composant de son type existe ne fait simplement rien, sans erreur.
+- Tant qu'un des types demandés n'a jamais été ajouté, le système ne fait simplement rien, sans erreur.
 
-### Accéder aux autres composants de la même entité
+### Un système sur plusieurs composants
 
-Un système ne reçoit **que le composant**, pas l'entité. Pour accéder à un autre composant de la même entité, le composant doit **connaître son entité** :
+Un système peut demander plusieurs types de composants. La fonction reçoit alors une référence vers chacun, dans le même ordre, et n'est appelée que pour les entités qui les possèdent **tous** :
+
+```cpp
+gm.createSystem<Position, Velocity>([](Position &pos, const Velocity &vel) {
+    pos.x += vel.vx;
+    pos.y += vel.vy;
+});
+```
+
+- Une entité qui ne possède qu'une partie des types est ignorée, sans erreur.
+- Un paramètre peut être `const` si le système ne fait que lire ce composant.
+- Un même type ne peut pas apparaître deux fois : `createSystem<Position, Position>` ne compile pas.
+
+> [!TIP]
+> Le système parcourt le **premier** type de la liste, puis cherche les autres pour chaque entité. Placez en premier le type **le plus rare** : `createSystem<Player, Position>` ne parcourt que les joueurs, alors que `createSystem<Position, Player>` parcourt toutes les positions pour n'en garder qu'une.
+
+### Accéder à l'entité depuis un système
+
+La fonction d'un système reçoit les composants, **pas l'entité**. Pour agir sur l'entité elle-même (la détruire, lui ajouter un composant…), le composant doit **connaître son entité** :
 
 ```cpp
 struct Weapon {
     RType::Entity owner;   // l'entité qui porte ce Weapon
-    int cooldown;
+    int ammo;
 };
 
-gm.createSystem<Weapon>([&gm](Weapon &w) {
-    if (--w.cooldown > 0)
-        return;
-    w.cooldown = 10;
-    const Position &from = gm.getComponent<Position>(w.owner);
+gm.createSystem<Weapon, Position>([&gm](Weapon &w, const Position &from) {
     RType::Entity bullet = gm.createEntity();
     gm.addComponent<Position>(bullet, from.x, from.y);
     gm.addComponent<Velocity>(bullet, 5.f, 0.f);
+    if (--w.ammo <= 0)
+        gm.removeComponent<Weapon>(w.owner);   // plus de munitions : on retire l'arme
 });
 
 RType::Entity ship = gm.createEntity();
 gm.addComponent<Position>(ship, 0.f, 0.f);
-gm.addComponent<Weapon>(ship, ship, 10);   // le Weapon connaît son entité
+gm.addComponent<Weapon>(ship, ship, 30);   // le Weapon connaît son entité
 ```
 
 Lorsque plusieurs données vont toujours ensemble, il est souvent préférable de les regrouper dans un seul composant (comme `Body { x, y, vx, vy }` dans l'exemple d'introduction) : un seul composant, un seul système, aucune recherche.
@@ -397,18 +417,18 @@ Hors `update()`, `destroyEntity` est **immédiat** : il retire les composants du
 **À ne pas faire :**
 
 ```cpp
-for (Lifetime &l : gm.getArray<Lifetime>().getDense())
-    if (l.ticks <= 0)
-        gm.destroyEntity(l.owner);          // INTERDIT : le parcours est corrompu
+for (auto &pack : gm.getArray<Lifetime>().getDense())
+    if (pack.component.ticks <= 0)
+        gm.destroyEntity(pack.entity());    // INTERDIT : le parcours est corrompu
 ```
 
 **À faire :** collectez d'abord, détruisez ensuite.
 
 ```cpp
 std::vector<RType::Entity> expired;
-for (const Lifetime &l : gm.getArray<Lifetime>().getDense())
-    if (l.ticks <= 0)
-        expired.push_back(l.owner);
+for (const auto &pack : gm.getArray<Lifetime>().getDense())
+    if (pack.component.ticks <= 0)
+        expired.push_back(pack.entity());
 for (RType::Entity e : expired)
     gm.destroyEntity(e);
 ```
@@ -552,13 +572,12 @@ struct Missile {
     RType::Entity target;
 };
 
-gm.createSystem<Missile>([&gm](Missile &m) {
+gm.createSystem<Missile, Position>([&gm](Missile &m, Position &pos) {
     if (!gm.hasEntity(m.target)) {
         gm.destroyEntity(m.self);   // plus de cible : le missile s'autodétruit
         return;
     }
     const Position &goal = gm.getComponent<Position>(m.target);
-    Position &pos = gm.getComponent<Position>(m.self);
     pos.x += (goal.x - pos.x) * 0.1f;
     pos.y += (goal.y - pos.y) * 0.1f;
 });
@@ -594,8 +613,8 @@ public:
     ComponentArray<Component> &getArray();   // .getDense(), .nbComponent()
 
     // Systèmes
-    template<typename Component>
-    SystemId createSystem(std::function<void(Component &)> func);
+    template<typename... Components>
+    SystemId createSystem(std::function<void(Components &...)> func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 };
@@ -613,8 +632,8 @@ public:
 | Savoir si une entité possède un composant | `gm.hasComponent<T>(e)` |
 | Retirer un composant | `gm.removeComponent<T>(e)` |
 | Vider une entité sans la détruire | `gm.removeComponents(e)` |
-| Parcourir tous les composants d'un type | `gm.getArray<T>().getDense()` |
+| Parcourir tous les composants d'un type | `gm.getArray<T>().getDense()` (`pack.component`, `pack.entity()`) |
 | Compter les composants d'un type | `gm.getArray<T>().nbComponent()` |
-| Ajouter un comportement | `gm.createSystem<T>(func)` (au démarrage) |
+| Ajouter un comportement | `gm.createSystem<T, ...>(func)` (au démarrage) |
 | Retirer un comportement | `gm.destroySystem(id)` |
 | Faire avancer le jeu d'une frame | `gm.update()` |

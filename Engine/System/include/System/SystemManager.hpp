@@ -53,18 +53,19 @@ namespace RType {
 
         /**
          * @brief Creates and registers a new system.
-         * @tparam Component The component type the system operates on.
-         * @param func Callback applied to each Component instance. It is
-         * moved from.
+         * @tparam Components The component types the system operates on.
+         * @param func Callback applied to each entity that has all the
+         * Components. It is moved from.
          * @return Id identifying the created system, usable with
          * destroySystem.
          */
-        template<typename Component>
-        SystemId createSystem(std::function<void(Component &)> &func)
+        template<typename... Components>
+        SystemId createSystem(std::function<void(Components &...)> &func)
         {
             SystemId id = _nextId++;
 
-            _systems.push_back({id, std::make_unique<System<Component>>(func)});
+            _systems.push_back(
+                {id, std::make_unique<System<Components...>>(func)});
             return id;
         }
 

@@ -368,8 +368,8 @@ namespace {
         });
         gm.update();
         POC_CHECK(gm.getArray<Owned>().nbComponent() == 50);
-        for (const Owned &o : gm.getArray<Owned>().getDense())
-            POC_CHECK(o.value % 2 == 1);
+        for (const auto &pack : gm.getArray<Owned>().getDense())
+            POC_CHECK(pack.component.value % 2 == 1);
     }
 
     void systemDestroysEveryEntity()
@@ -488,9 +488,9 @@ namespace {
             POC_CHECK(moveVisits == static_cast<int>(particles.size()));
             POC_CHECK(ageVisits == static_cast<int>(particles.size()));
             std::vector<Entity> expired;
-            for (const Lifetime &l : gm.getArray<Lifetime>().getDense())
-                if (l.ticks <= 0)
-                    expired.push_back(l.owner);
+            for (const auto &pack : gm.getArray<Lifetime>().getDense())
+                if (pack.component.ticks <= 0)
+                    expired.push_back(pack.component.owner);
             for (Entity e : expired) {
                 gm.destroyEntity(e);
                 std::erase_if(

@@ -9,6 +9,7 @@
 #define GAMEMANAGER_HPP_
 
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 #include "ComponentManager.hpp"
@@ -209,17 +210,22 @@ namespace RType {
 
         /**
          * @brief Creates and registers a new system. Always immediate.
-         * @tparam Component The component type the system operates on.
-         * @param func Callback applied to each Component instance.
+         *
+         * The callback is called once per entity that has all the
+         * Components, with one reference per type, in the same order.
+         * @tparam Components The component types the system operates on.
+         * The first one is iterated over: put the rarest one first.
+         * @param func Callback applied to each matching entity.
          * @return Id identifying the created system, usable with
          * destroySystem.
          * @warning Must not be called during update(): the new system
          * would run in the current frame.
          */
-        template<typename Component>
-        SystemId createSystem(std::function<void(Component &)> func)
+        template<typename... Components>
+        SystemId createSystem(
+            std::type_identity_t<std::function<void(Components &...)>> func)
         {
-            return _sm.createSystem<Component>(func);
+            return _sm.createSystem<Components...>(func);
         }
 
         /**

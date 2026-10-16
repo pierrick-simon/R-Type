@@ -35,6 +35,8 @@ namespace RType {
          */
         explicit Entity(std::size_t index, std::size_t generation = 0);
 
+        Entity() = delete;
+
         /**
          * @brief Compares two handles.
          * @param entity The handle to compare with.

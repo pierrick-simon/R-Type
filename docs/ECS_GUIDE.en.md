@@ -32,7 +32,7 @@ The whole API goes through a single class: **`RType::GameManager`**. The interna
 |---|---|
 | **Entity** (`Entity`) | An identifier that represents a game object (ship, bullet, enemy…). It holds no data. |
 | **Component** | A data struct attached to an entity (position, health…). An entity has at most one component of each type. |
-| **System** | A function called on every component of a given type, once per `update()`. This is where game logic lives. |
+| **System** | A function called, once per `update()`, on every entity that has all the requested components. This is where game logic lives. |
 | **Frame** | One call to `gm.update()`: every system runs once, in order. |
 | **Handle** | The `Entity` value you keep in order to refer to an entity later. |
 
@@ -66,7 +66,7 @@ Three ideas to remember:
 
 - **An entity is just an identifier.** It contains nothing: its components carry the data.
 - **A component is a plain data struct.** No inheritance, no logic.
-- **A system is a function called on every component of a type**, once per `update()`.
+- **A system is a function called on every entity that has the requested components**, once per `update()`.
 
 ---
 
@@ -158,11 +158,15 @@ gm.removeComponents(e);                    // removes ALL components; the entity
 ### Iterating over every component of a type
 
 ```cpp
-for (Health &h : gm.getArray<Health>().getDense())
-    h.hp = std::min(h.hp, 100);
+for (auto &pack : gm.getArray<Health>().getDense()) {
+    pack.component.hp = std::min(pack.component.hp, 100);
+    RType::Entity owner = pack.entity();   // the entity that owns this Health
+}
 
 std::size_t count = gm.getArray<Health>().nbComponent();
 ```
+
+Each element of `getDense()` is a `ComponentPack`: `pack.component` is the component, and `pack.entity()` the entity that owns it. The entity is read-only.
 
 `getArray<T>()` throws `NoSuchComponent` if **no component of type `T` has ever been added**. Once a `T` has existed, the array exists for good (even when empty).
 
@@ -198,31 +202,47 @@ RType::SystemId gravity = gm.createSystem<Velocity>([](Velocity &v) {
 - The component type **must be specified** between angle brackets: `createSystem<Velocity>(...)`.
 - On every `gm.update()`, the function is called **once for each existing `Velocity`**.
 - Systems run **in creation order**. A system sees the changes made by earlier systems during the same frame.
-- A system created before any component of its type exists simply does nothing, without error.
+- As long as one of the requested types has never been added, the system simply does nothing, without error.
 
-### Accessing other components of the same entity
+### A system over several components
 
-A system receives **only the component**, not the entity. To access another component of the same entity, the component must **know its entity**:
+A system can request several component types. The function then receives a reference to each of them, in the same order, and is only called for the entities that have **all** of them:
+
+```cpp
+gm.createSystem<Position, Velocity>([](Position &pos, const Velocity &vel) {
+    pos.x += vel.vx;
+    pos.y += vel.vy;
+});
+```
+
+- An entity that only has some of the types is skipped, without error.
+- A parameter can be `const` if the system only reads that component.
+- The same type cannot appear twice: `createSystem<Position, Position>` does not compile.
+
+> [!TIP]
+> The system iterates over the **first** type of the list, then looks up the other ones for each entity. Put the **rarest** type first: `createSystem<Player, Position>` only iterates over the players, whereas `createSystem<Position, Player>` iterates over every position to keep a single one.
+
+### Accessing the entity from a system
+
+A system's function receives the components, **not the entity**. To act on the entity itself (destroy it, add a component to it…), the component must **know its entity**:
 
 ```cpp
 struct Weapon {
     RType::Entity owner;   // the entity carrying this Weapon
-    int cooldown;
+    int ammo;
 };
 
-gm.createSystem<Weapon>([&gm](Weapon &w) {
-    if (--w.cooldown > 0)
-        return;
-    w.cooldown = 10;
-    const Position &from = gm.getComponent<Position>(w.owner);
+gm.createSystem<Weapon, Position>([&gm](Weapon &w, const Position &from) {
     RType::Entity bullet = gm.createEntity();
     gm.addComponent<Position>(bullet, from.x, from.y);
     gm.addComponent<Velocity>(bullet, 5.f, 0.f);
+    if (--w.ammo <= 0)
+        gm.removeComponent<Weapon>(w.owner);   // out of ammo: remove the weapon
 });
 
 RType::Entity ship = gm.createEntity();
 gm.addComponent<Position>(ship, 0.f, 0.f);
-gm.addComponent<Weapon>(ship, ship, 10);   // the Weapon knows its entity
+gm.addComponent<Weapon>(ship, ship, 30);   // the Weapon knows its entity
 ```
 
 When several pieces of data always go together, it is often better to group them into a single component (like `Body { x, y, vx, vy }` in the opening example): one component, one system, no lookup.
@@ -397,18 +417,18 @@ Outside `update()`, `destroyEntity` is **immediate**: it removes components from
 **Don't:**
 
 ```cpp
-for (Lifetime &l : gm.getArray<Lifetime>().getDense())
-    if (l.ticks <= 0)
-        gm.destroyEntity(l.owner);          // FORBIDDEN: the iteration is corrupted
+for (auto &pack : gm.getArray<Lifetime>().getDense())
+    if (pack.component.ticks <= 0)
+        gm.destroyEntity(pack.entity());    // FORBIDDEN: the iteration is corrupted
 ```
 
 **Do:** collect first, destroy afterwards.
 
 ```cpp
 std::vector<RType::Entity> expired;
-for (const Lifetime &l : gm.getArray<Lifetime>().getDense())
-    if (l.ticks <= 0)
-        expired.push_back(l.owner);
+for (const auto &pack : gm.getArray<Lifetime>().getDense())
+    if (pack.component.ticks <= 0)
+        expired.push_back(pack.entity());
 for (RType::Entity e : expired)
     gm.destroyEntity(e);
 ```
@@ -552,13 +572,12 @@ struct Missile {
     RType::Entity target;
 };
 
-gm.createSystem<Missile>([&gm](Missile &m) {
+gm.createSystem<Missile, Position>([&gm](Missile &m, Position &pos) {
     if (!gm.hasEntity(m.target)) {
         gm.destroyEntity(m.self);   // no target left: the missile self-destructs
         return;
     }
     const Position &goal = gm.getComponent<Position>(m.target);
-    Position &pos = gm.getComponent<Position>(m.self);
     pos.x += (goal.x - pos.x) * 0.1f;
     pos.y += (goal.y - pos.y) * 0.1f;
 });
@@ -594,8 +613,8 @@ public:
     ComponentArray<Component> &getArray();   // .getDense(), .nbComponent()
 
     // Systems
-    template<typename Component>
-    SystemId createSystem(std::function<void(Component &)> func);
+    template<typename... Components>
+    SystemId createSystem(std::function<void(Components &...)> func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 };
@@ -613,8 +632,8 @@ public:
 | Check whether an entity has a component | `gm.hasComponent<T>(e)` |
 | Remove a component | `gm.removeComponent<T>(e)` |
 | Empty an entity without destroying it | `gm.removeComponents(e)` |
-| Iterate over every component of a type | `gm.getArray<T>().getDense()` |
+| Iterate over every component of a type | `gm.getArray<T>().getDense()` (`pack.component`, `pack.entity()`) |
 | Count the components of a type | `gm.getArray<T>().nbComponent()` |
-| Add a behavior | `gm.createSystem<T>(func)` (at startup) |
+| Add a behavior | `gm.createSystem<T, ...>(func)` (at startup) |
 | Remove a behavior | `gm.destroySystem(id)` |
 | Advance the game by one frame | `gm.update()` |

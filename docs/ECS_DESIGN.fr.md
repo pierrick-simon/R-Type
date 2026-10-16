@@ -5,7 +5,7 @@
 Ce document présente l'architecture de l'ECS du moteur (`Engine/System`) et, surtout, **les raisons** des choix retenus.
 
 - **Public visé :** les personnes qui maintiennent ou font évoluer le moteur.
-- **Pour utiliser l'ECS au quotidien**, consultez plutôt [le guide d'utilisation de l'ECS](ECS_GUIDE.md).
+- **Pour utiliser l'ECS au quotidien**, consultez plutôt [le guide d'utilisation de l'ECS](ECS_GUIDE.fr.md).
 
 Seules les signatures sont présentées, jamais le corps des fonctions : ce document décrit une architecture, pas une implémentation. Les signatures sont simplifiées (commentaires Doxygen, `[[nodiscard]]` et constructeurs de copie supprimés omis) ; la référence reste le code dans `Engine/System/include/`.
 
@@ -38,7 +38,7 @@ Le document est organisé en deux parties :
 
 2. **Un `ComponentArray<Component>` par type de composant**, organisé en *sparse set* : `dense` contient les données réelles, regroupées et rapides à parcourir ; `sparse` donne un accès direct en O(1) à partir d'une `Entity`. Les deux rôles sont volontairement séparés : `dense` ne contient que les composants qui existent, tandis que `sparse` peut contenir des trous (il est dimensionné sur la plage d'index d'entités).
 
-3. **Une fonction virtuelle ne peut jamais dépendre du type `Component`.** C'est la règle qui guide tout le découpage entre interfaces (`IComponentArray`, `ISystem`) et classes templates (`ComponentArray<Component>`, `System<Component>`) : une fonction virtuelle doit avoir une signature fixe, connue à la compilation pour construire la vtable, et ne peut donc pas être un template. Tout ce qui manipule le type concret vit uniquement sur la classe template, jamais sur l'interface.
+3. **Une fonction virtuelle ne peut jamais dépendre du type `Component`.** C'est la règle qui guide tout le découpage entre interfaces (`IComponentArray`, `ISystem`) et classes templates (`ComponentArray<Component>`, `System<Components...>`) : une fonction virtuelle doit avoir une signature fixe, connue à la compilation pour construire la vtable, et ne peut donc pas être un template. Tout ce qui manipule le type concret vit uniquement sur la classe template, jamais sur l'interface.
 
 4. **Les entités sont des handles générationnels, pas des objets.** Une `Entity` est un couple *(index, génération)*. L'index est recyclé ; la génération garantit qu'un ancien handle ne désignera jamais la nouvelle entité.
 
@@ -55,10 +55,10 @@ Le document est organisé en deux parties :
 ```text
 GameManager                      façade publique + file de commandes
 ├── ComponentManager             type de composant -> ComponentArray
-│   └── ComponentArray<T>        sparse set (dense : plf::colony<T>)
+│   └── ComponentArray<T>        sparse set (dense : plf::colony<ComponentPack>)
 ├── EntityManager                index + génération, recyclage des index
 └── SystemManager                std::list de systèmes, ordre d'exécution
-    └── System<T>                appelle une fonction sur chaque T
+    └── System<Ts...>            appelle une fonction sur chaque entité qui a tous les Ts
 ```
 
 Toutes les classes sont dans l'espace de noms `RType`.
@@ -137,7 +137,18 @@ public:
 template<typename Component>
 class ComponentArray : public IComponentArray {
 public:
-    using Dense = plf::colony<Component>;
+    class ComponentPack {
+    public:
+        explicit ComponentPack(Entity entity, Component &&c);
+        Entity entity() const;
+
+        Component component;
+
+    private:
+        Entity _entity;
+    };
+
+    using Dense = plf::colony<ComponentPack>;
 
     template<typename... Args>
     Component &addEntity(Entity entity, Args &&...args);
@@ -157,7 +168,11 @@ private:
 
 **Comment `sparse` représente l'absence de composant.** Une case de `sparse` contient soit un itérateur valide vers `dense`, soit un itérateur construit par défaut, qui signifie « pas de composant ». `sparse` est agrandi à la demande, d'environ 1,5 fois l'index demandé, pour amortir les redimensionnements.
 
-**Pourquoi `dense` ne stocke que `Component`, et pas `std::pair<Entity, Component>`.** Le parcours de `getDense()` reste ainsi un simple parcours de composants, et la mémoire contient uniquement des données utiles. En contrepartie, un système ne connaît pas l'entité du composant qu'il traite : un composant qui a besoin de son entité la stocke lui-même (champ `owner`, voir le guide, section 4). Ce compromis est à réévaluer si de nombreux composants finissent par devoir stocker leur entité.
+**Pourquoi `dense` stocke l'entité avec le composant (`ComponentPack`).** Un système sur plusieurs composants (`System<Position, Velocity>`) parcourt le `dense` du premier type, puis doit retrouver les autres composants **de la même entité**. Or `sparse` ne fonctionne que dans le sens entité → composant : sans lien de l'élément vers son entité, le système ne peut pas savoir à qui appartient le composant qu'il parcourt. Un tableau d'entités séparé et parallèle à `dense` (le choix d'EnTT) n'est pas possible avec `plf::colony`, qui n'offre pas d'index stable partagé entre deux conteneurs ; l'entité est donc stockée dans l'élément lui-même. Le surcoût est d'au moins 16 octets par composant, acceptable pour le nombre d'entités d'un R-Type.
+
+**Pourquoi l'`Entity` entière, et pas seulement son index.** L'index suffirait pour interroger les autres tableaux, mais un handle reconstruit à partir de l'index seul aurait une génération fausse : il serait considéré comme périmé dès qu'il sortirait du tableau (vers un système ou vers `GameManager`). Stocker l'`Entity` complète garantit que `pack.entity()` est toujours un vrai handle.
+
+**Pourquoi l'entité est en lecture seule.** `getDense()` est public. Si l'entité d'un `ComponentPack` pouvait être modifiée, `dense` et `sparse` se désynchroniseraient. Elle est donc privée et exposée par un accesseur ; seul `component` est modifiable.
 
 **Pourquoi `ComponentArray` ne vérifie pas la génération.** `sparse` est indexé par `entity.index()` uniquement. La vérification de la génération est faite en amont, une seule fois, par `GameManager` (`hasEntity`) ; et comme la destruction d'une entité retire tous ses composants, un emplacement recyclé ne contient jamais les composants de l'ancienne entité. **Invariant :** aucun code ne doit appeler `ComponentArray` avec un handle non vérifié.
 
@@ -213,14 +228,14 @@ public:
     virtual void update(ComponentManager &cm) = 0;
 };
 
-template<typename Component>
+template<typename... Components>
 class System : public ISystem {
 public:
-    explicit System(std::function<void(Component &)> &func);
-    void update(ComponentManager &cm) override;   // appelle _func sur chaque Component
+    explicit System(std::function<void(Components &...)> &func);
+    void update(ComponentManager &cm) override;   // appelle _func sur chaque entité qui a tous les Components
 
 private:
-    std::function<void(Component &)> _func;
+    std::function<void(Components &...)> _func;
 };
 
 using SystemId = std::size_t;
@@ -236,8 +251,8 @@ class SystemManager {
 public:
     void process(ComponentManager &cm);
 
-    template<typename Component>
-    SystemId createSystem(std::function<void(Component &)> &func);
+    template<typename... Components>
+    SystemId createSystem(std::function<void(Components &...)> &func);
 
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
@@ -248,7 +263,15 @@ private:
 };
 ```
 
-**Pourquoi `update` reçoit un `ComponentManager &`.** Un système a besoin d'accéder aux données typées (`getComponentArray<Component>().getDense()`), pas à une liste brute d'identifiants. `ComponentManager` est le seul point d'accès pertinent. Si aucun composant du type n'a jamais existé (`isComponent<Component>()` est faux), le système ne fait rien.
+**Pourquoi `update` reçoit un `ComponentManager &`.** Un système a besoin d'accéder aux données typées (le `ComponentArray` de chacun de ses types), pas à une liste brute d'identifiants. `ComponentManager` est le seul point d'accès pertinent. Si l'un des types n'a jamais existé (`isComponent<T>()` est faux pour l'un d'eux), le système ne fait rien.
+
+**Comment `System<Components...>` trouve les entités (la jointure).**
+
+1. Les `ComponentArray` de tous les types sont récupérés une seule fois, avant la boucle (`std::tie`).
+2. Le `dense` du **premier** type est parcouru ; chaque `ComponentPack` donne l'entité de l'élément.
+3. Si l'entité possède tous les autres types, la fonction est appelée avec un composant de chaque type, obtenus en O(1) via leurs `sparse`. Sinon, l'entité est ignorée.
+
+Chaque recherche est en O(1), mais il y en a une par élément du **premier** tableau : le coût d'une frame dépend donc de la taille de ce tableau, et non de celle des autres. C'est pourquoi le guide recommande de placer le type le plus rare en premier. Choisir automatiquement le plus petit tableau à chaque `update()` est une amélioration possible.
 
 **Pourquoi `createSystem` renvoie un `SystemId` plutôt qu'un pointeur ou un itérateur.**
 
@@ -290,8 +313,9 @@ public:
     template<typename Component>
     ComponentArray<Component> &getArray();
 
-    template<typename Component>
-    SystemId createSystem(std::function<void(Component &)> func);
+    template<typename... Components>
+    SystemId createSystem(
+        std::type_identity_t<std::function<void(Components &...)>> func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 
@@ -310,6 +334,8 @@ private:
 **Pourquoi une façade unique.** C'est la seule classe que le code de jeu doit connaître. Elle centralise aussi les vérifications transverses : chaque accès à un composant vérifie d'abord `hasEntity` (et donc la génération), ce qui permet aux classes internes de s'en dispenser.
 
 **Pourquoi la copie est interdite.** Les commandes en attente et les fonctions des systèmes capturent souvent `this` ou une référence vers le `GameManager`. Une copie partagerait ces captures avec l'original, ce qui mènerait à des accès vers le mauvais objet.
+
+**Pourquoi `std::type_identity_t` dans `createSystem`.** Les types sont donnés explicitement (`createSystem<Position, Velocity>(lambda)`), mais pour un paquet de paramètres, le compilateur tente quand même d'en déduire d'autres à partir de l'argument. Une lambda n'étant pas un `std::function`, cette déduction échoue et l'appel ne compile pas. `std::type_identity_t` rend le paramètre non déduit : seuls les types explicites sont utilisés, et la lambda est convertie en `std::function`.
 
 ### La file de commandes
 
@@ -361,12 +387,12 @@ struct DisabledSystem<Gravity> {};
 
 ### Prérequis : connaître l'entité pendant le parcours
 
-Pour vérifier si une entité est désactivée, un système doit connaître l'entité du composant qu'il traite. Ce n'est **pas** le cas aujourd'hui : `dense` ne stocke que `Component` (voir [IComponentArray et ComponentArray](#icomponentarray-et-componentarray)). Avant d'implémenter cette extension, il faudra donc choisir entre :
-
-- stocker l'entité dans `dense` (`plf::colony<std::pair<Entity, Component>>`), ce qui modifie le type renvoyé par `getDense()` ;
-- ou maintenir une correspondance inverse *emplacement dense → entité* dans `ComponentArray`.
+Pour vérifier si une entité est désactivée, un système doit connaître l'entité du composant qu'il traite. **Ce prérequis est rempli** : chaque élément de `dense` est un `ComponentPack` qui contient son entité (voir [IComponentArray et ComponentArray](#icomponentarray-et-componentarray)).
 
 ### System\<Component, D\>
+
+> [!WARNING]
+> **Conflit avec le `System` actuel.** Depuis que `System` est variadique (`System<Components...>`), `System<Component, D>` désignerait un système sur **deux composants**, et non un système accompagné d'un tag. Il en va de même pour `createSystem<Component, D>`. Ce design devra être adapté avant toute implémentation, par exemple avec une classe et une fonction au nom distinct. À noter : un système sur plusieurs composants permet déjà de filtrer sur la **présence** d'un tag, mais pas sur son **absence**.
 
 ```cpp
 template<typename Component, typename D>
@@ -385,7 +411,7 @@ private:
 1. `hasComponent<Disabled>(entity)` : désactivation globale ;
 2. `hasComponent<D>(entity)` : désactivation de ce système précis.
 
-**Pourquoi centraliser la vérification de `Disabled` dans `ISystem`.** `System<Component>` (sans `D`) doit *aussi* respecter `Disabled` ; sinon, la désactivation globale n'aurait aucun effet sur les systèmes créés sans tag spécifique. Pour ne pas dupliquer (ou oublier) cette vérification dans chaque variante :
+**Pourquoi centraliser la vérification de `Disabled` dans `ISystem`.** `System<Components...>` (sans `D`) doit *aussi* respecter `Disabled` ; sinon, la désactivation globale n'aurait aucun effet sur les systèmes créés sans tag spécifique. Pour ne pas dupliquer (ou oublier) cette vérification dans chaque variante :
 
 ```cpp
 class ISystem {

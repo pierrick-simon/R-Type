@@ -33,10 +33,39 @@ namespace RType {
     class ComponentArray : public IComponentArray {
     public:
         /**
-         * @brief Packed storage type holding every component. Iteration
-         * order is unspecified.
+         * @brief Element of the dense storage: a component and the entity
+         * that owns it.
+         *
+         * The entity is read-only, so that the dense and sparse storages
+         * cannot get out of sync.
          */
-        using Dense = plf::colony<Component>;
+        class ComponentPack {
+        public:
+            explicit ComponentPack(Entity entity, Component &&c) :
+                _entity(entity), component(std::move(c))
+            {
+            }
+
+            /**
+             * @brief Get the pack's entity.
+             * @return Return the pack's entity.
+             */
+            [[nodiscard]] Entity entity() const
+            {
+                return _entity;
+            }
+
+            Component component;
+
+        private:
+            Entity _entity;
+        };
+
+        /**
+         * @brief Packed storage type holding every component with its
+         * entity. Iteration order is unspecified.
+         */
+        using Dense = plf::colony<ComponentPack>;
 
         explicit ComponentArray() = default;
 
@@ -58,13 +87,14 @@ namespace RType {
         {
             if (hasComponent(entity))
                 throw AlreadyExistingComponent();
-            auto iter = _dense.emplace(std::forward<Args>(args)...);
+            auto iter =
+                _dense.emplace(entity, Component(std::forward<Args>(args)...));
             auto sSize = _sparse.size();
             auto eIndex = entity.index();
             if (sSize <= eIndex)
                 _sparse.resize(eIndex + (eIndex / 2) + 1);
             _sparse[eIndex] = iter;
-            return *iter;
+            return iter->component;
         }
 
         /**
@@ -92,7 +122,7 @@ namespace RType {
         {
             if (!hasComponent(entity))
                 throw NoSuchComponent();
-            return *_sparse[entity.index()];
+            return _sparse[entity.index()]->component;
         }
 
         /**
@@ -117,11 +147,11 @@ namespace RType {
 
         /**
          * @brief Provides direct access to the packed storage.
-         * @return Reference to the dense container of components.
+         * @return Reference to the dense container of ComponentPack.
          * @warning Removing a component while iterating over it
          * invalidates the iteration.
          */
-        Dense &getDense()
+        [[nodiscard]] Dense &getDense()
         {
             return _dense;
         }

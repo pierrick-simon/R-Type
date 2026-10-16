@@ -38,7 +38,7 @@ The document is split into two parts:
 
 2. **One `ComponentArray<Component>` per component type**, organized as a *sparse set*: `dense` holds the actual data, packed and fast to iterate; `sparse` gives direct O(1) access from an `Entity`. The two roles are deliberately separate: `dense` only contains components that exist, while `sparse` may contain holes (it is sized on the range of entity indices).
 
-3. **A virtual function can never depend on the `Component` type.** This rule drives the whole split between interfaces (`IComponentArray`, `ISystem`) and template classes (`ComponentArray<Component>`, `System<Component>`): a virtual function must have a fixed signature, known at compile time to build the vtable, so it cannot be a template. Everything that handles the concrete type lives only on the template class, never on the interface.
+3. **A virtual function can never depend on the `Component` type.** This rule drives the whole split between interfaces (`IComponentArray`, `ISystem`) and template classes (`ComponentArray<Component>`, `System<Components...>`): a virtual function must have a fixed signature, known at compile time to build the vtable, so it cannot be a template. Everything that handles the concrete type lives only on the template class, never on the interface.
 
 4. **Entities are generational handles, not objects.** An `Entity` is an *(index, generation)* pair. The index is recycled; the generation guarantees that an old handle will never refer to the new entity.
 
@@ -55,10 +55,10 @@ The document is split into two parts:
 ```text
 GameManager                      public facade + command queue
 ├── ComponentManager             component type -> ComponentArray
-│   └── ComponentArray<T>        sparse set (dense: plf::colony<T>)
+│   └── ComponentArray<T>        sparse set (dense: plf::colony<ComponentPack>)
 ├── EntityManager                index + generation, index recycling
 └── SystemManager                std::list of systems, execution order
-    └── System<T>                calls a function on every T
+    └── System<Ts...>            calls a function on every entity that has all the Ts
 ```
 
 Every class lives in the `RType` namespace.
@@ -137,7 +137,18 @@ public:
 template<typename Component>
 class ComponentArray : public IComponentArray {
 public:
-    using Dense = plf::colony<Component>;
+    class ComponentPack {
+    public:
+        explicit ComponentPack(Entity entity, Component &&c);
+        Entity entity() const;
+
+        Component component;
+
+    private:
+        Entity _entity;
+    };
+
+    using Dense = plf::colony<ComponentPack>;
 
     template<typename... Args>
     Component &addEntity(Entity entity, Args &&...args);
@@ -157,7 +168,11 @@ private:
 
 **How `sparse` represents a missing component.** A `sparse` slot holds either a valid iterator into `dense`, or a default-constructed iterator meaning "no component". `sparse` grows on demand, to about 1.5 times the requested index, to amortize resizes.
 
-**Why `dense` stores only `Component`, not `std::pair<Entity, Component>`.** This keeps iterating `getDense()` a plain iteration over components, and memory holds only useful data. The trade-off is that a system does not know the entity of the component it is processing: a component that needs its entity stores it itself (an `owner` field, see the user guide, section 4). This trade-off should be revisited if many components end up having to store their entity.
+**Why `dense` stores the entity with the component (`ComponentPack`).** A system over several components (`System<Position, Velocity>`) iterates over the `dense` of the first type, then has to find the other components **of the same entity**. But `sparse` only works in the entity → component direction: without a link from the element to its entity, the system cannot know who owns the component it is iterating over. A separate entity array parallel to `dense` (EnTT's choice) is not possible with `plf::colony`, which offers no stable index shared between two containers; the entity is therefore stored in the element itself. The overhead is at least 16 bytes per component, acceptable for the number of entities in an R-Type.
+
+**Why the whole `Entity`, and not just its index.** The index would be enough to query the other arrays, but a handle rebuilt from the index alone would have a wrong generation: it would be considered stale as soon as it left the array (towards a system or towards `GameManager`). Storing the complete `Entity` guarantees that `pack.entity()` is always a real handle.
+
+**Why the entity is read-only.** `getDense()` is public. If the entity of a `ComponentPack` could be modified, `dense` and `sparse` would get out of sync. It is therefore private and exposed through an accessor; only `component` can be modified.
 
 **Why `ComponentArray` does not check the generation.** `sparse` is indexed by `entity.index()` only. The generation check is done upstream, once, by `GameManager` (`hasEntity`); and since destroying an entity removes all of its components, a recycled slot never holds the previous entity's components. **Invariant:** no code may call `ComponentArray` with an unchecked handle.
 
@@ -213,14 +228,14 @@ public:
     virtual void update(ComponentManager &cm) = 0;
 };
 
-template<typename Component>
+template<typename... Components>
 class System : public ISystem {
 public:
-    explicit System(std::function<void(Component &)> &func);
-    void update(ComponentManager &cm) override;   // calls _func on every Component
+    explicit System(std::function<void(Components &...)> &func);
+    void update(ComponentManager &cm) override;   // calls _func on every entity that has all the Components
 
 private:
-    std::function<void(Component &)> _func;
+    std::function<void(Components &...)> _func;
 };
 
 using SystemId = std::size_t;
@@ -236,8 +251,8 @@ class SystemManager {
 public:
     void process(ComponentManager &cm);
 
-    template<typename Component>
-    SystemId createSystem(std::function<void(Component &)> &func);
+    template<typename... Components>
+    SystemId createSystem(std::function<void(Components &...)> &func);
 
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
@@ -248,7 +263,15 @@ private:
 };
 ```
 
-**Why `update` takes a `ComponentManager &`.** A system needs access to typed data (`getComponentArray<Component>().getDense()`), not to a raw list of identifiers. `ComponentManager` is the only relevant access point. If no component of the type has ever existed (`isComponent<Component>()` is false), the system does nothing.
+**Why `update` takes a `ComponentManager &`.** A system needs access to typed data (the `ComponentArray` of each of its types), not to a raw list of identifiers. `ComponentManager` is the only relevant access point. If one of the types has never existed (`isComponent<T>()` is false for one of them), the system does nothing.
+
+**How `System<Components...>` finds the entities (the join).**
+
+1. The `ComponentArray` of every type is fetched once, before the loop (`std::tie`).
+2. The `dense` of the **first** type is iterated over; each `ComponentPack` gives the element's entity.
+3. If the entity has all the other types, the function is called with one component of each type, obtained in O(1) through their `sparse`. Otherwise, the entity is skipped.
+
+Each lookup is O(1), but there is one per element of the **first** array: the cost of a frame therefore depends on the size of that array, not on the size of the others. This is why the user guide recommends putting the rarest type first. Automatically picking the smallest array on every `update()` is a possible improvement.
 
 **Why `createSystem` returns a `SystemId` rather than a pointer or an iterator.**
 
@@ -290,8 +313,9 @@ public:
     template<typename Component>
     ComponentArray<Component> &getArray();
 
-    template<typename Component>
-    SystemId createSystem(std::function<void(Component &)> func);
+    template<typename... Components>
+    SystemId createSystem(
+        std::type_identity_t<std::function<void(Components &...)>> func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 
@@ -310,6 +334,8 @@ private:
 **Why a single facade.** It is the only class game code needs to know about. It also centralizes cross-cutting checks: every component access first checks `hasEntity` (and therefore the generation), which lets the internal classes skip it.
 
 **Why copying is disabled.** Pending commands and system functions often capture `this` or a reference to the `GameManager`. A copy would share those captures with the original, leading to accesses on the wrong object.
+
+**Why `std::type_identity_t` in `createSystem`.** The types are given explicitly (`createSystem<Position, Velocity>(lambda)`), but for a parameter pack, the compiler still tries to deduce more of them from the argument. Since a lambda is not a `std::function`, that deduction fails and the call does not compile. `std::type_identity_t` makes the parameter non-deduced: only the explicit types are used, and the lambda is converted to a `std::function`.
 
 ### The command queue
 
@@ -361,12 +387,12 @@ struct DisabledSystem<Gravity> {};
 
 ### Prerequisite: knowing the entity during iteration
 
-To check whether an entity is disabled, a system must know the entity of the component it is processing. This is **not** the case today: `dense` only stores `Component` (see [IComponentArray and ComponentArray](#icomponentarray-and-componentarray)). Before implementing this extension, a choice must therefore be made between:
-
-- storing the entity in `dense` (`plf::colony<std::pair<Entity, Component>>`), which changes the type returned by `getDense()`;
-- or maintaining a reverse *dense slot → entity* mapping in `ComponentArray`.
+To check whether an entity is disabled, a system must know the entity of the component it is processing. **This prerequisite is met**: each element of `dense` is a `ComponentPack` that holds its entity (see [IComponentArray and ComponentArray](#icomponentarray-and-componentarray)).
 
 ### System\<Component, D\>
+
+> [!WARNING]
+> **Conflict with the current `System`.** Since `System` became variadic (`System<Components...>`), `System<Component, D>` would mean a system over **two components**, not a system paired with a tag. The same goes for `createSystem<Component, D>`. This design will have to be adapted before any implementation, for example with a class and a function under a distinct name. Note that a system over several components can already filter on the **presence** of a tag, but not on its **absence**.
 
 ```cpp
 template<typename Component, typename D>
@@ -385,7 +411,7 @@ private:
 1. `hasComponent<Disabled>(entity)`: global disabling;
 2. `hasComponent<D>(entity)`: disabling of this specific system.
 
-**Why centralize the `Disabled` check in `ISystem`.** `System<Component>` (without `D`) must *also* respect `Disabled`; otherwise, global disabling would have no effect on systems created without a specific tag. To avoid duplicating (or forgetting) this check in every variant:
+**Why centralize the `Disabled` check in `ISystem`.** `System<Components...>` (without `D`) must *also* respect `Disabled`; otherwise, global disabling would have no effect on systems created without a specific tag. To avoid duplicating (or forgetting) this check in every variant:
 
 ```cpp
 class ISystem {
