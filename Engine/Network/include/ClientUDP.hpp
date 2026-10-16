@@ -14,43 +14,52 @@ namespace RType {
 
     class UDPClient {
     public:
-        UDPClient(const std::string& host, short port);
+        UDPClient(const std::string &host, short port);
         ~UDPClient();
         void start();
         void stop();
 
-        void send(Opcode op, const std::vector<uint8_t>& msg);
+        void send(Opcode op, const std::vector<uint8_t> &msg);
         bool isConnected() const;
         uint16_t getMyId() const;
 
     private:
         void receive();
-        void manageCommands(const Header& head, const std::vector<uint8_t>& payload);
+        void manageCommands(
+            const Header &head, const std::vector<uint8_t> &payload);
 
         void scheduleLogin();
-        void sendNow(Opcode op, const std::vector<uint8_t>& msg);
+        void sendNow(Opcode op, const std::vector<uint8_t> &msg);
 
         asio::io_context context_;
         asio::ip::udp::socket socket_;
         asio::ip::udp::endpoint serverEndpoint_;
-        asio::ip::udp::endpoint senderEndpoint_; 
+        asio::ip::udp::endpoint senderEndpoint_;
         std::vector<uint8_t> recvBuffer_ = std::vector<uint8_t>(1024);
         std::vector<uint8_t> sendBuffer_;
         asio::steady_timer loginTimer_;
 
         uint32_t seq_ = 0;
-        std::atomic<uint16_t> myId_{0};
+        std::atomic<uint16_t> myId_ {0};
         std::thread thread_;
 
         void manageLogin(Header header, std::vector<uint8_t> payload);
         void manageHealth(Header header, std::vector<uint8_t> payload);
 
-        std::map<Opcode, std::function<void(const Header&, const std::vector<uint8_t>&)>> protocolClient_ = {
-            {Opcode::LOGIN,  [this](const Header& h, const std::vector<uint8_t>& p) {manageLogin(h, p);}},
-            {Opcode::HEALTH, [this](const Header& h, const std::vector<uint8_t>& p) {manageHealth(h, p);}},
+        std::map<Opcode,
+            std::function<void(const Header &, const std::vector<uint8_t> &)>>
+            protocolClient_ = {
+                {Opcode::LOGIN,
+                    [this](const Header &h, const std::vector<uint8_t> &p) {
+                        manageLogin(h, p);
+                    }},
+                {Opcode::HEALTH,
+                    [this](const Header &h, const std::vector<uint8_t> &p) {
+                        manageHealth(h, p);
+                    }},
         };
     };
-    
-}
+
+} // namespace RType
 
 #endif
