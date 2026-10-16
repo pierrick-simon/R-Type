@@ -17,23 +17,25 @@ namespace RType {
         if (!onlyOne)
             throw EngineException("Window can be created only once");
         try {
-            this->Init(width, height, name, LOG_WARNING);
+            _window = std::make_unique<raylib::Window>();
+            _window->Init(width, height, name, LOG_WARNING);
+            _audioDevice = std::make_unique<raylib::AudioDevice>();
         } catch (raylib::RaylibException &e) {
             throw(EngineException(e.what()));
         }
         onlyOne = false;
     }
 
-    void Window::systemWindow(Window &w)
+    void Window::systemWindow(const Window &w)
     {
-        static int fps = w.GetFPS();
+        static int fps = w._window->GetFPS();
 
         if (fps != w.fps) {
             fps = w.fps;
-            w.SetTargetFPS(w.fps);
+            w._window->SetTargetFPS(w.fps);
         }
-        w.BeginDrawing();
-        w.ClearBackground(w.clearScreenColor);
-        w.EndDrawing();
+        w._window->BeginDrawing();
+        w._window->ClearBackground(w.clearScreenColor);
+        w._window->EndDrawing();
     }
 } // namespace RType

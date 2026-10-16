@@ -2,10 +2,10 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** KeyBoard
+** Keyboard
 */
 
-#include "KeyBoard.hpp"
+#include "Keyboard.hpp"
 #include <algorithm>
 #include "Exceptions.hpp"
 
@@ -27,14 +27,14 @@ namespace RType {
         throw EngineException("Key not found in the key map");
     }
 
-    KeyBoard::KeyBoard()
+    Keyboard::Keyboard()
     {
         static bool onlyOne = true;
         if (!onlyOne)
-            throw EngineException("You can only have one KeyBoard Component");
+            throw EngineException("You can only have one Keyboard Component");
     }
 
-    void KeyBoard::systemKeyBoard(KeyBoard &k)
+    void Keyboard::systemKeyboard(Keyboard &k)
     {
         k.keyPressed.clear();
         k.keyDown.clear();

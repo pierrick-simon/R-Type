@@ -9,7 +9,7 @@
 
 namespace RType {
     void Text2D::systemText2D(
-        Text2D &text, const Font &font, const Position2D &pos)
+        const Text2D &text, const Font &font, const Position2D &pos)
     {
         ::DrawTextPro(font,
             text.str.c_str(),

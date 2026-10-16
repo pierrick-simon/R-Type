@@ -8,6 +8,7 @@
 #ifndef WINDOW_HPP_
     #define WINDOW_HPP_
 
+    #include <memory>
     #include <raylib-cpp.hpp>
 
 namespace RType {
@@ -17,8 +18,13 @@ namespace RType {
      *
      * Also owns the audio device, so a Window must exist before any
      * Texture2D, Font or Sound is loaded.
+     *
+     * The raylib window and audio device live on the heap and are owned
+     * through unique_ptr: moving a Window transfers them and leaves the
+     * moved-from object empty, so it can't close the real window when it
+     * is destroyed (components are moved around by the ECS).
      */
-    class Window : public raylib::Window {
+    class Window {
     public:
         /**
          * @brief Create the window and initialize the audio device.
@@ -49,10 +55,11 @@ namespace RType {
          *          frame in which the drawing systems (Sprite2D, SpriteSheet2D,
          *          Text2D) are expected to run.
          */
-        static void systemWindow(Window &w);
+        static void systemWindow(const Window &w);
 
     private:
-        raylib::AudioDevice _audioDevice;
+        std::unique_ptr<raylib::Window> _window;
+        std::unique_ptr<raylib::AudioDevice> _audioDevice;
     };
 
 } // namespace RType
