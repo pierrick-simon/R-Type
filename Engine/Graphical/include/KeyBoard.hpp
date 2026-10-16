@@ -14,8 +14,14 @@
 
 namespace RType {
 
+    /**
+     * @brief Key helper converting raylib key codes to RType values.
+     */
     class Key {
     public:
+        /**
+         * @brief Keyboard keys.
+         */
         enum class Value {
             A, //!< The A key
             B, //!< The B key
@@ -124,21 +130,60 @@ namespace RType {
             KeyCount, //!< Keep last -- the total number of keyboard keys
         };
 
+        /**
+         * @brief Convert a raylib key code to a Value.
+         *
+         * @param keyCode The raylib key code.
+         * @return The corresponding Value.
+         *
+         * @throw std::out_of_range If @p keyCode is not a known key
+         *        (if the implementation uses at()).
+         *
+         * @warning Only raylib codes are accepted, not Value integers.
+         */
         static Value getValue(int keyCode);
+
+        /**
+         * @brief Convert a Value to the raylib key code.
+         *
+         * @param value The key.
+         * @return The corresponding raylib key code.
+         *
+         * @throw std::out_of_range If @p value has no mapping
+         *        (if the implementation uses at()).
+         *
+         * @warning Value::KeyCount is not a real key and must not be passed.
+         */
         static int getKeyCode(Value value);
 
     private:
         static const std::unordered_map<int, Value> _keyMap;
     };
 
+    /**
+     * @brief Keyboard state component.
+     *
+     * The state is refreshed once per frame by systemKeyBoard().
+     */
     class KeyBoard {
     public:
+        /**
+         * @brief Create a keyboard with an empty state.
+         */
         KeyBoard();
 
         std::vector<Key::Value> keyPressed;
         std::vector<Key::Value> keyDown;
         std::vector<Key::Value> keyReleased;
 
+        /**
+         * @brief System refreshing the keyboard state.
+         *
+         * @param k The keyboard to update.
+         *
+         * @warning Must be called once per frame, after the window has been
+         *          created, otherwise the state will be stale.
+         */
         static void systemKeyBoard(KeyBoard &k);
 
     private:

@@ -15,6 +15,9 @@
 
 namespace RType {
 
+    /**
+     * @brief Text component drawn on screen at a given position.
+     */
     struct Text2D {
         float fontSize = 10;
         std::string str = "Hello World";
@@ -23,6 +26,17 @@ namespace RType {
         float spacing = 0;
         Origin2D origin;
 
+        /**
+         * @brief System drawing a text.
+         *
+         * @param text The text component to draw.
+         * @param font The font used to render the text.
+         * @param pos  The position where the text is drawn.
+         *
+         * @warning Must be called between the beginning and the end of a
+         *          drawing frame (see Window::systemWindow).
+         * @warning @p font must stay valid for the whole call.
+         */
         static void systemText2D(
             Text2D &text, const Font &font, const Position2D &pos);
     };

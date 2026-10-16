@@ -9,6 +9,12 @@
 #define POSITION2D_HPP_
 
 namespace RType {
+    /**
+     * @brief Position of an entity in 2D space, in pixels.
+     *
+     * The coordinate system follows raylib's: (0, 0) is the top-left corner,
+     * x grows to the right and y grows downward.
+     */
     struct Position2D {
         float x = 0;
         float y = 0;
