@@ -2,11 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-<<<<<<<< HEAD:Engine/Graphical/include/Keyboard.hpp
-** Keyboard
-========
 ** KeyboardManager
->>>>>>>> dev:Engine/Graphical/include/KeyboardManager.hpp
 */
 
 #ifndef KEYBOARDMANAGER_HPP_
@@ -182,20 +178,12 @@ namespace RType {
      *
      * The state is refreshed once per frame by systemKeyboard().
      */
-<<<<<<<< HEAD:Engine/Graphical/include/Keyboard.hpp
-    class Keyboard {
-========
     class KeyboardManager {
->>>>>>>> dev:Engine/Graphical/include/KeyboardManager.hpp
     public:
         /**
          * @brief Create a keyboardManager with an empty state.
          */
-<<<<<<<< HEAD:Engine/Graphical/include/Keyboard.hpp
-        Keyboard();
-========
         KeyboardManager(Key::Layout layout = Key::Layout::AZERTY);
->>>>>>>> dev:Engine/Graphical/include/KeyboardManager.hpp
 
         std::vector<Key::Value> keyPressed;
         std::vector<Key::Value> keyDown;
@@ -211,11 +199,7 @@ namespace RType {
          * @warning Must be called once per frame, after the window has been
          *          created, otherwise the state will be stale.
          */
-<<<<<<<< HEAD:Engine/Graphical/include/Keyboard.hpp
-        static void systemKeyboard(Keyboard &k);
-========
         static void systemKeyboardManager(KeyboardManager &k);
->>>>>>>> dev:Engine/Graphical/include/KeyboardManager.hpp
 
     private:
         std::unordered_set<int> _held;

@@ -5,11 +5,7 @@
 ** Keyboard
 */
 
-<<<<<<<< HEAD:Engine/Graphical/src/Keyboard.cpp
-#include "Keyboard.hpp"
-========
 #include "KeyboardManager.hpp"
->>>>>>>> dev:Engine/Graphical/src/KeyboardManager.cpp
 #include <algorithm>
 #include "Exceptions.hpp"
 
@@ -37,23 +33,15 @@ namespace RType {
         throw EngineException("Key not found in the key map");
     }
 
-<<<<<<<< HEAD:Engine/Graphical/src/Keyboard.cpp
-    Keyboard::Keyboard()
-========
     KeyboardManager::KeyboardManager(Key::Layout layout) :
         layout(layout)
->>>>>>>> dev:Engine/Graphical/src/KeyboardManager.cpp
     {
         static bool onlyOne = true;
         if (!onlyOne)
             throw EngineException("You can only have one Keyboard Component");
     }
 
-<<<<<<<< HEAD:Engine/Graphical/src/Keyboard.cpp
-    void Keyboard::systemKeyboard(Keyboard &k)
-========
     void KeyboardManager::systemKeyboardManager(KeyboardManager &k)
->>>>>>>> dev:Engine/Graphical/src/KeyboardManager.cpp
     {
         k.keyPressed.clear();
         k.keyDown.clear();
