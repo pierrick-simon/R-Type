@@ -81,7 +81,10 @@ set(SYSTEM_LIB_NAME engine-system)
 set(SYSTEM System)
 
 set(SRCS_SYSTEM
-    ${SYSTEM}/src/Empty.cpp
+    ${SYSTEM}/src/GameManager.cpp
+    ${SYSTEM}/src/Entity.cpp
+    ${SYSTEM}/src/ComponentManager.cpp
+    ${SYSTEM}/src/SystemManager.cpp
 )
 
 set(INCLUDE_SYSTEM
