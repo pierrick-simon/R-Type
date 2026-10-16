@@ -5,9 +5,9 @@
 ** Keyboard
 */
 
-#include "KeyboardManager.hpp"
 #include <algorithm>
 #include "Exceptions.hpp"
+#include "KeyboardManager.hpp"
 
 namespace RType {
     Key::Value Key::getValue(int keyCode, Key::Layout layout)
