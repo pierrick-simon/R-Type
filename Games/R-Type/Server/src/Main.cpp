@@ -13,6 +13,7 @@
 #include "SpriteSheet2D.hpp"
 #include "Velocity2D.hpp"
 #include "Keyboard.hpp"
+#include "Friction2D.hpp"
 
 struct Player {
     float speed = 10;
@@ -47,6 +48,7 @@ RType::Entity createSpaceShip(RType::GameManager &gm)
     gm.addComponent<Player>(s);
     gm.addComponent<RType::Position2D>(s, 0, 100);
     gm.addComponent<RType::Velocity2D>(s);
+    gm.addComponent<RType::Friction2D>(s, 100);
     gm.addComponent<RType::Keyboard>(s);
     gm.addComponent<RType::Texture2D>(s, "R-Type/sprites/r-typesheet5.gif");
     gm.addComponent<RType::Clock>(s);
@@ -64,6 +66,7 @@ int main()
         gm.createSystem<RType::SpriteSheet2D, RType::Texture2D, RType::Position2D, RType::Clock>(RType::SpriteSheet2D::systemSpriteSheet2D);
         gm.createSystem<RType::Keyboard>(RType::Keyboard::systemKeyboard);
         gm.createSystem<Player, RType::Velocity2D, RType::Keyboard>(playerMovement);
+        gm.createSystem<RType::Friction2D, RType::Velocity2D, RType::Clock>(RType::Friction2D::systemFriction2D);
         gm.createSystem<RType::Velocity2D, RType::Position2D, RType::Clock>(RType::Velocity2D::systemVelocity2D);
 
         while (!WindowShouldClose())
