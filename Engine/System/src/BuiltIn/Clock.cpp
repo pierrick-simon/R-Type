@@ -8,6 +8,7 @@
 #include "Clock.hpp"
 
 namespace RType {
+
     void Clock::systemClock(Clock &c)
     {
         auto now = std::chrono::steady_clock::now();

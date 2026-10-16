@@ -76,6 +76,7 @@ set(SRCS_SYSTEM
     ${SYSTEM}/src/ComponentManager.cpp
     ${SYSTEM}/src/SystemManager.cpp
     ${SYSTEM}/src/BuiltIn/Clock.cpp
+    ${SYSTEM}/src/BuiltIn/Velocity2D.cpp
 )
 
 set(INCLUDE_SYSTEM
