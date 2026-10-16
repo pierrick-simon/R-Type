@@ -5,6 +5,7 @@
 ** Main
 */
 
+#include <algorithm>
 #include <iostream>
 
 #include "GameManager.hpp"
@@ -16,21 +17,36 @@
 #include "Friction2D.hpp"
 
 struct Player {
-    float speed = 15;
+    float speed = 3000;
 };
 
-void playerMovement(Player &p, RType::Velocity2D &v, RType::Keyboard &k)
+void playerMovement(const Player &p, RType::Velocity2D &v, const RType::Keyboard &k, const RType::Clock &c)
 {
+    const auto s = p.speed * (float(c.getElapsed().count()) / RType::MILLI_IN_SEC);
     for (auto &key : k.keyDown) {
         if (key == RType::Key::Value::Q)
-            v.x -= p.speed;
+            v.x -= s;
         if (key == RType::Key::Value::D)
-            v.x += p.speed;
+            v.x += s;
         if (key == RType::Key::Value::Z)
-            v.y -= p.speed;
+            v.y -= s;
         if (key == RType::Key::Value::S)
-            v.y += p.speed;
+            v.y += s;
     }
+}
+
+void playerAnimation(const Player &p, const RType::Velocity2D &v, RType::SpriteSheet2D &ss)
+{
+    if (v.y < -100)
+        ss.currentTile = 13;
+    else if (v.y < -40)
+        ss.currentTile = 14;
+    else if (v.y > 100)
+        ss.currentTile = 9;
+    else if (v.y > 40)
+        ss.currentTile = 8;
+    else
+        ss.currentTile = 15;
 }
 
 RType::Entity createWindow(RType::GameManager &gm)
@@ -52,6 +68,7 @@ RType::Entity createSpaceShip(RType::GameManager &gm)
     gm.addComponent<RType::Texture2D>(s, "R-Type/sprites/r-typesheet5.gif");
     gm.addComponent<RType::Clock>(s);
     gm.addComponent<RType::SpriteSheet2D>(s, RType::Size2D(1, 16), 0, 200);
+    gm.getComponent<RType::SpriteSheet2D>(s).animation = false;
     return s;
 }
 
@@ -62,9 +79,10 @@ int main()
         auto w = createWindow(gm);
         auto s = createSpaceShip(gm);
         gm.createSystem<RType::Clock>(RType::Clock::systemClock);
-        gm.createSystem<RType::SpriteSheet2D, RType::Texture2D, RType::Position2D, RType::Clock>(RType::SpriteSheet2D::systemSpriteSheet2D);
         gm.createSystem<RType::Keyboard>(RType::Keyboard::systemKeyboard);
-        gm.createSystem<Player, RType::Velocity2D, RType::Keyboard>(playerMovement);
+        gm.createSystem<Player, RType::Velocity2D, RType::Keyboard, RType::Clock>(playerMovement);
+        gm.createSystem<Player, RType::Velocity2D, RType::SpriteSheet2D>(playerAnimation);
+        gm.createSystem<RType::SpriteSheet2D, RType::Texture2D, RType::Position2D>(RType::SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<RType::Friction2D, RType::Velocity2D, RType::Clock>(RType::Friction2D::systemFriction2D);
         gm.createSystem<RType::Velocity2D, RType::Position2D, RType::Clock>(RType::Velocity2D::systemVelocity2D);
 
