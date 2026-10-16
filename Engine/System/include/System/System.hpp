@@ -53,7 +53,7 @@ namespace RType {
             auto &firstComponentArray = std::get<0>(componentArrayList);
             for (auto &component : firstComponentArray.getDense()) {
                 if (!(cm.hasComponent<Components>(component.entity()) && ...))
-                    break;
+                    continue;
                 _func(std::get<ComponentArray<Components> &>(componentArrayList)
                         .getComponent(component.entity())...);
             }
