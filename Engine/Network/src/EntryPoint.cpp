@@ -6,7 +6,7 @@
 */
 
 extern "C" {
-    namespace Engine {
+    namespace RType {
 
     }
 }

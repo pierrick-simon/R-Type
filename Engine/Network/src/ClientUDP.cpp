@@ -5,9 +5,9 @@
 ** ClientUDP.cpp
 */
 
-#include "Network.hpp"
+#include "ClientUDP.hpp"
 
-namespace Engine {
+namespace RType {
 
 UDPClient::UDPClient(const std::string& host, short port) :
     socket_(context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0)),

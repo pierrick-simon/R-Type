@@ -5,14 +5,9 @@
 ** ServerUDP.cpp
 */
 
-#include <asio.hpp>
-#include <iostream>
-#include <vector>
-#include <string>
+#include "ServerUDP.hpp"
 
-#include "Network.hpp"
-
-namespace Engine {
+namespace RType {
 
 UDPServer::UDPServer(short port) :
     socket_(context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)), healthTimer_(context_)
@@ -106,7 +101,7 @@ void UDPServer::broadcastNow(Opcode op, const std::vector<uint8_t>& payload)
 void UDPServer::manageCommand(Header header, std::vector<uint8_t> payload)
 {
     if (header.type == Opcode::LOGIN) {
-        login(header, payload);
+        manageLogin(header, payload);
         return;
     }
     auto it = clients_.find(header.senderId);
@@ -115,21 +110,35 @@ void UDPServer::manageCommand(Header header, std::vector<uint8_t> payload)
     std::string text(payload.begin(), payload.end());
     std::cout << "Reçu de ." << header.senderId << ". : " << text << std::endl;
     it->second.lastSeen = std::chrono::steady_clock::now();
-    if (header.type == Opcode::HEALTH)
-        return; 
+    for (const auto &[opcode, func] : protocol_) {
+        if (header.type == opcode) {
+            func(header, payload);
+            return;
+        }
+    }
+}
+
+void UDPServer::manageLogout(Header header, std::vector<uint8_t>)
+{
+    std::cout << "Client " << header.senderId << " logged out" << std::endl;
+    clients_.erase(header.senderId);
+}
+
+void UDPServer::manageHealth(Header, std::vector<uint8_t>)
+{
     return;
 }
 
-void UDPServer::login(Header header, std::vector<uint8_t> payload)
+void UDPServer::manageLogin(Header header, std::vector<uint8_t> payload)
 {
     std::cout << "Login" << std::endl;
-    nbClients += 1;
-    Client& c = clients_[nbClients];
+    nextId_ += 1;
+    Client& c = clients_[nextId_];
 
-    c.id = nbClients;
+    c.id = nextId_;
     c.endpoint = remoteEndpoint_;
-    std::cout << "nb clients :" << nbClients << std::endl;
-    sendToClient(c, Opcode::LOGIN, {static_cast<uint8_t>(nbClients >> 8), static_cast<uint8_t>(nbClients)});
+    std::cout << "Total clients :" << nextId_ << std::endl;
+    sendToClient(c, Opcode::LOGIN, {static_cast<uint8_t>(nextId_ >> 8), static_cast<uint8_t>(nextId_)});
 }
 
 

@@ -7,7 +7,7 @@
 
 #include "Network.hpp"
 
-namespace Engine {
+namespace RType {
 
 static inline void put16(uint8_t* p, uint16_t v)
 {
