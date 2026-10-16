@@ -1,7 +1,7 @@
 #!/bin/bash
 CMAKE_DIRECTORY="build"
 CLANG_TIDY="clang-tidy"
-STD="c++26"
+STD="c++20"
 
 for var in "$@"; do
   echo "The flag \"$var\" is not recognized!" >&2

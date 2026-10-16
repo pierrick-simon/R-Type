@@ -1,0 +1,45 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** IComponentArray
+*/
+
+#ifndef ICOMPONENTARRAY_HPP_
+#define ICOMPONENTARRAY_HPP_
+
+#include <cstddef>
+#include "Entity.hpp"
+
+namespace RType {
+
+    /**
+     * @brief Type-erased base class for ComponentArray<Component>.
+     */
+    class IComponentArray {
+    public:
+        virtual ~IComponentArray() = default;
+
+        /** @brief Returns the number of components stored. */
+        [[nodiscard]] virtual std::size_t nbComponent() const = 0;
+
+        /**
+         * @brief Removes the component associated with an entity.
+         * @param entity The entity whose component should be removed.
+         * @throw NoSuchComponent If the entity has no component in this
+         * array.
+         */
+        virtual void removeEntity(Entity entity) = 0;
+
+        /**
+         * @brief Checks whether an entity has a component in this array.
+         * @param entity The entity to check.
+         * @return true if the entity has a component here, false
+         * otherwise.
+         */
+        [[nodiscard]] virtual bool hasComponent(Entity entity) const = 0;
+    };
+
+} // namespace RType
+
+#endif /* !ICOMPONENTARRAY_HPP_ */
