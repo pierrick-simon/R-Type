@@ -92,25 +92,6 @@ add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
 target_include_directories(${SYSTEM_LIB_NAME} PUBLIC ${INCLUDE_SYSTEM})
 target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC plf-colony)
 
-# Create Network engine lib
-
-set(NETWORK_LIB_NAME engine-network)
-set(NETWORK Network)
-
-set(SRCS_NETWORK
-    ${NETWORK}/src/ClientUDP.cpp
-    ${NETWORK}/src/ServerUDP.cpp
-    ${NETWORK}/src/Utils.cpp
-    ${NETWORK}/src/EngineServer.cpp
-    ${NETWORK}/src/EngineClient.cpp
-)
-
-add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
-target_include_directories(${NETWORK_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
-)
-target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system asio::asio)
-
 # Create Graphical engine lib
 
 set(GRAPHICAL_LIB_NAME engine-graphical)
@@ -138,3 +119,22 @@ target_link_libraries(${GRAPHICAL_LIB_NAME} PUBLIC engine-system raylib-cpp::ray
 if (MSVC)
     target_compile_options(${GRAPHICAL_LIB_NAME} PRIVATE /wd4251)
 endif ()
+
+# Create Network engine lib
+
+set(NETWORK_LIB_NAME engine-network)
+set(NETWORK Network)
+
+set(SRCS_NETWORK
+    ${NETWORK}/src/ClientUDP.cpp
+    ${NETWORK}/src/ServerUDP.cpp
+    ${NETWORK}/src/Utils.cpp
+    ${NETWORK}/src/ServerManager.cpp
+    ${NETWORK}/src/ClientManager.cpp
+)
+
+add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
+target_include_directories(${NETWORK_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
+)
+target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system engine-graphic asio::asio)
