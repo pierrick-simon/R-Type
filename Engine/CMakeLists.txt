@@ -137,4 +137,4 @@ add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
 target_include_directories(${NETWORK_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
 )
-target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system engine-graphic asio::asio)
+target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system engine-graphical asio::asio)

@@ -8,6 +8,7 @@
 #ifndef CLIENTUDP_HPP
     #define CLIENTUDP_HPP
 
+    #include "Exceptions.hpp"
     #include "GameManager.hpp"
     #include "Network.hpp"
 
@@ -22,9 +23,16 @@ namespace RType {
 
         void received(GameManager &gm);
 
-        void send(Opcode op, const std::vector<uint8_t> &msg);
+        void send(uint8_t op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
         [[nodiscard]] uint16_t getMyId() const;
+
+        void addManage(uint8_t op, ManageFunc func);
+
+        class ClientException : public EngineException {
+            ClientException(const std::string &str) :
+                EngineException("Client error: " + str) {};
+        };
 
     private:
         void receive();
@@ -32,7 +40,7 @@ namespace RType {
             const Header &head, const std::vector<uint8_t> &payload);
 
         void scheduleLogin();
-        void sendNow(Opcode op, const std::vector<uint8_t> &msg);
+        void sendNow(uint8_t op, const std::vector<uint8_t> &msg);
 
         asio::io_context context_;
         asio::ip::udp::socket socket_;
@@ -51,17 +59,15 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
-        std::map<Opcode,
-            std::function<void(const Header &, const std::vector<uint8_t> &)>>
-            protocolClient_ = {
-                {Opcode::LOGIN,
-                    [this](const Header &h, const std::vector<uint8_t> &p) {
-                        manageLogin(h, p);
-                    }},
-                {Opcode::HEALTH,
-                    [this](const Header &h, const std::vector<uint8_t> &p) {
-                        manageHealth(h, p);
-                    }},
+        std::map<uint8_t, ManageFunc> protocolClient_ = {
+            {Opcode::LOGIN,
+                [this](const Header &h, const std::vector<uint8_t> &p) {
+                    manageLogin(h, p);
+                }},
+            {Opcode::HEALTH,
+                [this](const Header &h, const std::vector<uint8_t> &p) {
+                    manageHealth(h, p);
+                }},
         };
     };
 
