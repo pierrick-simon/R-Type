@@ -2,15 +2,15 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** KeyBind
+** Keybind
 */
 
-#include "KeyBind.hpp"
+#include "Keybind.hpp"
 #include <utility>
 #include <vector>
 
 namespace RType {
-    void KeyBind::remap(const KeyBind &bind, std::vector<Key::Value> &keys,
+    void Keybind::remap(const Keybind &bind, std::vector<Key::Value> &keys,
         std::vector<MouseButton::Value> &buttons)
     {
         std::vector<Key::Value> newKeys;
@@ -48,8 +48,8 @@ namespace RType {
         buttons = std::move(newButtons);
     }
 
-    void KeyBind::systemUpdateKeyBind(
-        const KeyBind &bind, MouseManager &mouse, KeyboardManager &keyboard)
+    void Keybind::systemUpdateKeybind(
+        const Keybind &bind, MouseManager &mouse, KeyboardManager &keyboard)
     {
         remap(bind, keyboard.keyPressed, mouse.buttonPressed);
         remap(bind, keyboard.keyDown, mouse.buttonDown);

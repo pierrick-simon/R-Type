@@ -9,11 +9,9 @@
 
 namespace RType {
     ServerManager::ServerManager(short port, bool defaultProtocole) :
-        _udp(std::make_unique<UDPServer>(port))
+        _udp(std::make_unique<UDPServer>(port)),
+        _defaultProtocole(defaultProtocole)
     {
-        if (defaultProtocole)
-            createDefaultProtocol();
-        _udp->start();
     }
 
     void ServerManager::createDefaultProtocol()
@@ -21,20 +19,26 @@ namespace RType {
     }
 
     void ServerManager::systemServerReceived(
-        ServerManager &server, GameManager &gm)
+        GameManager &gm, ServerManager &server)
     {
-        server._ctx->gm = std::ref(gm);
+        if (server._first) {
+            server._first = false;
+            if (server._defaultProtocole)
+                server.createDefaultProtocol();
+            server._udp->start();
+        }
+        server._ctx.gm = std::ref(gm);
         server._udp->received();
-        server._ctx->gm.reset();
+        server._ctx.gm.reset();
     }
 
     void ServerManager::addContextManage(uint8_t op,
-        const std::function<void(const Header &, const std::vector<uint8_t> &,
-            std::shared_ptr<Context>)> &func)
+        const std::function<void(
+            const Header &, const std::vector<uint8_t> &, Context &)> &func)
     {
-        _udp->addManage(op,
-            [ctx = _ctx, func](const Header &h, const std::vector<uint8_t> &p) {
-                func(h, p, ctx);
+        _udp->addManage(
+            op, [this, func](const Header &h, const std::vector<uint8_t> &p) {
+                func(h, p, _ctx);
             });
     }
 }; // namespace RType

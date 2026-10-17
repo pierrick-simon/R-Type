@@ -107,7 +107,7 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Texture2D.cpp
     ${GRAPHICAL}/src/KeyboardManager.cpp
     ${GRAPHICAL}/src/MouseManager.cpp
-    ${GRAPHICAL}/src/KeyBind.cpp
+    ${GRAPHICAL}/src/Keybind.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})

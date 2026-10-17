@@ -10,11 +10,9 @@
 namespace RType {
     ClientManager::ClientManager(
         const std::string &host, short port, bool defaultProtocole) :
-        _udp(std::make_unique<UDPClient>(host, port))
+        _udp(std::make_unique<UDPClient>(host, port)),
+        _defaultProtocole(defaultProtocole)
     {
-        if (defaultProtocole)
-            createDefaultProtocol();
-        _udp->start();
     }
 
     void ClientManager::createDefaultProtocol()
@@ -22,11 +20,17 @@ namespace RType {
     }
 
     void ClientManager::systemClientReceived(
-        ClientManager &client, GameManager &gm)
+        GameManager &gm, ClientManager &client)
     {
-        client._ctx->gm = std::ref(gm);
+        if (client._first) {
+            client._first = false;
+            if (client._defaultProtocole)
+                client.createDefaultProtocol();
+            client._udp->start();
+        }
+        client._ctx.gm = std::ref(gm);
         client._udp->received();
-        client._ctx->gm.reset();
+        client._ctx.gm.reset();
     }
 
     void ClientManager::send(const Opcode op, const std::vector<uint8_t> &payload)
@@ -35,12 +39,12 @@ namespace RType {
     }
 
     void ClientManager::addContextManage(uint8_t op,
-        const std::function<void(const Header &, const std::vector<uint8_t> &,
-            std::shared_ptr<Context>)> &func)
+        const std::function<void(
+            const Header &, const std::vector<uint8_t> &, Context &)> &func)
     {
-        _udp->addManage(op,
-            [ctx = _ctx, func](const Header &h, const std::vector<uint8_t> &p) {
-                func(h, p, ctx);
+        _udp->addManage(
+            op, [this, func](const Header &h, const std::vector<uint8_t> &p) {
+                func(h, p, _ctx);
             });
     }
 }; // namespace RType
