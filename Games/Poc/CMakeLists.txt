@@ -13,6 +13,9 @@ set(SRCS
         src/Simulation.cpp
         src/Systems.cpp
         src/MultiSystems.cpp
+        src/Views.cpp
+        src/FrameSystems.cpp
+        src/GmSystems.cpp
         src/Recycling.cpp
         src/Tricky.cpp
         src/ThrowTrace.cpp

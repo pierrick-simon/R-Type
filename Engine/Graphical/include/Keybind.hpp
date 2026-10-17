@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** KeyBind
+** Keybind
 */
 
 #ifndef KEYBIND_HPP_
@@ -22,7 +22,7 @@ namespace RType {
      * Inputs without a binding are left untouched. A bound input is removed
      * from its original list and added to the list of its target.
      */
-    class KeyBind {
+    class Keybind {
     public:
         /** @brief Keyboard key -> another keyboard key. */
         std::unordered_map<Key::Value, Key::Value> _keyToKey;
@@ -53,7 +53,7 @@ namespace RType {
          *          KeyboardManager::systemKeyboardManager(), since those
          *          systems rebuild the lists from the raw input each frame.
          */
-        static void systemUpdateKeyBind(const KeyBind &bind,
+        static void systemUpdateKeybind(const Keybind &bind,
             MouseManager &mouse, KeyboardManager &keyboard);
 
     private:
@@ -78,7 +78,7 @@ namespace RType {
          * example both "pressed"), since inputs can move from one list to the
          * other.
          */
-        static void remap(const KeyBind &bind, std::vector<Key::Value> &keys,
+        static void remap(const Keybind &bind, std::vector<Key::Value> &keys,
             std::vector<MouseButton::Value> &buttons);
 
         /**
