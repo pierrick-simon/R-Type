@@ -65,11 +65,11 @@ namespace RType {
          * @brief Add the default manage function to the udp Client.
          */
         void createDefaultProtocole();
-        void manageSprite(
-            const Header &header, const std::vector<uint8_t> &payload);
+        static void manageSprite(
+            const Header &header, const std::vector<uint8_t> &payload, std::shared_ptr<Context> _ctx);
 
         std::unique_ptr<UDPClient> _udp;
-        std::optional<std::reference_wrapper<GameManager>> _gm;
+        std::shared_ptr<Context> _ctx = std::make_shared<Context>();
     };
 } // namespace RType
 

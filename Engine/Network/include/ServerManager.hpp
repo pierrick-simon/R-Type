@@ -69,7 +69,7 @@ namespace RType {
         void createDefaultProtocole();
 
         std::unique_ptr<UDPServer> _udp;
-        std::optional<std::reference_wrapper<GameManager>> _gm;
+        std::shared_ptr<Context> _ctx = std::make_shared<Context>();
     };
 } // namespace RType
 

@@ -8,6 +8,7 @@
 #include "ClientManager.hpp"
 #include "Position2D.hpp"
 #include "Sprite2D.hpp"
+#include <iostream>
 
 namespace RType {
     ClientManager::ClientManager(
@@ -22,27 +23,29 @@ namespace RType {
     void ClientManager::createDefaultProtocole()
     {
         _udp->addManage(
-            SPRITE, [this](const Header &h, const std::vector<uint8_t> &p) {
-                manageSprite(h, p);
+            SPRITE, [ctx = _ctx](const Header &h, const std::vector<uint8_t> &p) {
+                manageSprite(h, p, ctx);
             });
     }
 
     void ClientManager::systemClientReceived(
         ClientManager &client, GameManager &gm)
     {
-        client._gm = std::ref(gm);
+        client._ctx->gm = std::ref(gm);
         client._udp->received();
-        client._gm.reset();
+        client._ctx->gm.reset();
     }
 
     void ClientManager::manageSprite(
-        const Header &header, const std::vector<uint8_t> &payload)
+        const Header &header, const std::vector<uint8_t> &payload, std::shared_ptr<Context> ctx)
     {
-        if (!_gm)
+        if (!ctx->gm) {
             return;
-        auto e = _gm->get().createEntity();
-        _gm->get().addComponent<RType::Position2D>(e, 0, 0);
-        _gm->get().addComponent<RType::Texture2D>(e, "loading.png");
-        _gm->get().addComponent<RType::Sprite2D>(e);
+        }
+        auto e = ctx->gm->get().createEntity();
+        ctx->gm->get().addComponent<RType::Position2D>(e, 0, 0);
+        ctx->gm->get().addComponent<RType::Texture2D>(e, "loading.png");
+        ctx->gm->get().addComponent<RType::Sprite2D>(e);
+        ctx->map.emplace(0, e);
     }
 }; // namespace RType

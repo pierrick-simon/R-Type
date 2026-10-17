@@ -36,7 +36,7 @@ int main()
         while (true) {
             gm.update();
             elapsed += gm.getComponent<RType::Clock>(c).getElapsed();
-            if (elapsed.count() / 10000 > 1 && !yes) {
+            if (elapsed.count() / 5000 > 1 && !yes) {
                 yes = true;
                 gm.getComponent<RType::ServerManager>(s).send();
                 std::cout << elapsed << "\n";
