@@ -22,6 +22,7 @@ Changes that are considered but not implemented are listed at the end, in [What 
   - [Components](#components)
   - [IComponentArray and ComponentArray](#icomponentarray-and-componentarray)
   - [ComponentManager](#componentmanager)
+  - [View](#view)
   - [ISystem, System and SystemManager](#isystem-system-and-systemmanager)
   - [GameManager (facade)](#gamemanager-facade)
   - [The command queue](#the-command-queue)
@@ -53,9 +54,10 @@ Changes that are considered but not implemented are listed at the end, in [What 
 GameManager                      public facade + command queue
 ├── ComponentManager             component type -> ComponentArray
 │   └── ComponentArray<T>        sparse set (dense: plf::colony<ComponentPack>)
+├── View<Ts...>                  iterates over the entities that have all the Ts (join)
 ├── EntityManager                index + generation, index recycling
 └── SystemManager                std::list of systems, execution order
-    └── System<Ts...>            calls a function on every entity that has all the Ts
+    └── System<Ts...>            loop over a View<Ts...>; no type: once per frame
 ```
 
 Every class lives in the `RType` namespace.
@@ -216,6 +218,55 @@ private:
 
 **Why `removeComponents(Entity)` exists alongside `removeComponent<Component>`.** When an entity is destroyed, its components must be removed from *every* array, without knowing their types at that point in the code. This is the main use case for polymorphism: we iterate over `_components` and call `hasComponent` then `removeEntity` through the interface.
 
+### View
+
+```cpp
+template<typename Component, typename... Components>
+constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
+
+template<typename... Components>
+class View {
+public:
+    static_assert(((duplicateCheck<Components, Components...> == 1) && ...));
+
+    explicit View(ComponentManager &cm);
+    void each(std::function<void(Entity, Components &...)> f);
+
+private:
+    std::tuple<ComponentArray<Components> *...> _view;   // nullptr if the type has never existed
+
+    void iterateSmallest(std::function<void(Entity, Components &...)> &f,
+        ComponentArray<Components> &...arrays);
+    template<typename Array>
+    void iterate(std::function<void(Entity, Components &...)> &f, Array &smallest,
+        ComponentArray<Components> &...arrays);
+};
+```
+
+**Why a view.** Iterating over the entities that have *several* component types (the *join*) is useful everywhere: in a system, in a frame system (collisions), or outside any frame (network, rendering). The view makes this join available anywhere, and provides the entity on top of the components. `System<Components...>` is now just a loop over a view.
+
+**How the view finds the entities (the join).**
+
+1. The constructor fetches, once, a pointer to the `ComponentArray` of each type.
+2. `each` opens the tuple with `std::apply` to get the arrays as a pack, then calls `iterateSmallest`.
+3. `iterateSmallest` computes the smallest size (`std::min` over the `nbComponent()`), then calls `iterate` on the **first array of that size**, and on it only (fold over `||`, which stops at the first `true`).
+4. `iterate` iterates over the `dense` of that array; each `ComponentPack` gives the element's entity. If the entity has all the other types, the function is called with the entity and one component of each type, obtained in O(1) directly from the arrays (without going through `ComponentManager` again). Otherwise, the entity is skipped.
+
+**Why iterate over the smallest array.** Each lookup is O(1), but there is one per element of the iterated array: the cost therefore depends on the size of that array, not on the size of the others. For `View<Position, Player>` with 1000 positions and a single player, iterating over `Position` would cost 1000 lookups, 999 of them useless; iterating over `Player` costs only one. The choice is made again on every `each`, since sizes change during the game.
+
+**Why `iterate` is a template.** The array to iterate over is only known at runtime, but its type (`ComponentArray<Position>` or `ComponentArray<Player>`) must be known at compile time: no variable can refer to "one or the other". The loop is therefore written once, as a template over the array type, and the fold instantiates it for each possible type; only the instance matching the smallest array is called.
+
+**Why pointers, stored in a `std::tuple`.**
+
+- **Pointers rather than references:** if a type has never been added, `getComponentArray<T>()` would throw. The view then stores `nullptr`, and `each` does nothing: a view on a missing type is empty, without exception. A reference cannot mean "nothing".
+- **A tuple:** a pack cannot be a class member (`ComponentArray<Components> *...arrays;` is not valid C++). The tuple stores one pointer per type, and `std::apply` turns it back into a pack when iterating.
+
+**Why forbid a duplicated type, and at compile time.** With `View<Position, Position>`, the function would receive two references to **the same** component: a source of silent bugs (two writes overwriting each other), with no legitimate use case. A `static_assert` turns this bug into a compile-time error, with a readable message. `duplicateCheck<T, Components...>` counts the occurrences of `T` in the pack (a fold over `+` of `std::is_same_v`); the outer fold over `&&` requires every type to appear exactly once. Comparing each type with the first one only would not be enough: `<Position, Velocity, Velocity>` would get through. `System` carries the same `static_assert`, so that the error points at `createSystem` rather than at an internal view.
+
+**Why a view is not a cache.** It only stores pointers to the arrays, never a list of entities: it therefore always sees the current state, and creating one only costs a few lookups in `ComponentManager`. It never needs to be invalidated or updated, but it is meant to be used right away, then thrown away.
+
+**Why `each` takes a `std::function`.** It is the simplest form, and it accepts `const` parameters. The cost is one indirect call per entity; a template parameter (`template<typename F> void each(F &&f)`) would avoid it (see [What is left to do](#what-is-left-to-do)).
+
 ### ISystem, System and SystemManager
 
 ```cpp
@@ -225,23 +276,16 @@ public:
     virtual void update(ComponentManager &cm) = 0;
 };
 
-template<typename Component, typename... Components>
-constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
-
 template<typename... Components>
 class System : public ISystem {
 public:
     static_assert(((duplicateCheck<Components, Components...> == 1) && ...));
 
     explicit System(std::function<void(Components &...)> &func);
-    void update(ComponentManager &cm) override;   // calls _func on every entity that has all the Components
+    void update(ComponentManager &cm) override;   // a View<Components...>, or _func() once if no type
 
 private:
     std::function<void(Components &...)> _func;
-
-    void iterateSmallest(ComponentArray<Components> &...arrays);
-    template<typename Array>
-    void iterate(Array &smallest, ComponentArray<Components> &...arrays);
 };
 
 using SystemId = std::size_t;
@@ -271,17 +315,11 @@ private:
 
 **Why `update` takes a `ComponentManager &`.** A system needs access to typed data (the `ComponentArray` of each of its types), not to a raw list of identifiers. `ComponentManager` is the only relevant access point. If one of the types has never existed (`isComponent<T>()` is false for one of them), the system does nothing.
 
-**How `System<Components...>` finds the entities (the join).**
+**How `System<Components...>` finds the entities.** `update` creates a `View<Components...>` and calls `each` with a lambda that ignores the entity and calls `_func` with the components. The whole join (smallest array, missing types, duplicates) is therefore the view's: see [View](#view).
 
-1. `update` fetches the `ComponentArray` of every type once, then passes them to `iterateSmallest` as a parameter pack.
-2. `iterateSmallest` computes the smallest size (`std::min` over the `nbComponent()`), then calls `iterate` on the **first array of that size**, and on it only (fold over `||`, which stops at the first `true`).
-3. `iterate` iterates over the `dense` of that array; each `ComponentPack` gives the element's entity. If the entity has all the other types, the function is called with one component of each type, obtained in O(1) directly from the arrays it received (without going through `ComponentManager` again). Otherwise, the entity is skipped.
+**Why a system without types is a frame system.** Some processing does not concern *one* entity: collisions between two groups, enemy waves spawning, the score. Rather than a second API, an empty pack takes on that meaning: with `Components` empty, `std::function<void(Components &...)>` naturally becomes `std::function<void()>`, and `update` calls `_func()` only once. The system keeps everything else: its `SystemId`, its rank in execution order, and the protection of the command queue. Thanks to `std::type_identity_t`, the pack is deduced as empty when no type is given: `createSystem(func)` and `createSystem<>(func)` are equivalent.
 
-**Why iterate over the smallest array.** Each lookup is O(1), but there is one per element of the iterated array: the cost of a frame therefore depends on the size of that array, not on the size of the others. For `System<Position, Player>` with 1000 positions and a single player, iterating over `Position` would cost 1000 lookups, 999 of them useless; iterating over `Player` costs only one. The choice is made again on every `update()`, since sizes change during the game.
-
-**Why forbid a duplicated type, and at compile time.** With `System<Position, Position>`, the function would receive two references to **the same** component: a source of silent bugs (two writes overwriting each other), with no legitimate use case. A `static_assert` turns this bug into a compile-time error, with a readable message. `duplicateCheck<T, Components...>` counts the occurrences of `T` in the pack (a fold over `+` of `std::is_same_v`); the outer fold over `&&` requires every type to appear exactly once. Comparing each type with the first one only would not be enough: `<Position, Velocity, Velocity>` would get through.
-
-**Why `iterate` is a template.** The array to iterate over is only known at runtime, but its type (`ComponentArray<Position>` or `ComponentArray<Player>`) must be known at compile time: no variable can refer to "one or the other". The loop is therefore written once, as a template over the array type, and the fold instantiates it for each possible type; only the instance matching the smallest array is called.
+**Why `if constexpr` in `update`.** With a plain `if`, both branches would be compiled for **every** `System`: `_func()` would not compile for a `System<Health>` (its function expects a `Health &`), and `View<>` would not compile for a `System<>` (`std::min` over an empty list). `if constexpr` discards from compilation the branch that does not match the pack; the `else` is required for the second branch to be discarded too.
 
 **Why `createSystem` returns a `SystemId` rather than a pointer or an iterator.**
 
@@ -322,6 +360,9 @@ public:
     bool hasComponent(Entity entity) const;
     template<typename Component>
     ComponentArray<Component> &getArray();
+
+    template<typename... Components>
+    View<Components...> view();
 
     template<typename... Components>
     SystemId createSystem(
@@ -381,11 +422,21 @@ These changes are **not implemented**. Only their principle is described here.
 
 `sparse` currently stores one `plf::colony::iterator` per entity index, that is 24 bytes per slot, for every component type, including for entities that do not have that component. A plain `ComponentPack *` (8 bytes, `nullptr` for "no component") would be enough: `plf::colony` guarantees that an element does not move as long as it is not removed. Only `removeEntity` needs an iterator, for `erase`: it can get it back with `_dense.get_iterator(pointer)`, an operation slower than a direct access, but rare and always deferred.
 
+### Receiving the entity in a system's function
+
+Allow `createSystem<Lifetime>([&gm](Entity e, Lifetime &l) {...})`, alongside the current form, to remove the `owner`/`self` fields from components. The view already provides the entity; the difficulty is accepting **both** function forms. `createSystem` would have to take any callable (`template<typename... Components, typename F>`), detect the form with `std::is_invocable_v`, and wrap the form without entity in a lambda that ignores it (capturing the function **by value**). `System` would then always store the form with the entity, except for a frame system, which has no entity (`std::conditional_t`). A generic lambda, which accepts both forms, would require choosing a priority.
+
+### Improving the view
+
+- **The `for` syntax**: `for (auto [e, pos, vel] : gm.view<Position, Velocity>())`, which allows `break` and `continue`. It requires writing an iterator that encapsulates "iterate over the smallest array and skip incomplete entities".
+- **A template `each`**: `template<typename F> void each(F &&f)` would avoid the indirect `std::function` call for each entity.
+- **Pairs**: `eachPair`, which yields each pair of entities only once (like `iter_combinations` in Bevy), for collisions between entities of the same group.
+
 ### Enabling and disabling an entity
 
 Allow pausing an entity (freezing an enemy, a cutscene, a death animation…), for every system or for a single one, without removing its components. The prerequisite is met, since each `ComponentPack` knows its entity: a system can therefore check, for each entity it iterates over, whether a disabling "tag" component is present. Two points remain to be designed:
 
 - **how to refer to a specific system**: `System<Component, Tag>` is no longer possible, since `System` is variadic and would read it as a system over two components. A distinct class will be needed, or the system will have to be referred to by its `SystemId`;
-- **filtering on the absence of a component**: a multi-component system already filters on the *presence* of a tag, but not yet on its *absence*.
+- **filtering on the absence of a component**: views and systems already filter on the *presence* of a tag, but not yet on its *absence*.
 
 In the meantime, adding and removing a "tag" component covers most cases (see the "Pausing an entity" recipe in the user guide, section 8).

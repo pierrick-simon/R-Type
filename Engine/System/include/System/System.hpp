@@ -21,8 +21,8 @@ namespace RType {
      * @brief Applies a callback to every entity that has all the given
      * component types.
      *
-     * Iterates over the dense storage of the smallest array, and skips
-     * the entities missing one of the other types.
+     * Loops over a View of the Components. Without any type, the system
+     * is a frame system: its callback is called only once per update().
      * @tparam Components The component types this system operates on.
      */
     template<typename... Components>
@@ -43,16 +43,19 @@ namespace RType {
 
         /**
          * @brief Applies the stored callback to every entity that has all
-         * the Components.
+         * the Components, or calls it once if there is no Component.
          * @param cm Component manager providing access to the
          * ComponentArray of each type. Does nothing if one of the types
          * has never been added.
          */
         void update(ComponentManager &cm) override
         {
-            View<Components...>(cm).each([&] (Entity, Components &...c) {
-                _func(c...);
-            });
+            if constexpr (sizeof...(Components) == 0) {
+                _func();
+            } else {
+                View<Components...>(cm).each(
+                    [&](Entity, Components &...c) { _func(c...); });
+            }
         }
 
     private:

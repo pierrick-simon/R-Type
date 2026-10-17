@@ -214,6 +214,8 @@ namespace RType {
          *
          * The callback is called once per entity that has all the
          * Components, with one reference per type, in the same order.
+         * Without any type (createSystem(func) or createSystem<>(func)),
+         * it is called only once per update(), with no argument.
          * @tparam Components The component types the system operates on.
          * Their order does not matter: the smallest array is iterated over.
          * @param func Callback applied to each matching entity.
@@ -244,7 +246,14 @@ namespace RType {
          */
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
-        template<typename ...Components>
+        /**
+         * @brief Creates a view over the entities that have all the given
+         * component types. Never throws: if one of the types has never
+         * been added, the view is empty.
+         * @tparam Components The component types to look for.
+         * @return The view, to iterate over with each().
+         */
+        template<typename... Components>
         View<Components...> view()
         {
             return View<Components...>(_cm);

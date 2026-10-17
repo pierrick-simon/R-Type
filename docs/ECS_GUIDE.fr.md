@@ -32,7 +32,8 @@ Toute l'API passe par une seule classe : **`RType::GameManager`**. Les classes i
 |---|---|
 | **Entité** (`Entity`) | Un identifiant qui représente un objet du jeu (vaisseau, balle, ennemi…). Elle ne contient aucune donnée. |
 | **Composant** | Une struct de données attachée à une entité (position, vie…). Une entité a au plus un composant de chaque type. |
-| **Système** | Une fonction appelée, une fois par `update()`, sur chaque entité qui possède tous les composants demandés. C'est là que vit la logique du jeu. |
+| **Système** | Une fonction appelée à chaque `update()` : une fois par entité qui possède tous les composants demandés, ou une seule fois si aucun composant n'est demandé (système par frame). C'est là que vit la logique du jeu. |
+| **Vue** | Un objet qui parcourt les entités possédant un ensemble de composants, et donne pour chacune l'entité et ses composants. |
 | **Frame** | Un appel à `gm.update()` : tous les systèmes s'exécutent une fois, dans l'ordre. |
 | **Handle** | La valeur `Entity` que vous conservez pour désigner une entité plus tard. |
 
@@ -173,6 +174,23 @@ Chaque élément de `getDense()` est un `ComponentPack` : `pack.component` est l
 > [!NOTE]
 > L'ordre de parcours de `getDense()` **ne correspond pas à l'ordre d'ajout** : les emplacements libérés sont réutilisés. Ne vous reposez jamais sur un ordre particulier.
 
+### Parcourir les entités qui ont plusieurs composants : les vues
+
+```cpp
+gm.view<Position, Velocity>().each(
+    [](RType::Entity e, Position &pos, const Velocity &vel) {
+        pos.x += vel.vx;
+        pos.y += vel.vy;
+    });
+```
+
+- La fonction est appelée pour chaque entité qui possède **tous** les types demandés. Elle reçoit **l'entité en premier**, puis une référence vers chaque composant, dans l'ordre des types.
+- Une vue sur un type qui n'a **jamais été ajouté** est simplement vide : contrairement à `getArray<T>()`, elle ne lance pas d'exception.
+- La vue parcourt automatiquement le type qui a **le moins de composants** : l'ordre des types ne change pas les performances.
+- Une vue ne copie rien et ne garde aucune liste d'entités : la créer ne coûte presque rien. Créez-en une au moment de vous en servir, plutôt que de la conserver.
+- Un même type ne peut pas apparaître deux fois : `gm.view<Position, Position>()` ne compile pas.
+- Les règles de parcours sont celles de `getDense()` : hors `update()`, ne détruisez pas d'entités pendant un `each` (voir la [section 7, piège n°3](#piège-n3--détruire-des-entités-en-parcourant-getdense-hors-update)).
+
 ### Les références vers un composant
 
 Une référence obtenue avec `getComponent` (ou pendant un parcours) **reste valide lorsque d'autres composants sont ajoutés ou retirés**. Elle devient invalide uniquement lorsque **ce composant précis** est retiré (ou que son entité est détruite).
@@ -247,6 +265,20 @@ gm.addComponent<Weapon>(ship, ship, 30);   // le Weapon connaît son entité
 
 Lorsque plusieurs données vont toujours ensemble, il est souvent préférable de les regrouper dans un seul composant (comme `Body { x, y, vx, vy }` dans l'exemple d'introduction) : un seul composant, un seul système, aucune recherche.
 
+### Un système par frame
+
+Un système créé **sans aucun type de composant** est appelé **une seule fois par `update()`**, sans argument :
+
+```cpp
+gm.createSystem([&gm] {                  // équivalent : gm.createSystem<>(...)
+    gm.view<Enemy>().each([](RType::Entity, Enemy &) { /* ... */ });
+});
+```
+
+C'est l'endroit naturel pour tout ce qui ne concerne pas une entité en particulier : les **collisions** entre deux groupes d'entités (voir la recette en [section 8](#8-recettes)), l'apparition des vagues d'ennemis, le score, un chronomètre…
+
+Un système par frame se comporte comme les autres : il a un `SystemId`, s'exécute à son rang dans l'ordre de création, et ses modifications structurelles sont différées à la fin de la frame.
+
 ### Détruire un système
 
 ```cpp
@@ -278,7 +310,7 @@ En dehors d'`update()`, tout est immédiat.
 | `removeComponents` | Immédiat | **Fin de frame** |
 | `createSystem` | Immédiat | Immédiat (non supporté : voir la [section 7](#7-les-pièges-à-éviter)) |
 | `destroySystem` | Immédiat | **Fin de frame** |
-| `getComponent`, `hasComponent`, `hasEntity`, `hasSystem` | Lecture | Lecture de l'état **avant** application des commandes en attente |
+| `getComponent`, `hasComponent`, `hasEntity`, `hasSystem`, `view` | Lecture | Lecture de l'état **avant** application des commandes en attente |
 
 ### Conséquences concrètes
 
@@ -324,6 +356,7 @@ Toutes les exceptions de l'ECS héritent de `RType::EngineException` (déclarée
 | | `e` n'a pas de `T` | `NoSuchComponent` |
 | `removeComponents(e)` | `e` détruite ou périmée | `NoSuchEntity` |
 | `getArray<T>()` | aucun `T` n'a jamais existé | `NoSuchComponent` |
+| `view<Ts...>()` | un des `Ts` n'a jamais existé | Vue vide (ne lance jamais d'exception) |
 | `destroySystem(id)` | système déjà détruit | Aucun effet |
 
 ### Les erreurs pendant `update()`
@@ -433,7 +466,7 @@ for (RType::Entity e : expired)
     gm.destroyEntity(e);
 ```
 
-Plus simple encore : faites-le dans un système, où la destruction est automatiquement différée.
+Il en va de même pour `gm.view<...>().each(...)`. Plus simple encore : faites-le dans un système, où la destruction est automatiquement différée.
 
 ### Piège n°4 : conserver un pointeur ou une référence vers le composant d'une autre entité
 
@@ -583,6 +616,29 @@ gm.createSystem<Missile, Position>([&gm](Missile &m, Position &pos) {
 });
 ```
 
+### Des collisions entre balles et ennemis
+
+Un système par frame, avec une vue imbriquée dans une autre : chaque balle est testée contre chaque ennemi.
+
+```cpp
+gm.createSystem([&gm] {
+    gm.view<Bullet, Position, Damage>().each(
+        [&gm](RType::Entity bullet, Bullet &, Position &bp, Damage &d) {
+            gm.view<Enemy, Position, Health>().each(
+                [&](RType::Entity, Enemy &, Position &ep, Health &h) {
+                    if (!overlap(bp, ep))
+                        return;
+                    h.hp -= d.value;
+                    gm.destroyEntity(bullet);   // différé : la balle reste visible jusqu'à la fin de la frame
+                });
+        });
+});
+```
+
+- Les vues donnent l'entité : `Bullet` n'a pas besoin de champ `self`.
+- Une balle qui touche deux ennemis dans la même frame les endommage tous les deux, puisque sa destruction est différée. Si ce n'est pas voulu, mémorisez dans la balle qu'elle a déjà touché.
+- Le coût est proportionnel à *balles × ennemis*. Au-delà de quelques centaines d'entités, une grille spatiale construite une fois par frame, au début du système, devient nécessaire.
+
 ---
 
 ## 9. Aide-mémoire de l'API
@@ -611,8 +667,10 @@ public:
     bool hasComponent(Entity entity) const;
     template<typename Component>
     ComponentArray<Component> &getArray();   // .getDense(), .nbComponent()
+    template<typename... Components>
+    View<Components...> view();              // .each([](Entity, Components &...) {...})
 
-    // Systèmes
+    // Systèmes (aucun type : une fois par frame, fonction sans argument)
     template<typename... Components>
     SystemId createSystem(std::function<void(Components &...)> func);
     void destroySystem(SystemId id);
@@ -633,7 +691,9 @@ public:
 | Retirer un composant | `gm.removeComponent<T>(e)` |
 | Vider une entité sans la détruire | `gm.removeComponents(e)` |
 | Parcourir tous les composants d'un type | `gm.getArray<T>().getDense()` (`pack.component`, `pack.entity()`) |
+| Parcourir les entités qui ont plusieurs composants | `gm.view<T, ...>().each(func)` |
 | Compter les composants d'un type | `gm.getArray<T>().nbComponent()` |
 | Ajouter un comportement | `gm.createSystem<T, ...>(func)` (au démarrage) |
+| Ajouter un traitement global, une fois par frame | `gm.createSystem(func)` (au démarrage) |
 | Retirer un comportement | `gm.destroySystem(id)` |
 | Faire avancer le jeu d'une frame | `gm.update()` |
