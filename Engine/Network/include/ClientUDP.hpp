@@ -44,7 +44,6 @@ namespace RType {
 
         uint32_t seq_ = 0;
         std::atomic<uint16_t> myId_ {0};
-        std::thread thread_;
 
         std::optional<std::reference_wrapper<GameManager>> gm_;
 
@@ -52,7 +51,6 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
-
         std::map<Opcode,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>
             protocolClient_ = {

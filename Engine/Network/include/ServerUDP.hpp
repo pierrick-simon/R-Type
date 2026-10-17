@@ -48,7 +48,6 @@ namespace RType {
         asio::io_context context_;
         asio::ip::udp::socket socket_;
         asio::steady_timer healthTimer_;
-        std::thread thread_;
 
         asio::ip::udp::endpoint remoteEndpoint_;
         std::vector<uint8_t> recvBuffer_ = std::vector<uint8_t>(1024);

@@ -24,14 +24,11 @@ namespace RType {
     {
         startReceive();
         scheduleHealthCheck();
-        thread_ = std::thread([this]() { context_.run(); });
     }
 
     void UDPServer::stop()
     {
         context_.stop();
-        if (thread_.joinable())
-            thread_.join();
     }
 
     void UDPServer::received(GameManager &gm)

@@ -25,14 +25,11 @@ namespace RType {
     {
         receive();
         asio::post(context_, [this]() { scheduleLogin(); });
-        thread_ = std::thread([this]() { context_.run(); });
     }
 
     void UDPClient::stop()
     {
         context_.stop();
-        if (thread_.joinable())
-            thread_.join();
     }
 
     void UDPClient::received(GameManager &gm)
