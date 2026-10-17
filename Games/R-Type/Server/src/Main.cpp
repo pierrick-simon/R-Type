@@ -15,9 +15,8 @@ RType::Entity createServer(RType::GameManager &gm)
 {
     auto s = gm.createEntity();
     gm.addComponent<RType::ServerManager>(s, 12345);
-    gm.createSystem<RType::ServerManager>([&gm](RType::ServerManager &server) {
-        RType::ServerManager::systemServerReceived(server, gm);
-    });
+    gm.createSystem<RType::ServerManager>(
+        RType::ServerManager::systemServerReceived);
     return s;
 }
 

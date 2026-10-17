@@ -19,7 +19,7 @@ namespace RType {
     }
 
     void ServerManager::systemServerReceived(
-        ServerManager &server, GameManager &gm)
+        GameManager &gm, ServerManager &server)
     {
         if (server._first) {
             server._first = false;

@@ -20,7 +20,7 @@ namespace RType {
     }
 
     void ClientManager::systemClientReceived(
-        ClientManager &client, GameManager &gm)
+        GameManager &gm, ClientManager &client)
     {
         if (client._first) {
             client._first = false;

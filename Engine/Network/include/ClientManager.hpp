@@ -58,7 +58,7 @@ namespace RType {
          *
          */
         static void systemClientReceived(
-            ClientManager &client, GameManager &gm);
+            GameManager &gm, ClientManager &client);
 
     private:
         /**

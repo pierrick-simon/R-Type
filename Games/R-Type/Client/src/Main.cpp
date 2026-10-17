@@ -8,6 +8,7 @@
 #include <iostream>
 #include "ClientManager.hpp"
 #include "GameManager.hpp"
+#include "KeyboardManager.hpp"
 #include "Sprite2D.hpp"
 #include "Window.hpp"
 
@@ -23,10 +24,18 @@ RType::Entity createClient(RType::GameManager &gm)
 {
     auto c = gm.createEntity();
     gm.addComponent<RType::ClientManager>(c, "127.0.0.1", 12345);
-    gm.createSystem<RType::ClientManager>([&gm](RType::ClientManager &client) {
-        RType::ClientManager::systemClientReceived(client, gm);
-    });
+    gm.createSystem<RType::ClientManager>(
+        RType::ClientManager::systemClientReceived);
     return c;
+}
+
+RType::Entity createKeyboard(RType::GameManager &gm)
+{
+    auto k = gm.createEntity();
+    gm.addComponent<RType::KeyboardManager>(k);
+    gm.createSystem<RType::KeyboardManager>(
+        RType::KeyboardManager::systemKeyboardManager);
+    return k;
 }
 
 int main()
@@ -35,6 +44,7 @@ int main()
         RType::GameManager gm;
         auto w = createWindow(gm);
         auto c = createClient(gm);
+        auto k = createKeyboard(gm);
 
         gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(
             RType::Sprite2D::systemDrawSprite2D);
