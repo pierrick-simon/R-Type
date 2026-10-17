@@ -31,13 +31,11 @@ namespace RType {
         context_.stop();
     }
 
-    void UDPServer::received(GameManager &gm)
+    void UDPServer::received()
     {
-        gm_ = std::ref(gm);
         if (context_.stopped())
             context_.restart();
         context_.poll();
-        gm_.reset();
     }
 
     void UDPServer::scheduleHealthCheck()

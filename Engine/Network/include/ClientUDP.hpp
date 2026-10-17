@@ -9,7 +9,6 @@
     #define CLIENTUDP_HPP
 
     #include "Exceptions.hpp"
-    #include "GameManager.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -21,7 +20,7 @@ namespace RType {
         void start();
         void stop();
 
-        void received(GameManager &gm);
+        void received();
 
         void send(uint8_t op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
@@ -52,8 +51,6 @@ namespace RType {
 
         uint32_t seq_ = 0;
         std::atomic<uint16_t> myId_ {0};
-
-        std::optional<std::reference_wrapper<GameManager>> gm_;
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);

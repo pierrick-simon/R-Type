@@ -9,6 +9,7 @@
 #define CLIENTMANAGER_HPP_
 
 #include "ClientUDP.hpp"
+#include "GameManager.hpp"
 
 namespace RType {
 
@@ -36,10 +37,12 @@ namespace RType {
          *
          * @param host Hostname or IP address of the server.
          * @param port UDP port of the server.
+         * @param defaultProtocole apply the default protocole for the client
          * @throws asio::system_error If the host cannot be resolved or the
          * socket cannot be opened.
          */
-        ClientManager(const std::string &host, short port);
+        ClientManager(
+            const std::string &host, short port, bool defaultProtocole = true);
 
         /**
          * @brief ECS system that processes pending network events.
@@ -58,8 +61,13 @@ namespace RType {
             ClientManager &client, GameManager &gm);
 
     private:
-        /// Owned UDP client, kept on the heap so its address never changes.
+        /**
+         * @brief Add the default manage function to the udp Client.
+         */
+        void createDefaultProtocole();
+
         std::unique_ptr<UDPClient> _udp;
+        std::optional<std::reference_wrapper<GameManager>> _gm;
     };
 } // namespace RType
 

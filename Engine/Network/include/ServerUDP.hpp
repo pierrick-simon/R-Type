@@ -9,7 +9,6 @@
     #define SERVERUDP_HPP_
 
     #include "Exceptions.hpp"
-    #include "GameManager.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -32,7 +31,7 @@ namespace RType {
         void start();
         void stop();
 
-        void received(GameManager &gm);
+        void received();
 
         void broadcast(uint8_t op, const std::vector<uint8_t> &payload);
         void sendToClient(
@@ -63,8 +62,6 @@ namespace RType {
         std::map<uint16_t, Client> clients_;
         uint16_t nextId_ = 0;
         uint16_t serverId_ = 0;
-
-        std::optional<std::reference_wrapper<GameManager>> gm_;
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
