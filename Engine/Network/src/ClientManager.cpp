@@ -24,8 +24,8 @@ namespace RType {
     void ClientManager::systemClientReceived(
         ClientManager &client, GameManager &gm)
     {
-        client._gm = std::ref(gm);
+        client._ctx->gm = std::ref(gm);
         client._udp->received();
-        client._gm.reset();
+        client._ctx->gm.reset();
     }
 }; // namespace RType

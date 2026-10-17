@@ -23,8 +23,8 @@ namespace RType {
     void ServerManager::systemServerReceived(
         ServerManager &server, GameManager &gm)
     {
-        server._gm = std::ref(gm);
+        server._ctx->gm = std::ref(gm);
         server._udp->received();
-        server._gm.reset();
+        server._ctx->gm.reset();
     }
 }; // namespace RType

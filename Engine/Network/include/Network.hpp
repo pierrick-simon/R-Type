@@ -17,7 +17,7 @@
     #include <map>
     #include <optional>
     #include <string>
-    #include <thread>
+    #include "GameManager.hpp"
 
 namespace RType {
 
@@ -42,6 +42,11 @@ namespace RType {
         const std::vector<uint8_t> &buf, std::size_t len);
     std::vector<uint8_t> serialize(
         Header h, const std::vector<uint8_t> &payload);
+
+    struct Context {
+        std::optional<std::reference_wrapper<GameManager>> gm;
+        std::unordered_map<size_t, Entity> map;
+    };
 
 } // namespace RType
 
