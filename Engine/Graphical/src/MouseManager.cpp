@@ -27,13 +27,6 @@ namespace RType {
         throw EngineException("Key not found in the key map");
     }
 
-    MouseManager::MouseManager()
-    {
-        static bool onlyOne = true;
-        if (!onlyOne)
-            throw EngineException("You can only have one Mouse Component");
-    }
-
     void MouseManager::systemMouseManager(MouseManager &m)
     {
         m.buttonPressed.clear();

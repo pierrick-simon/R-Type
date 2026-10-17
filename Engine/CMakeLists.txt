@@ -131,10 +131,12 @@ set(SRCS_NETWORK
     ${NETWORK}/src/Utils.cpp
     ${NETWORK}/src/ServerManager.cpp
     ${NETWORK}/src/ClientManager.cpp
+    ${NETWORK}/src/BuiltIn/KeyboardProtocol.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
 target_include_directories(${NETWORK_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include/BuiltIn
 )
 target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system engine-graphical asio::asio)

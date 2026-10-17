@@ -33,7 +33,7 @@ namespace RType {
         client._ctx.gm.reset();
     }
 
-    void ClientManager::send(const Opcode op, const std::vector<uint8_t> &payload)
+    void ClientManager::send(uint8_t op, const std::vector<uint8_t> &payload)
     {
         _udp->send(op, payload);
     }

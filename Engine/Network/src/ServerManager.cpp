@@ -6,6 +6,8 @@
 */
 
 #include "ServerManager.hpp"
+#include "KeyboardManager.hpp"
+#include "MouseManager.hpp"
 
 namespace RType {
     ServerManager::ServerManager(short port, bool defaultProtocole) :
@@ -16,6 +18,12 @@ namespace RType {
 
     void ServerManager::createDefaultProtocol()
     {
+        _udp->addManage(
+            LOGIN,
+            [this](const Header &h, const std::vector<uint8_t> &p) {
+                defaultClient();
+            },
+            true);
     }
 
     void ServerManager::systemServerReceived(
@@ -40,5 +48,17 @@ namespace RType {
             op, [this, func](const Header &h, const std::vector<uint8_t> &p) {
                 func(h, p, _ctx);
             });
+    }
+
+    void ServerManager::defaultClient()
+    {
+        if (!_ctx.gm)
+            return;
+        auto id = _udp->addNewClient();
+        auto entity = _ctx.gm->get().createEntity();
+        _ctx.clients.emplace(id, entity);
+        _ctx.gm->get().addComponent<DefaulClient>(entity, id);
+        _ctx.gm->get().addComponent<KeyboardManager>(entity);
+        _ctx.gm->get().addComponent<MouseManager>(entity);
     }
 }; // namespace RType

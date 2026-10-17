@@ -67,10 +67,26 @@ namespace RType {
             const std::function<void(const Header &,
                 const std::vector<uint8_t> &, Context &)> &func);
 
+        void defaultClient();
+
         std::unique_ptr<UDPServer> _udp;
         Context _ctx;
         bool _defaultProtocole;
         bool _first = true;
+    };
+
+    class DefaulClient {
+    public:
+        DefaulClient(uint32_t id) :
+            _id(id) {};
+
+        [[nodiscard]] uint32_t getId() const
+        {
+            return _id;
+        }
+
+    private:
+        uint32_t _id;
     };
 } // namespace RType
 

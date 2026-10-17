@@ -30,7 +30,7 @@ namespace RType {
         LOGOUT = 2,
         HEALTH = 3,
         KEY_PRESSED = 10,
-        KEY_RELEASED = 11 
+        KEY_RELEASED = 11
     };
 
     struct Header {
@@ -50,6 +50,7 @@ namespace RType {
         Header h, const std::vector<uint8_t> &payload);
 
     struct Context {
+        std::unordered_map<uint16_t, Entity> clients;
         std::optional<std::reference_wrapper<GameManager>> gm;
         std::unordered_map<size_t, Entity> map;
     };

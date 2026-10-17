@@ -36,9 +36,6 @@ namespace RType {
     KeyboardManager::KeyboardManager(Key::Layout layout) :
         layout(layout)
     {
-        static bool onlyOne = true;
-        if (!onlyOne)
-            throw EngineException("You can only have one Keyboard Component");
     }
 
     void KeyboardManager::systemKeyboardManager(KeyboardManager &k)

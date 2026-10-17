@@ -68,11 +68,6 @@ namespace RType {
      */
     class MouseManager {
     public:
-        /**
-         * @brief Create a mouseManager with an empty state.
-         */
-        MouseManager();
-
         std::vector<MouseButton::Value> buttonPressed;
         std::vector<MouseButton::Value> buttonDown;
         std::vector<MouseButton::Value> buttonReleased;

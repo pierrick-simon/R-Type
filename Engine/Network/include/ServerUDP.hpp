@@ -37,7 +37,9 @@ namespace RType {
         void sendToClient(
             Client &client, uint8_t op, const std::vector<uint8_t> &payload);
 
-        void addManage(uint8_t opCode, ManageFunc func);
+        void addManage(uint8_t opCode, ManageFunc func, bool override = false);
+
+        uint16_t addNewClient();
 
         class ClientException : public EngineException {
             ClientException(const std::string &str) :

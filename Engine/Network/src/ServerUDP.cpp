@@ -117,7 +117,9 @@ namespace RType {
         const Header &header, const std::vector<uint8_t> &payload)
     {
         if (header.type == Opcode::LOGIN) {
-            manageLogin(header, payload);
+            auto login = protocol_.find(Opcode::LOGIN);
+            if (login != protocol_.end())
+                login->second(header, payload);
             return;
         }
         auto it = clients_.find(header.senderId);
@@ -125,20 +127,16 @@ namespace RType {
             return;
         it->second.lastSeen = std::chrono::steady_clock::now();
         it->second.lastMsgReceived = {header, payload};
-        for (const auto &[opcode, func] : protocol_) {
-            if (header.type == opcode) {
-                func(header, payload);
-                return;
-            }
-        }
+        auto handler = protocol_.find(header.type);
+        if (handler != protocol_.end())
+            handler->second(header, payload);
     }
 
-    void UDPServer::addManage(uint8_t op, ManageFunc func)
+    void UDPServer::addManage(uint8_t op, ManageFunc func, bool override)
     {
-        auto tmp = protocol_.find(op);
-        if (tmp != protocol_.end())
+        if (!override && protocol_.count(op))
             throw EngineException("Opcode already use for a manage function");
-        protocol_.emplace(op, func);
+        protocol_[op] = std::move(func);
     }
 
     void UDPServer::manageLogout(
@@ -164,6 +162,20 @@ namespace RType {
             Opcode::LOGIN,
             {static_cast<uint8_t>(nextId_ >> 8),
                 static_cast<uint8_t>(nextId_)});
+    }
+
+    uint16_t UDPServer::addNewClient()
+    {
+        nextId_ += 1;
+        Client &c = clients_[nextId_];
+
+        c.id = nextId_;
+        c.endpoint = remoteEndpoint_;
+        sendToClient(c,
+            Opcode::LOGIN,
+            {static_cast<uint8_t>(nextId_ >> 8),
+                static_cast<uint8_t>(nextId_)});
+        return nextId_;
     }
 
 } // namespace RType
