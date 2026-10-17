@@ -24,15 +24,18 @@ namespace RType {
     #define TIMEOUT 6
     #define LOGIN_CHECK 3
 
-    enum class Opcode : uint8_t { LOGIN = 1, LOGOUT, HEALTH, SPRITE };
+    enum Opcode : uint8_t { LOGIN = 1, LOGOUT, HEALTH, SPRITE };
 
     struct Header {
         static constexpr std::size_t SIZE = 1 + 2 + 4 + 2;
-        Opcode type;
+        uint8_t type;
         uint16_t payloadSize;
         uint32_t sequence;
         uint16_t senderId;
     };
+
+    using ManageFunc =
+        std::function<void(const Header &, const std::vector<uint8_t> &)>;
 
     std::optional<Header> parse(
         const std::vector<uint8_t> &buf, std::size_t len);

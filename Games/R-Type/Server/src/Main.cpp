@@ -7,9 +7,9 @@
 
 #include <iostream>
 #include <unistd.h>
+#include "Clock.hpp"
 #include "GameManager.hpp"
 #include "ServerManager.hpp"
-#include "Clock.hpp"
 
 RType::Entity createServer(RType::GameManager &gm)
 {
@@ -39,6 +39,7 @@ int main()
             if (elapsed.count() / 10000 > 1 && !yes) {
                 yes = true;
                 gm.getComponent<RType::ServerManager>(s).send();
+                std::cout << elapsed << "\n";
             }
             usleep(1000);
         }

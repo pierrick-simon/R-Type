@@ -8,8 +8,8 @@
 #include <iostream>
 #include "ClientManager.hpp"
 #include "GameManager.hpp"
-#include "Window.hpp"
 #include "Sprite2D.hpp"
+#include "Window.hpp"
 
 RType::Entity createWindow(RType::GameManager &gm)
 {
@@ -36,9 +36,8 @@ int main()
         auto w = createWindow(gm);
         auto c = createClient(gm);
 
-        gm.createSystem<RType::Sprite2D,
-            RType::Texture2D,
-            RType::Position2D>(RType::Sprite2D::systemDrawSprite2D);
+        gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(
+            RType::Sprite2D::systemDrawSprite2D);
         while (!WindowShouldClose())
             gm.update();
     } catch (std::exception &e) {

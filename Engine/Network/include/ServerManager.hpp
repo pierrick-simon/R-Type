@@ -8,6 +8,7 @@
 #ifndef SERVERMANAGER_HPP_
 #define SERVERMANAGER_HPP_
 
+#include "GameManager.hpp"
 #include "ServerUDP.hpp"
 
 namespace RType {
@@ -36,9 +37,10 @@ namespace RType {
          * thread inside systemServerReceived().
          *
          * @param port UDP port to bind to.
+         * @param defaultProtocole apply the default protocole for the client
          * @throws asio::system_error If the socket cannot be bound to the port.
          */
-        ServerManager(short port);
+        ServerManager(short port, bool defaultProtocole = true);
 
         /**
          * @brief ECS system that processes pending network events.
@@ -61,7 +63,13 @@ namespace RType {
         }
 
     private:
+        /**
+         * @brief Add the default manage function to the udp Server.
+         */
+        void createDefaultProtocole();
+
         std::unique_ptr<UDPServer> _udp;
+        std::optional<std::reference_wrapper<GameManager>> _gm;
     };
 } // namespace RType
 

@@ -31,13 +31,11 @@ namespace RType {
         context_.stop();
     }
 
-    void UDPServer::received(GameManager &gm)
+    void UDPServer::received()
     {
-        gm_ = std::ref(gm);
         if (context_.stopped())
             context_.restart();
         context_.poll();
-        gm_.reset();
     }
 
     void UDPServer::scheduleHealthCheck()
@@ -85,7 +83,7 @@ namespace RType {
     }
 
     void UDPServer::sendToClient(
-        Client &client, Opcode op, const std::vector<uint8_t> &payload)
+        Client &client, uint8_t op, const std::vector<uint8_t> &payload)
     {
         client.sendBuffer = serialize(Header {op,
                                           static_cast<uint16_t>(payload.size()),
@@ -100,7 +98,7 @@ namespace RType {
             std::string(payload.begin(), payload.end()));
     }
 
-    void UDPServer::broadcast(Opcode op, const std::vector<uint8_t> &payload)
+    void UDPServer::broadcast(uint8_t op, const std::vector<uint8_t> &payload)
     {
         asio::post(context_, [this, op, payload]() {
             for (auto &[id, client] : clients_)
@@ -108,7 +106,8 @@ namespace RType {
         });
     }
 
-    void UDPServer::broadcastNow(Opcode op, const std::vector<uint8_t> &payload)
+    void UDPServer::broadcastNow(
+        uint8_t op, const std::vector<uint8_t> &payload)
     {
         for (auto &[id, client] : clients_)
             sendToClient(client, op, payload);
@@ -132,6 +131,14 @@ namespace RType {
                 return;
             }
         }
+    }
+
+    void UDPServer::addManage(uint8_t op, ManageFunc func)
+    {
+        auto tmp = protocol_.find(op);
+        if (tmp != protocol_.end())
+            throw EngineException("Opcode already use for a manage function");
+        protocol_.emplace(op, func);
     }
 
     void UDPServer::manageLogout(

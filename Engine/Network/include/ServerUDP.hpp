@@ -8,7 +8,7 @@
 #ifndef SERVERUDP_HPP_
     #define SERVERUDP_HPP_
 
-    #include "GameManager.hpp"
+    #include "Exceptions.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -31,11 +31,18 @@ namespace RType {
         void start();
         void stop();
 
-        void received(GameManager &gm);
+        void received();
 
-        void broadcast(Opcode op, const std::vector<uint8_t> &payload);
+        void broadcast(uint8_t op, const std::vector<uint8_t> &payload);
         void sendToClient(
-            Client &client, Opcode op, const std::vector<uint8_t> &payload);
+            Client &client, uint8_t op, const std::vector<uint8_t> &payload);
+
+        void addManage(uint8_t opCode, ManageFunc func);
+
+        class ClientException : public EngineException {
+            ClientException(const std::string &str) :
+                EngineException("Client error: " + str) {};
+        };
 
     private:
         void startReceive();
@@ -43,7 +50,7 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void scheduleHealthCheck();
         void checkClients();
-        void broadcastNow(Opcode op, const std::vector<uint8_t> &payload);
+        void broadcastNow(uint8_t op, const std::vector<uint8_t> &payload);
 
         asio::io_context context_;
         asio::ip::udp::socket socket_;
@@ -56,8 +63,6 @@ namespace RType {
         uint16_t nextId_ = 0;
         uint16_t serverId_ = 0;
 
-        std::optional<std::reference_wrapper<GameManager>> gm_;
-
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
         static void manageHealth(
@@ -65,7 +70,7 @@ namespace RType {
         void manageLogout(
             const Header &header, const std::vector<uint8_t> &payload);
 
-        std::map<Opcode,
+        std::map<uint8_t,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>
             protocol_ = {
                 {Opcode::LOGIN,

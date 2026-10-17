@@ -6,8 +6,6 @@
 */
 
 #include "ClientUDP.hpp"
-#include "Position2D.hpp"
-#include "Sprite2D.hpp"
 
 namespace RType {
 
@@ -34,13 +32,11 @@ namespace RType {
         context_.stop();
     }
 
-    void UDPClient::received(GameManager &gm)
+    void UDPClient::received()
     {
-        gm_ = std::ref(gm);
         if (context_.stopped())
             context_.restart();
         context_.poll();
-        gm_.reset();
     }
 
     void UDPClient::scheduleLogin()
@@ -55,12 +51,12 @@ namespace RType {
         });
     }
 
-    void UDPClient::send(Opcode op, const std::vector<uint8_t> &msg)
+    void UDPClient::send(uint8_t op, const std::vector<uint8_t> &msg)
     {
         asio::post(context_, [this, op, msg]() { sendNow(op, msg); });
     }
 
-    void UDPClient::sendNow(Opcode op, const std::vector<uint8_t> &msg)
+    void UDPClient::sendNow(uint8_t op, const std::vector<uint8_t> &msg)
     {
         sendBuffer_ = serialize(Header {op, 0, seq_++, myId_}, msg);
         socket_.async_send_to(asio::buffer(sendBuffer_),
@@ -83,6 +79,14 @@ namespace RType {
                 }
                 receive();
             });
+    }
+
+    void UDPClient::addManage(uint8_t op, ManageFunc func)
+    {
+        auto tmp = protocolClient_.find(op);
+        if (tmp != protocolClient_.end())
+            throw EngineException("Opcode already use for a manage function");
+        protocolClient_.emplace(op, func);
     }
 
     void UDPClient::manageCommands(
@@ -122,17 +126,6 @@ namespace RType {
         if (myId_ != 0)
             return true;
         return false;
-    }
-
-    void UDPClient::manageSprite(
-        const Header &header, const std::vector<uint8_t> &payload)
-    {
-        if (!gm_)
-            return;
-        auto e = gm_->get().createEntity();
-        gm_->get().addComponent<RType::Position2D>(e, 0, 0);
-        gm_->get().addComponent<RType::Texture2D>(e, "loading.png");
-        gm_->get().addComponent<RType::Sprite2D>(e);
     }
 
 } // namespace RType
