@@ -24,36 +24,49 @@ namespace RType {
     void KeyboardProtocol::manageKeyPressed(
         const Header &header, const std::vector<uint8_t> &payload, Context &ctx)
     {
-        if (!ctx.gm || payload.empty()) {
+        if (!ctx.gm || payload.empty() || !ctx.clients.count(header.senderId)) {
             return;
         }
         auto key = fromByte(payload[0]);
         if (!key)
             return;
+        auto &keyboard = ctx.gm->get().getComponent<KeyboardManager>(
+            ctx.clients.at(header.senderId));
+        keyboard.keyPressed.emplace_back(key.value());
+        if (std::find(keyboard.keyDown.begin(),
+                keyboard.keyDown.end(),
+                key.value()) == keyboard.keyDown.end())
+            keyboard.keyDown.emplace_back(key.value());
     }
 
-    void KeyboardProtocol::manageKeyRelease(
+    void KeyboardProtocol::manageKeyReleased(
         const Header &header, const std::vector<uint8_t> &payload, Context &ctx)
     {
-        if (!ctx.gm || payload.empty()) {
+        if (!ctx.gm || payload.empty() || !ctx.clients.count(header.senderId)) {
             return;
         }
         auto key = fromByte(payload[0]);
         if (!key)
             return;
+        auto &keyboard = ctx.gm->get().getComponent<KeyboardManager>(
+            ctx.clients.at(header.senderId));
+        keyboard.keyReleased.emplace_back(key.value());
+        keyboard.keyDown.erase(
+            std::remove(
+                keyboard.keyDown.begin(), keyboard.keyDown.end(), key.value()),
+            keyboard.keyDown.end());
     }
 
-    void KeyboardProtocol::systemKey(ClientManager &c, KeyboardManager &km)
+    void KeyboardProtocol::systemKeyboardProtocol(
+        ClientManager &c, KeyboardManager &km)
     {
         auto &pressed = km.keyPressed;
         auto &released = km.keyReleased;
 
         for (auto &value : pressed)
             c.send(Opcode::KEY_PRESSED, {toByte(value)});
-        pressed.clear();
         for (auto &value : released)
             c.send(Opcode::KEY_RELEASED, {toByte(value)});
-        released.clear();
     }
 
 } // namespace RType

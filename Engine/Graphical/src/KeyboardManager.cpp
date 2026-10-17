@@ -73,6 +73,12 @@ namespace RType {
         }
     }
 
+    void KeyboardManager::systemKeyboardManagerClear(KeyboardManager &k)
+    {
+        k.keyPressed.clear();
+        k.keyReleased.clear();
+    }
+
     const std::unordered_map<int, Key::Value> Key::_keyMapAzerty {
         // Letters (AZERTY)
         {KEY_Q, Value::A}, // key labeled A sits at the QWERTY Q position

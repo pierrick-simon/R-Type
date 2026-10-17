@@ -19,9 +19,10 @@ namespace RType {
     public:
         static void manageKeyPressed(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
-        static void manageKeyRelease(const Header &header,
+        static void manageKeyReleased(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
-        static void systemKey(ClientManager &c, KeyboardManager &km);
+        static void systemKeyboardProtocol(
+            ClientManager &c, KeyboardManager &km);
 
     private:
         static std::optional<Key::Value> fromByte(uint8_t b);

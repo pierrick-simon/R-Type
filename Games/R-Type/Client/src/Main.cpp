@@ -9,13 +9,14 @@
 #include "ClientManager.hpp"
 #include "GameManager.hpp"
 #include "KeyboardManager.hpp"
+#include "KeyboardProtocol.hpp"
 #include "Sprite2D.hpp"
 #include "Window.hpp"
 
 RType::Entity createWindow(RType::GameManager &gm)
 {
     auto w = gm.createEntity();
-    gm.addComponent<RType::Window>(w, 1920, 1080, "R-type");
+    gm.addComponent<RType::Window>(w, 800, 600, "R-type");
     gm.createSystem<RType::Window>(RType::Window::systemClearWindow);
     return w;
 }
@@ -26,6 +27,11 @@ RType::Entity createClient(RType::GameManager &gm)
     gm.addComponent<RType::ClientManager>(c, "127.0.0.1", 12345);
     gm.createSystem<RType::ClientManager>(
         RType::ClientManager::systemClientReceived);
+    gm.addComponent<RType::KeyboardManager>(c);
+    gm.createSystem<RType::KeyboardManager>(
+        RType::KeyboardManager::systemKeyboardManager);
+    gm.createSystem<RType::ClientManager, RType::KeyboardManager>(
+        RType::KeyboardProtocol::systemKeyboardProtocol);
     return c;
 }
 
@@ -44,7 +50,6 @@ int main()
         RType::GameManager gm;
         auto w = createWindow(gm);
         auto c = createClient(gm);
-        auto k = createKeyboard(gm);
 
         gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(
             RType::Sprite2D::systemDrawSprite2D);

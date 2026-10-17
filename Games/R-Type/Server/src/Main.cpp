@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include "Clock.hpp"
 #include "GameManager.hpp"
+#include "KeyboardManager.hpp"
 #include "ServerManager.hpp"
 
 RType::Entity createServer(RType::GameManager &gm)
@@ -29,6 +30,8 @@ int main()
         gm.addComponent<RType::Clock>(c);
 
         gm.createSystem<RType::Clock>(RType::Clock::systemClock);
+        gm.createSystem<RType::KeyboardManager>(
+            RType::KeyboardManager::systemKeyboardManagerClear);
 
         auto elapsed = std::chrono::milliseconds(0);
         bool yes = false;
