@@ -44,6 +44,7 @@ namespace Poc {
     TestList multiSystemTests();
     TestList viewTests();
     TestList frameSystemTests();
+    TestList gmSystemTests();
     TestList recyclingTests();
     TestList trickyTests();
 

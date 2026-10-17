@@ -15,6 +15,7 @@ set(SRCS
         src/MultiSystems.cpp
         src/Views.cpp
         src/FrameSystems.cpp
+        src/GmSystems.cpp
         src/Recycling.cpp
         src/Tricky.cpp
         src/ThrowTrace.cpp

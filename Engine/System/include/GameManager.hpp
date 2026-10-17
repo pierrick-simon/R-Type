@@ -232,6 +232,32 @@ namespace RType {
         }
 
         /**
+         * @brief Creates and registers a new system whose callback also
+         * receives this GameManager. Always immediate.
+         *
+         * Same as the other overload, but the callback takes the
+         * GameManager as its first parameter, which lets systems be
+         * written as plain functions instead of capturing it.
+         * @tparam Components The component types the system operates on.
+         * @param func Callback taking the GameManager, then one reference
+         * per component type. It is copied into the system.
+         * @return Id identifying the created system, usable with
+         * destroySystem.
+         * @warning Must not be called during update(): the new system
+         * would run in the current frame.
+         */
+        template<typename... Components>
+        SystemId createSystem(const std::type_identity_t<
+            std::function<void(GameManager &, Components &...)>> &func)
+        {
+            std::function<void(Components & ...)> wrapped =
+                [this, func](Components &...c) {
+                    func(*this, c...);
+                };
+            return _sm.createSystem<Components...>(wrapped);
+        }
+
+        /**
          * @brief Removes a previously created system. Deferred to the end
          * of the frame during update(). Does nothing if the system no
          * longer exists.

@@ -317,7 +317,7 @@ private:
 
 **Comment `System<Components...>` trouve les entités.** `update` crée une `View<Components...>` et appelle `each` avec une lambda qui ignore l'entité et appelle `_func` avec les composants. Toute la jointure (plus petit tableau, types absents, doublons) est donc celle de la vue : voir [View](#view).
 
-**Pourquoi un système sans type est un système par frame.** Certains traitements ne portent pas sur *une* entité : les collisions entre deux groupes, l'apparition des vagues, le score. Plutôt qu'une deuxième API, un pack vide prend ce sens : avec `Components` vide, `std::function<void(Components &...)>` devient naturellement `std::function<void()>`, et `update` appelle `_func()` une seule fois. Le système garde tout le reste : son `SystemId`, son rang dans l'ordre d'exécution, et la protection de la file de commandes. Grâce à `std::type_identity_t`, le pack est déduit comme vide quand aucun type n'est donné : `createSystem(func)` et `createSystem<>(func)` sont équivalents.
+**Pourquoi un système sans type est un système par frame.** Certains traitements ne portent pas sur *une* entité : les collisions entre deux groupes, l'apparition des vagues, le score. Plutôt qu'une deuxième API, un pack vide prend ce sens : avec `Components` vide, `std::function<void(Components &...)>` devient naturellement `std::function<void()>`, et `update` appelle `_func()` une seule fois. Le système garde tout le reste : son `SystemId`, son rang dans l'ordre d'exécution, et la protection de la file de commandes. Grâce à `std::type_identity_t`, le pack est déduit comme vide quand aucun type n'est donné : `createSystem(func)` et `createSystem<>(func)` sont équivalents. Un système par frame peut aussi recevoir le `GameManager` (voir [GameManager (façade)](#gamemanager-façade)) : c'est la forme recommandée pour les collisions, ou pour tout système qui a besoin de l'entité qu'il traite, en parcourant une vue.
 
 **Pourquoi `if constexpr` dans `update`.** Avec un `if` classique, les deux branches seraient compilées pour **chaque** `System` : `_func()` ne compilerait pas pour un `System<Health>` (sa fonction attend un `Health &`), et `View<>` ne compilerait pas pour un `System<>` (`std::min` sur une liste vide). `if constexpr` écarte de la compilation la branche qui ne correspond pas au pack ; le `else` est indispensable pour que la seconde branche soit elle aussi écartée.
 
@@ -367,6 +367,9 @@ public:
     template<typename... Components>
     SystemId createSystem(
         std::type_identity_t<std::function<void(Components &...)>> func);
+    template<typename... Components>
+    SystemId createSystem(const std::type_identity_t<
+        std::function<void(GameManager &, Components &...)>> &func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 
@@ -384,9 +387,15 @@ private:
 
 **Pourquoi une façade unique.** C'est la seule classe que le code de jeu doit connaître. Elle centralise aussi les vérifications transverses : chaque accès à un composant vérifie d'abord `hasEntity` (et donc la génération), ce qui permet aux classes internes de s'en dispenser.
 
-**Pourquoi la copie est interdite.** Les commandes en attente et les fonctions des systèmes capturent souvent `this` ou une référence vers le `GameManager`. Une copie partagerait ces captures avec l'original, ce qui mènerait à des accès vers le mauvais objet.
+**Pourquoi la copie est interdite.** Les commandes en attente et les adaptateurs des systèmes qui reçoivent le `GameManager` capturent `this`. Une copie partagerait ces captures avec l'original, ce qui mènerait à des accès vers le mauvais objet. Comme aucun constructeur de déplacement n'est déclaré, un `GameManager` ne peut pas non plus être déplacé : son adresse ne change jamais, et le `this` capturé reste valide aussi longtemps que lui.
 
-**Pourquoi `std::type_identity_t` dans `createSystem`.** Les types sont donnés explicitement (`createSystem<Position, Velocity>(lambda)`), mais pour un paquet de paramètres, le compilateur tente quand même d'en déduire d'autres à partir de l'argument. Une lambda n'étant pas un `std::function`, cette déduction échoue et l'appel ne compile pas. `std::type_identity_t` rend le paramètre non déduit : seuls les types explicites sont utilisés, et la lambda est convertie en `std::function`.
+**Pourquoi un système peut recevoir le `GameManager`.** Un système qui agit sur le monde (créer ou détruire des entités, lire les composants d'une autre entité, parcourir une vue) a besoin du `GameManager`. Le capturer dans une lambda (`[&gm]`) fonctionne, mais empêche d'écrire le système comme une fonction ordinaire, dans un fichier à part. `createSystem` accepte donc aussi une fonction dont le premier paramètre est un `GameManager &`.
+
+- **Deux surcharges, sans ambiguïté.** La seconde surcharge prend un `std::function<void(GameManager &, Components &...)>`. Le constructeur de `std::function` n'accepte que les fonctions appelables avec ses arguments : pour une lambda ou une fonction donnée, une seule des deux surcharges est donc viable, et le compilateur la choisit seul. Une lambda générique (`[](auto &...)`), qui accepterait les deux formes, rend l'appel ambigu : c'est une erreur de compilation, ce qui évite un choix arbitraire.
+- **Un adaptateur, construit une seule fois.** Le `GameManager` est connu dès la création du système : c'est `this`. La seconde surcharge enveloppe donc la fonction dans une lambda de la forme habituelle `(Components &...)`, qui appelle `func(*this, c...)`. `System` et `SystemManager` ne voient que la forme habituelle et n'ont pas changé ; avec un pack vide, l'adaptateur devient une lambda sans paramètre, et le système par frame fonctionne sans cas particulier.
+- **La fonction est capturée par valeur.** `func` est un paramètre de `createSystem`, détruit dès son retour ; l'adaptateur, lui, vit aussi longtemps que le système. Il doit donc garder sa propre copie de la fonction : une capture par référence laisserait une référence pendante, appelée à la première frame.
+
+**Pourquoi `std::type_identity_t` dans `createSystem`.** Les types sont donnés explicitement (`createSystem<Position, Velocity>(lambda)`), mais pour un paquet de paramètres, le compilateur tente quand même d'en déduire d'autres à partir de l'argument. Une lambda n'étant pas un `std::function`, cette déduction échoue et l'appel ne compile pas. `std::type_identity_t` rend le paramètre non déduit, dans les deux surcharges : seuls les types explicites sont utilisés, et la lambda est convertie en `std::function`.
 
 ### La file de commandes
 
@@ -424,7 +433,7 @@ Ces évolutions ne sont **pas implémentées**. Elles ne sont décrites ici que 
 
 ### Recevoir l'entité dans la fonction d'un système
 
-Permettre `createSystem<Lifetime>([&gm](Entity e, Lifetime &l) {...})`, en plus de la forme actuelle, pour supprimer les champs `owner`/`self` des composants. La vue fournit déjà l'entité ; la difficulté est d'accepter les **deux** formes de fonction. `createSystem` devrait prendre un appelable quelconque (`template<typename... Components, typename F>`), détecter la forme avec `std::is_invocable_v`, et envelopper la forme sans entité dans une lambda qui l'ignore (en capturant la fonction **par valeur**). `System` stockerait alors toujours la forme avec entité, sauf pour un système par frame, qui n'a pas d'entité (`std::conditional_t`). Une lambda générique, qui accepte les deux formes, imposerait de choisir une priorité.
+Permettre `createSystem<Lifetime>([](Entity e, Lifetime &l) {...})`, en plus des formes actuelles. En attendant, un système par frame qui parcourt une vue fournit déjà l'entité : c'est la pratique recommandée par le guide, et elle évite de stocker l'entité dans ses propres composants. La difficulté est d'accepter **plusieurs** formes de fonction, et contrairement au `GameManager`, l'entité n'est connue qu'au moment du parcours : l'adaptateur doit donc vivre dans `System`, pas dans `GameManager`. `createSystem` devrait prendre un appelable quelconque (`template<typename... Components, typename F>`), détecter la forme avec `std::is_invocable_v`, et envelopper la forme sans entité dans une lambda qui l'ignore (en capturant la fonction **par valeur**). `System` stockerait alors toujours la forme avec entité, sauf pour un système par frame, qui n'a pas d'entité (`std::conditional_t`). Une lambda générique, qui accepte les deux formes, imposerait de choisir une priorité.
 
 ### Améliorer la vue
 

@@ -317,7 +317,7 @@ private:
 
 **How `System<Components...>` finds the entities.** `update` creates a `View<Components...>` and calls `each` with a lambda that ignores the entity and calls `_func` with the components. The whole join (smallest array, missing types, duplicates) is therefore the view's: see [View](#view).
 
-**Why a system without types is a frame system.** Some processing does not concern *one* entity: collisions between two groups, enemy waves spawning, the score. Rather than a second API, an empty pack takes on that meaning: with `Components` empty, `std::function<void(Components &...)>` naturally becomes `std::function<void()>`, and `update` calls `_func()` only once. The system keeps everything else: its `SystemId`, its rank in execution order, and the protection of the command queue. Thanks to `std::type_identity_t`, the pack is deduced as empty when no type is given: `createSystem(func)` and `createSystem<>(func)` are equivalent.
+**Why a system without types is a frame system.** Some processing does not concern *one* entity: collisions between two groups, enemy waves spawning, the score. Rather than a second API, an empty pack takes on that meaning: with `Components` empty, `std::function<void(Components &...)>` naturally becomes `std::function<void()>`, and `update` calls `_func()` only once. The system keeps everything else: its `SystemId`, its rank in execution order, and the protection of the command queue. Thanks to `std::type_identity_t`, the pack is deduced as empty when no type is given: `createSystem(func)` and `createSystem<>(func)` are equivalent. A frame system can also receive the `GameManager` (see [GameManager (facade)](#gamemanager-facade)): it is the recommended form for collisions, or for any system that needs the entity it processes, by iterating over a view.
 
 **Why `if constexpr` in `update`.** With a plain `if`, both branches would be compiled for **every** `System`: `_func()` would not compile for a `System<Health>` (its function expects a `Health &`), and `View<>` would not compile for a `System<>` (`std::min` over an empty list). `if constexpr` discards from compilation the branch that does not match the pack; the `else` is required for the second branch to be discarded too.
 
@@ -367,6 +367,9 @@ public:
     template<typename... Components>
     SystemId createSystem(
         std::type_identity_t<std::function<void(Components &...)>> func);
+    template<typename... Components>
+    SystemId createSystem(const std::type_identity_t<
+        std::function<void(GameManager &, Components &...)>> &func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 
@@ -384,9 +387,15 @@ private:
 
 **Why a single facade.** It is the only class game code needs to know about. It also centralizes cross-cutting checks: every component access first checks `hasEntity` (and therefore the generation), which lets the internal classes skip it.
 
-**Why copying is disabled.** Pending commands and system functions often capture `this` or a reference to the `GameManager`. A copy would share those captures with the original, leading to accesses on the wrong object.
+**Why copying is disabled.** Pending commands and the adapters of systems that receive the `GameManager` capture `this`. A copy would share those captures with the original, leading to accesses on the wrong object. Since no move constructor is declared, a `GameManager` cannot be moved either: its address never changes, and the captured `this` stays valid as long as it lives.
 
-**Why `std::type_identity_t` in `createSystem`.** The types are given explicitly (`createSystem<Position, Velocity>(lambda)`), but for a parameter pack, the compiler still tries to deduce more of them from the argument. Since a lambda is not a `std::function`, that deduction fails and the call does not compile. `std::type_identity_t` makes the parameter non-deduced: only the explicit types are used, and the lambda is converted to a `std::function`.
+**Why a system can receive the `GameManager`.** A system that acts on the world (creating or destroying entities, reading another entity's components, iterating over a view) needs the `GameManager`. Capturing it in a lambda (`[&gm]`) works, but prevents writing the system as a plain function, in a separate file. `createSystem` therefore also accepts a function whose first parameter is a `GameManager &`.
+
+- **Two overloads, without ambiguity.** The second overload takes a `std::function<void(GameManager &, Components &...)>`. The `std::function` constructor only accepts functions callable with its arguments: for a given lambda or function, only one of the two overloads is viable, and the compiler picks it on its own. A generic lambda (`[](auto &...)`), which would accept both forms, makes the call ambiguous: it is a compile-time error, which avoids an arbitrary choice.
+- **An adapter, built once.** The `GameManager` is known as soon as the system is created: it is `this`. The second overload therefore wraps the function in a lambda of the usual `(Components &...)` form, which calls `func(*this, c...)`. `System` and `SystemManager` only see the usual form and did not change; with an empty pack, the adapter becomes a lambda without parameters, and the frame system works with no special case.
+- **The function is captured by value.** `func` is a parameter of `createSystem`, destroyed as soon as it returns; the adapter, on the other hand, lives as long as the system. It must therefore keep its own copy of the function: a capture by reference would leave a dangling reference, called on the first frame.
+
+**Why `std::type_identity_t` in `createSystem`.** The types are given explicitly (`createSystem<Position, Velocity>(lambda)`), but for a parameter pack, the compiler still tries to deduce more of them from the argument. Since a lambda is not a `std::function`, that deduction fails and the call does not compile. `std::type_identity_t` makes the parameter non-deduced, in both overloads: only the explicit types are used, and the lambda is converted to a `std::function`.
 
 ### The command queue
 
@@ -424,7 +433,7 @@ These changes are **not implemented**. Only their principle is described here.
 
 ### Receiving the entity in a system's function
 
-Allow `createSystem<Lifetime>([&gm](Entity e, Lifetime &l) {...})`, alongside the current form, to remove the `owner`/`self` fields from components. The view already provides the entity; the difficulty is accepting **both** function forms. `createSystem` would have to take any callable (`template<typename... Components, typename F>`), detect the form with `std::is_invocable_v`, and wrap the form without entity in a lambda that ignores it (capturing the function **by value**). `System` would then always store the form with the entity, except for a frame system, which has no entity (`std::conditional_t`). A generic lambda, which accepts both forms, would require choosing a priority.
+Allow `createSystem<Lifetime>([](Entity e, Lifetime &l) {...})`, alongside the current forms. In the meantime, a frame system iterating over a view already provides the entity: it is the practice recommended by the user guide, and it avoids storing the entity in its own components. The difficulty is accepting **several** function forms, and unlike the `GameManager`, the entity is only known during the iteration: the adapter would therefore have to live in `System`, not in `GameManager`. `createSystem` would have to take any callable (`template<typename... Components, typename F>`), detect the form with `std::is_invocable_v`, and wrap the form without entity in a lambda that ignores it (capturing the function **by value**). `System` would then always store the form with the entity, except for a frame system, which has no entity (`std::conditional_t`). A generic lambda, which accepts both forms, would require choosing a priority.
 
 ### Improving the view
 
