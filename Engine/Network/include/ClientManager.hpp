@@ -2,18 +2,18 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** EngineClient
+** ClientManager
 */
 
-#ifndef ENGINECLIENT_HPP_
-#define ENGINECLIENT_HPP_
+#ifndef CLIENTMANAGER_HPP_
+#define CLIENTMANAGER_HPP_
 
 #include "ClientUDP.hpp"
 
 namespace RType {
 
     /**
-     * @class EngineClient
+     * @class ClientManager
      * @brief ECS component that owns the UDP client and exposes it to the
      * engine.
      *
@@ -25,7 +25,7 @@ namespace RType {
      * @note Client is move-only. A moved-from Client holds a null UDPClient and
      *       must not be used.
      */
-    class EngineClient {
+    class ClientManager {
     public:
         /**
          * @brief Creates the UDP client targeting the given server.
@@ -39,7 +39,7 @@ namespace RType {
          * @throws asio::system_error If the host cannot be resolved or the
          * socket cannot be opened.
          */
-        EngineClient(const std::string &host, short port);
+        ClientManager(const std::string &host, short port);
 
         /**
          * @brief ECS system that processes pending network events.
@@ -54,7 +54,8 @@ namespace RType {
          *               components. It is only used during this call.
          *
          */
-        static void systemClientReceived(EngineClient &client, GameManager &gm);
+        static void systemClientReceived(
+            ClientManager &client, GameManager &gm);
 
     private:
         /// Owned UDP client, kept on the heap so its address never changes.
@@ -62,4 +63,4 @@ namespace RType {
     };
 } // namespace RType
 
-#endif /* !ENGINECLIENT_HPP_ */
+#endif /* !CLIENTMANAGER_HPP_ */

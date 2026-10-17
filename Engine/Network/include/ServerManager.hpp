@@ -2,18 +2,18 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** EngineServer
+** ServerManager
 */
 
-#ifndef ENGINESERVER_HPP_
-#define ENGINESERVER_HPP_
+#ifndef SERVERMANAGER_HPP_
+#define SERVERMANAGER_HPP_
 
 #include "ServerUDP.hpp"
 
 namespace RType {
 
     /**
-     * @class EngineServer
+     * @class ServerManager
      * @brief ECS component that owns the UDP server and exposes it to the
      * engine.
      *
@@ -25,7 +25,7 @@ namespace RType {
      * @note Server is move-only. A moved-from Server holds a null UDPServer and
      *       must not be used.
      */
-    class EngineServer {
+    class ServerManager {
     public:
         /**
          * @brief Creates the UDP server and starts listening.
@@ -38,7 +38,7 @@ namespace RType {
          * @param port UDP port to bind to.
          * @throws asio::system_error If the socket cannot be bound to the port.
          */
-        EngineServer(short port);
+        ServerManager(short port);
 
         /**
          * @brief ECS system that processes pending network events.
@@ -52,11 +52,12 @@ namespace RType {
          *               components. It is only used during this call.
          *
          */
-        static void systemServerReceived(EngineServer &server, GameManager &gm);
+        static void systemServerReceived(
+            ServerManager &server, GameManager &gm);
 
     private:
         std::unique_ptr<UDPServer> _udp;
     };
 } // namespace RType
 
-#endif /* !ENGINESERVER_HPP_ */
+#endif /* !SERVERMANAGER_HPP_ */

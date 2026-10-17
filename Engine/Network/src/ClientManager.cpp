@@ -2,20 +2,20 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** EngineClient
+** ClientManager
 */
 
-#include "EngineClient.hpp"
+#include "ClientManager.hpp"
 
 namespace RType {
-    EngineClient::EngineClient(const std::string &host, short port) :
+    ClientManager::ClientManager(const std::string &host, short port) :
         _udp(std::make_unique<UDPClient>(host, port))
     {
         _udp->start();
     }
 
-    void EngineClient::systemClientReceived(
-        EngineClient &client, GameManager &gm)
+    void ClientManager::systemClientReceived(
+        ClientManager &client, GameManager &gm)
     {
         client._udp->received(gm);
     }

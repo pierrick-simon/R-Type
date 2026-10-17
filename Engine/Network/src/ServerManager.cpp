@@ -2,20 +2,20 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** EngineServer
+** ServerManager
 */
 
-#include "EngineServer.hpp"
+#include "ServerManager.hpp"
 
 namespace RType {
-    EngineServer::EngineServer(short port) :
+    ServerManager::ServerManager(short port) :
         _udp(std::make_unique<UDPServer>(port))
     {
         _udp->start();
     }
 
-    void EngineServer::systemServerReceived(
-        EngineServer &server, GameManager &gm)
+    void ServerManager::systemServerReceived(
+        ServerManager &server, GameManager &gm)
     {
         server._udp->received(gm);
     }
