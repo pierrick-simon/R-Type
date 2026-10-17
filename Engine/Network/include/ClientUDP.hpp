@@ -56,6 +56,7 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
+
         std::map<uint8_t, ManageFunc> protocolClient_ = {
             {Opcode::LOGIN,
                 [this](const Header &h, const std::vector<uint8_t> &p) {
