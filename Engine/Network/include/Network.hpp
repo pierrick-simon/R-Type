@@ -17,7 +17,6 @@
     #include <map>
     #include <optional>
     #include <string>
-    #include <thread>
 
 namespace RType {
 
@@ -25,7 +24,7 @@ namespace RType {
     #define TIMEOUT 6
     #define LOGIN_CHECK 3
 
-    enum class Opcode : uint8_t { LOGIN = 1, LOGOUT, HEALTH };
+    enum class Opcode : uint8_t { LOGIN = 1, LOGOUT, HEALTH, SPRITE };
 
     struct Header {
         static constexpr std::size_t SIZE = 1 + 2 + 4 + 2;

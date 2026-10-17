@@ -51,6 +51,9 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
+        void manageSprite(
+            const Header &header, const std::vector<uint8_t> &payload);
+
         std::map<Opcode,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>
             protocolClient_ = {
@@ -61,6 +64,10 @@ namespace RType {
                 {Opcode::HEALTH,
                     [this](const Header &h, const std::vector<uint8_t> &p) {
                         manageHealth(h, p);
+                    }},
+                {Opcode::SPRITE,
+                    [this](const Header &h, const std::vector<uint8_t> &p) {
+                        manageSprite(h, p);
                     }},
         };
     };

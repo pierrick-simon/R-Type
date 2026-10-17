@@ -6,6 +6,8 @@
 */
 
 #include "ClientUDP.hpp"
+#include "Position2D.hpp"
+#include "Sprite2D.hpp"
 
 namespace RType {
 
@@ -120,6 +122,17 @@ namespace RType {
         if (myId_ != 0)
             return true;
         return false;
+    }
+
+    void UDPClient::manageSprite(
+        const Header &header, const std::vector<uint8_t> &payload)
+    {
+        if (!gm_)
+            return;
+        auto e = gm_->get().createEntity();
+        gm_->get().addComponent<RType::Position2D>(e, 0, 0);
+        gm_->get().addComponent<RType::Texture2D>(e, "loading.png");
+        gm_->get().addComponent<RType::Sprite2D>(e);
     }
 
 } // namespace RType

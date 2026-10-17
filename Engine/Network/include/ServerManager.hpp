@@ -55,6 +55,11 @@ namespace RType {
         static void systemServerReceived(
             ServerManager &server, GameManager &gm);
 
+        void send()
+        {
+            _udp->broadcast(Opcode::SPRITE, {});
+        }
+
     private:
         std::unique_ptr<UDPServer> _udp;
     };
