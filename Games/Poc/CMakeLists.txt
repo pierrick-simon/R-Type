@@ -13,6 +13,7 @@ set(SRCS
         src/Simulation.cpp
         src/Systems.cpp
         src/MultiSystems.cpp
+        src/Views.cpp
         src/Recycling.cpp
         src/Tricky.cpp
         src/ThrowTrace.cpp

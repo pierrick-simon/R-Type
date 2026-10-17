@@ -15,6 +15,7 @@
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
 #include "SystemManager.hpp"
+#include "View.hpp"
 
 namespace RType {
 
@@ -242,6 +243,12 @@ namespace RType {
          * @return true if the system exists, false otherwise.
          */
         [[nodiscard]] bool hasSystem(SystemId id) const;
+
+        template<typename ...Components>
+        View<Components...> view()
+        {
+            return View<Components...>(_cm);
+        }
 
     private:
         ComponentManager _cm;
