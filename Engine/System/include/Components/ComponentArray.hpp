@@ -42,7 +42,7 @@ namespace RType {
         class ComponentPack {
         public:
             explicit ComponentPack(Entity entity, Component &&c) :
-                _entity(entity), component(std::move(c))
+                component(std::move(c)), _entity(entity)
             {
             }
 
