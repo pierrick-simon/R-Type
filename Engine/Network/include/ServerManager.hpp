@@ -61,7 +61,7 @@ namespace RType {
         /**
          * @brief Add the default manage function to the udp Server.
          */
-        void createDefaultProtocole();
+        void createDefaultProtocol();
 
         void addContextManage(uint8_t op,
             const std::function<void(const Header &,

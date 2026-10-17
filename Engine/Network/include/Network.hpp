@@ -25,7 +25,13 @@ namespace RType {
     #define TIMEOUT 6
     #define LOGIN_CHECK 3
 
-    enum Opcode : uint8_t { LOGIN = 1, LOGOUT, HEALTH };
+    enum Opcode : uint8_t {
+        LOGIN = 1,
+        LOGOUT = 2,
+        HEALTH = 3,
+        KEY_PRESSED = 10,
+        KEY_RELEASED = 11 
+    };
 
     struct Header {
         static constexpr std::size_t SIZE = 1 + 2 + 4 + 2;

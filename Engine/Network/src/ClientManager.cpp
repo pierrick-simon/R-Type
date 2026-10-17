@@ -13,11 +13,11 @@ namespace RType {
         _udp(std::make_unique<UDPClient>(host, port))
     {
         if (defaultProtocole)
-            createDefaultProtocole();
+            createDefaultProtocol();
         _udp->start();
     }
 
-    void ClientManager::createDefaultProtocole()
+    void ClientManager::createDefaultProtocol()
     {
     }
 
@@ -27,6 +27,11 @@ namespace RType {
         client._ctx->gm = std::ref(gm);
         client._udp->received();
         client._ctx->gm.reset();
+    }
+
+    void ClientManager::send(const Opcode op, const std::vector<uint8_t> &payload)
+    {
+        _udp->send(op, payload);
     }
 
     void ClientManager::addContextManage(uint8_t op,

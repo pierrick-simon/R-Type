@@ -59,12 +59,14 @@ namespace RType {
          */
         static void systemClientReceived(
             ClientManager &client, GameManager &gm);
-
+        
+        void send(const Opcode op, const std::vector<uint8_t> &payload);
+        
     private:
         /**
          * @brief Add the default manage function to the udp Client.
          */
-        void createDefaultProtocole();
+        void createDefaultProtocol();
 
         void addContextManage(uint8_t op,
             const std::function<void(const Header &,

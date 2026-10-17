@@ -12,11 +12,11 @@ namespace RType {
         _udp(std::make_unique<UDPServer>(port))
     {
         if (defaultProtocole)
-            createDefaultProtocole();
+            createDefaultProtocol();
         _udp->start();
     }
 
-    void ServerManager::createDefaultProtocole()
+    void ServerManager::createDefaultProtocol()
     {
     }
 
