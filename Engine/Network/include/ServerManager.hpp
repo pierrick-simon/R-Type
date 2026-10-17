@@ -63,6 +63,10 @@ namespace RType {
          */
         void createDefaultProtocole();
 
+        void addContextManage(uint8_t op,
+            const std::function<void(const Header &,
+                const std::vector<uint8_t> &, std::shared_ptr<Context>)> &func);
+
         std::unique_ptr<UDPServer> _udp;
         std::shared_ptr<Context> _ctx = std::make_shared<Context>();
     };

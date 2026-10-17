@@ -27,4 +27,14 @@ namespace RType {
         server._udp->received();
         server._ctx->gm.reset();
     }
+
+    void ServerManager::addContextManage(uint8_t op,
+        const std::function<void(const Header &, const std::vector<uint8_t> &,
+            std::shared_ptr<Context>)> &func)
+    {
+        _udp->addManage(op,
+            [ctx = _ctx, func](const Header &h, const std::vector<uint8_t> &p) {
+                func(h, p, ctx);
+            });
+    }
 }; // namespace RType
