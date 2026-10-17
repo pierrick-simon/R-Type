@@ -34,6 +34,15 @@ namespace RType {
             thread_.join();
     }
 
+    void UDPServer::received(GameManager &gm)
+    {
+        gm_ = std::ref(gm);
+        if (context_.stopped())
+            context_.restart();
+        context_.poll();
+        gm_.reset();
+    }
+
     void UDPServer::scheduleHealthCheck()
     {
         healthTimer_.expires_after(std::chrono::seconds(HEALTH_CHECK_TIME));

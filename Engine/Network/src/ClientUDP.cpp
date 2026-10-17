@@ -35,6 +35,15 @@ namespace RType {
             thread_.join();
     }
 
+    void UDPClient::received(GameManager &gm)
+    {
+        gm_ = std::ref(gm);
+        if (context_.stopped())
+            context_.restart();
+        context_.poll();
+        gm_.reset();
+    }
+
     void UDPClient::scheduleLogin()
     {
         if (myId_ != 0)

@@ -8,6 +8,7 @@
 #ifndef CLIENTUDP_HPP
     #define CLIENTUDP_HPP
 
+    #include "GameManager.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -18,6 +19,8 @@ namespace RType {
         ~UDPClient();
         void start();
         void stop();
+
+        void received(GameManager &gm);
 
         void send(Opcode op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
@@ -42,6 +45,8 @@ namespace RType {
         uint32_t seq_ = 0;
         std::atomic<uint16_t> myId_ {0};
         std::thread thread_;
+
+        std::optional<std::reference_wrapper<GameManager>> gm_;
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);

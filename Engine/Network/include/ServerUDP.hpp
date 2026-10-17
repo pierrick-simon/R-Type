@@ -8,6 +8,7 @@
 #ifndef SERVERUDP_HPP_
     #define SERVERUDP_HPP_
 
+    #include "GameManager.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -29,6 +30,8 @@ namespace RType {
         ~UDPServer();
         void start();
         void stop();
+
+        void received(GameManager &gm);
 
         void broadcast(Opcode op, const std::vector<uint8_t> &payload);
         void sendToClient(
@@ -53,6 +56,8 @@ namespace RType {
         std::map<uint16_t, Client> clients_;
         uint16_t nextId_ = 0;
         uint16_t serverId_ = 0;
+
+        std::optional<std::reference_wrapper<GameManager>> gm_;
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
