@@ -22,11 +22,11 @@ namespace RType {
 
         void received();
 
-        void send(uint8_t op, const std::vector<uint8_t> &msg);
+        void send(Opcode op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
         [[nodiscard]] uint16_t getMyId() const;
 
-        void addManage(uint8_t op, ManageFunc func);
+        void addManage(Opcode op, ManageFunc func);
 
         class ClientException : public EngineException {
             ClientException(const std::string &str) :

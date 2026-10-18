@@ -60,7 +60,7 @@ namespace RType {
         static void systemClientReceived(
             GameManager &gm, ClientManager &client);
 
-        void send(uint8_t op, const std::vector<uint8_t> &payload);
+        void send(Opcode op, const std::vector<uint8_t> &payload);
 
     private:
         /**

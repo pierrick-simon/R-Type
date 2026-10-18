@@ -51,12 +51,12 @@ namespace RType {
         });
     }
 
-    void UDPClient::send(uint8_t op, const std::vector<uint8_t> &msg)
+    void UDPClient::send(Opcode op, const std::vector<uint8_t> &msg)
     {
         asio::post(context_, [this, op, msg]() { sendNow(op, msg); });
     }
 
-    void UDPClient::sendNow(uint8_t op, const std::vector<uint8_t> &msg)
+    void UDPClient::sendNow(Opcode op, const std::vector<uint8_t> &msg)
     {
         sendBuffer_ = serializeHeader(Header {op, 0, seq_++, myId_}, msg);
         socket_.async_send_to(asio::buffer(sendBuffer_),

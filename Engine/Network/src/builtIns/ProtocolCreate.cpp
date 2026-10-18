@@ -27,16 +27,57 @@ namespace RType {
     void ProtocolCreate::manageCreateSprite2D(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
-        auto asset = gm.getAssetsMap().find(e.id);
+        auto asset = gm.getAssetsMap().find(e.assetId);
         
         if (asset == gm.getAssetsMap().end())
             return;
         auto s = ctx.gm->get().createEntity();
+        gm.addComponent<RType::Sprite2D>(s);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Texture2D>(s, asset->second);
         ctx.map.emplace(e.id, s);
     }
 
+    void ProtocolCreate::manageCreateSpriteSheet(ProtocolEntity &e, Context &ctx)
+    {
+        auto &gm = ctx.gm->get();
+        auto asset = gm.getAssetsMap().find(e.assetId);
+        
+        if (asset == gm.getAssetsMap().end())
+            return;
+        auto s = ctx.gm->get().createEntity();
+        gm.addComponent<RType::SpriteSheet2D>(s);
+        gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        gm.addComponent<RType::Texture2D>(s, asset->second);
+        ctx.map.emplace(e.id, s);
+    }
+
+    void ProtocolCreate::manageCreateSound(ProtocolEntity &e, Context &ctx)
+    {
+        auto &gm = ctx.gm->get();
+        auto asset = gm.getAssetsMap().find(e.assetId);
+        
+        if (asset == gm.getAssetsMap().end())
+            return;
+        auto s = ctx.gm->get().createEntity();
+        gm.addComponent<RType::Sound>(s, asset->second, false);
+        gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        ctx.map.emplace(e.id, s);
+    }
+
+    void ProtocolCreate::manageCreateText2D(ProtocolEntity &e, Context &ctx)
+    {
+        auto &gm = ctx.gm->get();
+        auto asset = gm.getAssetsMap().find(e.assetId);
+        
+        if (asset == gm.getAssetsMap().end())
+            return;
+        auto s = ctx.gm->get().createEntity();
+        gm.addComponent<RType::Text2D>(s);
+        gm.addComponent<RType::Font>(s, asset->second);
+        gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        ctx.map.emplace(e.id, s);
+    }
 
 std::vector<uint8_t> serializeEntity(const ProtocolEntity &e)
 {
