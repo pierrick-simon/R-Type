@@ -39,7 +39,7 @@ namespace RType {
             const Header &head, const std::vector<uint8_t> &payload);
 
         void scheduleLogin();
-        void sendNow(uint8_t op, const std::vector<uint8_t> &msg);
+        void sendNow(Opcode op, const std::vector<uint8_t> &msg);
 
         asio::io_context context_;
         asio::ip::udp::socket socket_;

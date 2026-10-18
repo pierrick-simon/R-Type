@@ -32,7 +32,8 @@ namespace RType {
         KEY_PRESSED = 10,
         KEY_RELEASED = 11,
         MOUSE_BUTTON_PRESSED = 12,
-        MOUSE_BUTTON_RELEASED = 13
+        MOUSE_BUTTON_RELEASED = 13,
+        CREATE = 20
     };
 
     struct Header {
@@ -46,10 +47,15 @@ namespace RType {
     using ManageFunc =
         std::function<void(const Header &, const std::vector<uint8_t> &)>;
 
-    std::optional<Header> parse(
+    std::optional<Header> parseHeader(
         const std::vector<uint8_t> &buf, std::size_t len);
-    std::vector<uint8_t> serialize(
+    std::vector<uint8_t> serializeHeader(
         Header h, const std::vector<uint8_t> &payload);
+
+    inline uint32_t get32(const uint8_t *p);
+    inline uint16_t get16(const uint8_t *p);
+    inline void put32(uint8_t *p, uint32_t v);
+    inline void put16(uint8_t *p, uint16_t v);
 
     struct Context {
         std::unordered_map<uint16_t, Entity> clients;

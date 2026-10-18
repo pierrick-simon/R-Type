@@ -38,7 +38,7 @@ namespace RType {
         _udp->send(op, payload);
     }
 
-    void ClientManager::addContextManage(uint8_t op,
+    void ClientManager::addContextManage(Opcode op,
         const std::function<void(
             const Header &, const std::vector<uint8_t> &, Context &)> &func)
     {
