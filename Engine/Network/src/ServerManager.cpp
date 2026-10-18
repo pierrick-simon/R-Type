@@ -9,6 +9,7 @@
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "MouseManager.hpp"
+#include "MouseProtocol.hpp"
 
 namespace RType {
     ServerManager::ServerManager(short port, bool defaultProtocole) :
@@ -27,6 +28,10 @@ namespace RType {
             true);
         addContextManage(KEY_PRESSED, KeyboardProtocol::manageKeyPressed);
         addContextManage(KEY_RELEASED, KeyboardProtocol::manageKeyReleased);
+        addContextManage(
+            MOUSE_BUTTON_PRESSED, MouseProtocol::manageButtonPressed);
+        addContextManage(
+            MOUSE_BUTTON_RELEASED, MouseProtocol::manageButtonReleased);
     }
 
     void ServerManager::systemServerReceived(

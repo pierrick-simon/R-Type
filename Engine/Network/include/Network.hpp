@@ -30,7 +30,9 @@ namespace RType {
         LOGOUT = 2,
         HEALTH = 3,
         KEY_PRESSED = 10,
-        KEY_RELEASED = 11
+        KEY_RELEASED = 11,
+        MOUSE_BUTTON_PRESSED = 12,
+        MOUSE_BUTTON_RELEASED = 13
     };
 
     struct Header {

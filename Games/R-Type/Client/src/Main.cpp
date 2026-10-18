@@ -10,6 +10,8 @@
 #include "GameManager.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "MouseManager.hpp"
+#include "MouseProtocol.hpp"
 #include "Sprite2D.hpp"
 #include "Window.hpp"
 
@@ -32,6 +34,11 @@ RType::Entity createClient(RType::GameManager &gm)
         RType::KeyboardManager::systemKeyboardManager);
     gm.createSystem<RType::ClientManager, RType::KeyboardManager>(
         RType::KeyboardProtocol::systemKeyboardProtocol);
+    gm.addComponent<RType::MouseManager>(c);
+    gm.createSystem<RType::MouseManager>(
+        RType::MouseManager::systemMouseManager);
+    gm.createSystem<RType::ClientManager, RType::MouseManager>(
+        RType::MouseProtocol::systemMouseProtocol);
     return c;
 }
 

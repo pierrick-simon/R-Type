@@ -31,6 +31,9 @@ namespace RType {
             Extra, //!< The Extra Mouse Button
             Forward, //!< The Forward Mouse Button
             Back, //!< The Back Mouse Button
+
+            MouseButtonCount, //!< Keep last -- the total number of keyboard
+                              //!< keys
         };
 
         /**

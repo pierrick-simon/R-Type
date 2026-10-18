@@ -132,6 +132,7 @@ set(SRCS_NETWORK
     ${NETWORK}/src/ServerManager.cpp
     ${NETWORK}/src/ClientManager.cpp
     ${NETWORK}/src/BuiltIn/KeyboardProtocol.cpp
+    ${NETWORK}/src/BuiltIn/MouseProtocol.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
