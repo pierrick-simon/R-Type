@@ -277,7 +277,7 @@ namespace RType {
          * component types. Never throws: if one of the types has never
          * been added, the view is empty.
          * @tparam Components The component types to look for.
-         * @return The view, to iterate over with each().
+         * @return The view, to iterate over with each() or getVector().
          */
         template<typename... Components>
         View<Components...> view()
