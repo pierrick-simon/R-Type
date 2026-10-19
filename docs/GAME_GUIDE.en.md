@@ -661,11 +661,12 @@ What the engine does not do yet, and what to do in the meantime:
 |---|---|
 | [README](../README.md) | Installation, build, tests, linter |
 | [ECS user guide](ECS_GUIDE.en.md) | The whole `GameManager` API, in detail |
-| ↳ [Systems](ECS_GUIDE.en.md#4-systems) | Per-entity systems, frame systems, with the `GameManager`, `getVector()` |
-| ↳ [The frame](ECS_GUIDE.en.md#5-the-frame-immediate-and-deferred-operations) | What is immediate and what is deferred during `update()` |
-| ↳ [Pitfalls to avoid](ECS_GUIDE.en.md#7-pitfalls-to-avoid) | The most common mistakes, with their explanation |
-| ↳ [Recipes](ECS_GUIDE.en.md#8-recipes) | Lifetime, pause, homing projectile, collisions |
-| ↳ [API cheat sheet](ECS_GUIDE.en.md#9-api-cheat-sheet) | Every method on one page |
+| ECS guide, [Systems](ECS_GUIDE.en.md#4-systems) | Per-entity systems, frame systems, with the `GameManager`, `getVector()` |
+| ECS guide, [The frame](ECS_GUIDE.en.md#5-the-frame-immediate-and-deferred-operations) | What is immediate and what is deferred during `update()` |
+| ECS guide, [Pitfalls to avoid](ECS_GUIDE.en.md#7-pitfalls-to-avoid) | The most common mistakes, with their explanation |
+| ECS guide, [Recipes](ECS_GUIDE.en.md#8-recipes) | Lifetime, pause, homing projectile, collisions |
+| ECS guide, [API cheat sheet](ECS_GUIDE.en.md#9-api-cheat-sheet) | Every method on one page |
 | [ECS design notes](ECS_DESIGN.en.md) | The why behind the engine's architecture |
+| [Comparative studies](comparative-studies/en/README.md) | The project's technical choices and their alternatives: language, build, ECS, raylib, networking, protocol, tests… |
 | `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | The Doxygen documentation of each provided component |
 | `Games/Poc/` | The ECS tests: a usage example for every behavior |

@@ -7,7 +7,6 @@
 *.ilk
 *.pdb
 *.exe
-*lib*
 CMakeCache.txt
 cmake_install.cmake
 Makefile

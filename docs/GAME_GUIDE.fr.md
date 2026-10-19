@@ -661,11 +661,12 @@ Ce que le moteur ne fait pas encore, et comment faire en attendant :
 |---|---|
 | [README](../README.md) | Installation, compilation, tests, linter |
 | [Guide d'utilisation de l'ECS](ECS_GUIDE.fr.md) | Toute l'API du `GameManager`, en détail |
-| ↳ [Les systèmes](ECS_GUIDE.fr.md#4-les-systèmes) | Systèmes par entité, par frame, avec le `GameManager`, `getVector()` |
-| ↳ [La frame](ECS_GUIDE.fr.md#5-la-frame--opérations-immédiates-et-différées) | Ce qui est immédiat et ce qui est différé pendant `update()` |
-| ↳ [Les pièges à éviter](ECS_GUIDE.fr.md#7-les-pièges-à-éviter) | Les erreurs les plus courantes, avec leur explication |
-| ↳ [Recettes](ECS_GUIDE.fr.md#8-recettes) | Durée de vie, pause, projectile à tête chercheuse, collisions |
-| ↳ [Aide-mémoire de l'API](ECS_GUIDE.fr.md#9-aide-mémoire-de-lapi) | Toutes les méthodes sur une page |
+| Guide de l'ECS, [Les systèmes](ECS_GUIDE.fr.md#4-les-systèmes) | Systèmes par entité, par frame, avec le `GameManager`, `getVector()` |
+| Guide de l'ECS, [La frame](ECS_GUIDE.fr.md#5-la-frame--opérations-immédiates-et-différées) | Ce qui est immédiat et ce qui est différé pendant `update()` |
+| Guide de l'ECS, [Les pièges à éviter](ECS_GUIDE.fr.md#7-les-pièges-à-éviter) | Les erreurs les plus courantes, avec leur explication |
+| Guide de l'ECS, [Recettes](ECS_GUIDE.fr.md#8-recettes) | Durée de vie, pause, projectile à tête chercheuse, collisions |
+| Guide de l'ECS, [Aide-mémoire de l'API](ECS_GUIDE.fr.md#9-aide-mémoire-de-lapi) | Toutes les méthodes sur une page |
 | [Notes de conception de l'ECS](ECS_DESIGN.fr.md) | Le pourquoi de l'architecture du moteur |
+| [Études comparatives](comparative-studies/fr/README.md) | Les choix techniques du projet et leurs alternatives : langage, build, ECS, raylib, réseau, protocole, tests… |
 | `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | La documentation Doxygen de chaque composant fourni |
 | `Games/Poc/` | Les tests de l'ECS : un exemple d'utilisation pour chaque comportement |
