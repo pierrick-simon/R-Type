@@ -20,9 +20,6 @@ Current state of the repository:
 - **Continuous integration** installs Criterion with `apt-get install libcriterion-dev`.
 - **The Poc** (`Games/Poc`) has its own test runner, with more than 200 dependency-free tests. It is a validation program for the ECS: it is not affected by this choice.
 
-> [!NOTE]
-> The README states that Criterion is "*automatically downloaded if missing*". This is not the case: CMake only looks for it on the machine.
-
 Tests will become essential with networking ([study 10](10-network-protocol.md)): reading and writing headers, connection, presence checks. This code must be tested **on Windows as well as on Linux**, because that is where compiler differences (type sizes, byte order) show up.
 
 ---
@@ -179,7 +176,6 @@ All four are actively maintained: Criterion published its latest release this mo
 1. **Remove the `NOT WIN32` condition** from the Criterion block of the root `CMakeLists.txt`, so that tests are looked for and built on Windows too.
 2. **Document the installation on Windows:** build Criterion with Meson and Ninja, then install it where `find_library` will find it (or give its path to CMake).
 3. **Add a Windows build to continuous integration**, which builds Criterion the way its own continuous integration does, then runs the tests.
-4. **Fix the README**, which announces an automatic download of Criterion that does not exist.
 
 **What we accept:** a heavier installation on Windows than for a framework fetchable with `FetchContent`, and a framework less widespread than GoogleTest.
 

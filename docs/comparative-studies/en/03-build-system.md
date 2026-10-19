@@ -171,9 +171,6 @@ CPM describes itself as a layer over `FetchContent` ([CPM.cmake](https://github.
 
 **What we accept:** a longer first configuration (downloading and building raylib) and an Internet connection at that moment.
 
-> [!NOTE]
-> The README asks for "CMake ≥ 4.4", but the `CMakeLists.txt` files declare `cmake_minimum_required(VERSION 3.25...4.0)` and continuous integration installs `>=3.25`. These three values should be aligned.
-
 ---
 
 ## When to revisit this choice

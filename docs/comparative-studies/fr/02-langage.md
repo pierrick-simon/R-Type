@@ -162,9 +162,6 @@ Selon l'enquête JetBrains 2025 sur 1 800 développeurs C++, les standards les p
 
 **Ce que l'on accepte :** des temps de compilation plus longs et des erreurs de templates parfois obscures. Pour les limiter, l'API publique (`GameManager`) reste simple et ses erreurs de type sont documentées.
 
-> [!NOTE]
-> Le README annonce un badge « C++26 » et dit que GCC 14 est « requis pour le dialecte C++26 », alors que les `CMakeLists.txt` demandent C++20. Il faudra harmoniser les deux.
-
 ---
 
 ## Quand revoir ce choix

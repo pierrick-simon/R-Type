@@ -20,9 +20,6 @@ Le projet utilise **Criterion** : il est déjà intégré au build et à l'inté
 - **L'intégration continue** installe Criterion avec `apt-get install libcriterion-dev`.
 - **Le Poc** (`Games/Poc`) a son propre lanceur de tests, plus de 200 tests sans dépendance. C'est un programme de validation de l'ECS : il n'est pas concerné par ce choix.
 
-> [!NOTE]
-> Le README annonce que Criterion est « *automatically downloaded if missing* ». Ce n'est pas le cas : le CMake se contente de le chercher sur la machine.
-
 Les tests vont devenir indispensables avec le réseau ([étude 10](10-protocole-reseau.md)) : lecture et écriture des en-têtes, connexion, contrôle de présence. Ce code doit être testé **sous Windows comme sous Linux**, car c'est là qu'apparaissent les différences entre compilateurs (taille des types, ordre des octets).
 
 ---
@@ -179,7 +176,6 @@ Les quatre sont maintenus activement : Criterion a publié sa dernière version 
 1. **Retirer la condition `NOT WIN32`** du bloc Criterion du `CMakeLists.txt` racine, pour que les tests soient cherchés et compilés sous Windows aussi.
 2. **Documenter l'installation sous Windows :** compiler Criterion avec Meson et Ninja, puis l'installer là où `find_library` le trouvera (ou indiquer son chemin à CMake).
 3. **Ajouter une compilation Windows à l'intégration continue**, qui compile Criterion comme le fait sa propre intégration continue, puis lance les tests.
-4. **Corriger le README**, qui annonce un téléchargement automatique de Criterion qui n'existe pas.
 
 **Ce que l'on accepte :** une installation plus lourde sous Windows que celle d'un framework récupérable par `FetchContent`, et un framework moins répandu que GoogleTest.
 

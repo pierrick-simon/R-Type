@@ -162,9 +162,6 @@ According to the 2025 JetBrains survey of 1,800 C++ developers, the most used st
 
 **What we accept:** longer compile times and sometimes obscure template errors. To limit them, the public API (`GameManager`) stays simple and its type errors are documented.
 
-> [!NOTE]
-> The README shows a "C++26" badge and says GCC 14 is "required for the C++26 dialect", while the `CMakeLists.txt` files ask for C++20. The two should be aligned.
-
 ---
 
 ## When to revisit this choice
