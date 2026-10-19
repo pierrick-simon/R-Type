@@ -19,7 +19,15 @@ set(SRCS_GFX
         src/Enemies/EnemyVisuals.cpp
 )
 
-add_executable(r-type_server ${MAIN} ${SRCS} ${SRCS_GFX})
+set(GAME_SRCS
+        src/Background.cpp
+        src/Bullet.cpp
+        src/Player.cpp
+        src/Setup.cpp
+        src/Texture.cpp
+)
+
+add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
 target_link_libraries(r-type_server PRIVATE engine-system engine-graphical)
 

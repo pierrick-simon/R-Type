@@ -30,10 +30,10 @@ namespace RType {
 
     // Same relative root as the player texture in Main.cpp.
     inline constexpr SheetInfo SCOUT_SHEET = {
-        "R-Type/sprites/enemies/scout.png", 16, 21, 24, 70, 21, 14};
+        "R-Type/sprites/Enemies/scout.gif", 16, 21, 24, 70, 21, 14};
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
-        "R-Type/sprites/enemies/explosion.png", 7, 32, 31, 60, 0, 0};
+        "R-Type/sprites/Enemies/explosion.png", 7, 32, 31, 60, 0, 0};
 } // namespace RType
 
 #endif /* !ENEMYSHEET_HPP_ */
