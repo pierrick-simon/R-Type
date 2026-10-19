@@ -285,11 +285,13 @@ namespace RType {
             return View<Components...>(_cm);
         }
 
-        std::unordered_map<int, std::string> getAssetsMap() {
+        std::unordered_map<int, std::string> &getAssetsMap()
+        {
             return _assetsMap;
         }
 
-        void setAssetsMap(std::unordered_map<int, std::string> &map) {
+        void setAssetsMap(std::unordered_map<int, std::string> &map)
+        {
             _assetsMap = map;
         }
 

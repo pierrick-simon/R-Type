@@ -102,7 +102,7 @@ namespace RType {
     void UDPClient::manageLogin(
         const Header &header, const std::vector<uint8_t> &payload)
     {
-        if (payload.size() > 2)
+        if (payload.size() < 2)
             return;
         myId_ = (payload[0] << 8) | payload[1];
         std::cout << "My id = " << myId_ << std::endl;

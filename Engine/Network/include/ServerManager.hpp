@@ -57,6 +57,11 @@ namespace RType {
         static void systemServerReceived(
             GameManager &gm, ServerManager &server);
 
+        void broadcast(Opcode op, const std::vector<uint8_t> &payload)
+        {
+            _udp->broadcast(op, payload);
+        }
+
     private:
         /**
          * @brief Add the default manage function to the udp Server.

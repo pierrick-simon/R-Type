@@ -85,11 +85,12 @@ namespace RType {
     void UDPServer::sendToClient(
         Client &client, Opcode op, const std::vector<uint8_t> &payload)
     {
-        client.sendBuffer = serializeHeader(Header {op,
-                                          static_cast<uint16_t>(payload.size()),
-                                          client.seq++,
-                                          serverId_},
-            payload);
+        client.sendBuffer =
+            serializeHeader(Header {op,
+                                static_cast<uint16_t>(payload.size()),
+                                client.seq++,
+                                serverId_},
+                payload);
         socket_.async_send_to(asio::buffer(client.sendBuffer),
             client.endpoint,
             [this](std::error_code, std::size_t) {});
@@ -106,8 +107,7 @@ namespace RType {
         });
     }
 
-    void UDPServer::broadcastNow(
-        Opcode op, const std::vector<uint8_t> &payload)
+    void UDPServer::broadcastNow(Opcode op, const std::vector<uint8_t> &payload)
     {
         for (auto &[id, client] : clients_)
             sendToClient(client, op, payload);

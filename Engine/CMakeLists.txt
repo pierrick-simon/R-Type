@@ -133,6 +133,12 @@ set(SRCS_NETWORK
     ${NETWORK}/src/ClientManager.cpp
     ${NETWORK}/src/BuiltIn/KeyboardProtocol.cpp
     ${NETWORK}/src/BuiltIn/MouseProtocol.cpp
+    ${NETWORK}/src/BuiltIn/ProtocolCreate.cpp
+    ${NETWORK}/src/BuiltIn/ProtocolMove.cpp
+    ${NETWORK}/src/BuiltIn/ProtocolSet.cpp
+    ${NETWORK}/src/BuiltIn/ProtocolSound.cpp
+    ${NETWORK}/src/BuiltIn/ProtocolText.cpp
+    ${NETWORK}/src/BuiltIn/ProtocolDestroy.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})

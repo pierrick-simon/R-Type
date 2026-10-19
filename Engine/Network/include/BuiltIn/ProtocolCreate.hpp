@@ -8,16 +8,16 @@
 #ifndef PROTOCOL_CREATE_HPP_
     #define PROTOCOL_CREATE_HPP_
 
-#include "GameManager.hpp"
 #include "ClientManager.hpp"
+#include "GameManager.hpp"
 #include "Network.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
-#include "Sound.hpp"
 #include "Text2D.hpp"
 
 namespace RType {
-    
+
     struct ProtocolEntity {
         static constexpr std::size_t SIZE = 4 + 1 + 2 + 4 + 4;
         uint32_t id;
@@ -31,27 +31,26 @@ namespace RType {
         SPRITE = 0,
         SPRITESHEET = 1,
         SOUND = 2,
-        TEXT = 3
+        TEXT_ENTITY = 3
     };
-
 
     class ProtocolCreate {
     public:
         ProtocolCreate() {};
-        void manageCreate(
-            const Header &header, const std::vector<uint8_t> &payload, Context &ctx);
+        void manageCreate(const Header &header,
+            const std::vector<uint8_t> &payload, Context &ctx);
 
         void manageCreateSprite2D(ProtocolEntity &e, Context &ctx);
         void manageCreateSpriteSheet(ProtocolEntity &e, Context &ctx);
         void manageCreateSound(ProtocolEntity &e, Context &ctx);
         void manageCreateText2D(ProtocolEntity &e, Context &ctx);
 
-
     private:
-        
+        std::vector<uint8_t> serializeEntity(const ProtocolEntity &e);
+        std::optional<ProtocolEntity> parseEntity(
+            const std::vector<uint8_t> &payload);
     };
 
-
-} //namespace RType
+} // namespace RType
 
 #endif
