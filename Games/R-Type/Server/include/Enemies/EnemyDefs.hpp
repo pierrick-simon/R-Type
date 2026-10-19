@@ -35,10 +35,10 @@ namespace RType {
         float speed;
         float amplitude;
         float period;
-        PatternType pattern = PatternType::Straight;
-        float fireCooldown = 0.f;
-        float bulletSpeed = 0.f;
-        int bulletDamage = 1;
+        PatternType pattern;
+        float fireCooldown;
+        float bulletSpeed;
+        int bulletDamage;
     };
 
     inline constexpr std::array<EnemyDef, std::size_t(EnemyType::Count)>
