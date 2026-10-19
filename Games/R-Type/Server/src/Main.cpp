@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "Enemies/EnemySystems.hpp"
+#include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
 #include "GameManager.hpp"
 #include "Keyboard.hpp"
@@ -49,6 +51,9 @@ void playerShoot(RType::GameManager &gm, const RType::Position2D &pos, const RTy
     gm.addComponent<RType::Texture2D>(b, "R-Type/sprites/bullet.png");
     gm.addComponent<RType::Sprite2D>(b, RType::Origin2D());
     gm.addComponent<RType::Clock>(b);
+    gm.addComponent<RType::Projectile>(b, RType::Projectile{1, true});
+    // bullet.png: the visible part is 11x10 px, starting at (7, 9)
+    gm.addComponent<RType::Hitbox>(b, RType::Hitbox{11.f, 10.f, 7.f, 9.f});
 }
 
 void playerHandle(RType::GameManager &gm, const Player &p, RType::Velocity2D &v, const RType::Position2D &pos,
@@ -103,8 +108,12 @@ RType::Entity createSpaceShip(RType::GameManager &gm, RType::Entity km)
     gm.addComponent<RType::Friction2D>(s, 120);
     gm.addComponent<RType::Keyboard>(
         s, gm.getComponent<RType::KeyboardManager>(km));
-    gm.addComponent<RType::Texture2D>(s, "R-Type/sprites/r-typesheet5.gif");
+    gm.addComponent<RType::Texture2D>(s, "R-Type/sprites/PlayerSheets/r-typePlayerSheet5.gif");
     gm.addComponent<RType::Clock>(s);
+    // Enemies aim at / hurt this entity. Adjust the hitbox to the real sprite.
+    gm.addComponent<RType::EnemyTarget>(s);
+    gm.addComponent<RType::Health>(s, RType::Health{3, 3});
+    gm.addComponent<RType::Hitbox>(s, RType::Hitbox{28.f, 10.f, 2.f, 3.f});
     gm.addComponent<RType::SpriteSheet2D>(s, RType::Size2D(1, 16), 0, 200);
     gm.getComponent<RType::SpriteSheet2D>(s).animation = false;
     gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(RType::Sprite2D::systemDrawSprite2D);
@@ -119,6 +128,10 @@ int main()
         auto km = createKeyboardManager(gm);
         auto s = createSpaceShip(gm, km);
         gm.createSystem<RType::Clock>(RType::Clock::systemClock);
+        RType::registerEnemySystems(gm, RType::makeEnemyVisualHooks());
+        RType::createEnemyDirector(gm);
+        gm.createSystem<RType::SpriteSheet2D, RType::Clock>(
+            RType::SpriteSheet2D::systemAnimateSpriteSheet2D);
         gm.createSystem<Player,
             RType::Velocity2D,
             RType::Position2D,
