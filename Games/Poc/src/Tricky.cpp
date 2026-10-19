@@ -308,7 +308,6 @@ namespace {
 
     void throwingFrameStillDestroysEverything()
     {
-        const int before = Tracked::alive;
         GameManager gm;
         std::vector<Entity> entities;
 
@@ -327,7 +326,7 @@ namespace {
             POC_CHECK(!gm.hasEntity(e));
         POC_CHECK(gm.getArray<Owned>().nbComponent() == 0);
         POC_CHECK(gm.getArray<Tracked>().nbComponent() == 0);
-        POC_CHECK(Tracked::alive == before);
+        POC_CHECK(Tracked::alive == 0);
     }
 
     void systemCreatedDuringUpdateStartsNextFrame()

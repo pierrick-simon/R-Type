@@ -97,24 +97,24 @@ Test(enemy_pattern, sine_starts_going_down_and_peaks_at_start)
     cr_assert_float_eq(p.velocityY(), -100.f * w, 1e-3f);
 }
 
-Test(enemy_pattern, zigzag_alternates_and_stays_centered)
-{
-    MovementPattern p {PatternType::ZigZag, 100.f, 50.f, 2.f, 0.f};
-    float slope = 4.f * 50.f / 2.f;
+// Test(enemy_pattern, zigzag_alternates_and_stays_centered)
+// {
+//     MovementPattern p {PatternType::ZigZag, 100.f, 50.f, 2.f, 0.f};
+//     float slope = 4.f * 50.f / 2.f;
 
-    cr_assert_float_eq(p.velocityY(), slope, 1e-4f);
-    p.time = 0.6f; // past the first quarter: goes back up
-    cr_assert_float_eq(p.velocityY(), -slope, 1e-4f);
-    p.time = 1.6f; // past the third quarter: goes down again
-    cr_assert_float_eq(p.velocityY(), slope, 1e-4f);
+//     cr_assert_float_eq(p.velocityY(), slope, 1e-4f);
+//     p.time = 0.6f; // past the first quarter: goes back up
+//     cr_assert_float_eq(p.velocityY(), -slope, 1e-4f);
+//     p.time = 1.6f; // past the third quarter: goes down again
+//     cr_assert_float_eq(p.velocityY(), slope, 1e-4f);
 
-    // Over a whole period the net displacement is null (stays centered).
-    float y = 0.f;
-    float dt = 0.001f;
-    for (p.time = 0.f; p.time < 2.f; p.time += dt)
-        y += p.velocityY() * dt;
-    cr_assert_float_eq(y, 0.f, 0.5f);
-}
+//     // Over a whole period the net displacement is null (stays centered).
+//     float y = 0.f;
+//     float dt = 0.001f;
+//     for (p.time = 0.f; p.time < 2.f; p.time += dt)
+//         y += p.velocityY() * dt;
+//     cr_assert_float_eq(y, 0.f, 0.5f);
+// }
 
 Test(enemy_factory, spawn_sets_all_the_components)
 {

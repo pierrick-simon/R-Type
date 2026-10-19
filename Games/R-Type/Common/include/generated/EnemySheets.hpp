@@ -41,6 +41,5 @@ namespace RType::Assets {
     inline constexpr SheetInfo GUNSHIP_BLUE = {"assets/enemies/gunship_blue.png", 5, 33, 15, 100, 32, 13};
 
 } // namespace RType::Assets
-// clang-format on
 
 #endif /* !ENEMYSHEETS_HPP_ */

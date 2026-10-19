@@ -29,10 +29,12 @@ namespace {
     [[nodiscard]] Rectangle spriteFrame(const PreviewEnemy &enemy)
     {
         const auto &sheet = *enemy.definition.sheet;
-        int frame = int(enemy.animationTime * 1000.f / float(sheet.frameMs))
-            % sheet.frames;
+        int frame = int(enemy.animationTime * 1000.f / float(sheet.frameMs)) %
+            sheet.frames;
 
-        return {float(frame * sheet.cellW), 0.f, float(sheet.cellW),
+        return {float(frame * sheet.cellW),
+            0.f,
+            float(sheet.cellW),
             float(sheet.cellH)};
     }
 
@@ -78,14 +80,21 @@ int main()
             float centerX = 160.f + float(column) * 320.f;
             float centerY = 135.f + float(row) * 180.f;
             Rectangle source = spriteFrame(enemy);
-            Rectangle destination = {centerX, centerY,
+            Rectangle destination = {centerX,
+                centerY,
                 float(sheet.cellW) * DISPLAY_SCALE,
                 float(sheet.cellH) * DISPLAY_SCALE};
 
-            DrawText(enemy.definition.name, int(centerX - 100.f),
-                int(centerY - 75.f), 20, LIGHTGRAY);
-            DrawTexturePro(enemy.texture, source, destination,
-                {destination.width / 2.f, destination.height / 2.f}, 0.f,
+            DrawText(enemy.definition.name,
+                int(centerX - 100.f),
+                int(centerY - 75.f),
+                20,
+                LIGHTGRAY);
+            DrawTexturePro(enemy.texture,
+                source,
+                destination,
+                {destination.width / 2.f, destination.height / 2.f},
+                0.f,
                 WHITE);
             enemy.animationTime += elapsed;
         }
