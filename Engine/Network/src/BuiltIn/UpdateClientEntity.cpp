@@ -54,6 +54,7 @@ namespace RType {
             ProtocolEntity pe = {};
             if (update.active = true)
                 continue;
+            checkConnectedClient(server, update);
             try {
                 auto tmp = gm.getComponent<Position2D>(entity);
                 pe.posX = uint32_t(tmp.x());
@@ -106,6 +107,18 @@ namespace RType {
                 continue;
             _links.erase(iter);
             return;
+        }
+    }
+
+    void UpdateClientEntity::checkConnectedClient(
+        ServerManager &server, UpdateClientEntity &update)
+    {
+        std::unordered_set<uint32_t> lookup(
+            update._links.begin(), update._links.end());
+
+        for (const auto &[key, _] : server.getClients()) {
+            if (lookup.find(key) == lookup.end())
+                update.create.push_back(key);
         }
     }
 }; // namespace RType

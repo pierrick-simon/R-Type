@@ -63,6 +63,12 @@ namespace RType {
             const std::vector<uint8_t> &payload);
         void broadcast(Opcode op, const std::vector<uint8_t> &payload);
 
+        [[nodiscard]] const std::unordered_map<uint16_t, Entity> &
+        getClients() const
+        {
+            return _ctx.clients;
+        }
+
     private:
         /**
          * @brief Add the default manage function to the udp Server.

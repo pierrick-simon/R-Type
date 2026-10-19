@@ -54,6 +54,8 @@ namespace RType {
 
         static void setCreateEntity(GameManager &gm, Entity entity,
             ServerManager &server, UpdateClientEntity &update);
+        static void checkConnectedClient(
+            ServerManager &server, UpdateClientEntity &update);
     };
 }; // namespace RType
 

@@ -10,6 +10,7 @@
 #include "KeyboardProtocol.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "UpdateClientEntity.hpp"
 
 namespace RType {
     ServerManager::ServerManager(short port, bool defaultProtocole) :
@@ -88,5 +89,8 @@ namespace RType {
         _ctx.gm->get().addComponent<DefaulClient>(entity, id);
         _ctx.gm->get().addComponent<KeyboardManager>(entity);
         _ctx.gm->get().addComponent<MouseManager>(entity);
+        for (auto [_, update] :
+            _ctx.gm->get().view<UpdateClientEntity>().getVector())
+            update.create.push_back(id);
     }
 }; // namespace RType
