@@ -22,6 +22,7 @@ Les évolutions envisagées mais non implémentées sont listées à la fin, dan
   - [Composants](#composants)
   - [IComponentArray et ComponentArray](#icomponentarray-et-componentarray)
   - [ComponentManager](#componentmanager)
+  - [View](#view)
   - [ISystem, System et SystemManager](#isystem-system-et-systemmanager)
   - [GameManager (façade)](#gamemanager-façade)
   - [La file de commandes](#la-file-de-commandes)
@@ -53,9 +54,10 @@ Les évolutions envisagées mais non implémentées sont listées à la fin, dan
 GameManager                      façade publique + file de commandes
 ├── ComponentManager             type de composant -> ComponentArray
 │   └── ComponentArray<T>        sparse set (dense : plf::colony<ComponentPack>)
+├── View<Ts...>                  parcourt les entités qui ont tous les Ts (jointure)
 ├── EntityManager                index + génération, recyclage des index
 └── SystemManager                std::list de systèmes, ordre d'exécution
-    └── System<Ts...>            appelle une fonction sur chaque entité qui a tous les Ts
+    └── System<Ts...>            boucle sur une View<Ts...> ; sans type : une fois par frame
 ```
 
 Toutes les classes sont dans l'espace de noms `RType`.
@@ -216,6 +218,62 @@ private:
 
 **Pourquoi `removeComponents(Entity)` existe en plus de `removeComponent<Component>`.** Lorsqu'une entité est détruite, ses composants doivent être retirés de *tous* les tableaux, sans connaître leurs types à cet endroit du code. C'est le cas d'usage principal du polymorphisme : on parcourt `_components` et on appelle `hasComponent` puis `removeEntity` via l'interface.
 
+### View
+
+```cpp
+template<typename Component, typename... Components>
+constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
+
+template<typename... Components>
+class View {
+public:
+    static_assert(((duplicateCheck<Components, Components...> == 1) && ...));
+
+    explicit View(ComponentManager &cm);
+    void each(std::function<void(Entity, Components &...)> f);
+    std::vector<std::tuple<Entity, Components &...>> getVector();
+
+private:
+    std::tuple<ComponentArray<Components> *...> _view;   // nullptr si le type n'a jamais existé
+
+    void iterateSmallest(std::function<void(Entity, Components &...)> &f,
+        ComponentArray<Components> &...arrays);
+    template<typename Array>
+    void iterate(std::function<void(Entity, Components &...)> &f, Array &smallest,
+        ComponentArray<Components> &...arrays);
+};
+```
+
+**Pourquoi une vue.** Parcourir les entités qui possèdent *plusieurs* types de composants (la *jointure*) est utile partout : dans un système, dans un système par frame (collisions), ou hors de toute frame (réseau, rendu). La vue rend cette jointure accessible n'importe où, et donne l'entité en plus des composants. `System<Components...>` n'est plus qu'une boucle sur une vue.
+
+**Comment la vue trouve les entités (la jointure).**
+
+1. Le constructeur récupère, une seule fois, un pointeur vers le `ComponentArray` de chaque type.
+2. `each` ouvre le tuple avec `std::apply` pour obtenir les tableaux sous forme de pack, puis appelle `iterateSmallest`.
+3. `iterateSmallest` calcule la plus petite taille (`std::min` sur les `nbComponent()`), puis appelle `iterate` sur le **premier tableau de cette taille**, et sur lui seul (fold sur `||`, qui s'arrête au premier `true`).
+4. `iterate` parcourt le `dense` de ce tableau ; chaque `ComponentPack` donne l'entité de l'élément. Si l'entité possède tous les autres types, la fonction est appelée avec l'entité et un composant de chaque type, obtenus en O(1) directement sur les tableaux (sans repasser par `ComponentManager`). Sinon, l'entité est ignorée.
+
+**Pourquoi parcourir le plus petit tableau.** Chaque recherche est en O(1), mais il y en a une par élément du tableau parcouru : le coût dépend donc de la taille de ce tableau, et non de celle des autres. Pour `View<Position, Player>` avec 1000 positions et un seul joueur, parcourir `Position` coûterait 1000 recherches, dont 999 inutiles ; parcourir `Player` n'en coûte qu'une. Le choix est refait à chaque `each`, car les tailles évoluent en cours de partie.
+
+**Pourquoi `iterate` est un template.** Le tableau à parcourir n'est connu qu'à l'exécution, mais son type (`ComponentArray<Position>` ou `ComponentArray<Player>`) doit être connu à la compilation : aucune variable ne peut désigner « l'un ou l'autre ». La boucle est donc écrite une seule fois, sous forme de template sur le type du tableau, et le fold l'instancie pour chaque type possible ; seule l'instance correspondant au plus petit tableau est appelée.
+
+**Pourquoi des pointeurs, rangés dans un `std::tuple`.**
+
+- **Des pointeurs plutôt que des références :** si un type n'a jamais été ajouté, `getComponentArray<T>()` lancerait une exception. La vue stocke alors `nullptr`, et `each` ne fait rien : une vue sur un type absent est vide, sans exception. Une référence ne peut pas valoir « rien ».
+- **Un tuple :** un pack ne peut pas être un membre de classe (`ComponentArray<Components> *...arrays;` n'est pas du C++ valide). Le tuple range un pointeur par type, et `std::apply` le retransforme en pack au moment du parcours.
+
+**Pourquoi interdire un type en double, et à la compilation.** Avec `View<Position, Position>`, la fonction recevrait deux références vers **le même** composant : une source de bogues silencieux (deux écritures qui s'écrasent), sans aucun cas d'usage légitime. Un `static_assert` transforme ce bogue en erreur de compilation, avec un message lisible. `duplicateCheck<T, Components...>` compte les occurrences de `T` dans le pack (un fold sur `+` de `std::is_same_v`) ; le fold externe sur `&&` exige que chaque type apparaisse exactement une fois. Comparer chaque type au seul premier ne suffirait pas : `<Position, Velocity, Velocity>` passerait. `System` porte le même `static_assert`, pour que l'erreur désigne `createSystem` et non une vue interne.
+
+**Pourquoi une vue n'est pas un cache.** Elle ne stocke que des pointeurs vers les tableaux, jamais de liste d'entités : elle voit donc toujours l'état actuel, et la créer ne coûte que quelques recherches dans `ComponentManager`. Elle n'a pas à être invalidée ou mise à jour, mais elle est faite pour être utilisée immédiatement, puis jetée.
+
+**Pourquoi `getVector` existe, et pourquoi il réutilise `each`.** `each` ne permet ni `break`, ni `return` vers l'appelant, ni de parcourir deux fois la même liste (boucles imbriquées des collisions). Un range-for le permet, mais il exige un `begin()`/`end()` : écrire un vrai itérateur est difficile ici, car le tableau parcouru est choisi à l'exécution parmi des `Dense` de types différents (voir [Reste à faire](#reste-à-faire)). `getVector` contourne le problème : il appelle `each` avec une lambda qui ajoute chaque entité et ses composants au vector, et la jointure n'est donc écrite qu'une fois. Le range-for parcourt ensuite un simple `std::vector`.
+
+**Pourquoi des références dans le tuple.** `std::tuple<Entity, Components...>` copierait chaque composant : une écriture dans la boucle modifierait la copie, pas le composant, et un composant non copiable ne compilerait pas. Un tuple de références est légal dans un `std::vector` (il se construit et se déplace, ce qui suffit à `emplace_back`). Les éléments du vector étant des lvalues, `for (auto &[e, a, b] : ...)` compile, contrairement à un itérateur qui renverrait le tuple par valeur.
+
+**Ce que coûte `getVector`, et pourquoi c'est sûr.** Une allocation par appel, et une photo de l'état au moment de l'appel. Les références restent valides tant que leur composant n'est pas retiré, puisque `plf::colony` ne déplace jamais un élément : détruire une entité pendant le parcours (même hors `update()`, où c'est immédiat) n'invalide que les références de cette entité, jamais le vector lui-même. C'est pourquoi le guide le recommande pour détruire des entités hors `update()`, à la place de « collecter puis détruire ».
+
+**Pourquoi `each` prend un `std::function`.** C'est la forme la plus simple, et elle accepte les paramètres `const`. Le coût est un appel indirect par entité ; un paramètre template (`template<typename F> void each(F &&f)`) l'éviterait (voir [Reste à faire](#reste-à-faire)).
+
 ### ISystem, System et SystemManager
 
 ```cpp
@@ -225,23 +283,16 @@ public:
     virtual void update(ComponentManager &cm) = 0;
 };
 
-template<typename Component, typename... Components>
-constexpr std::size_t duplicateCheck = (std::is_same_v<Component, Components> + ...);
-
 template<typename... Components>
 class System : public ISystem {
 public:
     static_assert(((duplicateCheck<Components, Components...> == 1) && ...));
 
     explicit System(std::function<void(Components &...)> &func);
-    void update(ComponentManager &cm) override;   // appelle _func sur chaque entité qui a tous les Components
+    void update(ComponentManager &cm) override;   // une View<Components...>, ou _func() une fois si aucun type
 
 private:
     std::function<void(Components &...)> _func;
-
-    void iterateSmallest(ComponentArray<Components> &...arrays);
-    template<typename Array>
-    void iterate(Array &smallest, ComponentArray<Components> &...arrays);
 };
 
 using SystemId = std::size_t;
@@ -271,17 +322,11 @@ private:
 
 **Pourquoi `update` reçoit un `ComponentManager &`.** Un système a besoin d'accéder aux données typées (le `ComponentArray` de chacun de ses types), pas à une liste brute d'identifiants. `ComponentManager` est le seul point d'accès pertinent. Si l'un des types n'a jamais existé (`isComponent<T>()` est faux pour l'un d'eux), le système ne fait rien.
 
-**Comment `System<Components...>` trouve les entités (la jointure).**
+**Comment `System<Components...>` trouve les entités.** `update` crée une `View<Components...>` et appelle `each` avec une lambda qui ignore l'entité et appelle `_func` avec les composants. Toute la jointure (plus petit tableau, types absents, doublons) est donc celle de la vue : voir [View](#view).
 
-1. `update` récupère les `ComponentArray` de tous les types une seule fois, puis les passe à `iterateSmallest` sous forme de pack de paramètres.
-2. `iterateSmallest` calcule la plus petite taille (`std::min` sur les `nbComponent()`), puis appelle `iterate` sur le **premier tableau de cette taille**, et sur lui seul (fold sur `||`, qui s'arrête au premier `true`).
-3. `iterate` parcourt le `dense` de ce tableau ; chaque `ComponentPack` donne l'entité de l'élément. Si l'entité possède tous les autres types, la fonction est appelée avec un composant de chaque type, obtenus en O(1) directement sur les tableaux reçus (sans repasser par `ComponentManager`). Sinon, l'entité est ignorée.
+**Pourquoi un système sans type est un système par frame.** Certains traitements ne portent pas sur *une* entité : les collisions entre deux groupes, l'apparition des vagues, le score. Plutôt qu'une deuxième API, un pack vide prend ce sens : avec `Components` vide, `std::function<void(Components &...)>` devient naturellement `std::function<void()>`, et `update` appelle `_func()` une seule fois. Le système garde tout le reste : son `SystemId`, son rang dans l'ordre d'exécution, et la protection de la file de commandes. Grâce à `std::type_identity_t`, le pack est déduit comme vide quand aucun type n'est donné : `createSystem(func)` et `createSystem<>(func)` sont équivalents. Un système par frame peut aussi recevoir le `GameManager` (voir [GameManager (façade)](#gamemanager-façade)) : c'est la forme recommandée pour les collisions, ou pour tout système qui a besoin de l'entité qu'il traite, en parcourant une vue.
 
-**Pourquoi parcourir le plus petit tableau.** Chaque recherche est en O(1), mais il y en a une par élément du tableau parcouru : le coût d'une frame dépend donc de la taille de ce tableau, et non de celle des autres. Pour `System<Position, Player>` avec 1000 positions et un seul joueur, parcourir `Position` coûterait 1000 recherches, dont 999 inutiles ; parcourir `Player` n'en coûte qu'une. Le choix est refait à chaque `update()`, car les tailles évoluent en cours de partie.
-
-**Pourquoi interdire un type en double, et à la compilation.** Avec `System<Position, Position>`, la fonction recevrait deux références vers **le même** composant : une source de bogues silencieux (deux écritures qui s'écrasent), sans aucun cas d'usage légitime. Un `static_assert` transforme ce bogue en erreur de compilation, avec un message lisible. `duplicateCheck<T, Components...>` compte les occurrences de `T` dans le pack (un fold sur `+` de `std::is_same_v`) ; le fold externe sur `&&` exige que chaque type apparaisse exactement une fois. Comparer chaque type au seul premier ne suffirait pas : `<Position, Velocity, Velocity>` passerait.
-
-**Pourquoi `iterate` est un template.** Le tableau à parcourir n'est connu qu'à l'exécution, mais son type (`ComponentArray<Position>` ou `ComponentArray<Player>`) doit être connu à la compilation : aucune variable ne peut désigner « l'un ou l'autre ». La boucle est donc écrite une seule fois, sous forme de template sur le type du tableau, et le fold l'instancie pour chaque type possible ; seule l'instance correspondant au plus petit tableau est appelée.
+**Pourquoi `if constexpr` dans `update`.** Avec un `if` classique, les deux branches seraient compilées pour **chaque** `System` : `_func()` ne compilerait pas pour un `System<Health>` (sa fonction attend un `Health &`), et `View<>` ne compilerait pas pour un `System<>` (`std::min` sur une liste vide). `if constexpr` écarte de la compilation la branche qui ne correspond pas au pack ; le `else` est indispensable pour que la seconde branche soit elle aussi écartée.
 
 **Pourquoi `createSystem` renvoie un `SystemId` plutôt qu'un pointeur ou un itérateur.**
 
@@ -324,8 +369,14 @@ public:
     ComponentArray<Component> &getArray();
 
     template<typename... Components>
+    View<Components...> view();
+
+    template<typename... Components>
     SystemId createSystem(
         std::type_identity_t<std::function<void(Components &...)>> func);
+    template<typename... Components>
+    SystemId createSystem(const std::type_identity_t<
+        std::function<void(GameManager &, Components &...)>> &func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
 
@@ -343,9 +394,15 @@ private:
 
 **Pourquoi une façade unique.** C'est la seule classe que le code de jeu doit connaître. Elle centralise aussi les vérifications transverses : chaque accès à un composant vérifie d'abord `hasEntity` (et donc la génération), ce qui permet aux classes internes de s'en dispenser.
 
-**Pourquoi la copie est interdite.** Les commandes en attente et les fonctions des systèmes capturent souvent `this` ou une référence vers le `GameManager`. Une copie partagerait ces captures avec l'original, ce qui mènerait à des accès vers le mauvais objet.
+**Pourquoi la copie est interdite.** Les commandes en attente et les adaptateurs des systèmes qui reçoivent le `GameManager` capturent `this`. Une copie partagerait ces captures avec l'original, ce qui mènerait à des accès vers le mauvais objet. Comme aucun constructeur de déplacement n'est déclaré, un `GameManager` ne peut pas non plus être déplacé : son adresse ne change jamais, et le `this` capturé reste valide aussi longtemps que lui.
 
-**Pourquoi `std::type_identity_t` dans `createSystem`.** Les types sont donnés explicitement (`createSystem<Position, Velocity>(lambda)`), mais pour un paquet de paramètres, le compilateur tente quand même d'en déduire d'autres à partir de l'argument. Une lambda n'étant pas un `std::function`, cette déduction échoue et l'appel ne compile pas. `std::type_identity_t` rend le paramètre non déduit : seuls les types explicites sont utilisés, et la lambda est convertie en `std::function`.
+**Pourquoi un système peut recevoir le `GameManager`.** Un système qui agit sur le monde (créer ou détruire des entités, lire les composants d'une autre entité, parcourir une vue) a besoin du `GameManager`. Le capturer dans une lambda (`[&gm]`) fonctionne, mais empêche d'écrire le système comme une fonction ordinaire, dans un fichier à part. `createSystem` accepte donc aussi une fonction dont le premier paramètre est un `GameManager &`.
+
+- **Deux surcharges, sans ambiguïté.** La seconde surcharge prend un `std::function<void(GameManager &, Components &...)>`. Le constructeur de `std::function` n'accepte que les fonctions appelables avec ses arguments : pour une lambda ou une fonction donnée, une seule des deux surcharges est donc viable, et le compilateur la choisit seul. Une lambda générique (`[](auto &...)`), qui accepterait les deux formes, rend l'appel ambigu : c'est une erreur de compilation, ce qui évite un choix arbitraire.
+- **Un adaptateur, construit une seule fois.** Le `GameManager` est connu dès la création du système : c'est `this`. La seconde surcharge enveloppe donc la fonction dans une lambda de la forme habituelle `(Components &...)`, qui appelle `func(*this, c...)`. `System` et `SystemManager` ne voient que la forme habituelle et n'ont pas changé ; avec un pack vide, l'adaptateur devient une lambda sans paramètre, et le système par frame fonctionne sans cas particulier.
+- **La fonction est capturée par valeur.** `func` est un paramètre de `createSystem`, détruit dès son retour ; l'adaptateur, lui, vit aussi longtemps que le système. Il doit donc garder sa propre copie de la fonction : une capture par référence laisserait une référence pendante, appelée à la première frame.
+
+**Pourquoi `std::type_identity_t` dans `createSystem`.** Les types sont donnés explicitement (`createSystem<Position, Velocity>(lambda)`), mais pour un paquet de paramètres, le compilateur tente quand même d'en déduire d'autres à partir de l'argument. Une lambda n'étant pas un `std::function`, cette déduction échoue et l'appel ne compile pas. `std::type_identity_t` rend le paramètre non déduit, dans les deux surcharges : seuls les types explicites sont utilisés, et la lambda est convertie en `std::function`.
 
 ### La file de commandes
 
@@ -381,11 +438,21 @@ Ces évolutions ne sont **pas implémentées**. Elles ne sont décrites ici que 
 
 `sparse` stocke aujourd'hui un `plf::colony::iterator` par index d'entité, soit 24 octets par case, pour chaque type de composant, y compris pour les entités qui n'ont pas ce composant. Un simple `ComponentPack *` (8 octets, `nullptr` pour « pas de composant ») suffirait : `plf::colony` garantit qu'un élément ne change pas d'adresse tant qu'il n'est pas supprimé. Seul `removeEntity` a besoin d'un itérateur, pour `erase` : il peut le retrouver avec `_dense.get_iterator(pointeur)`, une opération plus lente qu'un accès direct, mais rare et toujours différée.
 
+### Recevoir l'entité dans la fonction d'un système
+
+Permettre `createSystem<Lifetime>([](Entity e, Lifetime &l) {...})`, en plus des formes actuelles. En attendant, un système par frame qui parcourt une vue fournit déjà l'entité : c'est la pratique recommandée par le guide, et elle évite de stocker l'entité dans ses propres composants. La difficulté est d'accepter **plusieurs** formes de fonction, et contrairement au `GameManager`, l'entité n'est connue qu'au moment du parcours : l'adaptateur doit donc vivre dans `System`, pas dans `GameManager`. `createSystem` devrait prendre un appelable quelconque (`template<typename... Components, typename F>`), détecter la forme avec `std::is_invocable_v`, et envelopper la forme sans entité dans une lambda qui l'ignore (en capturant la fonction **par valeur**). `System` stockerait alors toujours la forme avec entité, sauf pour un système par frame, qui n'a pas d'entité (`std::conditional_t`). Une lambda générique, qui accepte les deux formes, imposerait de choisir une priorité.
+
+### Améliorer la vue
+
+- **La syntaxe `for` sans allocation** : `getVector()` donne déjà la boucle `for`, au prix d'un vector alloué à chaque appel. Un vrai itérateur (`for (auto [e, pos, vel] : gm.view<Position, Velocity>())`) l'éviterait : il encapsulerait « parcourir le plus petit tableau et sauter les entités incomplètes ». La difficulté est que le tableau parcouru est choisi à l'exécution, parmi des `Dense` de types différents : l'itérateur devrait contenir un `std::variant` des itérateurs de colony, ou bien chaque tableau devrait exposer une liste d'entités de type commun (comme EnTT). `operator*` renverrait alors le tuple par valeur, ce qui impose `auto` ou `auto &&` dans la boucle, et non `auto &`.
+- **`each` en template** : `template<typename F> void each(F &&f)` éviterait l'appel indirect du `std::function` pour chaque entité.
+- **Les paires** : `eachPair`, qui donne chaque paire d'entités une seule fois (comme `iter_combinations` dans Bevy), pour les collisions entre entités d'un même groupe.
+
 ### Activer et désactiver une entité
 
 Permettre de mettre en pause une entité (gel d'un ennemi, cinématique, animation de mort…), pour tous les systèmes ou pour un seul, sans retirer ses composants. Le prérequis est rempli, puisque chaque `ComponentPack` connaît son entité : un système peut donc vérifier, pour chaque entité parcourue, la présence d'un composant « tag » de désactivation. Deux points restent à concevoir :
 
 - **comment désigner un système précis** : `System<Component, Tag>` n'est plus possible, car `System` est variadique et le lirait comme un système sur deux composants. Il faudra une classe distincte, ou désigner le système par son `SystemId` ;
-- **filtrer sur l'absence d'un composant** : un système multi-composants filtre déjà sur la *présence* d'un tag, mais pas encore sur son *absence*.
+- **filtrer sur l'absence d'un composant** : les vues et les systèmes filtrent déjà sur la *présence* d'un tag, mais pas encore sur son *absence*.
 
 En attendant, ajouter et retirer un composant « tag » couvre la plupart des cas (voir la recette « Mettre une entité en pause » dans le guide, section 8).
