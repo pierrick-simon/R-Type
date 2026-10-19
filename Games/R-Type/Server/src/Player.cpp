@@ -14,33 +14,47 @@
 
 namespace RType::Server {
 
-    namespace {
-
-        void playerMovement(Velocity2D &velocity, const float speed, const Key::Value key)
-        {
-            if (key == Key::Value::Q)
-                velocity.x -= speed;
-            if (key == Key::Value::D)
-                velocity.x += speed;
-            if (key == Key::Value::Z)
-                velocity.y -= speed;
-            if (key == Key::Value::S)
-                velocity.y += speed;
-        }
-
+    void setHeld(Player &player, const Key::Value key, const bool held)
+    {
+        if (key == Key::Value::Q)
+            player.left = held;
+        if (key == Key::Value::D)
+            player.right = held;
+        if (key == Key::Value::Z)
+            player.up = held;
+        if (key == Key::Value::S)
+            player.down = held;
     }
 
-    void playerHandle(GameManager &gm, const Player &player, Velocity2D &velocity,
+    void applyMovement(const Player &player, Velocity2D &velocity, const float speed)
+    {
+        if (player.left)
+            velocity.x -= speed;
+        if (player.right)
+            velocity.x += speed;
+        if (player.up)
+            velocity.y -= speed;
+        if (player.down)
+            velocity.y += speed;
+    }
+
+    void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
         const Position2D &pos, const Keyboard &keyboard, const Clock &clock)
     {
-        const auto speed = player.acceleration
-            * (float(clock.getElapsed().count()) / MILLI_IN_SEC);
+        const float elapsed = float(clock.getElapsed().count()) / MILLI_IN_SEC;
+        const float speed = player.acceleration * elapsed;
 
-        for (auto &key : keyboard.manager.keyDown)
-            playerMovement(velocity, speed, key);
-        for (auto &key : keyboard.manager.keyPressed)
-            if (key == Key::Value::Space)
+        player.cooldown = std::max(0.f, player.cooldown - elapsed);
+        for (auto &key : keyboard.manager.keyPressed) {
+            setHeld(player, key, true);
+            if (key == Key::Value::Space && player.cooldown <= 0.f) {
                 spawnBullet(gm, pos);
+                player.cooldown = SHOOT_COOLDOWN;
+            }
+        }
+        for (auto &key : keyboard.manager.keyReleased)
+            setHeld(player, key, false);
+        applyMovement(player, velocity, speed);
     }
 
     void playerClamp(const Player &, Position2D &pos, Velocity2D &velocity)

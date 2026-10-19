@@ -41,6 +41,7 @@ namespace RType::Server {
     inline constexpr float BULLET_HEIGHT = 20.f * SCALE;
     inline constexpr float BULLET_SPEED = 1500.f;
     inline constexpr unsigned int BULLET_FRAME_MS = 15;
+    inline constexpr float SHOOT_COOLDOWN = 0.2f;
 
     inline constexpr const char *BACKGROUND_PATH = "R-Type/sprites/Levels/Level1_Background.png";
     inline constexpr const char *PLAYER_PATH = "R-Type/sprites/PlayerSheets/r-typePlayerSheet1.gif";
