@@ -15,26 +15,51 @@
 #include "Texture2D.hpp"
 #include "Velocity2D.hpp"
 #include "Window.hpp"
+#include "Sprite2D.hpp"
 
+#define BULLETSPEED 1000
 struct Player {
     float speed = 3000;
 };
 
-void playerMovement(const Player &p, RType::Velocity2D &v,
+struct Bullet {
+    float speed = BULLETSPEED;
+};
+
+void playerMovement(RType::Velocity2D &v, const float s, const RType::Key::Value key)
+{
+    if (key == RType::Key::Value::Q)
+        v.x -= s;
+    if (key == RType::Key::Value::D)
+        v.x += s;
+    if (key == RType::Key::Value::Z)
+        v.y -= s;
+    if (key == RType::Key::Value::S)
+        v.y += s;
+}
+
+void playerShoot(RType::GameManager &gm, const RType::Position2D &pos, const RType::Key::Value key)
+{
+    if (key != RType::Key::Value::Space)
+        return;
+    auto b = gm.createEntity();
+    gm.addComponent<Bullet>(b);
+    gm.addComponent<RType::Position2D>(b, pos.x, pos.y);
+    gm.addComponent<RType::Velocity2D>(b, BULLETSPEED, 0);
+    gm.addComponent<RType::Texture2D>(b, "R-Type/sprites/bullet.png");
+    gm.addComponent<RType::Sprite2D>(b, RType::Origin2D());
+    gm.addComponent<RType::Clock>(b);
+}
+
+void playerHandle(RType::GameManager &gm, const Player &p, RType::Velocity2D &v, const RType::Position2D &pos,
     const RType::Keyboard &k, const RType::Clock &c)
 {
     const auto s =
         p.speed * (float(c.getElapsed().count()) / RType::MILLI_IN_SEC);
-    for (auto &key : k.manager.keyDown) {
-        if (key == RType::Key::Value::Q)
-            v.x -= s;
-        if (key == RType::Key::Value::D)
-            v.x += s;
-        if (key == RType::Key::Value::Z)
-            v.y -= s;
-        if (key == RType::Key::Value::S)
-            v.y += s;
-    }
+    for (auto &key : k.manager.keyDown)
+        playerMovement(v, s, key);
+    for (auto &key : k.manager.keyPressed)
+        playerShoot(gm, pos, key);
 }
 
 void playerAnimation(
@@ -82,6 +107,7 @@ RType::Entity createSpaceShip(RType::GameManager &gm, RType::Entity km)
     gm.addComponent<RType::Clock>(s);
     gm.addComponent<RType::SpriteSheet2D>(s, RType::Size2D(1, 16), 0, 200);
     gm.getComponent<RType::SpriteSheet2D>(s).animation = false;
+    gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(RType::Sprite2D::systemDrawSprite2D);
     return s;
 }
 
@@ -95,8 +121,9 @@ int main()
         gm.createSystem<RType::Clock>(RType::Clock::systemClock);
         gm.createSystem<Player,
             RType::Velocity2D,
+            RType::Position2D,
             RType::Keyboard,
-            RType::Clock>(playerMovement);
+            RType::Clock>(playerHandle);
         gm.createSystem<Player, RType::Velocity2D, RType::SpriteSheet2D>(
             playerAnimation);
         gm.createSystem<RType::SpriteSheet2D,
