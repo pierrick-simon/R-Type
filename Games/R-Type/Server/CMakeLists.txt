@@ -13,7 +13,7 @@ set(SRCS
 
 add_executable(r-type_server ${MAIN} ${SRCS})
 target_include_directories(r-type_server PRIVATE include)
-target_link_libraries(r-type_server PRIVATE engine-system)
+target_link_libraries(r-type_server PRIVATE rtype-common)
 
 # criterion
 if (TARGET criterion)
@@ -23,7 +23,7 @@ if (TARGET criterion)
     target_include_directories(server_tests_run_bin PRIVATE include)
     target_compile_options(server_tests_run_bin PRIVATE --coverage)
     target_link_options(server_tests_run_bin PRIVATE --coverage)
-    target_link_libraries(server_tests_run_bin PRIVATE criterion engine-system)
+    target_link_libraries(server_tests_run_bin PRIVATE criterion rtype-common)
 
     add_custom_target(server_tests_run
             COMMAND find ${CMAKE_BINARY_DIR} -name "*.gcda" -delete
