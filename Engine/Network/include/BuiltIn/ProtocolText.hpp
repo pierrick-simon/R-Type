@@ -24,7 +24,7 @@ namespace RType {
      */
     struct TextPayload {
         static constexpr std::size_t MIN_SIZE = 4 + 2;
-        uint32_t id;
+        uint32_t id = 0;
         std::string text;
     };
 
@@ -33,12 +33,12 @@ namespace RType {
         ProtocolText() = default;
 
         /** @brief Client handler: sets the Text2D string of the entity. */
-        void manageText(const Header &header,
+        static void manageText(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        /** @brief Server helper: broadcasts a new text for entity `id`. */
-        static void sendText(
-            ServerManager &s, uint32_t id, const std::string &text);
+        /** @brief Server helper: sendToClients a new text for entity `id`. */
+        static void sendText(const std::vector<uint32_t> &ids, ServerManager &s,
+            uint32_t id, const std::string &text);
 
         static std::vector<uint8_t> serializeText(const TextPayload &e);
         static std::optional<TextPayload> parseText(

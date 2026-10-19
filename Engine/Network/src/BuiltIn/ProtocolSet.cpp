@@ -19,28 +19,28 @@ namespace RType {
 
     enum class Kind { F32, U8, I8, U16, U32, POINT16 };
 
-    Kind kindOf(SetProperty p)
+    Kind kindOf(Property p)
     {
         switch (p) {
-            case SetProperty::SCALE:
-            case SetProperty::FONT_SIZE:
-            case SetProperty::ROTATION:
-            case SetProperty::SPACING:
-            case SetProperty::VOLUME:
-            case SetProperty::PITCH:
+            case Property::SCALE:
+            case Property::FONT_SIZE:
+            case Property::ROTATION:
+            case Property::SPACING:
+            case Property::VOLUME:
+            case Property::PITCH:
                 return Kind::F32;
-            case SetProperty::FLIP:
-            case SetProperty::VISIBLE:
-            case SetProperty::LOOP:
+            case Property::FLIP:
+            case Property::VISIBLE:
+            case Property::LOOP:
                 return Kind::U8;
-            case SetProperty::LAYER:
+            case Property::LAYER:
                 return Kind::I8;
-            case SetProperty::FRAME:
-            case SetProperty::FRAME_DURATION:
+            case Property::FRAME:
+            case Property::FRAME_DURATION:
                 return Kind::U16;
-            case SetProperty::COLOR:
+            case Property::COLOR:
                 return Kind::U32;
-            case SetProperty::ORIGIN:
+            case Property::ORIGIN:
                 return Kind::POINT16;
             default:
                 return Kind::U8;
@@ -49,10 +49,8 @@ namespace RType {
 
     raylib::Color toColor(uint32_t u)
     {
-        return raylib::Color(static_cast<uint8_t>(u >> 24),
-            static_cast<uint8_t>(u >> 16),
-            static_cast<uint8_t>(u >> 8),
-            static_cast<uint8_t>(u));
+        return static_cast<uint8_t>(u >> 24), static_cast<uint8_t>(u >> 16),
+               static_cast<uint8_t>(u >> 8), static_cast<uint8_t>(u);
     }
 
     /** Applies `fn` to the component T of `e`, if it has one. */
@@ -63,8 +61,7 @@ namespace RType {
             fn(gm.getComponent<T>(e));
     }
 
-    void apply(
-        GameManager &gm, Entity e, SetProperty prop, const SetValue &value)
+    void apply(GameManager &gm, Entity e, Property prop, const SetValue &value)
     {
         const float f =
             std::holds_alternative<float>(value) ? std::get<float>(value) : 0.f;
@@ -76,80 +73,76 @@ namespace RType {
             : Point16 {0, 0};
 
         switch (prop) {
-            case SetProperty::SCALE:
-                with<Sprite2D>(gm, e, [f](auto &c) { c.scale = f; });
-                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.scale = f; });
+            case Property::SCALE:
+                with<Sprite2D>(gm, e, [f](auto &c) { c.scale() = f; });
+                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.scale() = f; });
                 break;
-            case SetProperty::FONT_SIZE:
+            case Property::FONT_SIZE:
                 if (f > 0)
-                    with<Text2D>(gm, e, [f](auto &c) { c.fontSize = f; });
+                    with<Text2D>(gm, e, [f](auto &c) { c.fontSize() = f; });
                 break;
-            case SetProperty::ROTATION:
-                with<Sprite2D>(gm, e, [f](auto &c) { c.rotation = f; });
-                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.rotation = f; });
-                with<Text2D>(gm, e, [f](auto &c) { c.rotation = f; });
+            case Property::ROTATION:
+                with<Sprite2D>(gm, e, [f](auto &c) { c.rotation() = f; });
+                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.rotation() = f; });
+                with<Text2D>(gm, e, [f](auto &c) { c.rotation() = f; });
                 break;
-            case SetProperty::FLIP:
-                with<Sprite2D>(gm, e, [i](auto &c) { c.flip = i != 0; });
-                with<SpriteSheet2D>(gm, e, [i](auto &c) { c.flip = i != 0; });
+            case Property::FLIP:
+                with<Sprite2D>(gm, e, [i](auto &c) { c.flip() = i != 0; });
+                with<SpriteSheet2D>(gm, e, [i](auto &c) { c.flip() = i != 0; });
                 break;
-            case SetProperty::COLOR: {
+            case Property::COLOR: {
                 const auto color = toColor(static_cast<uint32_t>(i));
-                with<Sprite2D>(gm, e, [color](auto &c) { c.color = color; });
+                with<Sprite2D>(gm, e, [color](auto &c) { c.color() = color; });
                 with<SpriteSheet2D>(
-                    gm, e, [color](auto &c) { c.color = color; });
-                with<Text2D>(gm, e, [color](auto &c) { c.color = color; });
+                    gm, e, [color](auto &c) { c.color() = color; });
+                with<Text2D>(gm, e, [color](auto &c) { c.color() = color; });
                 break;
             }
-            case SetProperty::ORIGIN:
+            case Property::ORIGIN:
                 with<Sprite2D>(gm, e, [pt](auto &c) {
-                    c.origin = {static_cast<float>(pt.first),
+                    c.origin() = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
                 });
                 with<SpriteSheet2D>(gm, e, [pt](auto &c) {
-                    c.origin = {static_cast<float>(pt.first),
+                    c.origin() = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
                 });
                 with<Text2D>(gm, e, [pt](auto &c) {
-                    c.origin = {static_cast<float>(pt.first),
+                    c.origin() = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
                 });
                 break;
-            case SetProperty::FRAME:
+            case Property::FRAME:
                 with<SpriteSheet2D>(gm, e, [i](auto &c) {
-                    c.currentTile = static_cast<std::size_t>(i);
+                    c.currentTile() = static_cast<std::size_t>(i);
                 });
                 break;
-            case SetProperty::FRAME_DURATION:
+            case Property::FRAME_DURATION:
                 with<SpriteSheet2D>(gm, e, [i](auto &c) {
-                    c.frameDuration = std::chrono::milliseconds(i);
+                    c.frameDuration() = std::chrono::milliseconds(i);
                 });
                 break;
-            case SetProperty::SPACING:
-                with<Text2D>(gm, e, [f](auto &c) { c.spacing = f; });
+            case Property::SPACING:
+                with<Text2D>(gm, e, [f](auto &c) { c.spacing() = f; });
                 break;
-            case SetProperty::VOLUME:
+            case Property::VOLUME:
                 with<Sound>(gm, e, [f](auto &c) {
                     c.SetVolume(std::clamp(f, 0.f, 1.f));
                 });
                 break;
-            case SetProperty::PITCH:
+            case Property::PITCH:
                 if (f > 0)
                     with<Sound>(gm, e, [f](auto &c) { c.SetPitch(f); });
                 break;
-            case SetProperty::LOOP:
+            case Property::LOOP:
                 with<Sound>(gm, e, [i](auto &c) { c.loop = i != 0; });
-                break;
-            case SetProperty::LAYER:
-            case SetProperty::VISIBLE:
-                // TODO: the engine has no Layer / Visible component yet.
                 break;
             default:
                 break;
         }
     }
 
-    std::size_t ProtocolSet::valueSize(SetProperty prop)
+    std::size_t ProtocolSet::valueSize(Property prop)
     {
         switch (kindOf(prop)) {
             case Kind::F32:
@@ -177,15 +170,10 @@ namespace RType {
         apply(ctx.gm->get(), *entity, p->prop, p->value);
     }
 
-    void ProtocolSet::sendSet(ServerManager &s, const SetPayload &p)
-    {
-        s.broadcast(Opcode::SET, serializeSet(p));
-    }
-
     void ProtocolSet::sendSet(
-        ServerManager &s, uint32_t id, SetProperty prop, SetValue value)
+        const std::vector<uint32_t> &ids, ServerManager &s, const SetPayload &p)
     {
-        sendSet(s, SetPayload {id, prop, std::move(value)});
+        s.sendToClients(ids, Opcode::SET, serializeSet(p));
     }
 
     std::vector<uint8_t> ProtocolSet::serializeSet(const SetPayload &e)
@@ -230,11 +218,11 @@ namespace RType {
         const std::vector<uint8_t> &payload)
     {
         if (payload.size() <= SetPayload::HEADER_SIZE ||
-            payload[4] >= static_cast<uint8_t>(SetProperty::Count))
+            payload[4] >= static_cast<uint8_t>(Property::Count))
             return std::nullopt;
         SetPayload e {};
         e.id = get32(payload.data());
-        e.prop = static_cast<SetProperty>(payload[4]);
+        e.prop = static_cast<Property>(payload[4]);
         if (payload.size() != SetPayload::HEADER_SIZE + valueSize(e.prop))
             return std::nullopt;
         const uint8_t *v = payload.data() + SetPayload::HEADER_SIZE;

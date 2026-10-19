@@ -11,6 +11,7 @@
 #include "ClientManager.hpp"
 #include "GameManager.hpp"
 #include "Network.hpp"
+#include "ServerManager.hpp"
 #include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
@@ -36,18 +37,20 @@ namespace RType {
 
     class ProtocolCreate {
     public:
-        ProtocolCreate() {};
-        void manageCreate(const Header &header,
+        ProtocolCreate() = default;
+        static void manageCreate(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        void manageCreateSprite2D(ProtocolEntity &e, Context &ctx);
-        void manageCreateSpriteSheet(ProtocolEntity &e, Context &ctx);
-        void manageCreateSound(ProtocolEntity &e, Context &ctx);
-        void manageCreateText2D(ProtocolEntity &e, Context &ctx);
+        static void manageCreateSprite2D(ProtocolEntity &e, Context &ctx);
+        static void manageCreateSpriteSheet(ProtocolEntity &e, Context &ctx);
+        static void manageCreateSound(ProtocolEntity &e, Context &ctx);
+        static void manageCreateText2D(ProtocolEntity &e, Context &ctx);
+        static void sendCreate(const std::vector<uint32_t> &ids,
+            ServerManager &server, ProtocolEntity &pe);
+        static std::vector<uint8_t> serializeEntity(const ProtocolEntity &e);
 
     private:
-        std::vector<uint8_t> serializeEntity(const ProtocolEntity &e);
-        std::optional<ProtocolEntity> parseEntity(
+        static std::optional<ProtocolEntity> parseEntity(
             const std::vector<uint8_t> &payload);
     };
 

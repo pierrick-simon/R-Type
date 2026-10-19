@@ -6,6 +6,7 @@
 */
 
 #include "ProtocolCreate.hpp"
+#include "ServerManager.hpp"
 
 namespace RType {
 
@@ -109,6 +110,12 @@ namespace RType {
         e.posX = get32(payload.data() + 7);
         e.posY = get32(payload.data() + 11);
         return e;
+    }
+
+    void ProtocolCreate::sendCreate(const std::vector<uint32_t> &ids,
+        ServerManager &server, ProtocolEntity &pe)
+    {
+        server.sendToClients(ids, Opcode::CREATE, serializeEntity(pe));
     }
 
 } // namespace RType

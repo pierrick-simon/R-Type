@@ -23,13 +23,13 @@ namespace RType {
         auto &gm = ctx.gm->get();
         if (!gm.hasComponent<Text2D>(*entity))
             return;
-        gm.getComponent<Text2D>(*entity).str = std::move(e->text);
+        gm.getComponent<Text2D>(*entity).str() = std::move(e->text);
     }
 
-    void ProtocolText::sendText(
+    void ProtocolText::sendText(const std::vector<uint32_t> &ids,
         ServerManager &s, uint32_t id, const std::string &text)
     {
-        s.broadcast(Opcode::TEXT, serializeText({id, text}));
+        s.sendToClients(ids, Opcode::TEXT, serializeText({id, text}));
     }
 
     std::vector<uint8_t> ProtocolText::serializeText(const TextPayload &e)

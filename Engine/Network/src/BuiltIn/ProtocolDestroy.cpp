@@ -9,8 +9,8 @@
 
 namespace RType {
 
-    void ProtocolDestroy::manageDestroy(const Header &,
-        const std::vector<uint8_t> &payload, Context &ctx)
+    void ProtocolDestroy::manageDestroy(
+        const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         if (!ctx.gm)
             return;
@@ -47,7 +47,7 @@ namespace RType {
     {
         if (payload.size() != DestroyPayload::SIZE)
             return std::nullopt;
-        return DestroyPayload{get32(payload.data())};
+        return DestroyPayload {get32(payload.data())};
     }
 
 } // namespace RType

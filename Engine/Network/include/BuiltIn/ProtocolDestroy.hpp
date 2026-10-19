@@ -30,11 +30,13 @@ namespace RType {
     public:
         ProtocolDestroy() = default;
 
-        /** @brief Client handler: destroys the entity bound to the network id. */
-        void manageDestroy(const Header &header,
+        /** @brief Client handler: destroys the entity bound to the network id.
+         */
+        static void manageDestroy(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        /** @brief Server helper: broadcasts the destruction of entity `id`. */
+        /** @brief Server helper: sendToClients the destruction of entity `id`.
+         */
         static void sendDestroy(ServerManager &s, uint32_t id);
 
         static std::vector<uint8_t> serializeDestroy(const DestroyPayload &e);

@@ -29,7 +29,7 @@ namespace RType {
         void addManage(Opcode op, ManageFunc func);
 
         class ClientException : public EngineException {
-            public:
+        public:
             ClientException(const std::string &str) :
                 EngineException("Client error: " + str) {};
         };

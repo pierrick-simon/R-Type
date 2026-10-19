@@ -32,13 +32,13 @@ namespace RType {
 
         /** @brief Sound: play (resume if paused). SpriteSheet: start the
          * animation. */
-        void managePlay(const Header &header,
+        static void managePlay(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
         /** @brief Sound: pause. SpriteSheet: freeze the animation. */
-        void managePause(const Header &header,
+        static void managePause(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
         /** @brief Sound: stop. SpriteSheet: stop and reset to frame 0. */
-        void manageStop(const Header &header,
+        static void manageStop(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
         /** @brief Server helpers: broadcast the matching command. */

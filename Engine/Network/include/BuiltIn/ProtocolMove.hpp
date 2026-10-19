@@ -12,6 +12,7 @@
 #include <vector>
 #include "GameManager.hpp"
 #include "Network.hpp"
+#include "Position2D.hpp"
 #include "ServerManager.hpp"
 
 namespace RType {
@@ -32,11 +33,12 @@ namespace RType {
         ProtocolMove() = default;
 
         /** @brief Client handler: moves the entity bound to the network id. */
-        void manageMove(const Header &header,
+        static void manageMove(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        /** @brief Server helper: broadcasts the position of entity `id`. */
-        static void sendMove(ServerManager &s, uint32_t id, float x, float y);
+        /** @brief Server helper: sendToClients the position of entity `id`. */
+        static void sendMove(const std::vector<uint32_t> &ids, ServerManager &s,
+            uint32_t id, Position2D &pos);
 
         static std::vector<uint8_t> serializeMove(const MovePayload &e);
         static std::optional<MovePayload> parseMove(

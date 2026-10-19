@@ -58,20 +58,23 @@ namespace RType {
             });
     }
 
-    void ServerManager::sendToClients(const std::vector<uint32_t> &ids, Opcode op, const std::vector<uint8_t> &payload)
+    void ServerManager::sendToClients(const std::vector<uint32_t> &ids,
+        Opcode op, const std::vector<uint8_t> &payload)
     {
         for (auto id : ids)
             sendToClient(id, op, payload);
     }
 
-    void ServerManager::sendToClient(uint32_t id, Opcode op, const std::vector<uint8_t> &payload)
+    void ServerManager::sendToClient(
+        uint32_t id, Opcode op, const std::vector<uint8_t> &payload)
     {
         _udp->sendToClient(id, op, payload);
     }
 
-    void ServerManager::broadcast(Opcode op, const std::vector<uint8_t> &payload)
+    void ServerManager::broadcast(
+        Opcode op, const std::vector<uint8_t> &payload)
     {
-        for (auto [id, _]: _ctx.clients)
+        for (auto [id, _] : _ctx.clients)
             sendToClient(id, op, payload);
     }
 
@@ -85,6 +88,5 @@ namespace RType {
         _ctx.gm->get().addComponent<DefaulClient>(entity, id);
         _ctx.gm->get().addComponent<KeyboardManager>(entity);
         _ctx.gm->get().addComponent<MouseManager>(entity);
-        
     }
 }; // namespace RType

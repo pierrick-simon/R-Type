@@ -139,6 +139,7 @@ set(SRCS_NETWORK
     ${NETWORK}/src/BuiltIn/ProtocolSound.cpp
     ${NETWORK}/src/BuiltIn/ProtocolText.cpp
     ${NETWORK}/src/BuiltIn/ProtocolDestroy.cpp
+   ${NETWORK}/src/BuiltIn/UpdateClientEntity.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})

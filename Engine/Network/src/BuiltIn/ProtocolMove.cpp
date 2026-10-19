@@ -30,16 +30,17 @@ namespace RType {
         if (!gm.hasComponent<Position2D>(it->second))
             return;
         auto &pos = gm.getComponent<Position2D>(it->second);
-        pos.x = static_cast<float>(e->posX);
-        pos.y = static_cast<float>(e->posY);
+        pos.x() = static_cast<float>(e->posX);
+        pos.y() = static_cast<float>(e->posY);
     }
 
-    void ProtocolMove::sendMove(ServerManager &s, uint32_t id, float x, float y)
+    void ProtocolMove::sendMove(const std::vector<uint32_t> &ids,
+        ServerManager &s, uint32_t id, Position2D &pos)
     {
         MovePayload p {id,
-            static_cast<int32_t>(std::lround(x)),
-            static_cast<int32_t>(std::lround(y))};
-        s.broadcast(Opcode::MOVE, serializeMove(p));
+            static_cast<int32_t>(std::lround(pos.x())),
+            static_cast<int32_t>(std::lround(pos.y()))};
+        s.sendToClients(ids, Opcode::MOVE, serializeMove(p));
     }
 
     std::vector<uint8_t> ProtocolMove::serializeMove(const MovePayload &e)

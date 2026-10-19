@@ -100,10 +100,11 @@ namespace RType {
     }
 
     void UDPServer::sendToClient(
-            uint32_t &id, Opcode op, const std::vector<uint8_t> &payload)
+        uint32_t &id, Opcode op, const std::vector<uint8_t> &payload)
     {
         if (!clients_.count(id))
-            throw(ServerException("Client " + std::to_string(id) + " not found"));
+            throw(
+                ServerException("Client " + std::to_string(id) + " not found"));
         sendToClient(clients_.at(id), op, payload);
     }
 

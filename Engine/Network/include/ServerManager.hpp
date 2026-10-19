@@ -57,8 +57,10 @@ namespace RType {
         static void systemServerReceived(
             GameManager &gm, ServerManager &server);
 
-        void sendToClient(uint32_t id, Opcode op, const std::vector<uint8_t> &payload);
-        void sendToClients(const std::vector<uint32_t> &ids, Opcode op, const std::vector<uint8_t> &payload);
+        void sendToClient(
+            uint32_t id, Opcode op, const std::vector<uint8_t> &payload);
+        void sendToClients(const std::vector<uint32_t> &ids, Opcode op,
+            const std::vector<uint8_t> &payload);
         void broadcast(Opcode op, const std::vector<uint8_t> &payload);
 
     private:

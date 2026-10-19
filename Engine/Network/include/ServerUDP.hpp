@@ -44,7 +44,7 @@ namespace RType {
         uint16_t addNewClient();
 
         class ServerException : public EngineException {
-            public:
+        public:
             ServerException(const std::string &str) :
                 EngineException("Server error: " + str) {};
         };
