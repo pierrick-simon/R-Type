@@ -71,7 +71,7 @@ namespace RType {
             remoteEndpoint_,
             [this](std::error_code ec, std::size_t bytesRecvd) {
                 if (!ec && bytesRecvd > 0) {
-                    if (auto header = parse(recvBuffer_, bytesRecvd)) {
+                    if (auto header = parseHeader(recvBuffer_, bytesRecvd)) {
                         manageCommand(header.value(),
                             std::vector<uint8_t>(
                                 recvBuffer_.begin() + Header::SIZE,
@@ -83,9 +83,9 @@ namespace RType {
     }
 
     void UDPServer::sendToClient(
-        Client &client, uint8_t op, const std::vector<uint8_t> &payload)
+        Client &client, Opcode op, const std::vector<uint8_t> &payload)
     {
-        client.sendBuffer = serialize(Header {op,
+        client.sendBuffer = serializeHeader(Header {op,
                                           static_cast<uint16_t>(payload.size()),
                                           client.seq++,
                                           serverId_},
@@ -98,7 +98,7 @@ namespace RType {
             std::string(payload.begin(), payload.end()));
     }
 
-    void UDPServer::broadcast(uint8_t op, const std::vector<uint8_t> &payload)
+    void UDPServer::broadcast(Opcode op, const std::vector<uint8_t> &payload)
     {
         asio::post(context_, [this, op, payload]() {
             for (auto &[id, client] : clients_)
@@ -107,7 +107,7 @@ namespace RType {
     }
 
     void UDPServer::broadcastNow(
-        uint8_t op, const std::vector<uint8_t> &payload)
+        Opcode op, const std::vector<uint8_t> &payload)
     {
         for (auto &[id, client] : clients_)
             sendToClient(client, op, payload);

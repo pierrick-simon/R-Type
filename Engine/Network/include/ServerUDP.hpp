@@ -33,9 +33,9 @@ namespace RType {
 
         void received();
 
-        void broadcast(uint8_t op, const std::vector<uint8_t> &payload);
+        void broadcast(Opcode op, const std::vector<uint8_t> &payload);
         void sendToClient(
-            Client &client, uint8_t op, const std::vector<uint8_t> &payload);
+            Client &client, Opcode op, const std::vector<uint8_t> &payload);
 
         void addManage(uint8_t opCode, ManageFunc func, bool override = false);
 
@@ -52,7 +52,7 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void scheduleHealthCheck();
         void checkClients();
-        void broadcastNow(uint8_t op, const std::vector<uint8_t> &payload);
+        void broadcastNow(Opcode op, const std::vector<uint8_t> &payload);
 
         asio::io_context context_;
         asio::ip::udp::socket socket_;

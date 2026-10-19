@@ -48,7 +48,7 @@ namespace RType {
         server._ctx.gm.reset();
     }
 
-    void ServerManager::addContextManage(uint8_t op,
+    void ServerManager::addContextManage(Opcode op,
         const std::function<void(
             const Header &, const std::vector<uint8_t> &, Context &)> &func)
     {
