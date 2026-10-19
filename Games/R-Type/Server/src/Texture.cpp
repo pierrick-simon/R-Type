@@ -17,4 +17,4 @@ namespace RType::Server {
         return texture;
     }
 
-}
+} // namespace RType::Server

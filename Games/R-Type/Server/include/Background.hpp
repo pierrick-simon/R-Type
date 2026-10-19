@@ -16,6 +16,6 @@ namespace RType::Server {
 
     void createBackground(GameManager &gm);
     void backgroundLoop(const Background &background, Position2D &pos);
-}
+} // namespace RType::Server
 
 #endif

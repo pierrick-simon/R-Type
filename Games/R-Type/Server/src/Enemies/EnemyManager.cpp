@@ -55,9 +55,9 @@ namespace RType {
             float(sheet.cellH - sheet.hitboxH) * SPRITE_SCALE / 2.f;
 
         gm.addComponent<Enemy>(
-            entity, Enemy{type, def.scoreValue, def.contactDamage});
-        gm.addComponent<Health>(entity, Health{def.hp, def.hp});
-        gm.addComponent<Position2D>(entity, Position2D{x, y});
+            entity, Enemy {type, def.scoreValue, def.contactDamage});
+        gm.addComponent<Health>(entity, Health {def.hp, def.hp});
+        gm.addComponent<Position2D>(entity, Position2D {x, y});
         gm.addComponent<Velocity2D>(entity);
         gm.addComponent<Clock>(entity);
         gm.addComponent<MovementPattern>(entity, pattern);
@@ -82,12 +82,12 @@ namespace RType {
 
         // (x, y) is the centre of the bullet; Position2D is its top-left.
         gm.addComponent<Position2D>(
-            bullet, Position2D{x - BULLET_SIZE / 2.f, y - BULLET_SIZE / 2.f});
-        gm.addComponent<Velocity2D>(bullet, Velocity2D{vx, vy});
+            bullet, Position2D {x - BULLET_SIZE / 2.f, y - BULLET_SIZE / 2.f});
+        gm.addComponent<Velocity2D>(bullet, Velocity2D {vx, vy});
         gm.addComponent<Clock>(bullet);
-        gm.addComponent<Projectile>(bullet, Projectile{damage, false});
+        gm.addComponent<Projectile>(bullet, Projectile {damage, false});
         gm.addComponent<Hitbox>(
-            bullet, Hitbox{BULLET_HITBOX, BULLET_HITBOX, inset, inset});
+            bullet, Hitbox {BULLET_HITBOX, BULLET_HITBOX, inset, inset});
         if (hooks.onBulletSpawn)
             hooks.onBulletSpawn(gm, bullet);
         return bullet;

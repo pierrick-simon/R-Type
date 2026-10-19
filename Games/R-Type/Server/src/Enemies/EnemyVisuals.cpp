@@ -22,7 +22,7 @@ namespace RType {
             // Size2D is {height, width}: one row, `frames` columns.
             // frameDurationTime must be set at construction: frameDuration is
             // computed from it by its default member initializer.
-            return SpriteSheet2D{
+            return SpriteSheet2D {
                 .recNb = {1, info.frames},
                 .currentTile = 0,
                 .frameDurationTime = static_cast<unsigned int>(info.frameMs),
@@ -40,12 +40,12 @@ namespace RType {
                 float(info.frames * (info.frameMs + 17)) / 1000.f;
 
             gm.addComponent<Position2D>(e,
-                Position2D{cx - float(info.cellW) * SPRITE_SCALE / 2.f,
+                Position2D {cx - float(info.cellW) * SPRITE_SCALE / 2.f,
                     cy - float(info.cellH) * SPRITE_SCALE / 2.f});
             gm.addComponent<Texture2D>(e, info.file);
             gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
             gm.addComponent<Clock>(e);
-            gm.addComponent<Lifetime>(e, Lifetime{duration});
+            gm.addComponent<Lifetime>(e, Lifetime {duration});
         }
 
     } // namespace
@@ -54,13 +54,15 @@ namespace RType {
     {
         EnemyHooks hooks;
 
-        hooks.onEnemySpawn = [](GameManager &gm, Entity e, const EnemyDef &def) {
-            gm.addComponent<Texture2D>(e, def.sheet->file);
-            gm.addComponent<SpriteSheet2D>(e, makeSheet(*def.sheet));
-        };
+        hooks.onEnemySpawn =
+            [](GameManager &gm, Entity e, const EnemyDef &def) {
+                gm.addComponent<Texture2D>(e, def.sheet->file);
+                gm.addComponent<SpriteSheet2D>(e, makeSheet(*def.sheet));
+            };
         hooks.onBulletSpawn = [](GameManager &gm, Entity e) {
             gm.addComponent<Texture2D>(e, "R-Type/sprites/bullet.png");
-            gm.addComponent<Sprite2D>(e, Sprite2D{.origin = {}, .color = raylib::Color::Red()});
+            gm.addComponent<Sprite2D>(
+                e, Sprite2D {.origin = {}, .color = raylib::Color::Red()});
         };
         hooks.onEnemyDeath = spawnExplosion;
         return hooks;

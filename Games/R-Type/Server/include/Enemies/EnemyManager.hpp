@@ -24,7 +24,8 @@ namespace RType {
      * are only available at the end of the frame (see GameManager).
      */
     struct EnemyHooks {
-        std::function<void(GameManager &, Entity, const EnemyDef &)> onEnemySpawn;
+        std::function<void(GameManager &, Entity, const EnemyDef &)>
+            onEnemySpawn;
         std::function<void(GameManager &, Entity)> onBulletSpawn;
         /** x / y: centre of the destroyed enemy. */
         std::function<void(GameManager &, float x, float y)> onEnemyDeath;
@@ -48,7 +49,8 @@ namespace RType {
         float restartDelay = 4.f; // seconds after the last spawn; < 0: no loop
         int score = 0;
 
-        /** Spawn @p count enemies, one every @p interval seconds from @p start. */
+        /** Spawn @p count enemies, one every @p interval seconds from @p start.
+         */
         void addWave(
             EnemyType type, float y, int count, float interval, float start);
     };
@@ -61,7 +63,8 @@ namespace RType {
     Entity fireEnemyBullet(GameManager &gm, float x, float y, float vx,
         float vy, int damage, const EnemyHooks &hooks = {});
 
-    /** Creates the director entity (EnemyDirector + Clock) with a demo level. */
+    /** Creates the director entity (EnemyDirector + Clock) with a demo level.
+     */
     Entity createEnemyDirector(GameManager &gm);
 
 } // namespace RType

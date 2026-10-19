@@ -26,12 +26,14 @@ namespace RType::Server {
             auto background = gm.createEntity();
 
             gm.addComponent<Background>(background);
-            gm.addComponent<Texture2D>(background, loadPixelTexture(BACKGROUND_PATH));
+            gm.addComponent<Texture2D>(
+                background, loadPixelTexture(BACKGROUND_PATH));
             gm.addComponent<Sprite2D>(background, Origin2D(), SCALE);
-            gm.addComponent<Position2D>(background, static_cast<float>(i) * BACKGROUND_PERIOD, 0.f);
+            gm.addComponent<Position2D>(
+                background, static_cast<float>(i) * BACKGROUND_PERIOD, 0.f);
             gm.addComponent<Velocity2D>(background, -BACKGROUND_SPEED, 0.f);
             gm.addComponent<Clock>(background);
         }
     }
 
-}
+} // namespace RType::Server

@@ -44,10 +44,13 @@ namespace RType::Server {
     inline constexpr unsigned int BULLET_FRAME_MS = 15;
     inline constexpr float SHOOT_COOLDOWN = 0.2f;
 
-    inline constexpr const char *BACKGROUND_PATH = "R-Type/sprites/Levels/Level1_Background.png";
-    inline constexpr const char *PLAYER_PATH = "R-Type/sprites/PlayerSheets/r-typePlayerSheet1.gif";
-    inline constexpr const char *BULLET_PATH = "R-Type/sprites/PlayerSheets/PlayerBullet.gif";
+    inline constexpr const char *BACKGROUND_PATH =
+        "R-Type/sprites/Levels/Level1_Background.png";
+    inline constexpr const char *PLAYER_PATH =
+        "R-Type/sprites/PlayerSheets/r-typePlayerSheet1.gif";
+    inline constexpr const char *BULLET_PATH =
+        "R-Type/sprites/PlayerSheets/PlayerBullet.gif";
 
-}
+} // namespace RType::Server
 
 #endif

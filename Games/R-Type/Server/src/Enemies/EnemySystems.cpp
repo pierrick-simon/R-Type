@@ -97,7 +97,9 @@ namespace RType {
 
         Rect rectOf(const Position2D &pos, const Hitbox &box)
         {
-            return {pos.x + box.offsetX, pos.y + box.offsetY, box.width,
+            return {pos.x + box.offsetX,
+                pos.y + box.offsetY,
+                box.width,
                 box.height};
         }
 
@@ -193,11 +195,8 @@ namespace RType {
             director.timeline[director.next].time <= director.elapsed) {
             const SpawnEvent &event = director.timeline[director.next++];
 
-            spawnEnemy(gm,
-                event.type,
-                SCREEN_WIDTH + SPAWN_MARGIN,
-                event.y,
-                hooks);
+            spawnEnemy(
+                gm, event.type, SCREEN_WIDTH + SPAWN_MARGIN, event.y, hooks);
         }
         if (director.next >= director.timeline.size() &&
             director.restartDelay >= 0.f &&
@@ -275,31 +274,30 @@ namespace RType {
             });
 
         // 2. Ramming: the enemy explodes (no score) and hurts the target once.
-        gm.view<Enemy, Health, Position2D, Hitbox>().each(
-            [&](Entity enemy,
-                Enemy &info,
-                Health &health,
-                Position2D &ep,
-                Hitbox &eb) {
-                if (health.hp <= 0)
-                    return;
-                const Rect enemyRect = rectOf(ep, eb);
+        gm.view<Enemy, Health, Position2D, Hitbox>().each([&](Entity enemy,
+                                                              Enemy &info,
+                                                              Health &health,
+                                                              Position2D &ep,
+                                                              Hitbox &eb) {
+            if (health.hp <= 0)
+                return;
+            const Rect enemyRect = rectOf(ep, eb);
 
-                gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
-                    [&](Entity,
-                        EnemyTarget &,
-                        Health &targetHealth,
-                        Position2D &tp,
-                        Hitbox &tb) {
-                        if (health.hp <= 0 || targetHealth.hp <= 0 ||
-                            !overlap(enemyRect, rectOf(tp, tb)))
-                            return;
-                        targetHealth.hp = std::max(
-                            0, targetHealth.hp - info.contactDamage);
-                        health.hp = 0;
-                        killEnemy(gm, hooks, enemy, ep, eb);
-                    });
-            });
+            gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
+                [&](Entity,
+                    EnemyTarget &,
+                    Health &targetHealth,
+                    Position2D &tp,
+                    Hitbox &tb) {
+                    if (health.hp <= 0 || targetHealth.hp <= 0 ||
+                        !overlap(enemyRect, rectOf(tp, tb)))
+                        return;
+                    targetHealth.hp =
+                        std::max(0, targetHealth.hp - info.contactDamage);
+                    health.hp = 0;
+                    killEnemy(gm, hooks, enemy, ep, eb);
+                });
+        });
     }
 
     void registerEnemySystems(GameManager &gm, EnemyHooks hooks)
@@ -308,11 +306,9 @@ namespace RType {
 
         gm.createSystem<MovementPattern, Velocity2D, Clock>(systemEnemyPattern);
         gm.createSystem<Weapon, Position2D, Hitbox, Clock>(
-            [h](GameManager &g,
-                Weapon &w,
-                Position2D &p,
-                Hitbox &b,
-                Clock &c) { systemEnemyWeapon(g, w, p, b, c, *h); });
+            [h](GameManager &g, Weapon &w, Position2D &p, Hitbox &b, Clock &c) {
+                systemEnemyWeapon(g, w, p, b, c, *h);
+            });
         gm.createSystem<EnemyDirector, Clock>(
             [h](GameManager &g, EnemyDirector &d, Clock &c) {
                 systemEnemyDirector(g, d, c, *h);

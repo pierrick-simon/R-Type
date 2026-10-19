@@ -74,13 +74,15 @@ namespace RType {
         int damage = 1;
     };
 
-    /** Anything that hurts: fromPlayer bullets hit enemies, the others hit EnemyTarget. */
+    /** Anything that hurts: fromPlayer bullets hit enemies, the others hit
+     * EnemyTarget. */
     struct Projectile {
         int damage = 1;
         bool fromPlayer = false;
     };
 
-    /** Tag put on the entity enemies aim at and damage (the player). Needs Health, Position2D, Hitbox. */
+    /** Tag put on the entity enemies aim at and damage (the player). Needs
+     * Health, Position2D, Hitbox. */
     struct EnemyTarget {};
 
     /** The entity is destroyed once remaining (seconds) reaches 0. */

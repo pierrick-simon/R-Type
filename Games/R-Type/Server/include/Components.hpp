@@ -21,12 +21,10 @@ namespace RType::Server {
         bool down = false;
     };
 
-    struct Bullet {
-    };
+    struct Bullet {};
 
-    struct Background {
-    };
+    struct Background {};
 
-}
+} // namespace RType::Server
 
 #endif

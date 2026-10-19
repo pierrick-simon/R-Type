@@ -27,7 +27,8 @@ namespace RType::Server {
             player.down = held;
     }
 
-    void applyMovement(const Player &player, Velocity2D &velocity, const float speed)
+    void applyMovement(
+        const Player &player, Velocity2D &velocity, const float speed)
     {
         if (player.left)
             velocity.x -= speed;
@@ -92,8 +93,8 @@ namespace RType::Server {
 
         gm.addComponent<Player>(ship);
         gm.addComponent<EnemyTarget>(ship);
-        gm.addComponent<Health>(ship, Health{PLAYER_HP, PLAYER_HP});
-        gm.addComponent<Hitbox>(ship, Hitbox{PLAYER_WIDTH, PLAYER_HEIGHT});
+        gm.addComponent<Health>(ship, Health {PLAYER_HP, PLAYER_HP});
+        gm.addComponent<Hitbox>(ship, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
         gm.addComponent<Position2D>(ship, 100.f, WINDOW_HEIGHT / 2.f);
         gm.addComponent<Velocity2D>(ship);
         gm.addComponent<Friction2D>(ship, PLAYER_FRICTION);
@@ -113,4 +114,4 @@ namespace RType::Server {
         return ship;
     }
 
-}
+} // namespace RType::Server

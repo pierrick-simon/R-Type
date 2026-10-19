@@ -21,9 +21,11 @@ namespace RType::Server {
     Entity createSpaceShip(GameManager &gm, Entity keyboardManager);
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
         const Position2D &pos, const Keyboard &keyboard, const Clock &clock);
-    void playerClamp(const Player &player, Position2D &pos, Velocity2D &velocity);
-    void playerAnimation(const Player &player, const Velocity2D &velocity, SpriteSheet2D &sheet);
+    void playerClamp(
+        const Player &player, Position2D &pos, Velocity2D &velocity);
+    void playerAnimation(
+        const Player &player, const Velocity2D &velocity, SpriteSheet2D &sheet);
 
-}
+} // namespace RType::Server
 
 #endif

@@ -36,7 +36,8 @@ namespace RType::Server {
         auto keyboardManager = gm.createEntity();
 
         gm.addComponent<KeyboardManager>(keyboardManager);
-        gm.createSystem<KeyboardManager>(KeyboardManager::systemKeyboardManager);
+        gm.createSystem<KeyboardManager>(
+            KeyboardManager::systemKeyboardManager);
         return keyboardManager;
     }
 
@@ -44,16 +45,22 @@ namespace RType::Server {
     {
         gm.createSystem<Clock>(Clock::systemClock);
         registerEnemySystems(gm, enemyHooks);
-        gm.createSystem<Player, Velocity2D, Position2D, Keyboard, Clock>(playerHandle);
-        gm.createSystem<Friction2D, Velocity2D, Clock>(Friction2D::systemFriction2D);
-        gm.createSystem<Velocity2D, Position2D, Clock>(Velocity2D::systemVelocity2D);
+        gm.createSystem<Player, Velocity2D, Position2D, Keyboard, Clock>(
+            playerHandle);
+        gm.createSystem<Friction2D, Velocity2D, Clock>(
+            Friction2D::systemFriction2D);
+        gm.createSystem<Velocity2D, Position2D, Clock>(
+            Velocity2D::systemVelocity2D);
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
-        gm.createSystem<SpriteSheet2D, Clock>(SpriteSheet2D::systemAnimateSpriteSheet2D);
+        gm.createSystem<SpriteSheet2D, Clock>(
+            SpriteSheet2D::systemAnimateSpriteSheet2D);
         gm.createSystem<>(bulletSystem);
-        gm.createSystem<Sprite2D, Texture2D, Position2D>(Sprite2D::systemDrawSprite2D);
-        gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(SpriteSheet2D::systemDrawSpriteSheet2D);
+        gm.createSystem<Sprite2D, Texture2D, Position2D>(
+            Sprite2D::systemDrawSprite2D);
+        gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
+            SpriteSheet2D::systemDrawSpriteSheet2D);
     }
 
-}
+} // namespace RType::Server
