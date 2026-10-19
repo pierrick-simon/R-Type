@@ -54,8 +54,7 @@ namespace RType {
         hitbox.offsetY =
             float(sheet.cellH - sheet.hitboxH) * SPRITE_SCALE / 2.f;
 
-        gm.addComponent<Enemy>(
-            entity, Enemy {type, def.scoreValue, def.contactDamage});
+        gm.addComponent<Enemy>(entity, Enemy {type, def.scoreValue});
         gm.addComponent<Health>(entity, Health {def.hp, def.hp});
         gm.addComponent<Position2D>(entity, Position2D {x, y});
         gm.addComponent<Velocity2D>(entity);

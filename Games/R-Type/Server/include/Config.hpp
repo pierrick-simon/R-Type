@@ -27,6 +27,11 @@ namespace RType::Server {
     inline constexpr float PLAYER_FRICTION = 120.f;
     inline constexpr int PLAYER_HP = 3;
     inline constexpr unsigned int PLAYER_FRAME_MS = 200;
+    inline constexpr int PLAYER_EXPLOSION_FRAMES = 6;
+    inline constexpr float PLAYER_EXPLOSION_WIDTH = 33.f;
+    inline constexpr float PLAYER_EXPLOSION_HEIGHT = 30.f;
+    inline constexpr unsigned int PLAYER_EXPLOSION_FRAME_MS = 70;
+    inline constexpr float PLAYER_DEATH_DURATION = 0.55f;
 
     inline constexpr std::size_t FRAME_DOWN_MAX = 0;
     inline constexpr std::size_t FRAME_DOWN = 1;
@@ -48,6 +53,8 @@ namespace RType::Server {
         "R-Type/sprites/Levels/Level1_Background.png";
     inline constexpr const char *PLAYER_PATH =
         "R-Type/sprites/PlayerSheets/r-typePlayerSheet1.gif";
+    inline constexpr const char *PLAYER_EXPLOSION_PATH =
+        "R-Type/sprites/PlayerSheets/ExplosionPlayerDead.gif";
     inline constexpr const char *BULLET_PATH =
         "R-Type/sprites/PlayerSheets/PlayerBullet.gif";
 

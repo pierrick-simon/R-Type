@@ -19,11 +19,17 @@ namespace RType::Server {
         bool right = false;
         bool up = false;
         bool down = false;
+        bool dying = false;
+        float deathTimer = 0.f;
     };
 
     struct Bullet {};
 
     struct Background {};
+
+    struct PlayerExplosion {
+        float remaining = 0.f;
+    };
 
 } // namespace RType::Server
 

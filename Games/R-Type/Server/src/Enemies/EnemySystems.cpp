@@ -121,14 +121,18 @@ namespace RType {
                 r.y > SCREEN_HEIGHT + OFFSCREEN_MARGIN;
         }
 
-        /** Centre of the first EnemyTarget. False when there is none. */
+        /** Centre of the first living EnemyTarget. False when there is none. */
         bool findTarget(GameManager &gm, float &x, float &y)
         {
             bool found = false;
 
-            gm.view<EnemyTarget, Position2D, Hitbox>().each(
-                [&](Entity, EnemyTarget &, Position2D &pos, Hitbox &box) {
-                    if (found)
+            gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
+                [&](Entity,
+                    EnemyTarget &,
+                    Health &health,
+                    Position2D &pos,
+                    Hitbox &box) {
+                    if (found || health.hp <= 0)
                         return;
                     x = pos.x + box.offsetX + box.width / 2.f;
                     y = pos.y + box.offsetY + box.height / 2.f;
@@ -273,7 +277,7 @@ namespace RType {
                     gm.destroyEntity(bullet);
             });
 
-        // 2. Ramming: the enemy explodes (no score) and hurts the target once.
+        // 2. Ramming: the enemy explodes (no score) and kills the target.
         gm.view<Enemy, Health, Position2D, Hitbox>().each([&](Entity enemy,
                                                               Enemy &info,
                                                               Health &health,
@@ -292,8 +296,7 @@ namespace RType {
                     if (health.hp <= 0 || targetHealth.hp <= 0 ||
                         !overlap(enemyRect, rectOf(tp, tb)))
                         return;
-                    targetHealth.hp =
-                        std::max(0, targetHealth.hp - info.contactDamage);
+                    targetHealth.hp = 0;
                     health.hp = 0;
                     killEnemy(gm, hooks, enemy, ep, eb);
                 });

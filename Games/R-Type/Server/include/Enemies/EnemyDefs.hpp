@@ -16,10 +16,8 @@ namespace RType {
     constexpr float SPRITE_SCALE = 3.f;
     constexpr float HITBOX_RATIO = 0.8f;
 
-    /** Must match the Window created in Main.cpp. */
     constexpr float SCREEN_WIDTH = 1920.f;
     constexpr float SCREEN_HEIGHT = 1080.f;
-    /** Enemies appear this many pixels right of the screen. */
     constexpr float SPAWN_MARGIN = 80.f;
 
     /**
@@ -34,7 +32,6 @@ namespace RType {
         const SheetInfo *sheet;
         int hp;
         int scoreValue;
-        int contactDamage;
         float speed;
         float amplitude;
         float period;
@@ -50,7 +47,6 @@ namespace RType {
                 .sheet = &SCOUT_SHEET,
                 .hp = 1,
                 .scoreValue = 100,
-                .contactDamage = 1,
                 .speed = 260.f,
                 .amplitude = 120.f,
                 .period = 2.f,
@@ -59,7 +55,6 @@ namespace RType {
                 .sheet = &SCOUT_SHEET,
                 .hp = 3,
                 .scoreValue = 300,
-                .contactDamage = 1,
                 .speed = 180.f,
                 .amplitude = 140.f,
                 .period = 1.2f,
