@@ -13,7 +13,7 @@ set(SRCS
 
 add_executable(r-type_server ${MAIN} ${SRCS})
 target_include_directories(r-type_server PRIVATE include)
-target_link_libraries(r-type_server PRIVATE rtype-common)
+target_link_libraries(r-type_server PRIVATE engine-system engine-graphical)
 
 # criterion
 if (TARGET criterion)
