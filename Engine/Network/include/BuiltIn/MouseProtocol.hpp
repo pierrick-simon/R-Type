@@ -21,7 +21,7 @@ namespace RType {
             const std::vector<uint8_t> &payload, Context &ctx);
         static void manageButtonReleased(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
-        static void systemMouseProtocol(ClientManager &c, MouseManager &mm);
+        static void systemMouseProtocol(GameManager &gm, ClientManager &c);
 
     private:
         static std::optional<MouseButton::Value> fromByte(uint8_t b);

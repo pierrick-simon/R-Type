@@ -57,15 +57,16 @@ namespace RType {
             mouse.buttonDown.end());
     }
 
-    void MouseProtocol::systemMouseProtocol(ClientManager &c, MouseManager &mm)
+    void MouseProtocol::systemMouseProtocol(GameManager &gm, ClientManager &c)
     {
-        auto &pressed = mm.buttonPressed;
-        auto &released = mm.buttonReleased;
-
-        for (auto &value : pressed)
-            c.send(Opcode::MOUSE_BUTTON_PRESSED, {toByte(value)});
-        for (auto &value : released)
-            c.send(Opcode::MOUSE_BUTTON_RELEASED, {toByte(value)});
+        gm.view<MouseManager>().each([&c](Entity e, MouseManager &mm) {
+            auto &pressed = mm.buttonPressed;
+            auto &released = mm.buttonReleased;
+            for (auto &value : pressed)
+                c.send(Opcode::MOUSE_BUTTON_PRESSED, {toByte(value)});
+            for (auto &value : released)
+                c.send(Opcode::MOUSE_BUTTON_RELEASED, {toByte(value)});
+        });
     }
 
 } // namespace RType

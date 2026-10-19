@@ -58,15 +58,16 @@ namespace RType {
     }
 
     void KeyboardProtocol::systemKeyboardProtocol(
-        ClientManager &c, KeyboardManager &km)
+        GameManager &gm, ClientManager &c)
     {
-        auto &pressed = km.keyPressed;
-        auto &released = km.keyReleased;
-
-        for (auto &value : pressed)
-            c.send(Opcode::KEY_PRESSED, {toByte(value)});
-        for (auto &value : released)
-            c.send(Opcode::KEY_RELEASED, {toByte(value)});
+        gm.view<KeyboardManager>().each([&c](Entity e, KeyboardManager &km) {
+            auto &pressed = km.keyPressed;
+            auto &released = km.keyReleased;
+            for (auto &value : pressed)
+                c.send(Opcode::KEY_PRESSED, {toByte(value)});
+            for (auto &value : released)
+                c.send(Opcode::KEY_RELEASED, {toByte(value)});
+        });
     }
 
 } // namespace RType

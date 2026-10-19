@@ -32,12 +32,9 @@ RType::Entity createClient(RType::GameManager &gm)
     gm.addComponent<RType::KeyboardManager>(c);
     gm.createSystem<RType::KeyboardManager>(
         RType::KeyboardManager::systemKeyboardManager);
-    gm.createSystem<RType::ClientManager, RType::KeyboardManager>(
+    gm.createSystem<RType::ClientManager>(
         RType::KeyboardProtocol::systemKeyboardProtocol);
-    gm.addComponent<RType::MouseManager>(c);
-    gm.createSystem<RType::MouseManager>(
-        RType::MouseManager::systemMouseManager);
-    gm.createSystem<RType::ClientManager, RType::MouseManager>(
+    gm.createSystem<RType::ClientManager>(
         RType::MouseProtocol::systemMouseProtocol);
     return c;
 }
@@ -51,12 +48,23 @@ RType::Entity createKeyboard(RType::GameManager &gm)
     return k;
 }
 
+RType::Entity createMouse(RType::GameManager &gm)
+{
+    auto k = gm.createEntity();
+    gm.addComponent<RType::MouseManager>(k);
+    gm.createSystem<RType::MouseManager>(
+        RType::MouseManager::systemMouseManager);
+    return k;
+}
+
 int main()
 {
     try {
         RType::GameManager gm;
         auto w = createWindow(gm);
         auto c = createClient(gm);
+        auto k = createKeyboard(gm);
+        auto m = createMouse(gm);
 
         gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(
             RType::Sprite2D::systemDrawSprite2D);

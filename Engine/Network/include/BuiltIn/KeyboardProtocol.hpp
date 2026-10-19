@@ -21,8 +21,7 @@ namespace RType {
             const std::vector<uint8_t> &payload, Context &ctx);
         static void manageKeyReleased(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
-        static void systemKeyboardProtocol(
-            ClientManager &c, KeyboardManager &km);
+        static void systemKeyboardProtocol(GameManager &gm, ClientManager &c);
 
     private:
         static std::optional<Key::Value> fromByte(uint8_t b);
