@@ -75,9 +75,7 @@ namespace RType {
         std::vector<std::tuple<Entity, Components &...>> getVector()
         {
             std::vector<std::tuple<Entity, Components &...>> v;
-            each([&v] (Entity e, Components &... c) {
-                v.emplace_back(e, c...);
-            });
+            each([&v](Entity e, Components &...c) { v.emplace_back(e, c...); });
             return v;
         }
 

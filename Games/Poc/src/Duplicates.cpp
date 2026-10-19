@@ -54,8 +54,8 @@ namespace {
 
         gm.addComponent<Health>(e, 1);
         for (int i = 0; i < 5; i++)
-            POC_CHECK_THROWS(gm.addComponent<Health>(e, i),
-                RType::AlreadyExistingComponent);
+            POC_CHECK_THROWS(
+                gm.addComponent<Health>(e, i), RType::AlreadyExistingComponent);
         POC_CHECK(gm.getComponent<Health>(e).hp == 1);
         POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
     }
@@ -66,13 +66,12 @@ namespace {
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 1);
-        POC_CHECK_THROWS(
-            gm.addComponent<Health>(e, 2), RType::EngineException);
+        POC_CHECK_THROWS(gm.addComponent<Health>(e, 2), RType::EngineException);
         try {
             gm.addComponent<Health>(e, 3);
         } catch (const RType::AlreadyExistingComponent &error) {
-            POC_CHECK(std::string(error.what()).find("Already") !=
-                std::string::npos);
+            POC_CHECK(
+                std::string(error.what()).find("Already") != std::string::npos);
         }
     }
 
@@ -120,8 +119,7 @@ namespace {
         gm.destroyEntity(old);
         Entity reused = gm.createEntity();
         gm.addComponent<Health>(reused, 2);
-        POC_CHECK_THROWS(
-            gm.addComponent<Health>(old, 3), RType::NoSuchEntity);
+        POC_CHECK_THROWS(gm.addComponent<Health>(old, 3), RType::NoSuchEntity);
         POC_CHECK(gm.getComponent<Health>(reused).hp == 2);
     }
 
@@ -339,8 +337,7 @@ namespace Poc {
                 refusedComponentIsDestroyed},
             {"[duplicate] inside a system, update() throws",
                 insideASystemThrowsAtTheEndOfUpdate},
-            {"[duplicate] inside a per-entity system",
-                insideAPerEntitySystem},
+            {"[duplicate] inside a per-entity system", insideAPerEntitySystem},
             {"[duplicate] two adds in the same frame keep the first",
                 twoAddsInTheSameFrameKeepTheFirst},
             {"[duplicate] two systems checking hasComponent still collide",

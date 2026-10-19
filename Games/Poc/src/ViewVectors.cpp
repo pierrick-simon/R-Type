@@ -31,14 +31,14 @@ namespace {
     using RType::View;
     using namespace Poc;
 
-    static_assert(std::is_same_v<decltype(std::declval<View<Health> &>()
-                                             .getVector()),
-                      std::vector<std::tuple<Entity, Health &>>>,
+    static_assert(
+        std::is_same_v<decltype(std::declval<View<Health> &>().getVector()),
+            std::vector<std::tuple<Entity, Health &>>>,
         "getVector must return std::vector<std::tuple<Entity, Ts &...>>");
 
     static_assert(
-        std::is_same_v<decltype(std::declval<View<Damage, Health> &>()
-                                    .getVector()),
+        std::is_same_v<
+            decltype(std::declval<View<Damage, Health> &>().getVector()),
             std::vector<std::tuple<Entity, Damage &, Health &>>>,
         "getVector must keep the order of the view's types");
 
@@ -165,9 +165,8 @@ namespace {
                 gm.addComponent<Velocity>(e, 1.f, 1.f);
         }
         gm.view<Position, Velocity>().each(
-            [&fromEach](Entity e, Position &, Velocity &) {
-                fromEach.insert(e);
-            });
+            [&fromEach](
+                Entity e, Position &, Velocity &) { fromEach.insert(e); });
         for (auto &[e, p, v] : gm.view<Position, Velocity>().getVector())
             fromVector.insert(e);
         POC_CHECK(fromVector.size() == fromEach.size());
@@ -419,8 +418,7 @@ namespace Poc {
                 componentsMatchTheirEntity},
             {"[view vector] holds references, not copies",
                 holdsReferencesNotCopies},
-            {"[view vector] writes through the vector",
-                writesThroughTheVector},
+            {"[view vector] writes through the vector", writesThroughTheVector},
             {"[view vector] writes through std::get", writesThroughStdGet},
             {"[view vector] same entities as each", sameEntitiesAsEach},
             {"[view vector] the type order does not change the entities",
