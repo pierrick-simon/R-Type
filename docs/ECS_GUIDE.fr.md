@@ -6,6 +6,7 @@ Ce guide explique comment **utiliser** l'ECS du moteur (`Engine/System`) au quot
 
 - **Public visé :** toute personne qui écrit du code de jeu au-dessus du moteur. Aucune connaissance préalable des ECS n'est nécessaire.
 - **Pour comprendre les choix d'architecture** (le *pourquoi*), consultez [les notes de conception de l'ECS](ECS_DESIGN.fr.md).
+- **Pour créer un jeu complet** (dossier, CMake, fenêtre, sprites, entrées, son), consultez [le guide de création d'un jeu](GAME_GUIDE.fr.md).
 
 Toute l'API passe par une seule classe : **`RType::GameManager`**. Les classes internes (`EntityManager`, `ComponentManager`, `SystemManager`) sont des détails d'implémentation : le code de jeu ne doit jamais les utiliser directement.
 

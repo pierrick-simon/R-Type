@@ -6,6 +6,7 @@ This guide explains how to **use** the engine's ECS (`Engine/System`) day to day
 
 - **Audience:** anyone writing game code on top of the engine. No prior knowledge of ECS is required.
 - **To understand the architectural choices** (the *why*), see [the ECS design notes](ECS_DESIGN.en.md).
+- **To make a whole game** (folder, CMake, window, sprites, input, sound), see [the game making guide](GAME_GUIDE.en.md).
 
 The whole API goes through a single class: **`RType::GameManager`**. The internal classes (`EntityManager`, `ComponentManager`, `SystemManager`) are implementation details: game code must never use them directly.
 
