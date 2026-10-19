@@ -15,6 +15,7 @@
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
 #include "SystemManager.hpp"
+#include "View.hpp"
 
 namespace RType {
 
@@ -213,6 +214,8 @@ namespace RType {
          *
          * The callback is called once per entity that has all the
          * Components, with one reference per type, in the same order.
+         * Without any type (createSystem(func) or createSystem<>(func)),
+         * it is called only once per update(), with no argument.
          * @tparam Components The component types the system operates on.
          * Their order does not matter: the smallest array is iterated over.
          * @param func Callback applied to each matching entity.
@@ -229,6 +232,32 @@ namespace RType {
         }
 
         /**
+         * @brief Creates and registers a new system whose callback also
+         * receives this GameManager. Always immediate.
+         *
+         * Same as the other overload, but the callback takes the
+         * GameManager as its first parameter, which lets systems be
+         * written as plain functions instead of capturing it.
+         * @tparam Components The component types the system operates on.
+         * @param func Callback taking the GameManager, then one reference
+         * per component type. It is copied into the system.
+         * @return Id identifying the created system, usable with
+         * destroySystem.
+         * @warning Must not be called during update(): the new system
+         * would run in the current frame.
+         */
+        template<typename... Components>
+        SystemId createSystem(const std::type_identity_t<
+            std::function<void(GameManager &, Components &...)>> &func)
+        {
+            std::function<void(Components & ...)> wrapped =
+                [this, func](Components &...c) {
+                    func(*this, c...);
+                };
+            return _sm.createSystem<Components...>(wrapped);
+        }
+
+        /**
          * @brief Removes a previously created system. Deferred to the end
          * of the frame during update(). Does nothing if the system no
          * longer exists.
@@ -242,6 +271,19 @@ namespace RType {
          * @return true if the system exists, false otherwise.
          */
         [[nodiscard]] bool hasSystem(SystemId id) const;
+
+        /**
+         * @brief Creates a view over the entities that have all the given
+         * component types. Never throws: if one of the types has never
+         * been added, the view is empty.
+         * @tparam Components The component types to look for.
+         * @return The view, to iterate over with each() or getVector().
+         */
+        template<typename... Components>
+        View<Components...> view()
+        {
+            return View<Components...>(_cm);
+        }
 
     private:
         ComponentManager _cm;

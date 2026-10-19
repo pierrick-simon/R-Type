@@ -42,8 +42,13 @@ namespace Poc {
     TestList simulationTests();
     TestList systemTests();
     TestList multiSystemTests();
+    TestList viewTests();
+    TestList viewVectorTests();
+    TestList frameSystemTests();
+    TestList gmSystemTests();
     TestList recyclingTests();
     TestList trickyTests();
+    TestList duplicateTests();
 
     int runTests(const TestList &tests);
 
