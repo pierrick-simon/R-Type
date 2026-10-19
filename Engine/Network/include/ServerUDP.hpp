@@ -36,14 +36,17 @@ namespace RType {
         void broadcast(Opcode op, const std::vector<uint8_t> &payload);
         void sendToClient(
             Client &client, Opcode op, const std::vector<uint8_t> &payload);
+        void sendToClient(
+            uint32_t &id, Opcode op, const std::vector<uint8_t> &payload);
 
         void addManage(uint8_t opCode, ManageFunc func, bool override = false);
 
         uint16_t addNewClient();
 
-        class ClientException : public EngineException {
-            ClientException(const std::string &str) :
-                EngineException("Client error: " + str) {};
+        class ServerException : public EngineException {
+            public:
+            ServerException(const std::string &str) :
+                EngineException("Server error: " + str) {};
         };
 
     private:
