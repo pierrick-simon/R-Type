@@ -164,6 +164,7 @@ Every document exists in French and English.
 | **Game making guide** | Create a game on top of the engine: folder, CMake, window, sprites, input, sound, do's and don'ts | [EN](docs/GAME_GUIDE.en.md) · [FR](docs/GAME_GUIDE.fr.md) |
 | **ECS guide** | Entities, components, systems, views, the frame, errors, pitfalls, recipes, API cheat sheet | [EN](docs/ECS_GUIDE.en.md) · [FR](docs/ECS_GUIDE.fr.md) |
 | **ECS design notes** | Why the ECS is built the way it is | [EN](docs/ECS_DESIGN.en.md) · [FR](docs/ECS_DESIGN.fr.md) |
+| **Accessibility** | What the engine offers for accessibility (rebinding, layouts, input, text, tint), why it helps and who for | [EN](docs/ACCESSIBILITY.en.md) · [FR](docs/ACCESSIBILITY.fr.md) |
 | **Comparative studies** | Why Windows and Linux, C++, CMake, an ECS, raylib, Asio, `plf::colony`, sparse sets, `FetchContent`, UDP, Criterion | [EN](docs/comparative-studies/en/README.md) · [FR](docs/comparative-studies/fr/README.md) |
 
 The engine's headers (`Engine/*/include`) are also documented with Doxygen.

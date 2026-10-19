@@ -667,6 +667,7 @@ What the engine does not do yet, and what to do in the meantime:
 | ECS guide, [Recipes](ECS_GUIDE.en.md#8-recipes) | Lifetime, pause, homing projectile, collisions |
 | ECS guide, [API cheat sheet](ECS_GUIDE.en.md#9-api-cheat-sheet) | Every method on one page |
 | [ECS design notes](ECS_DESIGN.en.md) | The why behind the engine's architecture |
+| [Accessibility](ACCESSIBILITY.en.md) | What the engine offers for accessibility, why it helps and who for |
 | [Comparative studies](comparative-studies/en/README.md) | The project's technical choices and their alternatives: language, build, ECS, raylib, networking, protocol, tests… |
 | `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | The Doxygen documentation of each provided component |
 | `Games/Poc/` | The ECS tests: a usage example for every behavior |

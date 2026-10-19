@@ -667,6 +667,7 @@ Ce que le moteur ne fait pas encore, et comment faire en attendant :
 | Guide de l'ECS, [Recettes](ECS_GUIDE.fr.md#8-recettes) | Durée de vie, pause, projectile à tête chercheuse, collisions |
 | Guide de l'ECS, [Aide-mémoire de l'API](ECS_GUIDE.fr.md#9-aide-mémoire-de-lapi) | Toutes les méthodes sur une page |
 | [Notes de conception de l'ECS](ECS_DESIGN.fr.md) | Le pourquoi de l'architecture du moteur |
+| [Accessibilité](ACCESSIBILITY.fr.md) | Ce que le moteur offre pour l'accessibilité, pourquoi c'est utile et pour qui |
 | [Études comparatives](comparative-studies/fr/README.md) | Les choix techniques du projet et leurs alternatives : langage, build, ECS, raylib, réseau, protocole, tests… |
 | `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | La documentation Doxygen de chaque composant fourni |
 | `Games/Poc/` | Les tests de l'ECS : un exemple d'utilisation pour chaque comportement |
