@@ -8,6 +8,7 @@
 #include "Bullet.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
+#include "Enemies/EnemyComponents.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Texture.hpp"
 #include "Velocity2D.hpp"
@@ -21,6 +22,8 @@ namespace RType::Server {
         auto bullet = gm.createEntity();
 
         gm.addComponent<Bullet>(bullet);
+        gm.addComponent<Projectile>(bullet, Projectile{1, true});
+        gm.addComponent<Hitbox>(bullet, Hitbox{BULLET_WIDTH, BULLET_HEIGHT});
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
         gm.addComponent<Texture2D>(bullet, loadPixelTexture(BULLET_PATH));

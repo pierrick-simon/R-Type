@@ -10,6 +10,7 @@
 #include "Bullet.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
+#include "Enemies/EnemySystems.hpp"
 #include "Friction2D.hpp"
 #include "Keyboard.hpp"
 #include "Player.hpp"
@@ -39,9 +40,10 @@ namespace RType::Server {
         return keyboardManager;
     }
 
-    void createSystems(GameManager &gm)
+    void createSystems(GameManager &gm, const EnemyHooks &enemyHooks)
     {
         gm.createSystem<Clock>(Clock::systemClock);
+        registerEnemySystems(gm, enemyHooks);
         gm.createSystem<Player, Velocity2D, Position2D, Keyboard, Clock>(playerHandle);
         gm.createSystem<Friction2D, Velocity2D, Clock>(Friction2D::systemFriction2D);
         gm.createSystem<Velocity2D, Position2D, Clock>(Velocity2D::systemVelocity2D);

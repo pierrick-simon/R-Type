@@ -25,6 +25,7 @@ namespace RType::Server {
     inline constexpr float PLAYER_HEIGHT = 17.f * SCALE;
     inline constexpr float PLAYER_ACCELERATION = 3000.f;
     inline constexpr float PLAYER_FRICTION = 120.f;
+    inline constexpr int PLAYER_HP = 3;
     inline constexpr unsigned int PLAYER_FRAME_MS = 200;
 
     inline constexpr std::size_t FRAME_DOWN_MAX = 0;

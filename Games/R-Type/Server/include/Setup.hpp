@@ -10,11 +10,15 @@
 
 #include "GameManager.hpp"
 
+namespace RType {
+    struct EnemyHooks;
+} // namespace RType
+
 namespace RType::Server {
 
     Entity createWindow(GameManager &gm);
     Entity createKeyboardManager(GameManager &gm);
-    void createSystems(GameManager &gm);
-}
+    void createSystems(GameManager &gm, const EnemyHooks &enemyHooks);
+} // namespace RType::Server
 
 #endif
