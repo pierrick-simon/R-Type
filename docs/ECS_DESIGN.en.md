@@ -231,6 +231,7 @@ public:
 
     explicit View(ComponentManager &cm);
     void each(std::function<void(Entity, Components &...)> f);
+    std::vector<std::tuple<Entity, Components &...>> getVector();
 
 private:
     std::tuple<ComponentArray<Components> *...> _view;   // nullptr if the type has never existed
@@ -264,6 +265,12 @@ private:
 **Why forbid a duplicated type, and at compile time.** With `View<Position, Position>`, the function would receive two references to **the same** component: a source of silent bugs (two writes overwriting each other), with no legitimate use case. A `static_assert` turns this bug into a compile-time error, with a readable message. `duplicateCheck<T, Components...>` counts the occurrences of `T` in the pack (a fold over `+` of `std::is_same_v`); the outer fold over `&&` requires every type to appear exactly once. Comparing each type with the first one only would not be enough: `<Position, Velocity, Velocity>` would get through. `System` carries the same `static_assert`, so that the error points at `createSystem` rather than at an internal view.
 
 **Why a view is not a cache.** It only stores pointers to the arrays, never a list of entities: it therefore always sees the current state, and creating one only costs a few lookups in `ComponentManager`. It never needs to be invalidated or updated, but it is meant to be used right away, then thrown away.
+
+**Why `getVector` exists, and why it reuses `each`.** `each` allows neither `break`, nor `return` to the caller, nor iterating twice over the same list (the nested loops of collisions). A range-for allows all of them, but it requires `begin()`/`end()`: writing a real iterator is hard here, because the array iterated over is chosen at runtime among `Dense` storages of different types (see [What is left to do](#what-is-left-to-do)). `getVector` sidesteps the problem: it calls `each` with a lambda that appends each entity and its components to the vector, so the join is written only once. The range-for then iterates over a plain `std::vector`.
+
+**Why references in the tuple.** `std::tuple<Entity, Components...>` would copy every component: a write in the loop would change the copy, not the component, and a non-copyable component would not compile. A tuple of references is legal in a `std::vector` (it can be constructed and moved, which is all `emplace_back` needs). Since the vector's elements are lvalues, `for (auto &[e, a, b] : ...)` compiles, unlike with an iterator that would return the tuple by value.
+
+**What `getVector` costs, and why it is safe.** One allocation per call, and a snapshot of the state at the time of the call. The references stay valid as long as their component is not removed, since `plf::colony` never moves an element: destroying an entity during the iteration (even outside `update()`, where it is immediate) only invalidates that entity's references, never the vector itself. This is why the guide recommends it to destroy entities outside `update()`, instead of "collect then destroy".
 
 **Why `each` takes a `std::function`.** It is the simplest form, and it accepts `const` parameters. The cost is one indirect call per entity; a template parameter (`template<typename F> void each(F &&f)`) would avoid it (see [What is left to do](#what-is-left-to-do)).
 
@@ -437,7 +444,7 @@ Allow `createSystem<Lifetime>([](Entity e, Lifetime &l) {...})`, alongside the c
 
 ### Improving the view
 
-- **The `for` syntax**: `for (auto [e, pos, vel] : gm.view<Position, Velocity>())`, which allows `break` and `continue`. It requires writing an iterator that encapsulates "iterate over the smallest array and skip incomplete entities".
+- **The `for` syntax without allocation**: `getVector()` already provides the `for` loop, at the cost of a vector allocated on each call. A real iterator (`for (auto [e, pos, vel] : gm.view<Position, Velocity>())`) would avoid it: it would encapsulate "iterate over the smallest array and skip incomplete entities". The difficulty is that the array iterated over is chosen at runtime, among `Dense` storages of different types: the iterator would have to hold a `std::variant` of the colony iterators, or each array would have to expose a list of entities of a common type (as EnTT does). `operator*` would then return the tuple by value, which requires `auto` or `auto &&` in the loop, not `auto &`.
 - **A template `each`**: `template<typename F> void each(F &&f)` would avoid the indirect `std::function` call for each entity.
 - **Pairs**: `eachPair`, which yields each pair of entities only once (like `iter_combinations` in Bevy), for collisions between entities of the same group.
 

@@ -11,6 +11,8 @@
 #include <functional>
 #include <tuple>
 #include <type_traits>
+#include <vector>
+
 #include "ComponentArray.hpp"
 #include "ComponentManager.hpp"
 
@@ -58,7 +60,7 @@ namespace RType {
          * @param f Function receiving the entity, then one reference
          * per component type, in the order of Components.
          * @warning Outside update(), destroying entities during the
-         * iteration invalidates it: collect them first.
+         * iteration invalidates it: iterate over getVector() instead.
          */
         void each(std::function<void(Entity, Components &...)> f)
         {
@@ -69,6 +71,30 @@ namespace RType {
                     iterateSmallest(f, *ca...);
                 },
                 _view);
+        }
+
+        /**
+         * @brief Lists every entity that has all the Components, to
+         * iterate over them with a range-based for loop.
+         *
+         * Unlike each(), the loop can use break or return, and the list
+         * can be iterated over several times (nested loops).
+         * @return One tuple per matching entity: the entity, then one
+         * reference per component type, in the order of Components.
+         * Empty if one of the types has never been added.
+         * @note The references point to the real components, not to
+         * copies. They stay valid until their own component is removed:
+         * destroying an entity during the loop, even outside update(),
+         * does not invalidate the others.
+         * @warning Allocates a vector on each call, and only reflects the
+         * state at the time of the call: call it right before the loop,
+         * and do not keep it across frames.
+         */
+        std::vector<std::tuple<Entity, Components &...>> getVector()
+        {
+            std::vector<std::tuple<Entity, Components &...>> v;
+            each([&v](Entity e, Components &...c) { v.emplace_back(e, c...); });
+            return v;
         }
 
         static_assert(((duplicateCheck<Components, Components...> == 1) && ...),

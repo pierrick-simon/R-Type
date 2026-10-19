@@ -179,6 +179,8 @@ gm.view<Position, Velocity>().each(
 > [!NOTE]
 > The iteration order **does not match the insertion order**: freed slots are reused. Never rely on any particular order.
 
+In a system, a view can also be iterated over with a `for` loop, thanks to `getVector()`: see [section 4](#iterating-over-a-view-in-a-system-getvector).
+
 To count the components of a type: `gm.getArray<T>().nbComponent()`. `getArray<T>()` also gives low-level access to the storage (`getDense()`, whose elements expose `.component` and `.entity()`), but throws `NoSuchComponent` if no `T` has ever been added: to iterate, always prefer a view.
 
 ### References to a component
@@ -242,7 +244,7 @@ gm.createSystem<Homing, Position>(
     });
 ```
 
-Both forms, with and without the `GameManager`, can be mixed freely. Do not capture the `GameManager` in a system's lambda (`[&gm]`): receiving it as a parameter lets you write the system as a **plain function**, in a separate file (see below). Inside a system, on the other hand, the lambda passed to `each` may capture the received `gm`: it only lives for the duration of the iteration.
+Both forms, with and without the `GameManager`, can be mixed freely. Do not capture the `GameManager` in a system's lambda (`[&gm]`): receiving it as a parameter lets you write the system as a **plain function**, in a separate file (see below). Inside a system, on the other hand, the lambda passed to `each` may capture the received `gm`: it only lives for the duration of the iteration. With a loop over `getVector()`, there is no lambda at all: `gm` can be used directly.
 
 ### A frame system
 
@@ -250,13 +252,50 @@ A system created **without any component type** is called **only once per `updat
 
 ```cpp
 gm.createSystem([](RType::GameManager &gm) {   // same as: gm.createSystem<>(...)
-    gm.view<Enemy>().each([](RType::Entity, Enemy &) { /* ... */ });
+    for (auto &[e, enemy, pos] : gm.view<Enemy, Position>().getVector()) {
+        if (pos.x < 0.f)
+            gm.destroyEntity(e);               // deferred: safe during the loop
+    }
 });
 ```
+
+Inside, entities are iterated over with a **view** (see [below](#iterating-over-a-view-in-a-system-getvector)).
 
 It is the natural place for anything that does not concern a single entity: **collisions** between two groups of entities (see the [recipe](#collisions-between-bullets-and-enemies)), enemy waves spawning, the score, a timer…
 
 A frame system behaves like the others: it has a `SystemId`, runs at its rank in creation order, and its structural changes are deferred to the end of the frame.
+
+### Iterating over a view in a system: `getVector()`
+
+In a system, the most readable way is to iterate over a view with a regular `for` loop. `getVector()` turns the view into a `std::vector` holding, for each entity, a tuple with **the entity then a reference to each of its components**:
+
+```cpp
+inline void bounds(RType::GameManager &gm)
+{
+    for (auto &[e, pos, vel] : gm.view<Position, Velocity>().getVector()) {
+        pos.x += vel.vx;
+        if (pos.x > 1920.f)
+            gm.destroyEntity(e);   // deferred: safe during the loop
+    }
+}
+
+gm.createSystem(bounds);
+```
+
+- The exact type is `std::vector<std::tuple<RType::Entity, Position &, Velocity &>>`: the components are **references**, and a change in the loop does change the real component.
+- The loop allows `break`, `continue` and `return`, and the list can be iterated over several times: this is what makes **nested loops** (collisions) easy to write (see the [recipe](#collisions-between-bullets-and-enemies)).
+- The vector is a **snapshot** taken at the time of the call: an entity or a component added afterwards does not appear in it. Call `getVector()` right before the loop, and do not keep it from one frame to the next.
+- It **allocates** a vector on each call. `each` (see [views](#iterating-over-entities-views)) allocates nothing, and remains available: `gm.view<A, B>().each([&gm](RType::Entity e, A &a, B &b) {...})`.
+
+**Which one to choose?**
+
+| Need | Use |
+|---|---|
+| An iteration in a system, general case | `getVector()` |
+| Leave the loop (`break`, `return`) | `getVector()` |
+| A nested loop (collisions): build the inner list only once | `getVector()` |
+| Destroy entities during the iteration, outside `update()` | `getVector()` (see [pitfall 3](#pitfall-3-destroying-entities-during-an-iteration-outside-update)) |
+| A simple iteration over a very large number of entities, without allocation | `each` |
 
 ### Accessing the entity from a system
 
@@ -268,15 +307,21 @@ struct Weapon {
 };
 
 gm.createSystem([](RType::GameManager &gm) {
-    gm.view<Weapon, Position>().each(
-        [&gm](RType::Entity ship, Weapon &w, const Position &from) {
-            RType::Entity bullet = gm.createEntity();
-            gm.addComponent<Position>(bullet, from.x, from.y);
-            gm.addComponent<Velocity>(bullet, 5.f, 0.f);
-            if (--w.ammo <= 0)
-                gm.removeComponent<Weapon>(ship);   // out of ammo: remove the weapon
-        });
+    for (auto &[ship, w, from] : gm.view<Weapon, Position>().getVector()) {
+        RType::Entity bullet = gm.createEntity();
+        gm.addComponent<Position>(bullet, from.x, from.y);
+        gm.addComponent<Velocity>(bullet, 5.f, 0.f);
+        if (--w.ammo <= 0)
+            gm.removeComponent<Weapon>(ship);   // out of ammo: remove the weapon
+    }
 });
+```
+
+`ship`, `w` and `from` are the entity and **references** to its components: `--w.ammo` does change the real `Weapon`. The same thing with `each`:
+
+```cpp
+gm.view<Weapon, Position>().each(
+    [&gm](RType::Entity ship, Weapon &w, const Position &from) { /* ... */ });
 ```
 
 Do not copy the entity into a field of the component (`owner`, `self`): it would have to be filled in by hand on every `addComponent`, and a mistake would go unnoticed.
@@ -295,7 +340,9 @@ inline void move(Position &pos, const Velocity &vel)
 
 inline void collisions(RType::GameManager &gm)
 {
-    gm.view<Bullet, Position>().each(/* ... */);
+    for (auto &[bullet, b, pos] : gm.view<Bullet, Position>().getVector()) {
+        /* ... */
+    }
 }
 
 // At startup
@@ -487,17 +534,15 @@ gm.view<Lifetime>().each([&gm](RType::Entity e, Lifetime &l) {
 });
 ```
 
-**Do:** do it in a system, where destruction is automatically deferred (see the [recipe](#a-limited-lifetime-bullets-particles-explosions)). If you really have to do it outside `update()`, collect first, destroy afterwards:
+**Do:** do it in a system, where destruction is automatically deferred (see the [recipe](#a-limited-lifetime-bullets-particles-explosions)). If you really have to do it outside `update()`, iterate over `getVector()`: the list is built before the first destruction, so destroying an entity does not disturb it.
 
 ```cpp
-std::vector<RType::Entity> expired;
-gm.view<Lifetime>().each([&expired](RType::Entity e, const Lifetime &l) {
+for (auto &[e, l] : gm.view<Lifetime>().getVector())
     if (l.ticks <= 0)
-        expired.push_back(e);
-});
-for (RType::Entity e : expired)
-    gm.destroyEntity(e);
+        gm.destroyEntity(e);               // OK: the vector is not touched
 ```
+
+One rule only: outside `update()`, destruction is immediate, so **do not touch `e`'s components after destroying it** (here `l`). The references of the other entities in the vector stay valid.
 
 ### Pitfall 4: keeping a pointer or reference to another entity's component
 
@@ -654,27 +699,29 @@ gm.createSystem([](RType::GameManager &gm) {
 
 ### Collisions between bullets and enemies
 
-A frame system, with one view nested in another: each bullet is tested against each enemy.
+A frame system, with two nested loops: each bullet is tested against each enemy.
 
 ```cpp
 inline void collisions(RType::GameManager &gm)
 {
-    gm.view<Bullet, Position, Damage>().each(
-        [&gm](RType::Entity bullet, Bullet &, const Position &bp, const Damage &d) {
-            gm.view<Enemy, Position, Health>().each(
-                [&](RType::Entity, Enemy &, const Position &ep, Health &h) {
-                    if (!overlap(bp, ep))
-                        return;
-                    h.hp -= d.value;
-                    gm.destroyEntity(bullet);   // deferred: the bullet stays visible until the end of the frame
-                });
-        });
+    auto enemies = gm.view<Enemy, Position, Health>().getVector();   // built only once
+
+    for (auto &[bullet, b, bp, d] : gm.view<Bullet, Position, Damage>().getVector()) {
+        for (auto &[enemy, en, ep, h] : enemies) {
+            if (!overlap(bp, ep))
+                continue;
+            h.hp -= d.value;
+            gm.destroyEntity(bullet);   // deferred: the bullet stays visible until the end of the frame
+            break;                      // a bullet hits only one enemy
+        }
+    }
 }
 
 gm.createSystem(collisions);
 ```
 
-- A bullet that hits two enemies in the same frame damages both of them, since its destruction is deferred. If that is not intended, record in the bullet that it has already hit.
+- The list of enemies is built **once per frame**, not once per bullet as a nested view would.
+- The `break` prevents a bullet from hitting two enemies in the same frame: without it, since its destruction is deferred, it would damage every enemy it overlaps.
 - The cost is proportional to *bullets × enemies*. Beyond a few hundred entities, a spatial grid built once per frame, at the start of the system, becomes necessary.
 
 ---
@@ -705,6 +752,7 @@ public:
     bool hasComponent(Entity entity) const;
     template<typename... Components>
     View<Components...> view();              // .each([](Entity, Components &...) {...})
+                                             // .getVector(): std::vector<std::tuple<Entity, Components &...>>
     template<typename Component>
     ComponentArray<Component> &getArray();   // .nbComponent()
 
@@ -731,6 +779,7 @@ public:
 | Remove a component | `gm.removeComponent<T>(e)` |
 | Empty an entity without destroying it | `gm.removeComponents(e)` |
 | Iterate over entities, with their entity | `gm.view<T, ...>().each(func)` |
+| Iterate with a `for` loop (`break`, nested loops) | `for (auto &[e, t, ...] : gm.view<T, ...>().getVector())` |
 | Count the components of a type | `gm.getArray<T>().nbComponent()` |
 | Add a per-entity behavior | `gm.createSystem<T, ...>(func)` (at startup) |
 | Add a global processing, once per frame | `gm.createSystem(func)` (at startup) |
