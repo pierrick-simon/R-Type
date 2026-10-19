@@ -2,7 +2,7 @@
 
 > 🌐 **Language:** [Français](../fr/07-stockage-des-composants.md) · English
 
-> **Decision:** in the ECS, the components of a given type are stored in a **`plf::colony`**, the reference implementation of the upcoming `std::hive` (C++26).
+> **Decision:** in the ECS, the components of a given type are stored in a **`plf::colony`**, the container `std::hive` (C++26) derives from.
 > **Status:** adopted · **Date:** October 2026 · [Back to the index](README.md)
 
 ## In short
@@ -90,7 +90,7 @@ The element is marked as removed without being moved, and its slot is reused lat
 **Weaknesses**
 
 - **One allocation per element**: about 14 ns per insertion, against 0.8 for a `vector` (see [Data](#the-data)).
-- **32 bytes of overhead** per element for two pointers and the allocation. After a few removals and insertions, nodes are scattered in memory, and iteration becomes slow.
+- **32 bytes per element** for an 8-byte value, because of the two pointers and the allocation. After a few removals and insertions, nodes are scattered in memory, and iteration becomes slow.
 
 ### `std::unordered_map<Entity, Component>` or `std::vector<std::unique_ptr<Component>>`
 
@@ -188,7 +188,7 @@ These are **orders of magnitude**, not measurements of the project: real compone
 
 ## When to revisit this choice
 
-- **When libstdc++ and MSVC provide `std::hive`**: replace `plf::colony` with `std::hive`. The behavior is the same, since colony is its reference implementation, and a dependency disappears.
+- **When libstdc++ and MSVC provide `std::hive`**: replace `plf::colony` with `std::hive`. The principle is the same, since `std::hive` derives from colony: only a few function names change, and a dependency disappears.
 - **If profiling shows that iteration dominates the frame** (tens of thousands of entities, many systems): consider a packed `vector` **only for components that do not need stable references**, as EnTT allows. Beware: this changes the guarantee offered to game code, and must be documented in the guide.
 
 ---

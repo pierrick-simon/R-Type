@@ -54,7 +54,7 @@ What to take away:
 
 ### Garbage collector pauses
 
-C#, Java, Go and Python free memory with a **garbage collector**, which runs when it decides to. The documentation of Unity, an engine written in C++ but scripted in C#, explains it: these interruptions cause "*GC spikes*" that "*interrupt the consistent 60 fps frame rate*". Unity offers an incremental mode that does not make collection faster, but spreads it over several frames ([Unity, *Incremental garbage collection*](https://docs.unity3d.com/Manual/performance-incremental-garbage-collection.html)). In C++, memory is freed at a known point (end of scope, `destroyEntity`), with no hidden pause.
+C#, Java, Go and Python free memory with a **garbage collector**, which runs when it decides to. The documentation of Unity, an engine whose games are scripted in C#, explains it: these interruptions cause "*GC spikes*" that "*interrupt the consistent 60 fps frame rate*". Unity offers an incremental mode that does not make collection faster, but spreads it over several frames ([Unity, *Incremental garbage collection*](https://docs.unity3d.com/Manual/performance-incremental-garbage-collection.html)). In C++, memory is freed at a known point (end of scope, `destroyEntity`), with no hidden pause.
 
 ### The price of C++: memory safety
 
@@ -79,7 +79,7 @@ According to the 2025 JetBrains survey of 1,800 C++ developers, the most used st
 **Strengths**
 
 - **Fast**, no garbage collector, full control over data layout: essential for an ECS whose whole point is to store components contiguously ([study 04](04-ecs-architecture.md)).
-- **Templates:** the ECS is typed at compile time. `View<Position, Velocity>`, the duplicate check with `static_assert` or type deduction in `createSystem` have no runtime cost.
+- **Templates:** the ECS is typed at compile time. A `View<Position, Velocity>` only yields `Position` and `Velocity` components, and a duplicate type is rejected by a `static_assert`: these checks cost nothing at runtime.
 - **RAII:** a `Texture2D` or a `Window` frees its raylib resource in its destructor, with no manual call to forget.
 - **The richest game ecosystem.**
 
@@ -158,7 +158,7 @@ According to the 2025 JetBrains survey of 1,800 C++ developers, the most used st
 - **Handles rather than pointers:** an `Entity` is an *(index, generation)* pair. A stale handle is detected by `hasEntity` instead of referring to another entity ([design notes](../../ECS_DESIGN.en.md#entity-and-entitymanager)).
 - **Stable references:** components never change address as long as they exist ([study 07](07-component-storage.md)).
 - **Sanitizers:** the Poc is built by default with AddressSanitizer and UndefinedBehaviorSanitizer (`POC_SANITIZE`), which detect invalid memory accesses and undefined behavior at runtime.
-- **Static analysis:** `clang-tidy` (`script/lint.sh`) runs in continuous integration.
+- **Static analysis:** `clang-tidy` runs in continuous integration (cpp-linter action), and locally with `script/lint.sh`.
 
 **What we accept:** longer compile times and sometimes obscure template errors. To limit them, the public API (`GameManager`) stays simple and its type errors are documented.
 

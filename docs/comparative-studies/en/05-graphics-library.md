@@ -13,7 +13,7 @@ raylib is the only library compared here that offers **ready-to-use 2D and 3D** 
 
 ## Context
 
-The engine (`Engine/`) must display images, animations and text, play sounds and read the keyboard and mouse, on Windows and Linux. The R-Type is a 2D game, but the engine is designed to host **other games** (the `Games/` folder plans for several) and to allow effects that 2D alone cannot provide:
+The engine (`Engine/`) must display images, animations and text, play sounds and read the keyboard and mouse, on Windows and Linux. The R-Type is a 2D game, but the engine is designed to host **other games** (the `Games/` folder is meant to hold several) and to allow effects that 2D alone cannot provide:
 
 - **3D backgrounds** seen from the side, with real depth and parallax (the "2.5D" style of recent R-Type games);
 - **3D-modeled bosses** in a 2D game;
@@ -155,7 +155,7 @@ Source: [raylib README](https://github.com/raysan5/raylib).
 
 - **The game needs modern rendering** (thousands of lights, deferred rendering, Vulkan): SDL3 and its GPU API would become relevant, at the cost of writing a renderer.
 - **The project drops any 3D ambition** and the team prefers an object API: SFML 3 would be more comfortable.
-- **Moving to raylib 6**, already available (vcpkg and Conan offer 6.0, and raylib-cpp 6.0.3): update raylib and raylib-cpp together, since their versions are tied, and check the API changes before migrating.
+- **Moving to raylib 6**, already available (6.2 was released on October 15, 2026; vcpkg and Conan offer 6.0, and raylib-cpp follows 6.0 with its 6.0.3 release): update raylib and raylib-cpp together, since their versions are tied, and check the API changes before migrating.
 
 ---
 

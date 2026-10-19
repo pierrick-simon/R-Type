@@ -7,7 +7,7 @@
 
 ## En bref
 
-`FetchContent` ne demande **rien d'autre que CMake**. Il fonctionne à l'identique sous Windows et Linux, récupère nos quatre bibliothèques et fige leurs versions dans un seul fichier. Son défaut est de tout retélécharger et recompiler dans chaque nouveau dossier de build. **CPM** obtient le même score : c'est une surcouche de `FetchContent` qui ajoute un cache partagé, et donc l'évolution naturelle si la configuration devient trop longue. **vcpkg** est le meilleur des gestionnaires de paquets (cache binaire, toutes nos bibliothèques), mais demande une installation à chaque poste. **Conan** ne propose pas deux de nos quatre bibliothèques.
+`FetchContent` ne demande **rien d'autre que CMake**. Il fonctionne à l'identique sous Windows et Linux, récupère nos quatre bibliothèques et fige leurs versions dans un seul fichier. Son défaut est de tout retélécharger et recompiler dans chaque nouveau dossier de build. **CPM** obtient le même score : c'est une surcouche de `FetchContent` qui ajoute un cache partagé, et donc l'évolution naturelle si la configuration devient trop longue. **vcpkg** est le meilleur des gestionnaires de paquets (cache binaire, toutes nos bibliothèques), mais demande une installation à chaque poste. **Conan** ne propose pas raylib-cpp.
 
 ---
 
@@ -56,9 +56,9 @@ Vérification dans les catalogues officiels, le 19 octobre 2026 :
 | raylib | Oui (6.0) | Oui (6.0, 5.5…) |
 | raylib-cpp | Oui (6.0.3) | Non |
 | Asio | Oui (1.32.0) | Oui (1.38.2, 1.36.0…) |
-| plf::colony | Oui (7.7.15) | Non |
+| plf::colony | Oui (7.7.15) | Oui (7.39, 7.06…) |
 
-- **Conan Center ne propose ni raylib-cpp, ni plf::colony** : il faudrait écrire et maintenir nos propres recettes.
+- **Conan Center ne propose pas raylib-cpp** : il faudrait écrire et maintenir notre propre recette.
 - **vcpkg les propose toutes**, mais ses versions par défaut diffèrent des nôtres (raylib 6.0 au lieu de 5.5, Asio 1.32 au lieu de 1.34.2). Il faudrait figer chaque version à la main dans le manifeste.
 
 ### Ce que demande chaque outil
@@ -127,7 +127,7 @@ Vérification dans les catalogues officiels, le 19 octobre 2026 :
 **Points faibles**
 
 - **Python ou un installateur à part**, sur chaque poste.
-- **raylib-cpp et plf::colony absentes** du catalogue : deux recettes à écrire.
+- **raylib-cpp absente** du catalogue : une recette à écrire.
 
 ### Paquets du système (`apt`, etc.)
 
@@ -159,13 +159,13 @@ Vérification dans les catalogues officiels, le 19 octobre 2026 :
 |---|---|---|---|---|---|---|---|
 | Rien à installer (3) | 5 | 4 | 2 | 2 | 3 | 5 | 4 |
 | Windows et Linux (3) | 5 | 5 | 5 | 5 | 1 | 5 | 5 |
-| Nos 4 bibliothèques (3) | 5 | 5 | 4 | 2 | 2 | 5 | 5 |
+| Nos 4 bibliothèques (3) | 5 | 5 | 4 | 3 | 2 | 5 | 5 |
 | Versions figées (2) | 5 | 5 | 4 | 4 | 2 | 5 | 5 |
 | Poids du dépôt, mises à jour (2) | 5 | 5 | 5 | 5 | 4 | 1 | 3 |
 | Temps de configuration (2) | 2 | 3 | 5 | 4 | 5 | 3 | 3 |
 | Aucune couche en plus (1) | 5 | 4 | 3 | 2 | 5 | 5 | 4 |
 | Hors ligne (1) | 2 | 4 | 4 | 4 | 5 | 5 | 4 |
-| **Total pondéré /100** | **89** | **89** | **80** | **69** | **59** | **86** | **85** |
+| **Total pondéré /100** | **89** | **89** | **80** | **73** | **59** | **86** | **85** |
 
 ---
 

@@ -2,7 +2,7 @@
 
 > 🌐 **Langue :** Français · [English](../en/07-component-storage.md)
 
-> **Décision :** dans l'ECS, les composants d'un même type sont stockés dans un **`plf::colony`**, l'implémentation de référence du futur `std::hive` (C++26).
+> **Décision :** dans l'ECS, les composants d'un même type sont stockés dans un **`plf::colony`**, le conteneur dont est issu `std::hive` (C++26).
 > **Statut :** adopté · **Date :** octobre 2026 · [Retour au sommaire](README.md)
 
 ## En bref
@@ -90,7 +90,7 @@ On marque l'élément comme supprimé sans le déplacer, et on réutilise sa cas
 **Points faibles**
 
 - **Une allocation par élément** : environ 14 ns par insertion, contre 0,8 pour un `vector` (voir [Données](#les-données)).
-- **32 octets de surcoût** par élément pour deux pointeurs et l'allocation. Après quelques suppressions et insertions, les nœuds sont éparpillés en mémoire, et le parcours devient lent.
+- **32 octets par élément** pour une valeur de 8 octets, à cause des deux pointeurs et de l'allocation. Après quelques suppressions et insertions, les nœuds sont éparpillés en mémoire, et le parcours devient lent.
 
 ### `std::unordered_map<Entity, Component>` ou `std::vector<std::unique_ptr<Component>>`
 
@@ -188,7 +188,7 @@ Ce sont des **ordres de grandeur**, pas des mesures du projet : les composants r
 
 ## Quand revoir ce choix
 
-- **Quand libstdc++ et MSVC fourniront `std::hive`** : remplacer `plf::colony` par `std::hive`. Le comportement est le même, puisque colony en est l'implémentation de référence, et une dépendance disparaît.
+- **Quand libstdc++ et MSVC fourniront `std::hive`** : remplacer `plf::colony` par `std::hive`. Le principe est le même, puisque `std::hive` est issu de colony : seuls quelques noms de fonctions changent, et une dépendance disparaît.
 - **Si le profilage montre que les parcours dominent la frame** (dizaines de milliers d'entités, beaucoup de systèmes) : envisager un `vector` compacté **seulement pour les composants qui n'ont pas besoin de références stables**, comme le permet EnTT. Attention : c'est un changement de la garantie offerte au code de jeu, à documenter dans le guide.
 
 ---

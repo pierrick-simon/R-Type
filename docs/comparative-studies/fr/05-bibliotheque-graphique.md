@@ -13,7 +13,7 @@ raylib est la seule des bibliothèques comparées à offrir **la 2D et la 3D pr�
 
 ## Contexte
 
-Le moteur (`Engine/`) doit afficher des images, des animations et du texte, jouer des sons et lire le clavier et la souris, sur Windows et Linux. Le R-Type est un jeu en 2D, mais le moteur est conçu pour accueillir **d'autres jeux** (le dossier `Games/` en prévoit plusieurs) et pour permettre des effets que la 2D seule ne donne pas :
+Le moteur (`Engine/`) doit afficher des images, des animations et du texte, jouer des sons et lire le clavier et la souris, sur Windows et Linux. Le R-Type est un jeu en 2D, mais le moteur est conçu pour accueillir **d'autres jeux** (le dossier `Games/` est fait pour en contenir plusieurs) et pour permettre des effets que la 2D seule ne donne pas :
 
 - des **décors en 3D** vus de côté, avec une vraie profondeur et de la parallaxe (le style « 2,5D » des R-Type récents) ;
 - des **boss modélisés en 3D** dans un jeu en 2D ;
@@ -155,7 +155,7 @@ Source : [README de raylib](https://github.com/raysan5/raylib).
 
 - **Le jeu demande un rendu moderne** (milliers de lumières, rendu différé, Vulkan) : SDL3 et son API GPU deviendraient pertinents, au prix d'un moteur de rendu à écrire.
 - **Le projet abandonne toute ambition 3D** et l'équipe préfère une API objet : SFML 3 serait plus confortable.
-- **Passer à raylib 6**, déjà disponible (vcpkg et Conan proposent la 6.0, et raylib-cpp la 6.0.3) : mettre à jour raylib et raylib-cpp en même temps, car leurs versions sont liées, et vérifier les changements d'API avant de migrer.
+- **Passer à raylib 6**, déjà disponible (la 6.2 est sortie le 15 octobre 2026 ; vcpkg et Conan proposent la 6.0, et raylib-cpp suit la 6.0 avec sa version 6.0.3) : mettre à jour raylib et raylib-cpp en même temps, car leurs versions sont liées, et vérifier les changements d'API avant de migrer.
 
 ---
 

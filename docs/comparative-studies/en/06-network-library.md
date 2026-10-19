@@ -63,7 +63,7 @@ The choice of transport is the topic of [study 10](10-network-protocol.md): the 
 
 **Strengths**
 
-- The same code (Boost.Asio 1.38.2 ships with the Boost 1.92.0 beta), with the Boost ecosystem (Beast for HTTP, for instance).
+- The same code (Boost.Asio 1.38.2 ships with Boost 1.92.0), with the Boost ecosystem (Beast for HTTP, for instance).
 
 **Weaknesses**
 

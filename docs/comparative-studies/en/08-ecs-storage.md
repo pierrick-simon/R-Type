@@ -90,7 +90,7 @@ Bevy lets the storage be chosen **per component**: table (archetype) by default,
 
 **Weaknesses**
 
-- **Two storages to write and maintain**, and one more choice for every component.
+- **Two storage modes to write and maintain**, and one more choice for every component.
 
 ---
 

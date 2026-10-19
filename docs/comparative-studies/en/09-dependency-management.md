@@ -7,7 +7,7 @@
 
 ## In short
 
-`FetchContent` requires **nothing but CMake**. It works the same on Windows and Linux, fetches our four libraries and pins their versions in a single file. Its drawback is that it downloads and rebuilds everything in every new build folder. **CPM** gets the same score: it is a layer over `FetchContent` that adds a shared cache, and therefore the natural next step if configuration becomes too long. **vcpkg** is the best of the package managers (binary cache, all our libraries), but requires an installation on every machine. **Conan** does not offer two of our four libraries.
+`FetchContent` requires **nothing but CMake**. It works the same on Windows and Linux, fetches our four libraries and pins their versions in a single file. Its drawback is that it downloads and rebuilds everything in every new build folder. **CPM** gets the same score: it is a layer over `FetchContent` that adds a shared cache, and therefore the natural next step if configuration becomes too long. **vcpkg** is the best of the package managers (binary cache, all our libraries), but requires an installation on every machine. **Conan** does not offer raylib-cpp.
 
 ---
 
@@ -56,9 +56,9 @@ Checked in the official catalogs, on October 19, 2026:
 | raylib | Yes (6.0) | Yes (6.0, 5.5…) |
 | raylib-cpp | Yes (6.0.3) | No |
 | Asio | Yes (1.32.0) | Yes (1.38.2, 1.36.0…) |
-| plf::colony | Yes (7.7.15) | No |
+| plf::colony | Yes (7.7.15) | Yes (7.39, 7.06…) |
 
-- **Conan Center offers neither raylib-cpp nor plf::colony**: we would have to write and maintain our own recipes.
+- **Conan Center does not offer raylib-cpp**: we would have to write and maintain our own recipe.
 - **vcpkg offers all of them**, but its default versions differ from ours (raylib 6.0 instead of 5.5, Asio 1.32 instead of 1.34.2). Each version would have to be pinned by hand in the manifest.
 
 ### What each tool requires
@@ -127,7 +127,7 @@ Checked in the official catalogs, on October 19, 2026:
 **Weaknesses**
 
 - **Python or a separate installer**, on every machine.
-- **raylib-cpp and plf::colony missing** from the catalog: two recipes to write.
+- **raylib-cpp missing** from the catalog: one recipe to write.
 
 ### System packages (`apt`, etc.)
 
@@ -159,13 +159,13 @@ Checked in the official catalogs, on October 19, 2026:
 |---|---|---|---|---|---|---|---|
 | Nothing to install (3) | 5 | 4 | 2 | 2 | 3 | 5 | 4 |
 | Windows and Linux (3) | 5 | 5 | 5 | 5 | 1 | 5 | 5 |
-| Our 4 libraries (3) | 5 | 5 | 4 | 2 | 2 | 5 | 5 |
+| Our 4 libraries (3) | 5 | 5 | 4 | 3 | 2 | 5 | 5 |
 | Pinned versions (2) | 5 | 5 | 4 | 4 | 2 | 5 | 5 |
 | Repository size, updates (2) | 5 | 5 | 5 | 5 | 4 | 1 | 3 |
 | Configure time (2) | 2 | 3 | 5 | 4 | 5 | 3 | 3 |
 | No extra layer (1) | 5 | 4 | 3 | 2 | 5 | 5 | 4 |
 | Offline (1) | 2 | 4 | 4 | 4 | 5 | 5 | 4 |
-| **Weighted total /100** | **89** | **89** | **80** | **69** | **59** | **86** | **85** |
+| **Weighted total /100** | **89** | **89** | **80** | **73** | **59** | **86** | **85** |
 
 ---
 

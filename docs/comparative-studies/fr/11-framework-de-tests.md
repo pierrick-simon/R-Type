@@ -2,7 +2,7 @@
 
 > 🌐 **Langue :** Français · [English](../en/11-test-framework.md)
 
-> **Décision :** les tests unitaires du client, du serveur et du moteur utilisent **Criterion**, à activer aussi sous Windows.
+> **Décision :** les tests unitaires du client et du serveur (et, à terme, du moteur) utilisent **Criterion**, à activer aussi sous Windows.
 > **Statut :** adopté · **Date :** octobre 2026 · [Retour au sommaire](README.md)
 
 ## En bref
@@ -20,7 +20,7 @@ Le projet utilise **Criterion** : il est déjà intégré au build et à l'inté
 - **L'intégration continue** installe Criterion avec `apt-get install libcriterion-dev`.
 - **Le Poc** (`Games/Poc`) a son propre lanceur de tests, plus de 200 tests sans dépendance. C'est un programme de validation de l'ECS : il n'est pas concerné par ce choix.
 
-Les tests vont devenir indispensables avec le réseau ([étude 10](10-protocole-reseau.md)) : lecture et écriture des en-têtes, connexion, contrôle de présence. Ce code doit être testé **sous Windows comme sous Linux**, car c'est là qu'apparaissent les différences entre compilateurs (taille des types, ordre des octets).
+Les tests vont devenir indispensables avec le réseau ([étude 10](10-protocole-reseau.md)) : lecture et écriture des en-têtes, connexion, contrôle de présence. Ce code doit être testé **sous Windows comme sous Linux**, car c'est là qu'apparaissent les différences entre systèmes et compilateurs (taille des types, comportement des sockets).
 
 ---
 

@@ -179,7 +179,7 @@ private:
 | **Presence** | The server sends `HEALTH` every 2 seconds, and the client answers. A client silent for 6 seconds is removed |
 | **Client messages** | Inputs: `KEY_PRESSED`, `KEY_RELEASED`, `MOUSE_BUTTON_PRESSED`, `MOUSE_BUTTON_RELEASED` |
 | **Server messages** | Entity changes: `CREATE`, `MOVE`, `SET`, `TEXT`, `DESTROY`, and sounds: `PLAY`, `PAUSE`, `STOP` |
-| **Size** | 1,024-byte receive buffer: every datagram stays below the recommended 1,200 bytes |
+| **Size** | 1,024-byte receive buffer: a message, header included, must fit in 1,024 bytes, below the recommended 1,200 bytes |
 | **Game loop** | No network thread: an ECS system (`ServerManager::systemServerReceived`, `ClientManager::systemClientReceived`) calls `poll()` on the Asio context every frame |
 
 These choices follow the recommendations of this study's sources: the server receives inputs, never positions, and does not take the client at its word ([Gambetta, *Client-Server Game Architecture*](https://www.gabrielgambetta.com/client-server-game-architecture.html)); datagrams stay under 1,200 bytes, the conservative limit used by QUIC ([RFC 9000, section 14](https://www.rfc-editor.org/rfc/rfc9000.html#section-14)) and by Glenn Fiedler ([Gaffer On Games, *Packet Fragmentation and Reassembly*](https://gafferongames.com/post/packet_fragmentation_and_reassembly/)).
@@ -211,7 +211,6 @@ The current implementation has no reliability yet: a lost message is never resen
 - IETF, RFC 9293, *Transmission Control Protocol (TCP)*: <https://www.rfc-editor.org/rfc/rfc9293.html>
 - IETF, RFC 896, *Congestion Control in IP/TCP Internetworks* (John Nagle): <https://www.rfc-editor.org/rfc/rfc896.html>
 - IETF, RFC 8085, *UDP Usage Guidelines*: <https://www.rfc-editor.org/rfc/rfc8085.html>
-- IETF, RFC 8200 (IPv6), minimum link MTU: <https://www.rfc-editor.org/rfc/rfc8200.html>
 - IETF, RFC 9000 (QUIC), section 14 *Datagram Size*: <https://www.rfc-editor.org/rfc/rfc9000.html#section-14>
 - Asio, *TCP, UDP and ICMP*: <https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/networking/protocols.html>
 - Asio, *Streams, Short Reads and Short Writes*: <https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/streams.html>

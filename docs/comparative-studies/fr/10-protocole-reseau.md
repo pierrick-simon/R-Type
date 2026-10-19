@@ -179,7 +179,7 @@ private:
 | **Présence** | Le serveur envoie `HEALTH` toutes les 2 secondes, le client répond. Un client silencieux depuis 6 secondes est retiré |
 | **Messages du client** | Les entrées : `KEY_PRESSED`, `KEY_RELEASED`, `MOUSE_BUTTON_PRESSED`, `MOUSE_BUTTON_RELEASED` |
 | **Messages du serveur** | Les changements d'entités : `CREATE`, `MOVE`, `SET`, `TEXT`, `DESTROY`, et les sons : `PLAY`, `PAUSE`, `STOP` |
-| **Taille** | Tampon de réception de 1 024 octets : chaque datagramme reste sous les 1 200 octets recommandés |
+| **Taille** | Tampon de réception de 1 024 octets : un message, en-tête compris, doit tenir dans 1 024 octets, sous les 1 200 octets recommandés |
 | **Boucle de jeu** | Pas de thread réseau : un système de l'ECS (`ServerManager::systemServerReceived`, `ClientManager::systemClientReceived`) appelle `poll()` sur le contexte Asio à chaque frame |
 
 Ces choix suivent les recommandations des sources de cette étude : le serveur reçoit des entrées, jamais des positions, et il ne croit pas le client sur parole ([Gambetta, *Client-Server Game Architecture*](https://www.gabrielgambetta.com/client-server-game-architecture.html)) ; les datagrammes restent sous 1 200 octets, la limite prudente retenue par QUIC ([RFC 9000, section 14](https://www.rfc-editor.org/rfc/rfc9000.html#section-14)) et par Glenn Fiedler ([Gaffer On Games, *Packet Fragmentation and Reassembly*](https://gafferongames.com/post/packet_fragmentation_and_reassembly/)).
@@ -211,7 +211,6 @@ L'implémentation actuelle n'a pas encore de fiabilité : un message perdu n'est
 - IETF, RFC 9293, *Transmission Control Protocol (TCP)* : <https://www.rfc-editor.org/rfc/rfc9293.html>
 - IETF, RFC 896, *Congestion Control in IP/TCP Internetworks* (John Nagle) : <https://www.rfc-editor.org/rfc/rfc896.html>
 - IETF, RFC 8085, *UDP Usage Guidelines* : <https://www.rfc-editor.org/rfc/rfc8085.html>
-- IETF, RFC 8200 (IPv6), taille minimale des liens : <https://www.rfc-editor.org/rfc/rfc8200.html>
 - IETF, RFC 9000 (QUIC), section 14 *Datagram Size* : <https://www.rfc-editor.org/rfc/rfc9000.html#section-14>
 - Asio, *TCP, UDP and ICMP* : <https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/networking/protocols.html>
 - Asio, *Streams, Short Reads and Short Writes* : <https://think-async.com/Asio/asio-1.38.2/doc/asio/overview/core/streams.html>

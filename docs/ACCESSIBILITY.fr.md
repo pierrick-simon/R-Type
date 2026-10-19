@@ -190,7 +190,7 @@ Avec raylib, `fontSize` correspond à peu près à la hauteur du texte en pixels
 **Pourquoi c'est bien.**
 
 - **Un fond uni** au choix du joueur, pour un mode contraste élevé.
-- **Des FPS réglables** : sur une machine peu puissante, baisser les FPS garde le jeu fluide et régulier. Le jeu reste à la même vitesse, puisque les déplacements dépendent du temps écoulé (`Clock`) et pas du nombre d'images.
+- **Des FPS réglables** : sur une machine peu puissante, une limite plus basse donne un rythme d'images régulier. Les déplacements de `Velocity2D` tiennent compte du temps écoulé (`Clock`) : un objet garde la même vitesse quel que soit le nombre d'images par seconde.
 
 **Pour qui.** Les joueurs qui ont besoin d'un fond sans détails, et ceux qui jouent sur un ordinateur modeste.
 
@@ -206,7 +206,7 @@ Avec raylib, `fontSize` correspond à peu près à la hauteur du texte en pixels
 | Souris | Un second périphérique pour jouer | Une main, souris adaptées | Intermédiaire |
 | Taille, couleur, espacement et police du texte | Un texte lisible et réglable | Malvoyants, dyslexiques | Basique à avancé |
 | Teinte et échelle des images | Décor assombri, couleurs au choix, éléments agrandis | Malvoyants, daltoniens | Basique à intermédiaire |
-| Couleur de fond, FPS | Contraste élevé, jeu fluide sur petite machine | Contraste élevé, machines modestes | — |
+| Couleur de fond, FPS | Contraste élevé, rythme d'images régulier sur petite machine | Contraste élevé, machines modestes | — |
 
 ---
 

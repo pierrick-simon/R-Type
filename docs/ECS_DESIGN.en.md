@@ -163,7 +163,7 @@ private:
 };
 ```
 
-**Why `plf::colony` rather than `std::vector` for `dense`.** With a `std::vector`, a removal requires a *swap-and-pop* that moves the last element: any external reference to that component becomes invalid, and `sparse` must be resynchronized. `plf::colony` (the reference implementation of `std::hive`, standardized in C++26) guarantees that an element that is not removed never moves, regardless of insertions and removals elsewhere in the container. This is what allows `sparse` to store iterators directly, and game code to keep a reference to a component (see the user guide, section 3).
+**Why `plf::colony` rather than `std::vector` for `dense`.** With a `std::vector`, a removal requires a *swap-and-pop* that moves the last element: any external reference to that component becomes invalid, and `sparse` must be resynchronized. `plf::colony` (the container `std::hive` derives from, standardized in C++26) guarantees that an element that is not removed never moves, regardless of insertions and removals elsewhere in the container. This is what allows `sparse` to store iterators directly, and game code to keep a reference to a component (see the user guide, section 3).
 
 **How `sparse` represents a missing component.** A `sparse` slot holds either a valid iterator into `dense`, or a default-constructed iterator meaning "no component". `sparse` grows on demand, to about 1.5 times the requested index, to amortize resizes.
 

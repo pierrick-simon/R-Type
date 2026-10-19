@@ -43,8 +43,9 @@ server and client, and a proof-of-concept program (`Poc`) that tests the ECS.
 | **Input** | `KeyboardManager` (AZERTY and QWERTY), `MouseManager`, `Keybind` (key rebinding) | `engine-graphical` (raylib) |
 | **Networking** | UDP client and server with Asio, in-house connection and presence check (in progress) | `engine-network` |
 
-Every component comes with its own system function (`systemXxx`), to register
-with `GameManager::createSystem`. See the
+Components with a behavior come with their own system function (`systemXxx`),
+to register with `GameManager::createSystem`; pure data components
+(`Position2D`, `Origin2D`, `Size2D`, `Texture2D`, `Font`) have none. See the
 [game making guide](docs/GAME_GUIDE.en.md) for a complete example.
 
 ---
@@ -167,7 +168,8 @@ Every document exists in French and English.
 | **Accessibility** | What the engine offers for accessibility (rebinding, layouts, input, text, tint), why it helps and who for | [EN](docs/ACCESSIBILITY.en.md) · [FR](docs/ACCESSIBILITY.fr.md) |
 | **Comparative studies** | Why Windows and Linux, C++, CMake, an ECS, raylib, Asio, `plf::colony`, sparse sets, `FetchContent`, UDP, Criterion | [EN](docs/comparative-studies/en/README.md) · [FR](docs/comparative-studies/fr/README.md) |
 
-The engine's headers (`Engine/*/include`) are also documented with Doxygen.
+The engine's headers (`Engine/System/include`, `Engine/Graphical/include`) also
+carry Doxygen comments for every class and component.
 
 ---
 
@@ -180,7 +182,7 @@ The engine's headers (`Engine/*/include`) are also documented with Doxygen.
 ```
 
 The CI (GitHub Actions, Ubuntu 24.04) builds the client and the server, runs
-the Criterion tests and the linter on every pull request. The linter also
+the Criterion tests and the linter on every push and pull request. The linter also
 checks the code against C++26 (`-std=c++2c`).
 
 ---

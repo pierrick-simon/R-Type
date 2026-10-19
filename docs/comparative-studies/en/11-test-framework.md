@@ -2,7 +2,7 @@
 
 > 🌐 **Language:** [Français](../fr/11-framework-de-tests.md) · English
 
-> **Decision:** the unit tests of the client, the server and the engine use **Criterion**, to be enabled on Windows too.
+> **Decision:** the unit tests of the client and the server (and, eventually, of the engine) use **Criterion**, to be enabled on Windows too.
 > **Status:** adopted · **Date:** October 2026 · [Back to the index](README.md)
 
 ## In short
@@ -20,7 +20,7 @@ Current state of the repository:
 - **Continuous integration** installs Criterion with `apt-get install libcriterion-dev`.
 - **The Poc** (`Games/Poc`) has its own test runner, with more than 200 dependency-free tests. It is a validation program for the ECS: it is not affected by this choice.
 
-Tests will become essential with networking ([study 10](10-network-protocol.md)): reading and writing headers, connection, presence checks. This code must be tested **on Windows as well as on Linux**, because that is where compiler differences (type sizes, byte order) show up.
+Tests will become essential with networking ([study 10](10-network-protocol.md)): reading and writing headers, connection, presence checks. This code must be tested **on Windows as well as on Linux**, because that is where differences between systems and compilers (type sizes, socket behavior) show up.
 
 ---
 

@@ -54,7 +54,7 @@ Ce qu'il faut en retenir :
 
 ### Les pauses du ramasse-miettes
 
-C#, Java, Go et Python libèrent la mémoire avec un **ramasse-miettes** (*garbage collector*), qui s'exécute quand il le décide. La documentation de Unity, moteur écrit en C++ mais scripté en C#, l'explique : ces interruptions produisent des « *GC spikes* » qui « *interrompent la cadence régulière de 60 fps* ». Unity propose un mode incrémental qui ne rend pas le ramassage plus rapide, mais l'étale sur plusieurs frames ([Unity, *Incremental garbage collection*](https://docs.unity3d.com/Manual/performance-incremental-garbage-collection.html)). En C++, la mémoire est libérée à un moment connu (fin de portée, `destroyEntity`), sans pause cachée.
+C#, Java, Go et Python libèrent la mémoire avec un **ramasse-miettes** (*garbage collector*), qui s'exécute quand il le décide. La documentation de Unity, moteur dont les jeux sont scriptés en C#, l'explique : ces interruptions produisent des « *GC spikes* » qui « *interrompent la cadence régulière de 60 fps* ». Unity propose un mode incrémental qui ne rend pas le ramassage plus rapide, mais l'étale sur plusieurs frames ([Unity, *Incremental garbage collection*](https://docs.unity3d.com/Manual/performance-incremental-garbage-collection.html)). En C++, la mémoire est libérée à un moment connu (fin de portée, `destroyEntity`), sans pause cachée.
 
 ### Le prix du C++ : la sûreté mémoire
 
@@ -79,7 +79,7 @@ Selon l'enquête JetBrains 2025 sur 1 800 développeurs C++, les standards les p
 **Points forts**
 
 - **Rapide**, sans ramasse-miettes, avec un contrôle total de la disposition des données : indispensable pour un ECS dont tout l'intérêt est de ranger les composants de façon contiguë ([étude 04](04-architecture-ecs.md)).
-- **Templates :** l'ECS est typé à la compilation. `View<Position, Velocity>`, la vérification des doublons par `static_assert` ou la déduction des types dans `createSystem` n'ont aucun coût à l'exécution.
+- **Templates :** l'ECS est typé à la compilation. Une `View<Position, Velocity>` ne donne que des `Position` et des `Velocity`, et un type en double est refusé par un `static_assert` : ces vérifications ne coûtent rien à l'exécution.
 - **RAII :** une `Texture2D` ou une `Window` libère sa ressource raylib dans son destructeur, sans appel manuel à oublier.
 - **L'écosystème jeu le plus riche.**
 
@@ -158,7 +158,7 @@ Selon l'enquête JetBrains 2025 sur 1 800 développeurs C++, les standards les p
 - **Des handles plutôt que des pointeurs :** une `Entity` est un couple *(index, génération)*. Un handle périmé est détecté par `hasEntity` au lieu de désigner une autre entité ([notes de conception](../../ECS_DESIGN.fr.md#entity-et-entitymanager)).
 - **Des références stables :** les composants ne changent jamais d'adresse tant qu'ils existent ([étude 07](07-stockage-des-composants.md)).
 - **Les sanitizers :** le Poc est compilé par défaut avec AddressSanitizer et UndefinedBehaviorSanitizer (`POC_SANITIZE`), qui détectent à l'exécution les accès mémoire invalides et les comportements indéfinis.
-- **L'analyse statique :** `clang-tidy` (`script/lint.sh`) tourne dans l'intégration continue.
+- **L'analyse statique :** `clang-tidy` tourne dans l'intégration continue (action cpp-linter), et en local avec `script/lint.sh`.
 
 **Ce que l'on accepte :** des temps de compilation plus longs et des erreurs de templates parfois obscures. Pour les limiter, l'API publique (`GameManager`) reste simple et ses erreurs de type sont documentées.
 

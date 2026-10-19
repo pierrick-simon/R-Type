@@ -190,7 +190,7 @@ With raylib, `fontSize` roughly matches the text height in pixels.
 **Why it is good.**
 
 - **A plain background** of the player's choice, for a high contrast mode.
-- **Adjustable FPS**: on a low-end machine, lowering the FPS keeps the game smooth and steady. The game keeps the same speed, since movement depends on elapsed time (`Clock`), not on the number of frames.
+- **Adjustable FPS**: on a low-end machine, a lower cap gives a steady frame rate. `Velocity2D` movement takes elapsed time (`Clock`) into account: an object keeps the same speed whatever the number of frames per second.
 
 **Who it is for.** Players who need a background without details, and those who play on a modest computer.
 
@@ -206,7 +206,7 @@ With raylib, `fontSize` roughly matches the text height in pixels.
 | Mouse | A second device to play with | One hand, adapted mice | Intermediate |
 | Text size, color, spacing and font | Readable, adjustable text | Low vision, dyslexia | Basic to advanced |
 | Image tint and scale | Dimmed scenery, chosen colors, enlarged elements | Low vision, color blindness | Basic to intermediate |
-| Background color, FPS | High contrast, smooth game on a small machine | High contrast, modest machines | — |
+| Background color, FPS | High contrast, steady frame rate on a small machine | High contrast, modest machines | — |
 
 ---
 
