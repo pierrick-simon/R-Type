@@ -10,8 +10,8 @@
 
 #include <functional>
 #include <tuple>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 #include "ComponentArray.hpp"
 #include "ComponentManager.hpp"
