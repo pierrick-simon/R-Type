@@ -10,10 +10,12 @@ set(SRCS
         src/Main.cpp
         src/Runner.cpp
         src/EdgeCases.cpp
+        src/Duplicates.cpp
         src/Simulation.cpp
         src/Systems.cpp
         src/MultiSystems.cpp
         src/Views.cpp
+        src/ViewVectors.cpp
         src/FrameSystems.cpp
         src/GmSystems.cpp
         src/Recycling.cpp

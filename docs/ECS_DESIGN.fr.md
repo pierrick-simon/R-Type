@@ -231,6 +231,7 @@ public:
 
     explicit View(ComponentManager &cm);
     void each(std::function<void(Entity, Components &...)> f);
+    std::vector<std::tuple<Entity, Components &...>> getVector();
 
 private:
     std::tuple<ComponentArray<Components> *...> _view;   // nullptr si le type n'a jamais existé
@@ -264,6 +265,12 @@ private:
 **Pourquoi interdire un type en double, et à la compilation.** Avec `View<Position, Position>`, la fonction recevrait deux références vers **le même** composant : une source de bogues silencieux (deux écritures qui s'écrasent), sans aucun cas d'usage légitime. Un `static_assert` transforme ce bogue en erreur de compilation, avec un message lisible. `duplicateCheck<T, Components...>` compte les occurrences de `T` dans le pack (un fold sur `+` de `std::is_same_v`) ; le fold externe sur `&&` exige que chaque type apparaisse exactement une fois. Comparer chaque type au seul premier ne suffirait pas : `<Position, Velocity, Velocity>` passerait. `System` porte le même `static_assert`, pour que l'erreur désigne `createSystem` et non une vue interne.
 
 **Pourquoi une vue n'est pas un cache.** Elle ne stocke que des pointeurs vers les tableaux, jamais de liste d'entités : elle voit donc toujours l'état actuel, et la créer ne coûte que quelques recherches dans `ComponentManager`. Elle n'a pas à être invalidée ou mise à jour, mais elle est faite pour être utilisée immédiatement, puis jetée.
+
+**Pourquoi `getVector` existe, et pourquoi il réutilise `each`.** `each` ne permet ni `break`, ni `return` vers l'appelant, ni de parcourir deux fois la même liste (boucles imbriquées des collisions). Un range-for le permet, mais il exige un `begin()`/`end()` : écrire un vrai itérateur est difficile ici, car le tableau parcouru est choisi à l'exécution parmi des `Dense` de types différents (voir [Reste à faire](#reste-à-faire)). `getVector` contourne le problème : il appelle `each` avec une lambda qui ajoute chaque entité et ses composants au vector, et la jointure n'est donc écrite qu'une fois. Le range-for parcourt ensuite un simple `std::vector`.
+
+**Pourquoi des références dans le tuple.** `std::tuple<Entity, Components...>` copierait chaque composant : une écriture dans la boucle modifierait la copie, pas le composant, et un composant non copiable ne compilerait pas. Un tuple de références est légal dans un `std::vector` (il se construit et se déplace, ce qui suffit à `emplace_back`). Les éléments du vector étant des lvalues, `for (auto &[e, a, b] : ...)` compile, contrairement à un itérateur qui renverrait le tuple par valeur.
+
+**Ce que coûte `getVector`, et pourquoi c'est sûr.** Une allocation par appel, et une photo de l'état au moment de l'appel. Les références restent valides tant que leur composant n'est pas retiré, puisque `plf::colony` ne déplace jamais un élément : détruire une entité pendant le parcours (même hors `update()`, où c'est immédiat) n'invalide que les références de cette entité, jamais le vector lui-même. C'est pourquoi le guide le recommande pour détruire des entités hors `update()`, à la place de « collecter puis détruire ».
 
 **Pourquoi `each` prend un `std::function`.** C'est la forme la plus simple, et elle accepte les paramètres `const`. Le coût est un appel indirect par entité ; un paramètre template (`template<typename F> void each(F &&f)`) l'éviterait (voir [Reste à faire](#reste-à-faire)).
 
@@ -437,7 +444,7 @@ Permettre `createSystem<Lifetime>([](Entity e, Lifetime &l) {...})`, en plus des
 
 ### Améliorer la vue
 
-- **La syntaxe `for`** : `for (auto [e, pos, vel] : gm.view<Position, Velocity>())`, qui permet `break` et `continue`. Il faut écrire un itérateur qui encapsule « parcourir le plus petit tableau et sauter les entités incomplètes ».
+- **La syntaxe `for` sans allocation** : `getVector()` donne déjà la boucle `for`, au prix d'un vector alloué à chaque appel. Un vrai itérateur (`for (auto [e, pos, vel] : gm.view<Position, Velocity>())`) l'éviterait : il encapsulerait « parcourir le plus petit tableau et sauter les entités incomplètes ». La difficulté est que le tableau parcouru est choisi à l'exécution, parmi des `Dense` de types différents : l'itérateur devrait contenir un `std::variant` des itérateurs de colony, ou bien chaque tableau devrait exposer une liste d'entités de type commun (comme EnTT). `operator*` renverrait alors le tuple par valeur, ce qui impose `auto` ou `auto &&` dans la boucle, et non `auto &`.
 - **`each` en template** : `template<typename F> void each(F &&f)` éviterait l'appel indirect du `std::function` pour chaque entité.
 - **Les paires** : `eachPair`, qui donne chaque paire d'entités une seule fois (comme `iter_combinations` dans Bevy), pour les collisions entre entités d'un même groupe.
 

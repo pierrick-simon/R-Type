@@ -179,6 +179,8 @@ gm.view<Position, Velocity>().each(
 > [!NOTE]
 > L'ordre de parcours **ne correspond pas à l'ordre d'ajout** : les emplacements libérés sont réutilisés. Ne vous reposez jamais sur un ordre particulier.
 
+Dans un système, la vue se parcourt aussi avec une boucle `for`, grâce à `getVector()` : voir la [section 4](#parcourir-une-vue-dans-un-système--getvector).
+
 Pour compter les composants d'un type : `gm.getArray<T>().nbComponent()`. `getArray<T>()` donne aussi un accès bas niveau au stockage (`getDense()`, dont chaque élément expose `.component` et `.entity()`), mais lance `NoSuchComponent` si aucun `T` n'a jamais été ajouté : pour parcourir, préférez toujours une vue.
 
 ### Les références vers un composant
@@ -242,7 +244,7 @@ gm.createSystem<Homing, Position>(
     });
 ```
 
-Les deux formes, avec et sans `GameManager`, peuvent être mélangées librement. Ne capturez pas le `GameManager` dans la lambda d'un système (`[&gm]`) : le recevoir en paramètre permet d'écrire le système comme une **fonction ordinaire**, dans un fichier à part (voir ci-dessous). À l'intérieur d'un système, en revanche, la lambda passée à `each` peut capturer le `gm` reçu : elle ne vit que le temps du parcours.
+Les deux formes, avec et sans `GameManager`, peuvent être mélangées librement. Ne capturez pas le `GameManager` dans la lambda d'un système (`[&gm]`) : le recevoir en paramètre permet d'écrire le système comme une **fonction ordinaire**, dans un fichier à part (voir ci-dessous). À l'intérieur d'un système, en revanche, la lambda passée à `each` peut capturer le `gm` reçu : elle ne vit que le temps du parcours. Avec une boucle sur `getVector()`, il n'y a même pas de lambda : `gm` est directement utilisable.
 
 ### Un système par frame
 
@@ -250,13 +252,50 @@ Un système créé **sans aucun type de composant** est appelé **une seule fois
 
 ```cpp
 gm.createSystem([](RType::GameManager &gm) {   // équivalent : gm.createSystem<>(...)
-    gm.view<Enemy>().each([](RType::Entity, Enemy &) { /* ... */ });
+    for (auto &[e, enemy, pos] : gm.view<Enemy, Position>().getVector()) {
+        if (pos.x < 0.f)
+            gm.destroyEntity(e);               // différé : sans danger pendant la boucle
+    }
 });
 ```
+
+À l'intérieur, les entités se parcourent avec une **vue** (voir [ci-dessous](#parcourir-une-vue-dans-un-système--getvector)).
 
 C'est l'endroit naturel pour tout ce qui ne concerne pas une seule entité : les **collisions** entre deux groupes d'entités (voir la [recette](#des-collisions-entre-balles-et-ennemis)), l'apparition des vagues d'ennemis, le score, un chronomètre…
 
 Un système par frame se comporte comme les autres : il a un `SystemId`, s'exécute à son rang dans l'ordre de création, et ses modifications structurelles sont différées à la fin de la frame.
+
+### Parcourir une vue dans un système : `getVector()`
+
+Dans un système, le plus lisible est de parcourir une vue avec une boucle `for` classique. `getVector()` transforme la vue en un `std::vector` qui contient, pour chaque entité, un tuple avec **l'entité puis une référence vers chacun de ses composants** :
+
+```cpp
+inline void bounds(RType::GameManager &gm)
+{
+    for (auto &[e, pos, vel] : gm.view<Position, Velocity>().getVector()) {
+        pos.x += vel.vx;
+        if (pos.x > 1920.f)
+            gm.destroyEntity(e);   // différé : sans danger pendant la boucle
+    }
+}
+
+gm.createSystem(bounds);
+```
+
+- Le type exact est `std::vector<std::tuple<RType::Entity, Position &, Velocity &>>` : les composants sont des **références**, et une modification dans la boucle modifie bien le vrai composant.
+- La boucle permet `break`, `continue` et `return`, et la liste peut être parcourue plusieurs fois : c'est ce qui rend les **boucles imbriquées** (collisions) simples à écrire (voir la [recette](#des-collisions-entre-balles-et-ennemis)).
+- Le vector est une **photo** prise au moment de l'appel : une entité ou un composant ajouté ensuite n'y apparaît pas. Appelez `getVector()` juste avant la boucle, et ne le conservez pas d'une frame à l'autre.
+- Il **alloue** un vector à chaque appel. `each` (voir [les vues](#parcourir-des-entités--les-vues)) n'alloue rien, et reste disponible : `gm.view<A, B>().each([&gm](RType::Entity e, A &a, B &b) {...})`.
+
+**Lequel choisir ?**
+
+| Besoin | À utiliser |
+|---|---|
+| Un parcours dans un système, cas général | `getVector()` |
+| Sortir de la boucle (`break`, `return`) | `getVector()` |
+| Une boucle imbriquée (collisions) : construire la liste intérieure une seule fois | `getVector()` |
+| Détruire des entités pendant le parcours, hors `update()` | `getVector()` (voir le [piège n°3](#piège-n3--détruire-des-entités-pendant-un-parcours-hors-update)) |
+| Un parcours simple sur un très grand nombre d'entités, sans allocation | `each` |
 
 ### Accéder à l'entité depuis un système
 
@@ -268,15 +307,21 @@ struct Weapon {
 };
 
 gm.createSystem([](RType::GameManager &gm) {
-    gm.view<Weapon, Position>().each(
-        [&gm](RType::Entity ship, Weapon &w, const Position &from) {
-            RType::Entity bullet = gm.createEntity();
-            gm.addComponent<Position>(bullet, from.x, from.y);
-            gm.addComponent<Velocity>(bullet, 5.f, 0.f);
-            if (--w.ammo <= 0)
-                gm.removeComponent<Weapon>(ship);   // plus de munitions : on retire l'arme
-        });
+    for (auto &[ship, w, from] : gm.view<Weapon, Position>().getVector()) {
+        RType::Entity bullet = gm.createEntity();
+        gm.addComponent<Position>(bullet, from.x, from.y);
+        gm.addComponent<Velocity>(bullet, 5.f, 0.f);
+        if (--w.ammo <= 0)
+            gm.removeComponent<Weapon>(ship);   // plus de munitions : on retire l'arme
+    }
 });
+```
+
+`ship`, `w` et `from` sont l'entité et des **références** vers ses composants : `--w.ammo` modifie bien le vrai `Weapon`. La même chose avec `each` :
+
+```cpp
+gm.view<Weapon, Position>().each(
+    [&gm](RType::Entity ship, Weapon &w, const Position &from) { /* ... */ });
 ```
 
 Ne recopiez pas l'entité dans un champ du composant (`owner`, `self`) : il faudrait la renseigner à la main à chaque `addComponent`, et une erreur passerait inaperçue.
@@ -295,7 +340,9 @@ inline void move(Position &pos, const Velocity &vel)
 
 inline void collisions(RType::GameManager &gm)
 {
-    gm.view<Bullet, Position>().each(/* ... */);
+    for (auto &[bullet, b, pos] : gm.view<Bullet, Position>().getVector()) {
+        /* ... */
+    }
 }
 
 // Au démarrage
@@ -487,17 +534,15 @@ gm.view<Lifetime>().each([&gm](RType::Entity e, Lifetime &l) {
 });
 ```
 
-**À faire :** faites-le dans un système, où la destruction est automatiquement différée (voir la [recette](#une-durée-de-vie-limitée-balles-particules-explosions)). Si vous devez vraiment le faire hors `update()`, collectez d'abord, détruisez ensuite :
+**À faire :** faites-le dans un système, où la destruction est automatiquement différée (voir la [recette](#une-durée-de-vie-limitée-balles-particules-explosions)). Si vous devez vraiment le faire hors `update()`, parcourez `getVector()` : la liste est construite avant la première destruction, donc détruire une entité ne la perturbe pas.
 
 ```cpp
-std::vector<RType::Entity> expired;
-gm.view<Lifetime>().each([&expired](RType::Entity e, const Lifetime &l) {
+for (auto &[e, l] : gm.view<Lifetime>().getVector())
     if (l.ticks <= 0)
-        expired.push_back(e);
-});
-for (RType::Entity e : expired)
-    gm.destroyEntity(e);
+        gm.destroyEntity(e);               // OK : le vector n'est pas touché
 ```
+
+Une seule règle : hors `update()`, la destruction est immédiate, donc **ne touchez plus aux composants de `e` après l'avoir détruite** (ici `l`). Les références des autres entités du vector restent valides.
 
 ### Piège n°4 : conserver un pointeur ou une référence vers le composant d'une autre entité
 
@@ -654,27 +699,29 @@ gm.createSystem([](RType::GameManager &gm) {
 
 ### Des collisions entre balles et ennemis
 
-Un système par frame, avec une vue imbriquée dans une autre : chaque balle est testée contre chaque ennemi.
+Un système par frame, avec deux boucles imbriquées : chaque balle est testée contre chaque ennemi.
 
 ```cpp
 inline void collisions(RType::GameManager &gm)
 {
-    gm.view<Bullet, Position, Damage>().each(
-        [&gm](RType::Entity bullet, Bullet &, const Position &bp, const Damage &d) {
-            gm.view<Enemy, Position, Health>().each(
-                [&](RType::Entity, Enemy &, const Position &ep, Health &h) {
-                    if (!overlap(bp, ep))
-                        return;
-                    h.hp -= d.value;
-                    gm.destroyEntity(bullet);   // différé : la balle reste visible jusqu'à la fin de la frame
-                });
-        });
+    auto enemies = gm.view<Enemy, Position, Health>().getVector();   // construite une seule fois
+
+    for (auto &[bullet, b, bp, d] : gm.view<Bullet, Position, Damage>().getVector()) {
+        for (auto &[enemy, en, ep, h] : enemies) {
+            if (!overlap(bp, ep))
+                continue;
+            h.hp -= d.value;
+            gm.destroyEntity(bullet);   // différé : la balle reste visible jusqu'à la fin de la frame
+            break;                      // une balle ne touche qu'un ennemi
+        }
+    }
 }
 
 gm.createSystem(collisions);
 ```
 
-- Une balle qui touche deux ennemis dans la même frame les endommage tous les deux, puisque sa destruction est différée. Si ce n'est pas voulu, mémorisez dans la balle qu'elle a déjà touché.
+- La liste des ennemis est construite **une fois par frame**, et non une fois par balle comme le ferait une vue imbriquée.
+- Le `break` empêche une balle de toucher deux ennemis dans la même frame : sans lui, comme sa destruction est différée, elle endommagerait tous les ennemis qu'elle chevauche.
 - Le coût est proportionnel à *balles × ennemis*. Au-delà de quelques centaines d'entités, une grille spatiale construite une fois par frame, au début du système, devient nécessaire.
 
 ---
@@ -705,6 +752,7 @@ public:
     bool hasComponent(Entity entity) const;
     template<typename... Components>
     View<Components...> view();              // .each([](Entity, Components &...) {...})
+                                             // .getVector() : std::vector<std::tuple<Entity, Components &...>>
     template<typename Component>
     ComponentArray<Component> &getArray();   // .nbComponent()
 
@@ -731,6 +779,7 @@ public:
 | Retirer un composant | `gm.removeComponent<T>(e)` |
 | Vider une entité sans la détruire | `gm.removeComponents(e)` |
 | Parcourir des entités, avec leur entité | `gm.view<T, ...>().each(func)` |
+| Parcourir avec une boucle `for` (`break`, boucles imbriquées) | `for (auto &[e, t, ...] : gm.view<T, ...>().getVector())` |
 | Compter les composants d'un type | `gm.getArray<T>().nbComponent()` |
 | Ajouter un comportement par entité | `gm.createSystem<T, ...>(func)` (au démarrage) |
 | Ajouter un traitement global, une fois par frame | `gm.createSystem(func)` (au démarrage) |
