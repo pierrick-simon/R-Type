@@ -30,7 +30,7 @@ add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
 target_link_libraries(r-type_server PRIVATE engine-system engine-graphical engine-network)
 
-if (TARGET criterion AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_init.cpp")
+if (TARGET criterion)
     set(SRCS_TESTS tests/tests_init.cpp)
 
     add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
