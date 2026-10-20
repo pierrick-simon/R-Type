@@ -45,6 +45,14 @@ namespace RType {
         }
     }
 
+    void SpriteSheet2D::systemMasterAnimateSpriteSheet2D(
+        GameManager &gm, const MasterClock &clock)
+    {
+
+        for (auto [_, sprite] : gm.view<SpriteSheet2D>().getVector())
+            systemAnimateSpriteSheet2D(sprite, clock);
+    }
+
     std::optional<SetValue> SpriteSheet2D::getProperty(Property prop) const
     {
         switch (prop) {

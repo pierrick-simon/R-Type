@@ -10,6 +10,7 @@
 
 #include <optional>
 #include "Clock.hpp"
+#include "GameManager.hpp"
 #include "Origin2D.hpp"
 #include "Position2D.hpp"
 #include "Property.hpp"
@@ -211,6 +212,8 @@ namespace RType {
          */
         static void systemAnimateSpriteSheet2D(
             SpriteSheet2D &sprite, const Clock &clock);
+        static void systemMasterAnimateSpriteSheet2D(
+            GameManager &gm, const MasterClock &clock);
 
     private:
         Size2D _recNb = {1, 1};

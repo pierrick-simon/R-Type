@@ -8,6 +8,7 @@
 #ifndef GRAVITYFIELD2D_HPP_
 #define GRAVITYFIELD2D_HPP_
 
+    #include "Clock.hpp"
     #include "Velocity2D.hpp"
 
 namespace RType {
@@ -18,7 +19,8 @@ namespace RType {
      * The coordinate system follows raylib's: (0, 0) is the top-left corner,
      * x grows to the right and y grows downward.
      */
-    struct GravityField2D {
+    class GravityField2D {
+    public:
         float x = 0.f;
         float y = 1.f;
         float g = 9.80665f;
@@ -35,6 +37,12 @@ namespace RType {
          */
         static void systemGravityField2D(const GravityField2D &gravity,
             Velocity2D &velocity, const Clock &clock);
+        static void systemMasterGravityField2D(
+            GameManager &gm, const MasterClock &clock);
+
+    private:
+        static void gravityField2D(
+            const GravityField2D &gravity, Velocity2D &velocity, float elapsed);
     };
 
 } // namespace RType
