@@ -14,6 +14,7 @@
 #include "Network.hpp"
 #include "Position2D.hpp"
 #include "ServerManager.hpp"
+#include "Velocity2D.hpp"
 
 namespace RType {
 
@@ -26,6 +27,8 @@ namespace RType {
         uint32_t id;
         int32_t posX;
         int32_t posY;
+        int32_t vX;
+        int32_t vY;
     };
 
     class MoveProtocol {
@@ -36,9 +39,10 @@ namespace RType {
         static void manageMove(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        /** @brief Server helper: sendToClients the position of entity `id`. */
+        /** @brief Server helper: sendToClients the position and the velocity of
+         * entity `id`. */
         static void sendMove(const std::vector<uint32_t> &ids, ServerManager &s,
-            uint32_t id, Position2D &pos);
+            uint32_t id, const Position2D &pos, const Velocity2D &v = {});
 
         static std::vector<uint8_t> serializeMove(const MovePayload &e);
         static std::optional<MovePayload> parseMove(

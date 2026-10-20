@@ -7,6 +7,7 @@
 
 #include "CreateProtocol.hpp"
 #include "ServerManager.hpp"
+#include "Velocity2D.hpp"
 
 namespace RType {
 
@@ -38,6 +39,7 @@ namespace RType {
         auto s = ctx.gm->get().createEntity();
         gm.addComponent<RType::Sprite2D>(s);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        gm.addComponent<RType::Velocity2D>(s);
         gm.addComponent<RType::Texture2D>(s, asset->second);
         ctx.map.emplace(e.id, s);
     }
@@ -53,6 +55,7 @@ namespace RType {
         auto s = ctx.gm->get().createEntity();
         gm.addComponent<RType::SpriteSheet2D>(s);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        gm.addComponent<RType::Velocity2D>(s);
         gm.addComponent<RType::Texture2D>(s, asset->second);
         ctx.map.emplace(e.id, s);
     }
@@ -67,6 +70,7 @@ namespace RType {
         auto s = ctx.gm->get().createEntity();
         gm.addComponent<RType::Sound>(s, asset->second, false);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        gm.addComponent<RType::Velocity2D>(s);
         ctx.map.emplace(e.id, s);
     }
 
@@ -81,6 +85,7 @@ namespace RType {
         gm.addComponent<RType::Text2D>(s);
         gm.addComponent<RType::Font>(s, asset->second);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+        gm.addComponent<RType::Velocity2D>(s);
         ctx.map.emplace(e.id, s);
     }
 

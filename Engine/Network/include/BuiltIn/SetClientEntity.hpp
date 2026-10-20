@@ -57,7 +57,7 @@ namespace RType {
                     SetPayload p {update.getId(), prop, *value};
                     SetProtocol::sendSet(update.create, server, p);
                 }
-            } catch (NoSuchEntity &) {
+            } catch (NoSuchComponent &) {
             }
         }
 
@@ -83,7 +83,7 @@ namespace RType {
         static void systemUpdateEntity(
             ServerManager &server, C &comp, UpdateClientEntity &update)
         {
-            if (!update.active)
+            if (!update.active || !update.getUpdate())
                 return;
             for (Property prop : comp.getUpdate()) {
                 auto value = comp.getProperty(prop);

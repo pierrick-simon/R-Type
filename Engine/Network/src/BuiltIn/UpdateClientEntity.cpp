@@ -27,8 +27,8 @@ namespace RType {
     }
 
     UpdateClientEntity::UpdateClientEntity(
-        EntityType type, int asset, bool active) :
-        _type(type), asset(asset), active(active)
+        EntityType type, int asset, bool active, std::size_t rate) :
+        _type(type), asset(asset), active(active), rate(rate)
     {
         static uint32_t id = 0;
         _id = id;
@@ -38,12 +38,19 @@ namespace RType {
     void UpdateClientEntity::systemUpdateEntityPos(
         GameManager &gm, ServerManager &server)
     {
-        for (auto [_, pos, update] :
+        for (auto [entity, pos, update] :
             gm.view<Position2D, UpdateClientEntity>().getVector()) {
-            if (!pos.getUpdate() || !update.active)
+            if (!pos.getUpdate() || !update.active || !update._update)
                 continue;
             pos.setUpdate(false);
-            MoveProtocol::sendMove(update._links, server, update.getId(), pos);
+            if (!gm.hasComponent<Velocity2D>(entity))
+                MoveProtocol::sendMove(
+                    update._links, server, update.getId(), pos);
+            else {
+                auto &v = gm.getComponent<Velocity2D>(entity);
+                MoveProtocol::sendMove(
+                    update._links, server, update.getId(), pos, v);
+            }
         }
     }
 
@@ -53,19 +60,19 @@ namespace RType {
         for (auto [entity, update] :
             gm.view<UpdateClientEntity>().getVector()) {
             ProtocolEntity pe = {};
-            if (!update.active)
+            removeCommon(update.create, update._links);
+            if (!update.active || !update._update || update.create.empty())
                 continue;
             checkConnectedClient(server, update);
             try {
                 auto tmp = gm.getComponent<Position2D>(entity);
                 pe.posX = uint32_t(tmp.x());
                 pe.posY = uint32_t(tmp.y());
-            } catch (NoSuchEntity &e) {
+            } catch (NoSuchComponent &e) {
             }
             pe.assetId = update.asset;
             pe.id = update.getId();
             pe.type = update._type;
-            removeCommon(update.create, update._links);
             CreateProtocol::sendCreate(update.create, server, pe);
             setCreateEntity(gm, entity, server, update);
             update._links.insert(update._links.end(),
@@ -84,7 +91,7 @@ namespace RType {
             auto text = gm.getComponent<Text2D>(entity);
             TextProtocol::sendText(
                 update.create, server, update._id, text.str());
-        } catch (NoSuchEntity &e) {
+        } catch (NoSuchComponent &e) {
         }
     }
 
@@ -93,7 +100,7 @@ namespace RType {
     {
         for (auto [_, text, update] :
             gm.view<Text2D, UpdateClientEntity>().getVector()) {
-            if (!update.active || text.getUpdateText())
+            if (!update.active || !update._update || text.getUpdateText())
                 continue;
             TextProtocol::sendText(
                 update._links, server, update._id, text.str());
@@ -132,6 +139,17 @@ namespace RType {
                 update.getLinks(), server, update.getId());
             gm.destroyEntity(e);
         } catch (NoSuchEntity &e) {
+        }
+    }
+
+    void UpdateClientEntity::systemMasterUpdateClientEntitySleep(
+        GameManager &gm, MasterClock &clock)
+    {
+        for (auto [_, update] : gm.view<UpdateClientEntity>().getVector()) {
+            update._sleep += clock.getElapsed();
+            update._update = update._sleep.count() > MILLI_IN_SEC / update.rate;
+            if (update._update)
+                update._sleep = std::chrono::milliseconds(0);
         }
     }
 }; // namespace RType

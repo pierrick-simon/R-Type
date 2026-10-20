@@ -40,7 +40,8 @@ namespace RType {
         PLAY = 24,
         PAUSE = 25,
         STOP = 26,
-        DESTROY = 27
+        DESTROY = 27,
+        MOVE_VELOCITY = 28
     };
 
     struct Header {
