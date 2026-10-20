@@ -10,9 +10,9 @@
 namespace RType {
 
     UDPClient::UDPClient(const std::string &host, short port) :
-        socket_(context_, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0)),
-        loginTimer_(context_),
-        serverEndpoint_(asio::ip::make_address(host), port)
+        _socket(_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), 0)),
+        _loginTimer(_context),
+        _serverEndpoint(asio::ip::make_address(host), port)
     {
     }
 
@@ -24,28 +24,28 @@ namespace RType {
     void UDPClient::start()
     {
         receive();
-        asio::post(context_, [this]() { scheduleLogin(); });
+        asio::post(_context, [this]() { scheduleLogin(); });
     }
 
     void UDPClient::stop()
     {
-        context_.stop();
+        _context.stop();
     }
 
     void UDPClient::received()
     {
-        if (context_.stopped())
-            context_.restart();
-        context_.poll();
+        if (_context.stopped())
+            _context.restart();
+        _context.poll();
     }
 
     void UDPClient::scheduleLogin()
     {
-        if (myId_ != 0)
+        if (_myId != 0)
             return;
         sendNow(Opcode::LOGIN, {});
-        loginTimer_.expires_after(std::chrono::seconds(LOGIN_CHECK));
-        loginTimer_.async_wait([this](std::error_code ec) {
+        _loginTimer.expires_after(std::chrono::seconds(LOGIN_CHECK));
+        _loginTimer.async_wait([this](std::error_code ec) {
             if (!ec)
                 scheduleLogin();
         });
@@ -53,28 +53,28 @@ namespace RType {
 
     void UDPClient::send(Opcode op, const std::vector<uint8_t> &msg)
     {
-        asio::post(context_, [this, op, msg]() { sendNow(op, msg); });
+        asio::post(_context, [this, op, msg]() { sendNow(op, msg); });
     }
 
     void UDPClient::sendNow(Opcode op, const std::vector<uint8_t> &msg)
     {
-        sendBuffer_ = serializeHeader(Header {op, 0, seq_++, myId_}, msg);
-        socket_.async_send_to(asio::buffer(sendBuffer_),
-            serverEndpoint_,
+        _sendBuffer = serializeHeader(Header {op, 0, _seq++, _myId}, msg);
+        _socket.async_send_to(asio::buffer(_sendBuffer),
+            _serverEndpoint,
             [](std::error_code, std::size_t) {});
     }
 
     void UDPClient::receive()
     {
-        socket_.async_receive_from(asio::buffer(recvBuffer_),
-            senderEndpoint_,
+        _socket.async_receive_from(asio::buffer(_recvBuffer),
+            _senderEndpoint,
             [this](std::error_code ec, std::size_t bytesRecvd) {
                 if (!ec && bytesRecvd > 0) {
-                    if (auto h = parseHeader(recvBuffer_, bytesRecvd)) {
+                    if (auto h = parseHeader(_recvBuffer, bytesRecvd)) {
                         manageCommands(h.value(),
                             std::vector<uint8_t>(
-                                recvBuffer_.begin() + Header::SIZE,
-                                recvBuffer_.begin() + long(bytesRecvd)));
+                                _recvBuffer.begin() + Header::SIZE,
+                                _recvBuffer.begin() + long(bytesRecvd)));
                     }
                 }
                 receive();
@@ -83,15 +83,15 @@ namespace RType {
 
     void UDPClient::addManage(Opcode op, ManageFunc func)
     {
-        if (protocolClient_.count(op))
+        if (_protocolClient.count(op))
             throw EngineException("Opcode already use for a manage function");
-        protocolClient_.emplace(op, func);
+        _protocolClient.emplace(op, func);
     }
 
     void UDPClient::manageCommands(
         const Header &head, const std::vector<uint8_t> &payload)
     {
-        for (const auto &[opcode, func] : protocolClient_) {
+        for (const auto &[opcode, func] : _protocolClient) {
             if (head.type == opcode) {
                 func(head, payload);
                 return;
@@ -104,8 +104,8 @@ namespace RType {
     {
         if (payload.size() < 2)
             return;
-        myId_ = (payload[0] << 8) | payload[1];
-        std::cout << "My id = " << myId_ << std::endl;
+        _myId = (payload[0] << 8) | payload[1];
+        std::cout << "My id = " << _myId << std::endl;
     }
 
     void UDPClient::manageHealth(
@@ -117,12 +117,12 @@ namespace RType {
 
     uint16_t UDPClient::getMyId() const
     {
-        return myId_;
+        return _myId;
     }
 
     bool UDPClient::isConnected() const
     {
-        if (myId_ != 0)
+        if (_myId != 0)
             return true;
         return false;
     }

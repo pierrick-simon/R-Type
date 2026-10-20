@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolHelper
+** HelperProtocol
 */
 
-#ifndef PROTOCOL_HELPER_HPP_
-    #define PROTOCOL_HELPER_HPP_
+#ifndef HELPERPROTOCOL_HPP_
+    #define HELPERPROTOCOL_HPP_
 
 #include <optional>
 #include "GameManager.hpp"
@@ -36,4 +36,4 @@ namespace RType {
 
 } // namespace RType
 
-#endif /* !PROTOCOL_HELPER_HPP_ */
+#endif /* !HELPERPROTOCOL_HPP_ */

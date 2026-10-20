@@ -2,17 +2,17 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolSound
+** SoundProtocol
 */
 
-#include "ProtocolSound.hpp"
-#include "ProtocolHelper.hpp"
+#include "SoundProtocol.hpp"
+#include "HelperProtocol.hpp"
 #include "Sound.hpp"
 #include "SpriteSheet2D.hpp"
 
 namespace RType {
 
-    void ProtocolSound::managePlay(
+    void SoundProtocol::managePlay(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         auto e = parseSound(payload);
@@ -32,7 +32,7 @@ namespace RType {
         }
     }
 
-    void ProtocolSound::managePause(
+    void SoundProtocol::managePause(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         auto e = parseSound(payload);
@@ -53,7 +53,7 @@ namespace RType {
         }
     }
 
-    void ProtocolSound::manageStop(
+    void SoundProtocol::manageStop(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         auto e = parseSound(payload);
@@ -75,22 +75,22 @@ namespace RType {
         }
     }
 
-    void ProtocolSound::sendPlay(ServerManager &s, uint32_t id)
+    void SoundProtocol::sendPlay(ServerManager &s, uint32_t id)
     {
         s.broadcast(Opcode::PLAY, serializeSound({id}));
     }
 
-    void ProtocolSound::sendPause(ServerManager &s, uint32_t id)
+    void SoundProtocol::sendPause(ServerManager &s, uint32_t id)
     {
         s.broadcast(Opcode::PAUSE, serializeSound({id}));
     }
 
-    void ProtocolSound::sendStop(ServerManager &s, uint32_t id)
+    void SoundProtocol::sendStop(ServerManager &s, uint32_t id)
     {
         s.broadcast(Opcode::STOP, serializeSound({id}));
     }
 
-    std::vector<uint8_t> ProtocolSound::serializeSound(const SoundPayload &e)
+    std::vector<uint8_t> SoundProtocol::serializeSound(const SoundPayload &e)
     {
         std::vector<uint8_t> out(SoundPayload::SIZE);
 
@@ -98,7 +98,7 @@ namespace RType {
         return out;
     }
 
-    std::optional<SoundPayload> ProtocolSound::parseSound(
+    std::optional<SoundPayload> SoundProtocol::parseSound(
         const std::vector<uint8_t> &payload)
     {
         if (payload.size() != SoundPayload::SIZE)

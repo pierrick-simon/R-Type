@@ -2,15 +2,15 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolCreate
+** CreateProtocol
 */
 
-#include "ProtocolCreate.hpp"
+#include "CreateProtocol.hpp"
 #include "ServerManager.hpp"
 
 namespace RType {
 
-    void ProtocolCreate::manageCreate(
+    void CreateProtocol::manageCreate(
         const Header &header, const std::vector<uint8_t> &payload, Context &ctx)
     {
         if (!ctx.gm || payload.size() < ProtocolEntity::SIZE)
@@ -28,7 +28,7 @@ namespace RType {
             manageCreateText2D(e.value(), ctx);
     }
 
-    void ProtocolCreate::manageCreateSprite2D(ProtocolEntity &e, Context &ctx)
+    void CreateProtocol::manageCreateSprite2D(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
         auto asset = gm.getAssetsMap().find(e.assetId);
@@ -42,7 +42,7 @@ namespace RType {
         ctx.map.emplace(e.id, s);
     }
 
-    void ProtocolCreate::manageCreateSpriteSheet(
+    void CreateProtocol::manageCreateSpriteSheet(
         ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
@@ -57,7 +57,7 @@ namespace RType {
         ctx.map.emplace(e.id, s);
     }
 
-    void ProtocolCreate::manageCreateSound(ProtocolEntity &e, Context &ctx)
+    void CreateProtocol::manageCreateSound(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
         auto asset = gm.getAssetsMap().find(e.assetId);
@@ -70,7 +70,7 @@ namespace RType {
         ctx.map.emplace(e.id, s);
     }
 
-    void ProtocolCreate::manageCreateText2D(ProtocolEntity &e, Context &ctx)
+    void CreateProtocol::manageCreateText2D(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
         auto asset = gm.getAssetsMap().find(e.assetId);
@@ -84,7 +84,7 @@ namespace RType {
         ctx.map.emplace(e.id, s);
     }
 
-    std::vector<uint8_t> ProtocolCreate::serializeEntity(
+    std::vector<uint8_t> CreateProtocol::serializeEntity(
         const ProtocolEntity &e)
     {
         std::vector<uint8_t> out(ProtocolEntity::SIZE);
@@ -97,7 +97,7 @@ namespace RType {
         return out;
     }
 
-    std::optional<ProtocolEntity> ProtocolCreate::parseEntity(
+    std::optional<ProtocolEntity> CreateProtocol::parseEntity(
         const std::vector<uint8_t> &payload)
     {
         ProtocolEntity e = {};
@@ -112,7 +112,7 @@ namespace RType {
         return e;
     }
 
-    void ProtocolCreate::sendCreate(const std::vector<uint32_t> &ids,
+    void CreateProtocol::sendCreate(const std::vector<uint32_t> &ids,
         ServerManager &server, ProtocolEntity &pe)
     {
         server.sendToClients(ids, Opcode::CREATE, serializeEntity(pe));

@@ -7,11 +7,11 @@
 
 #include "UpdateClientEntity.hpp"
 #include <unordered_set>
-#include "ProtocolCreate.hpp"
-#include "ProtocolDestroy.hpp"
-#include "ProtocolMove.hpp"
-#include "ProtocolSet.hpp"
-#include "ProtocolText.hpp"
+#include "CreateProtocol.hpp"
+#include "DestroyProtocol.hpp"
+#include "MoveProtocol.hpp"
+#include "SetProtocol.hpp"
+#include "TextProtocol.hpp"
 #include "SetClientEntity.hpp"
 
 namespace RType {
@@ -43,7 +43,7 @@ namespace RType {
             if (!pos.getUpdate() || !update.active)
                 continue;
             pos.setUpdate(false);
-            ProtocolMove::sendMove(update._links, server, update.getId(), pos);
+            MoveProtocol::sendMove(update._links, server, update.getId(), pos);
         }
     }
 
@@ -66,7 +66,7 @@ namespace RType {
             pe.id = update.getId();
             pe.type = update._type;
             removeCommon(update.create, update._links);
-            ProtocolCreate::sendCreate(update.create, server, pe);
+            CreateProtocol::sendCreate(update.create, server, pe);
             setCreateEntity(gm, entity, server, update);
             update._links.insert(update._links.end(),
                 update.create.begin(),
@@ -82,7 +82,7 @@ namespace RType {
             gm, entity, server, update);
         try {
             auto text = gm.getComponent<Text2D>(entity);
-            ProtocolText::sendText(
+            TextProtocol::sendText(
                 update.create, server, update._id, text.str());
         } catch (NoSuchEntity &e) {
         }
@@ -95,7 +95,7 @@ namespace RType {
             gm.view<Text2D, UpdateClientEntity>().getVector()) {
             if (!update.active || text.getUpdateText())
                 continue;
-            ProtocolText::sendText(
+            TextProtocol::sendText(
                 update._links, server, update._id, text.str());
             text.setUpdateText(false);
         }
@@ -128,7 +128,7 @@ namespace RType {
     {
         try {
             auto &update = gm.getComponent<UpdateClientEntity>(e);
-            ProtocolDestroy::sendDestroy(
+            DestroyProtocol::sendDestroy(
                 update.getLinks(), server, update.getId());
             gm.destroyEntity(e);
         } catch (NoSuchEntity &e) {

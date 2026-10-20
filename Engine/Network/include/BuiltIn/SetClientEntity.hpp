@@ -13,7 +13,7 @@
 #include <vector>
 #include "GameManager.hpp"
 #include "Property.hpp"
-#include "ProtocolSet.hpp"
+#include "SetProtocol.hpp"
 #include "ServerManager.hpp"
 #include "UpdateClientEntity.hpp"
 
@@ -55,7 +55,7 @@ namespace RType {
                     if (!value)
                         return;
                     SetPayload p {update.getId(), prop, *value};
-                    ProtocolSet::sendSet(update.create, server, p);
+                    SetProtocol::sendSet(update.create, server, p);
                 }
             } catch (NoSuchEntity &) {
             }
@@ -90,7 +90,7 @@ namespace RType {
                 if (!value)
                     return;
                 SetPayload p {update.getId(), prop, *value};
-                ProtocolSet::sendSet(update.getLinks(), server, p);
+                SetProtocol::sendSet(update.getLinks(), server, p);
             }
             comp.clearUpdate();
         }

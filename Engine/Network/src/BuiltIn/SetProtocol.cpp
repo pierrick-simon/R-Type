@@ -2,14 +2,14 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolSet
+** SetProtocol
 */
 
-#include "ProtocolSet.hpp"
+#include "SetProtocol.hpp"
 #include <algorithm>
 #include <bit>
 #include <cmath>
-#include "ProtocolHelper.hpp"
+#include "HelperProtocol.hpp"
 #include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
@@ -142,7 +142,7 @@ namespace RType {
         }
     }
 
-    std::size_t ProtocolSet::valueSize(Property prop)
+    std::size_t SetProtocol::valueSize(Property prop)
     {
         switch (kindOf(prop)) {
             case Kind::F32:
@@ -156,7 +156,7 @@ namespace RType {
         }
     }
 
-    void ProtocolSet::manageSet(
+    void SetProtocol::manageSet(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         auto p = parseSet(payload);
@@ -170,13 +170,13 @@ namespace RType {
         apply(ctx.gm->get(), *entity, p->prop, p->value);
     }
 
-    void ProtocolSet::sendSet(
+    void SetProtocol::sendSet(
         const std::vector<uint32_t> &ids, ServerManager &s, const SetPayload &p)
     {
         s.sendToClients(ids, Opcode::SET, serializeSet(p));
     }
 
-    std::vector<uint8_t> ProtocolSet::serializeSet(const SetPayload &e)
+    std::vector<uint8_t> SetProtocol::serializeSet(const SetPayload &e)
     {
         std::vector<uint8_t> out(SetPayload::HEADER_SIZE + valueSize(e.prop));
         uint8_t *v = out.data() + SetPayload::HEADER_SIZE;
@@ -214,7 +214,7 @@ namespace RType {
         return out;
     }
 
-    std::optional<SetPayload> ProtocolSet::parseSet(
+    std::optional<SetPayload> SetProtocol::parseSet(
         const std::vector<uint8_t> &payload)
     {
         if (payload.size() <= SetPayload::HEADER_SIZE ||

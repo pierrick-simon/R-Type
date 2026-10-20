@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolSound
+** SoundProtocol
 */
 
-#ifndef PROTOCOL_SOUND_HPP_
-    #define PROTOCOL_SOUND_HPP_
+#ifndef SOUNDPROTOCOL_HPP_
+    #define SOUNDPROTOCOL_HPP_
 
 #include <optional>
 #include <vector>
@@ -26,9 +26,9 @@ namespace RType {
         uint32_t id;
     };
 
-    class ProtocolSound {
+    class SoundProtocol {
     public:
-        ProtocolSound() = default;
+        SoundProtocol() = default;
 
         /** @brief Sound: play (resume if paused). SpriteSheet: start the
          * animation. */

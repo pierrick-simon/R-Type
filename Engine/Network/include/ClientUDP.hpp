@@ -42,23 +42,23 @@ namespace RType {
         void scheduleLogin();
         void sendNow(Opcode op, const std::vector<uint8_t> &msg);
 
-        asio::io_context context_;
-        asio::ip::udp::socket socket_;
-        asio::ip::udp::endpoint serverEndpoint_;
-        asio::ip::udp::endpoint senderEndpoint_;
-        std::vector<uint8_t> recvBuffer_ = std::vector<uint8_t>(1024);
-        std::vector<uint8_t> sendBuffer_;
-        asio::steady_timer loginTimer_;
+        asio::io_context _context;
+        asio::ip::udp::socket _socket;
+        asio::ip::udp::endpoint _serverEndpoint;
+        asio::ip::udp::endpoint _senderEndpoint;
+        std::vector<uint8_t> _recvBuffer = std::vector<uint8_t>(1024);
+        std::vector<uint8_t> _sendBuffer;
+        asio::steady_timer _loginTimer;
 
-        uint32_t seq_ = 0;
-        std::atomic<uint16_t> myId_ {0};
+        uint32_t _seq = 0;
+        std::atomic<uint16_t> _myId {0};
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
 
-        std::map<uint8_t, ManageFunc> protocolClient_ = {
+        std::map<uint8_t, ManageFunc> _protocolClient = {
             {Opcode::LOGIN,
                 [this](const Header &h, const std::vector<uint8_t> &p) {
                     manageLogin(h, p);

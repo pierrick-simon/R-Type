@@ -2,14 +2,14 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolDestroy
+** DestroyProtocol
 */
 
-#include "ProtocolDestroy.hpp"
+#include "DestroyProtocol.hpp"
 
 namespace RType {
 
-    void ProtocolDestroy::manageDestroy(
+    void DestroyProtocol::manageDestroy(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         if (!ctx.gm)
@@ -28,13 +28,13 @@ namespace RType {
             gm.destroyEntity(entity);
     }
 
-    void ProtocolDestroy::sendDestroy(
+    void DestroyProtocol::sendDestroy(
         const std::vector<uint32_t> &ids, ServerManager &s, uint32_t id)
     {
         s.sendToClients(ids, Opcode::DESTROY, serializeDestroy({id}));
     }
 
-    std::vector<uint8_t> ProtocolDestroy::serializeDestroy(
+    std::vector<uint8_t> DestroyProtocol::serializeDestroy(
         const DestroyPayload &e)
     {
         std::vector<uint8_t> out(DestroyPayload::SIZE);
@@ -43,7 +43,7 @@ namespace RType {
         return out;
     }
 
-    std::optional<DestroyPayload> ProtocolDestroy::parseDestroy(
+    std::optional<DestroyPayload> DestroyProtocol::parseDestroy(
         const std::vector<uint8_t> &payload)
     {
         if (payload.size() != DestroyPayload::SIZE)

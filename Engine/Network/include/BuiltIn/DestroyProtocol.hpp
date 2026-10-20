@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolDestroy
+** DestroyProtocol
 */
 
-#ifndef PROTOCOL_DESTROY_HPP_
-    #define PROTOCOL_DESTROY_HPP_
+#ifndef DESTROYPROTOCOL_HPP_
+    #define DESTROYPROTOCOL_HPP_
 
 #include <optional>
 #include <vector>
@@ -26,9 +26,9 @@ namespace RType {
         uint32_t id;
     };
 
-    class ProtocolDestroy {
+    class DestroyProtocol {
     public:
-        ProtocolDestroy() = default;
+        DestroyProtocol() = default;
 
         /** @brief Client handler: destroys the entity bound to the network id.
          */
@@ -47,4 +47,4 @@ namespace RType {
 
 } // namespace RType
 
-#endif /* !PROTOCOL_DESTROY_HPP_ */
+#endif /* !DESTROYPROTOCOL_HPP_ */

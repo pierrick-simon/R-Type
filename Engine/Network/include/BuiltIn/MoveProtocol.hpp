@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolMove
+** MoveProtocol
 */
 
-#ifndef PROTOCOL_MOVE_HPP_
-    #define PROTOCOL_MOVE_HPP_
+#ifndef MOVEPROTOCOL_HPP_
+    #define MOVEPROTOCOL_HPP_
 
 #include <optional>
 #include <vector>
@@ -28,9 +28,9 @@ namespace RType {
         int32_t posY;
     };
 
-    class ProtocolMove {
+    class MoveProtocol {
     public:
-        ProtocolMove() = default;
+        MoveProtocol() = default;
 
         /** @brief Client handler: moves the entity bound to the network id. */
         static void manageMove(const Header &header,

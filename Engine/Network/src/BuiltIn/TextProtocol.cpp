@@ -2,16 +2,16 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolText
+** TextProtocol
 */
 
-#include "ProtocolText.hpp"
-#include "ProtocolHelper.hpp"
+#include "TextProtocol.hpp"
+#include "HelperProtocol.hpp"
 #include "Text2D.hpp"
 
 namespace RType {
 
-    void ProtocolText::manageText(
+    void TextProtocol::manageText(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         auto e = parseText(payload);
@@ -26,13 +26,13 @@ namespace RType {
         gm.getComponent<Text2D>(*entity).str() = std::move(e->text);
     }
 
-    void ProtocolText::sendText(const std::vector<uint32_t> &ids,
+    void TextProtocol::sendText(const std::vector<uint32_t> &ids,
         ServerManager &s, uint32_t id, const std::string &text)
     {
         s.sendToClients(ids, Opcode::TEXT, serializeText({id, text}));
     }
 
-    std::vector<uint8_t> ProtocolText::serializeText(const TextPayload &e)
+    std::vector<uint8_t> TextProtocol::serializeText(const TextPayload &e)
     {
         const auto len = static_cast<uint16_t>(
             std::min<std::size_t>(e.text.size(), UINT16_MAX));
@@ -44,7 +44,7 @@ namespace RType {
         return out;
     }
 
-    std::optional<TextPayload> ProtocolText::parseText(
+    std::optional<TextPayload> TextProtocol::parseText(
         const std::vector<uint8_t> &payload)
     {
         if (payload.size() < TextPayload::MIN_SIZE)

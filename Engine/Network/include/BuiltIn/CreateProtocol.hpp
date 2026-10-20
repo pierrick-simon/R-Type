@@ -35,9 +35,9 @@ namespace RType {
         TEXT_ENTITY = 3
     };
 
-    class ProtocolCreate {
+    class CreateProtocol {
     public:
-        ProtocolCreate() = default;
+        CreateProtocol() = default;
         static void manageCreate(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 

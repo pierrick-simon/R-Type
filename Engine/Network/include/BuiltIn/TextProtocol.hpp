@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolText
+** TextProtocol
 */
 
-#ifndef PROTOCOL_TEXT_HPP_
-    #define PROTOCOL_TEXT_HPP_
+#ifndef TEXTPROTOCOL_HPP_
+    #define TEXTPROTOCOL_HPP_
 
 #include <optional>
 #include <string>
@@ -28,9 +28,9 @@ namespace RType {
         std::string text;
     };
 
-    class ProtocolText {
+    class TextProtocol {
     public:
-        ProtocolText() = default;
+        TextProtocol() = default;
 
         /** @brief Client handler: sets the Text2D string of the entity. */
         static void manageText(const Header &header,
@@ -47,4 +47,4 @@ namespace RType {
 
 } // namespace RType
 
-#endif /* !PROTOCOL_TEXT_HPP_ */
+#endif /* !TEXTPROTOCOL_HPP_ */

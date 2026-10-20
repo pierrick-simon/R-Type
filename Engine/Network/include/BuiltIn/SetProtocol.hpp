@@ -2,11 +2,11 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolSet
+** SetProtocol
 */
 
-#ifndef PROTOCOL_SET_HPP_
-    #define PROTOCOL_SET_HPP_
+#ifndef SETPROTOCOL_HPP_
+    #define SETPROTOCOL_HPP_
 
 #include <cstdint>
 #include <optional>
@@ -32,9 +32,9 @@ namespace RType {
         SetValue value;
     };
 
-    class ProtocolSet {
+    class SetProtocol {
     public:
-        ProtocolSet() = default;
+        SetProtocol() = default;
 
         /** @brief Client handler: applies the property to the entity. */
         static void manageSet(const Header &header,
@@ -54,4 +54,4 @@ namespace RType {
 
 } // namespace RType
 
-#endif /* !PROTOCOL_SET_HPP_ */
+#endif /* !SETPROTOCOL_HPP_ */

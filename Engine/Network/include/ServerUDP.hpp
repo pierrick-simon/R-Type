@@ -58,16 +58,16 @@ namespace RType {
         void checkClients();
         void broadcastNow(Opcode op, const std::vector<uint8_t> &payload);
 
-        asio::io_context context_;
-        asio::ip::udp::socket socket_;
-        asio::steady_timer healthTimer_;
+        asio::io_context _context;
+        asio::ip::udp::socket _socket;
+        asio::steady_timer _healthTimer;
 
-        asio::ip::udp::endpoint remoteEndpoint_;
-        std::vector<uint8_t> recvBuffer_ = std::vector<uint8_t>(1024);
-        std::vector<uint8_t> sendBuffer_;
-        std::map<uint16_t, Client> clients_;
-        uint16_t nextId_ = 0;
-        uint16_t serverId_ = 0;
+        asio::ip::udp::endpoint _remoteEndpoint;
+        std::vector<uint8_t> _recvBuffer = std::vector<uint8_t>(1024);
+        std::vector<uint8_t> _sendBuffer;
+        std::map<uint16_t, Client> _clients;
+        uint16_t _nextId = 0;
+        uint16_t _serverId = 0;
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
@@ -76,7 +76,7 @@ namespace RType {
 
         std::map<uint8_t,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>
-            protocol_ = {
+            _protocol = {
                 {Opcode::LOGIN,
                     [this](const Header &h, const std::vector<uint8_t> &p) {
                         manageLogin(h, p);

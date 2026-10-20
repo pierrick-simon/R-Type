@@ -2,16 +2,16 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ProtocolMove
+** MoveProtocol
 */
 
-#include "ProtocolMove.hpp"
+#include "MoveProtocol.hpp"
 #include <cmath>
 #include "Position2D.hpp"
 
 namespace RType {
 
-    void ProtocolMove::manageMove(
+    void MoveProtocol::manageMove(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
         if (!ctx.gm)
@@ -34,7 +34,7 @@ namespace RType {
         pos.y() = static_cast<float>(e->posY);
     }
 
-    void ProtocolMove::sendMove(const std::vector<uint32_t> &ids,
+    void MoveProtocol::sendMove(const std::vector<uint32_t> &ids,
         ServerManager &s, uint32_t id, Position2D &pos)
     {
         MovePayload p {id,
@@ -43,7 +43,7 @@ namespace RType {
         s.sendToClients(ids, Opcode::MOVE, serializeMove(p));
     }
 
-    std::vector<uint8_t> ProtocolMove::serializeMove(const MovePayload &e)
+    std::vector<uint8_t> MoveProtocol::serializeMove(const MovePayload &e)
     {
         std::vector<uint8_t> out(MovePayload::SIZE);
 
@@ -53,7 +53,7 @@ namespace RType {
         return out;
     }
 
-    std::optional<MovePayload> ProtocolMove::parseMove(
+    std::optional<MovePayload> MoveProtocol::parseMove(
         const std::vector<uint8_t> &payload)
     {
         if (payload.size() != MovePayload::SIZE)
