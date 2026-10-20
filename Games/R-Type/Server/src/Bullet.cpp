@@ -6,6 +6,7 @@
 */
 
 #include "Bullet.hpp"
+#include "Assets.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyComponents.hpp"
@@ -27,7 +28,8 @@ namespace RType::Server {
         gm.addComponent<Hitbox>(bullet, Hitbox {BULLET_WIDTH, BULLET_HEIGHT});
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
-        gm.addComponent<Texture2D>(bullet, loadPixelTexture(BULLET_PATH));
+        gm.addComponent<Texture2D>(
+            bullet, loadPixelTexture(gm, Asset::PLAYER_BULLET));
         gm.addComponent<Clock>(bullet);
         gm.addComponent<SpriteSheet2D>(bullet,
             Size2D(1, BULLET_FRAMES),

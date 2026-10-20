@@ -109,7 +109,6 @@ namespace RType {
                 b.y < a.y + a.h;
         }
 
-        /** Bullets disappear on every side, enemies only once they are gone. */
         bool leftScreen(const Rect &r, bool everySide)
         {
             if (r.x + r.w < -OFFSCREEN_MARGIN)
@@ -121,7 +120,6 @@ namespace RType {
                 r.y > SCREEN_HEIGHT + OFFSCREEN_MARGIN;
         }
 
-        /** Centre of the first living EnemyTarget. False when there is none. */
         bool findTarget(GameManager &gm, float &x, float &y)
         {
             bool found = false;
@@ -148,7 +146,7 @@ namespace RType {
                 hooks.onEnemyDeath(gm,
                     pos.x + box.offsetX + box.width / 2.f,
                     pos.y + box.offsetY + box.height / 2.f);
-            gm.destroyEntity(enemy); // idempotent, applied at end of frame
+            gm.destroyEntity(enemy);
         }
 
     } // namespace
@@ -162,7 +160,6 @@ namespace RType {
         weapon.timer += elapsedSeconds(clock);
         if (weapon.timer < weapon.cooldown)
             return;
-        // The shot leaves from the middle of the left edge of the hitbox.
         const float muzzleX = pos.x + hitbox.offsetX;
         const float muzzleY = pos.y + hitbox.offsetY + hitbox.height / 2.f;
         if (muzzleX > SCREEN_WIDTH)
@@ -174,7 +171,7 @@ namespace RType {
         float targetY = 0.f;
         if (findTarget(gm, targetX, targetY)) {
             if (targetX >= muzzleX)
-                return; // the player is behind us: keep the shot for later
+                return;
             const float dx = targetX - muzzleX;
             const float dy = targetY - muzzleY;
             const float length = std::sqrt(dx * dx + dy * dy);
@@ -238,7 +235,6 @@ namespace RType {
     void systemEnemyCombat(
         GameManager &gm, EnemyDirector &director, const EnemyHooks &hooks)
     {
-        // 1. Bullets.
         gm.view<Projectile, Position2D, Hitbox>().each(
             [&](Entity bullet, Projectile &shot, Position2D &bp, Hitbox &bb) {
                 const Rect bulletRect = rectOf(bp, bb);
@@ -279,7 +275,6 @@ namespace RType {
                     gm.destroyEntity(bullet);
             });
 
-        // 2. Ramming: the enemy explodes (no score) and kills the target.
         gm.view<Enemy, Health, Position2D, Hitbox>().each([&](Entity enemy,
                                                               Enemy &info,
                                                               Health &health,

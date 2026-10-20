@@ -8,11 +8,14 @@
 #ifndef TEXTURE_HPP_
 #define TEXTURE_HPP_
 
+#include "Assets.hpp"
+#include "GameManager.hpp"
 #include "Texture2D.hpp"
 
 namespace RType::Server {
 
-    Texture2D loadPixelTexture(const char *path);
-}
+    Texture2D loadPixelTexture(GameManager &gm, AssetId id);
+    void unloadTextures(GameManager &gm);
+} // namespace RType::Server
 
 #endif

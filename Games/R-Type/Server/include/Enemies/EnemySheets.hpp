@@ -8,18 +8,12 @@
 #ifndef ENEMYSHEET_HPP_
 #define ENEMYSHEET_HPP_
 
+#include "Assets.hpp"
+
 namespace RType {
 
-    /**
-     * @brief Description of a REGULAR strip (all cells have the same size).
-     *
-     * The strips are produced from the original irregular sheets with
-     * tools/repack_sheet.py, which prints frames / cellW / cellH.
-     * hitboxW / hitboxH are in sprite pixels (before SPRITE_SCALE) and the
-     * hitbox is centered in the cell.
-     */
     struct SheetInfo {
-        const char *file;
+        AssetId asset;
         int frames;
         int cellW;
         int cellH;
@@ -28,16 +22,16 @@ namespace RType {
         int hitboxH;
     };
 
-    // Same relative root as the player texture in Main.cpp.
     inline constexpr SheetInfo SCOUT_SHEET = {
-        "R-Type/sprites/Enemies/scout.gif", 8, 21, 24, 70, 21, 14};
+        Asset::ENEMY_SCOUT, 8, 21, 24, 70, 21, 14};
     inline constexpr SheetInfo GUNNER_SHEET = {
-        "R-Type/sprites/Enemies/RobotEnemy.gif", 3, 33, 34, 150, 33, 25};
-    inline constexpr SheetInfo ENEMY_BULLET_SHEET = {
-        "R-Type/sprites/Enemies/EnemyBullet.gif", 4, 19, 8, 50, 19, 8};
+        Asset::ENEMY_ROBOT, 3, 33, 34, 150, 33, 25};
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
-        "R-Type/sprites/Enemies/ExplosionDead.gif", 6, 32, 31, 60, 0, 0};
+        Asset::ENEMY_EXPLOSION, 6, 32, 31, 60, 0, 0};
+
+    inline constexpr SheetInfo ENEMY_BULLET_SHEET = {
+        Asset::ENEMY_BULLET, 4, 19, 8, 50, 6, 6};
 } // namespace RType
 
-#endif /* !ENEMYSHEET_HPP_ */
+#endif

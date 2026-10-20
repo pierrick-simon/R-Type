@@ -9,73 +9,94 @@
 
 #include <algorithm>
 
+#include "Assets.hpp"
+#include "Background.hpp"
 #include "Bullet.hpp"
 #include "Config.hpp"
+#include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
 #include "Texture.hpp"
 
 namespace RType::Server {
 
-    namespace {
 
-        float elapsedSeconds(const Clock &clock)
-        {
-            return static_cast<float>(clock.getElapsed().count()) /
-                static_cast<float>(MILLI_IN_SEC);
-        }
+    float elapsedSeconds(const Clock &clock)
+    {
+        return static_cast<float>(clock.getElapsed().count()) /
+            static_cast<float>(MILLI_IN_SEC);
+    }
 
-        void setHeld(Player &player, const Key::Value key, const bool held)
-        {
-            if (key == Key::Value::Q)
-                player.left = held;
-            if (key == Key::Value::D)
-                player.right = held;
-            if (key == Key::Value::Z)
-                player.up = held;
-            if (key == Key::Value::S)
-                player.down = held;
-        }
+    void setHeld(Player &player, const Key::Value key, const bool held)
+    {
+        if (key == Key::Value::Q)
+            player.left = held;
+        if (key == Key::Value::D)
+            player.right = held;
+        if (key == Key::Value::Z)
+            player.up = held;
+        if (key == Key::Value::S)
+            player.down = held;
+    }
 
-        void applyMovement(
-            const Player &player, Velocity2D &velocity, const float speed)
-        {
-            if (player.left)
-                velocity.x -= speed;
-            if (player.right)
-                velocity.x += speed;
-            if (player.up)
-                velocity.y -= speed;
-            if (player.down)
-                velocity.y += speed;
-        }
+    void applyMovement(
+        const Player &player, Velocity2D &velocity, const float speed)
+    {
+        if (player.left)
+            velocity.x -= speed;
+        if (player.right)
+            velocity.x += speed;
+        if (player.up)
+            velocity.y -= speed;
+        if (player.down)
+            velocity.y += speed;
+    }
 
-        void spawnPlayerExplosion(GameManager &gm, const Position2D &position)
-        {
-            const Entity explosion = gm.createEntity();
+    void spawnPlayerExplosion(GameManager &gm, const Position2D &position)
+    {
+        const Entity explosion = gm.createEntity();
 
-            gm.addComponent<Position2D>(explosion,
-                Position2D {position.x +
-                        (PLAYER_WIDTH - PLAYER_EXPLOSION_WIDTH * SCALE) / 2.f,
-                    position.y +
-                        (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * SCALE) /
-                            2.f});
-            gm.addComponent<Texture2D>(
-                explosion, loadPixelTexture(PLAYER_EXPLOSION_PATH));
-            gm.addComponent<SpriteSheet2D>(explosion,
-                Size2D {1, PLAYER_EXPLOSION_FRAMES},
-                0,
-                PLAYER_EXPLOSION_FRAME_MS,
-                std::chrono::milliseconds(PLAYER_EXPLOSION_FRAME_MS),
-                std::chrono::milliseconds(0),
-                Origin2D {},
-                true,
-                SCALE);
-            gm.addComponent<Clock>(explosion);
-            gm.addComponent<PlayerExplosion>(
-                explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
-        }
+        gm.addComponent<Position2D>(explosion,
+            Position2D {position.x +
+                    (PLAYER_WIDTH - PLAYER_EXPLOSION_WIDTH * SCALE) / 2.f,
+                position.y +
+                    (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * SCALE) /
+                        2.f});
+        gm.addComponent<Texture2D>(
+            explosion, loadPixelTexture(gm, Asset::PLAYER_EXPLOSION));
+        gm.addComponent<SpriteSheet2D>(explosion,
+            Size2D {1, PLAYER_EXPLOSION_FRAMES},
+            0,
+            PLAYER_EXPLOSION_FRAME_MS,
+            std::chrono::milliseconds(PLAYER_EXPLOSION_FRAME_MS),
+            std::chrono::milliseconds(0),
+            Origin2D {},
+            true,
+            SCALE);
+        gm.addComponent<Clock>(explosion);
+        gm.addComponent<PlayerExplosion>(
+            explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
+    }
 
-    } // namespace
+    void respawnPlayer(GameManager &gm, Entity player)
+    {
+        auto &state = gm.getComponent<Player>(player);
+        auto &health = gm.getComponent<Health>(player);
+        auto &position = gm.getComponent<Position2D>(player);
+        auto &sheet = gm.getComponent<SpriteSheet2D>(player);
+        const auto &keyboard = gm.getComponent<Keyboard>(player);
+
+        state = Player {};
+        for (const auto key : keyboard.manager.keyDown)
+            setHeld(state, key, true);
+        health.hp = health.maxHp;
+        position = Position2D {PLAYER_START_X, WINDOW_HEIGHT / 2.f};
+        gm.getComponent<Velocity2D>(player) = {};
+        sheet.color.a = 255;
+        sheet.currentTile = FRAME_NEUTRAL;
+        resetEnemies(gm);
+        resetBackground(gm);
+    }
+
 
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
         const Position2D &pos, const Keyboard &keyboard, const Clock &clock,
@@ -149,7 +170,7 @@ namespace RType::Server {
                 }
                 state.deathTimer -= elapsedSeconds(clock);
                 if (state.deathTimer <= 0.f)
-                    gm.destroyEntity(player);
+                    respawnPlayer(gm, player);
             });
         gm.view<PlayerExplosion, Clock>().each(
             [&gm](Entity explosion, PlayerExplosion &state, Clock &clock) {
@@ -167,12 +188,13 @@ namespace RType::Server {
         gm.addComponent<EnemyTarget>(ship);
         gm.addComponent<Health>(ship, Health {PLAYER_HP, PLAYER_HP});
         gm.addComponent<Hitbox>(ship, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
-        gm.addComponent<Position2D>(ship, 100.f, WINDOW_HEIGHT / 2.f);
+        gm.addComponent<Position2D>(ship, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
         gm.addComponent<Velocity2D>(ship);
         gm.addComponent<Friction2D>(ship, PLAYER_FRICTION);
         gm.addComponent<Keyboard>(
             ship, gm.getComponent<KeyboardManager>(keyboardManager));
-        gm.addComponent<Texture2D>(ship, loadPixelTexture(PLAYER_PATH));
+        gm.addComponent<Texture2D>(
+            ship, loadPixelTexture(gm, Asset::PLAYER_SHEET_1));
         gm.addComponent<Clock>(ship);
         gm.addComponent<SpriteSheet2D>(ship,
             Size2D {1, PLAYER_FRAMES},

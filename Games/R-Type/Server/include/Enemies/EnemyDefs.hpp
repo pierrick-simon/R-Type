@@ -20,13 +20,6 @@ namespace RType {
     constexpr float SCREEN_HEIGHT = 1080.f;
     constexpr float SPAWN_MARGIN = 80.f;
 
-    /**
-     * @brief Static description of an enemy kind: adding an enemy is one more
-     * line in ENEMY_DEFS (plus one EnemyType value).
-     *
-     * speed is positive (pixels per second, the enemy always goes left).
-     * fireCooldown <= 0 means the enemy does not shoot.
-     */
     struct EnemyDef {
         const char *name;
         const SheetInfo *sheet;
@@ -64,9 +57,6 @@ namespace RType {
                 .bulletDamage = 1},
         }};
 
-    /**
-     * @brief Get the description of an enemy kind.
-     */
     [[nodiscard]] constexpr const EnemyDef &enemyDef(EnemyType type)
     {
         return ENEMY_DEFS[std::size_t(type)];

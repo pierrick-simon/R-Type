@@ -12,7 +12,7 @@
 
 namespace RType {
     struct EnemyHooks;
-} // namespace RType
+}
 
 namespace RType::Server {
 

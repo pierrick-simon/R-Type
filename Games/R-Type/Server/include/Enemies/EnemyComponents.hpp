@@ -24,14 +24,6 @@ namespace RType {
         ZigZag,
     };
 
-    /**
-     * @brief Per-enemy configuration and state for its movement.
-     *
-     * horizontalVelocity is in pixels per second. For SineWave, amplitude is
-     * a vertical displacement in pixels and period is in seconds. For ZigZag,
-     * amplitude is a vertical velocity in pixels per second and period is the
-     * interval, in seconds, between two direction changes.
-     */
     struct MovementPattern {
         PatternType type = PatternType::Straight;
         float horizontalVelocity = -300.f;
@@ -53,12 +45,6 @@ namespace RType {
         int maxHp = 1;
     };
 
-    /**
-     * @brief Axis-aligned collision box, in pixels (already scaled).
-     *
-     * offsetX / offsetY locate the box relative to Position2D (the top-left
-     * corner of the drawn sprite), so the box can be smaller than the sprite.
-     */
     struct Hitbox {
         float width = 0.f;
         float height = 0.f;
@@ -66,7 +52,6 @@ namespace RType {
         float offsetY = 0.f;
     };
 
-    /** Periodic shot. timer counts up to cooldown (seconds). */
     struct Weapon {
         float cooldown = 1.f;
         float timer = 0.f;
@@ -74,21 +59,16 @@ namespace RType {
         int damage = 1;
     };
 
-    /** Anything that hurts: fromPlayer bullets hit enemies, the others hit
-     * EnemyTarget. */
     struct Projectile {
         int damage = 1;
         bool fromPlayer = false;
     };
 
-    /** Tag put on the entity enemies aim at and damage (the player). Needs
-     * Health, Position2D, Hitbox. */
     struct EnemyTarget {};
 
-    /** The entity is destroyed once remaining (seconds) reaches 0. */
     struct Lifetime {
         float remaining = 0.f;
     };
 } // namespace RType
 
-#endif /* !ENEMY_HPP_ */
+#endif

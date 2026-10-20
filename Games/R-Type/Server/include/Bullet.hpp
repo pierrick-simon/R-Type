@@ -16,7 +16,6 @@ namespace RType::Server {
 
     void spawnBullet(GameManager &gm, const Position2D &shooter);
     void bulletSystem(GameManager &gm);
-
 } // namespace RType::Server
 
 #endif

@@ -8,18 +8,17 @@ set(MAIN
         src/Main.cpp
 )
 
-# Game logic: no raylib needed, unit-testable.
 set(SRCS
         src/Enemies/EnemyManager.cpp
         src/Enemies/EnemySystems.cpp
 )
 
-# Everything that touches textures / the window.
 set(SRCS_GFX
         src/Enemies/EnemyVisuals.cpp
 )
 
 set(GAME_SRCS
+        src/Assets.cpp
         src/Background.cpp
         src/Bullet.cpp
         src/Player.cpp
@@ -31,7 +30,6 @@ add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
 target_link_libraries(r-type_server PRIVATE engine-system engine-graphical)
 
-# criterion
 if (TARGET criterion AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_init.cpp")
     set(SRCS_TESTS tests/tests_init.cpp)
 

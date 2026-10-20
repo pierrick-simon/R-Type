@@ -16,8 +16,29 @@
 namespace RType {
 
     namespace {
-        constexpr float BULLET_SIZE = 32.f; // bullet.png
-        constexpr float BULLET_HITBOX = 12.f;
+        Hitbox centeredHitbox(const SheetInfo &sheet)
+        {
+            Hitbox hitbox;
+
+            hitbox.width = float(sheet.hitboxW) * SPRITE_SCALE;
+            hitbox.height = float(sheet.hitboxH) * SPRITE_SCALE;
+            hitbox.offsetX =
+                float(sheet.cellW - sheet.hitboxW) * SPRITE_SCALE / 2.f;
+            hitbox.offsetY =
+                float(sheet.cellH - sheet.hitboxH) * SPRITE_SCALE / 2.f;
+            return hitbox;
+        }
+
+        template<typename Component>
+        void destroyAll(GameManager &gm)
+        {
+            std::vector<Entity> entities;
+
+            gm.view<Component>().each(
+                [&entities](Entity e, Component &) { entities.push_back(e); });
+            for (const Entity e : entities)
+                gm.destroyEntity(e);
+        }
     } // namespace
 
     void EnemyDirector::addWave(
@@ -45,14 +66,7 @@ namespace RType {
         pattern.amplitude = def.amplitude;
         pattern.period = def.period;
 
-        // Hitbox centered in the (scaled) sprite cell.
-        Hitbox hitbox;
-        hitbox.width = float(sheet.hitboxW) * SPRITE_SCALE;
-        hitbox.height = float(sheet.hitboxH) * SPRITE_SCALE;
-        hitbox.offsetX =
-            float(sheet.cellW - sheet.hitboxW) * SPRITE_SCALE / 2.f;
-        hitbox.offsetY =
-            float(sheet.cellH - sheet.hitboxH) * SPRITE_SCALE / 2.f;
+        const Hitbox hitbox = centeredHitbox(sheet);
 
         gm.addComponent<Enemy>(entity, Enemy {type, def.scoreValue});
         gm.addComponent<Health>(entity, Health {def.hp, def.hp});
@@ -77,19 +91,30 @@ namespace RType {
         float vy, int damage, const EnemyHooks &hooks)
     {
         const Entity bullet = gm.createEntity();
-        const float inset = (BULLET_SIZE - BULLET_HITBOX) / 2.f;
+        const SheetInfo &sheet = ENEMY_BULLET_SHEET;
 
-        // (x, y) is the centre of the bullet; Position2D is its top-left.
-        gm.addComponent<Position2D>(
-            bullet, Position2D {x - BULLET_SIZE / 2.f, y - BULLET_SIZE / 2.f});
+        gm.addComponent<Position2D>(bullet,
+            Position2D {x - float(sheet.cellW) * SPRITE_SCALE / 2.f,
+                y - float(sheet.cellH) * SPRITE_SCALE / 2.f});
         gm.addComponent<Velocity2D>(bullet, Velocity2D {vx, vy});
         gm.addComponent<Clock>(bullet);
         gm.addComponent<Projectile>(bullet, Projectile {damage, false});
-        gm.addComponent<Hitbox>(
-            bullet, Hitbox {BULLET_HITBOX, BULLET_HITBOX, inset, inset});
+        gm.addComponent<Hitbox>(bullet, centeredHitbox(sheet));
         if (hooks.onBulletSpawn)
             hooks.onBulletSpawn(gm, bullet);
         return bullet;
+    }
+
+    void resetEnemies(GameManager &gm)
+    {
+        destroyAll<Enemy>(gm);
+        destroyAll<Projectile>(gm);
+        destroyAll<Lifetime>(gm);
+        gm.view<EnemyDirector>().each([](Entity, EnemyDirector &director) {
+            director.elapsed = 0.f;
+            director.next = 0;
+            director.score = 0;
+        });
     }
 
     Entity createEnemyDirector(GameManager &gm)
@@ -97,7 +122,6 @@ namespace RType {
         const Entity entity = gm.createEntity();
         EnemyDirector director;
 
-        // Demo level: edit freely. (type, y, count, interval, start time)
         director.addWave(EnemyType::Scout, 300.f, 5, 0.5f, 2.f);
         director.addWave(EnemyType::Scout, 800.f, 5, 0.5f, 6.f);
         director.addWave(EnemyType::Gunner, 540.f, 2, 1.5f, 10.f);
