@@ -8,6 +8,7 @@
 #include "UpdateClientEntity.hpp"
 #include <unordered_set>
 #include "ProtocolCreate.hpp"
+#include "ProtocolDestroy.hpp"
 #include "ProtocolMove.hpp"
 #include "ProtocolSet.hpp"
 #include "ProtocolText.hpp"
@@ -119,6 +120,18 @@ namespace RType {
         for (const auto &[key, _] : server.getClients()) {
             if (lookup.find(key) == lookup.end())
                 update.create.push_back(key);
+        }
+    }
+
+    void UpdateClientEntity::destroyUpdateEntity(
+        GameManager &gm, Entity e, ServerManager &server)
+    {
+        try {
+            auto &update = gm.getComponent<UpdateClientEntity>(e);
+            ProtocolDestroy::sendDestroy(
+                update.getLinks(), server, update.getId());
+            gm.destroyEntity(e);
+        } catch (NoSuchEntity &e) {
         }
     }
 }; // namespace RType

@@ -47,6 +47,9 @@ namespace RType {
 
         void removeLink(uint32_t id);
 
+        static void destroyUpdateEntity(
+            GameManager &gm, Entity e, ServerManager &server);
+
     private:
         uint32_t _id;
         std::vector<uint32_t> _links;

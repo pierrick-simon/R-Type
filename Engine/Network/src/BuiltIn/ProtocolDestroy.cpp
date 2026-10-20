@@ -28,9 +28,10 @@ namespace RType {
             gm.destroyEntity(entity);
     }
 
-    void ProtocolDestroy::sendDestroy(ServerManager &s, uint32_t id)
+    void ProtocolDestroy::sendDestroy(
+        const std::vector<uint32_t> &ids, ServerManager &s, uint32_t id)
     {
-        s.broadcast(Opcode::DESTROY, serializeDestroy({id}));
+        s.sendToClients(ids, Opcode::DESTROY, serializeDestroy({id}));
     }
 
     std::vector<uint8_t> ProtocolDestroy::serializeDestroy(

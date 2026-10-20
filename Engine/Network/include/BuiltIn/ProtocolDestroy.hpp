@@ -37,7 +37,8 @@ namespace RType {
 
         /** @brief Server helper: sendToClients the destruction of entity `id`.
          */
-        static void sendDestroy(ServerManager &s, uint32_t id);
+        static void sendDestroy(
+            const std::vector<uint32_t> &ids, ServerManager &s, uint32_t id);
 
         static std::vector<uint8_t> serializeDestroy(const DestroyPayload &e);
         static std::optional<DestroyPayload> parseDestroy(
