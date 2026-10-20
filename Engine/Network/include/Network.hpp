@@ -8,7 +8,16 @@
 #ifndef NETWORK_HPP_
     #define NETWORK_HPP_
 
+    #if defined(_WIN32)
+        #define WIN32_LEAN_AND_MEAN
+        #define NOGDI
+        #define NOUSER
+    #endif
     #include <asio.hpp>
+    #if defined(_WIN32)
+        #undef near
+        #undef far
+    #endif
     #include <atomic>
     #include <chrono>
     #include <cstdint>

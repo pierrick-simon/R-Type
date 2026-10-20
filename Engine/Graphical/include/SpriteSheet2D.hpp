@@ -31,6 +31,19 @@ namespace RType {
      */
     class SpriteSheet2D {
     public:
+        /** @brief SpriteSheet2D default constructor
+         */
+        SpriteSheet2D() = default;
+        SpriteSheet2D(Size2D recNb, unsigned int frameDuration, float scale) :
+            _recNb(recNb), _frameDuration(frameDuration), _scale(scale) {};
+        SpriteSheet2D(Size2D recNb, std::size_t currentTile,
+            unsigned int frameDuration, float scale, bool animation = true) :
+            _recNb(recNb),
+            _currentTile(currentTile),
+            _frameDuration(frameDuration),
+            _scale(scale),
+            _animation(animation) {};
+
         /**
          * @brief Number of tiles in the texture (not synchronized).
          *
@@ -189,10 +202,7 @@ namespace RType {
 
         /** @return The default update
          */
-        [[nodiscard]] static const std::vector<Property> &getDefaultUpdate()
-        {
-            return _default;
-        }
+        [[nodiscard]] static const std::vector<Property> &getDefaultUpdate();
 
         /** @brief Clear update
          */

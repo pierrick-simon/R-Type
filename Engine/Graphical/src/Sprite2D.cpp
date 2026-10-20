@@ -46,6 +46,11 @@ namespace RType {
         }
     }
 
+    const std::vector<Property> &Sprite2D::getDefaultUpdate()
+    {
+        return _default;
+    }
+
     const std::vector<Property> Sprite2D::_default = {
         Property::SCALE,
         Property::ROTATION,

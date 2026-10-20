@@ -75,6 +75,11 @@ namespace RType {
         }
     }
 
+    const std::vector<Property> &SpriteSheet2D::getDefaultUpdate()
+    {
+        return _default;
+    }
+
     const std::vector<Property> SpriteSheet2D::_default = {
         Property::SCALE,
         Property::ROTATION,

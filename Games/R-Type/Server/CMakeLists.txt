@@ -9,17 +9,31 @@ set(MAIN
 )
 
 set(SRCS
+        src/Enemies/EnemyManager.cpp
+        src/Enemies/EnemySystems.cpp
 )
 
-add_executable(r-type_server ${MAIN} ${SRCS})
+set(SRCS_GFX
+        src/Enemies/EnemyVisuals.cpp
+)
+
+set(GAME_SRCS
+        src/Assets.cpp
+        src/Background.cpp
+        src/Bullet.cpp
+        src/Player.cpp
+        src/Setup.cpp
+        src/Texture.cpp
+)
+
+add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
 target_link_libraries(r-type_server PRIVATE engine-system engine-graphical engine-network)
 
-# criterion
 if (TARGET criterion)
     set(SRCS_TESTS tests/tests_init.cpp)
 
-    add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS})
+    add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
     target_include_directories(server_tests_run_bin PRIVATE include)
     target_compile_options(server_tests_run_bin PRIVATE --coverage)
     target_link_options(server_tests_run_bin PRIVATE --coverage)
