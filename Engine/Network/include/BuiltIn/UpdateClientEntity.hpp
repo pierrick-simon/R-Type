@@ -45,6 +45,11 @@ namespace RType {
             return _links;
         }
 
+        [[nodiscard]] std::vector<uint32_t> &getLinks()
+        {
+            return _links;
+        }
+
         void removeLink(uint32_t id);
 
         static void destroyUpdateEntity(

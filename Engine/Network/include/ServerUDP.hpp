@@ -42,6 +42,7 @@ namespace RType {
         void addManage(uint8_t opCode, ManageFunc func, bool override = false);
 
         uint16_t addNewClient();
+        void removeClient(const Header &header);
 
         class ServerException : public EngineException {
         public:
@@ -72,8 +73,6 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         static void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
-        void manageLogout(
-            const Header &header, const std::vector<uint8_t> &payload);
 
         std::map<uint8_t,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>
@@ -84,7 +83,7 @@ namespace RType {
                     }},
                 {Opcode::LOGOUT,
                     [this](const Header &h, const std::vector<uint8_t> &p) {
-                        manageLogout(h, p);
+                        removeClient(h);
                     }},
                 {Opcode::HEALTH,
                     [this](const Header &h, const std::vector<uint8_t> &p) {

@@ -148,8 +148,7 @@ namespace RType {
         protocol_[op] = std::move(func);
     }
 
-    void UDPServer::manageLogout(
-        const Header &header, const std::vector<uint8_t> &)
+    void UDPServer::removeClient(const Header &header)
     {
         std::cout << "Client " << header.senderId << " logged out" << std::endl;
         clients_.erase(header.senderId);

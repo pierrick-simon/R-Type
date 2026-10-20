@@ -27,6 +27,12 @@ namespace RType {
                 defaultClient();
             },
             true);
+        _udp->addManage(
+            LOGIN,
+            [this](const Header &h, const std::vector<uint8_t> &p) {
+                deleteDefaultProtocol(h);
+            },
+            true);
         addContextManage(KEY_PRESSED, KeyboardProtocol::manageKeyPressed);
         addContextManage(KEY_RELEASED, KeyboardProtocol::manageKeyReleased);
         addContextManage(
@@ -92,5 +98,20 @@ namespace RType {
         for (auto [_, update] :
             _ctx.gm->get().view<UpdateClientEntity>().getVector())
             update.create.push_back(id);
+    }
+
+    void ServerManager::deleteDefaultProtocol(const Header &h)
+    {
+        if (!_ctx.gm)
+            return;
+        _udp->removeClient(h);
+        for (auto [_, update] :
+            _ctx.gm->get().view<UpdateClientEntity>().getVector()) {
+            auto &l = update.getLinks();
+            l.erase(std::remove_if(l.begin(),
+                        l.end(),
+                        [&](uint32_t v) { return h.senderId == v; }),
+                l.end());
+        }
     }
 }; // namespace RType
