@@ -32,7 +32,9 @@ namespace RType {
     inline constexpr SheetInfo SCOUT_SHEET = {
         "R-Type/sprites/Enemies/scout.gif", 8, 21, 24, 70, 21, 14};
     inline constexpr SheetInfo GUNNER_SHEET = {
-        "R-Type/sprites/Enemies/RobotEnemy.gif", 3, 33, 34, 70, 33, 25};
+        "R-Type/sprites/Enemies/RobotEnemy.gif", 3, 33, 34, 150, 33, 25};
+    inline constexpr SheetInfo ENEMY_BULLET_SHEET = {
+        "R-Type/sprites/Enemies/EnemyBullet.gif", 4, 19, 8, 50, 19, 8};
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
         "R-Type/sprites/Enemies/ExplosionDead.gif", 6, 32, 31, 60, 0, 0};

@@ -153,10 +153,12 @@ namespace RType {
 
     } // namespace
 
-    void systemEnemyWeapon(GameManager &gm, Weapon &weapon,
+    void systemEnemyWeapon(GameManager &gm, const Enemy &enemy, Weapon &weapon,
         const Position2D &pos, const Hitbox &hitbox, const Clock &clock,
         const EnemyHooks &hooks)
     {
+        if (enemy.type != EnemyType::Gunner)
+            return;
         weapon.timer += elapsedSeconds(clock);
         if (weapon.timer < weapon.cooldown)
             return;
@@ -270,7 +272,7 @@ namespace RType {
                                 !overlap(bulletRect, rectOf(tp, tb)))
                                 return;
                             consumed = true;
-                            health.hp = std::max(0, health.hp - shot.damage);
+                            health.hp = 0;
                         });
                 }
                 if (consumed)
@@ -308,10 +310,13 @@ namespace RType {
         const auto h = std::make_shared<const EnemyHooks>(std::move(hooks));
 
         gm.createSystem<MovementPattern, Velocity2D, Clock>(systemEnemyPattern);
-        gm.createSystem<Weapon, Position2D, Hitbox, Clock>(
-            [h](GameManager &g, Weapon &w, Position2D &p, Hitbox &b, Clock &c) {
-                systemEnemyWeapon(g, w, p, b, c, *h);
-            });
+        gm.createSystem<Enemy, Weapon, Position2D, Hitbox, Clock>(
+            [h](GameManager &g,
+                Enemy &e,
+                Weapon &w,
+                Position2D &p,
+                Hitbox &b,
+                Clock &c) { systemEnemyWeapon(g, e, w, p, b, c, *h); });
         gm.createSystem<EnemyDirector, Clock>(
             [h](GameManager &g, EnemyDirector &d, Clock &c) {
                 systemEnemyDirector(g, d, c, *h);

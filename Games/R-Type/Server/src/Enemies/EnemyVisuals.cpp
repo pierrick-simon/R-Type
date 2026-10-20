@@ -56,9 +56,8 @@ namespace RType {
                 gm.addComponent<SpriteSheet2D>(e, makeSheet(*def.sheet));
             };
         hooks.onBulletSpawn = [](GameManager &gm, Entity e) {
-            gm.addComponent<Texture2D>(e, "R-Type/sprites/bullet.png");
-            gm.addComponent<Sprite2D>(
-                e, Sprite2D {.origin = {}, .color = raylib::Color::Red()});
+            gm.addComponent<Texture2D>(e, ENEMY_BULLET_SHEET.file);
+            gm.addComponent<SpriteSheet2D>(e, makeSheet(ENEMY_BULLET_SHEET));
         };
         hooks.onEnemyDeath = spawnExplosion;
         return hooks;

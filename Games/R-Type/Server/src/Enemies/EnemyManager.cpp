@@ -61,7 +61,7 @@ namespace RType {
         gm.addComponent<Clock>(entity);
         gm.addComponent<MovementPattern>(entity, pattern);
         gm.addComponent<Hitbox>(entity, hitbox);
-        if (def.fireCooldown > 0.f) {
+        if (type == EnemyType::Gunner && def.fireCooldown > 0.f) {
             Weapon weapon;
             weapon.cooldown = def.fireCooldown;
             weapon.bulletSpeed = def.bulletSpeed;

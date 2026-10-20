@@ -31,7 +31,7 @@ namespace RType {
      * EnemyTarget entity (straight left if there is none). Does nothing while
      * the enemy is off screen or when the target is behind it.
      */
-    void systemEnemyWeapon(GameManager &gm, Weapon &weapon,
+    void systemEnemyWeapon(GameManager &gm, const Enemy &enemy, Weapon &weapon,
         const Position2D &pos, const Hitbox &hitbox, const Clock &clock,
         const EnemyHooks &hooks);
 
