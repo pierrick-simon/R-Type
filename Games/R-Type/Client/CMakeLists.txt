@@ -13,7 +13,7 @@ set(SRCS
 
 add_executable(r-type_client ${MAIN} ${SRCS})
 target_include_directories(r-type_client PRIVATE include)
-target_link_libraries(r-type_client PRIVATE engine-system)
+target_link_libraries(r-type_client PRIVATE engine-system engine-network engine-graphical)
 
 # criterion
 if (TARGET criterion)
@@ -23,7 +23,7 @@ if (TARGET criterion)
     target_include_directories(client_tests_run_bin PRIVATE include)
     target_compile_options(client_tests_run_bin PRIVATE --coverage)
     target_link_options(client_tests_run_bin PRIVATE --coverage)
-    target_link_libraries(client_tests_run_bin PRIVATE criterion engine-system)
+    target_link_libraries(client_tests_run_bin PRIVATE criterion engine-system engine-network engine-graphical)
 
     add_custom_target(client_tests_run
             COMMAND find ${CMAKE_BINARY_DIR} -name "*.gcda" -delete

@@ -285,11 +285,22 @@ namespace RType {
             return View<Components...>(_cm);
         }
 
+        std::unordered_map<int, std::string> &getAssetsMap()
+        {
+            return _assetsMap;
+        }
+
+        void setAssetsMap(std::unordered_map<int, std::string> &map)
+        {
+            _assetsMap = map;
+        }
+
     private:
         ComponentManager _cm;
         EntityManager _em;
         SystemManager _sm;
         CommandQueue _cq;
+        std::unordered_map<int, std::string> _assetsMap;
 
         bool _updating = false;
 

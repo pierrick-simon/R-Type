@@ -201,6 +201,17 @@ namespace RType {
          */
         static void systemKeyboardManager(KeyboardManager &k);
 
+        /**
+         * @brief System clear the keyboard state.
+         *
+         * @param k The keyboard to update.
+         *
+         * @warning Must be called once per frame, after the window has been
+         *          created, otherwise the state will be stale for pressed
+         *          and released key.
+         */
+        static void systemKeyboardManagerClear(KeyboardManager &k);
+
     private:
         std::unordered_set<int> _held;
     };

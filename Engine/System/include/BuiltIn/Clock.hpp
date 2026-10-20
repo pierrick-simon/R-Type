@@ -49,6 +49,15 @@ namespace RType {
         std::chrono::milliseconds _elapsed = std::chrono::milliseconds(0);
     };
 
+    struct MasterClock : public Clock {
+        MasterClock();
+
+        static void systemMasterClock(MasterClock &c)
+        {
+            systemClock(c);
+        };
+    };
+
 }; // namespace RType
 
 #endif /* !CLOCK_HPP_ */
