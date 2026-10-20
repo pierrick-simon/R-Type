@@ -34,6 +34,8 @@ namespace RType {
          */
         static void systemFriction2D(const Friction2D &friction,
             Velocity2D &velocity, const Clock &clock);
+        static void systemMasterFriction2D(
+            GameManager &gm, const MasterClock &clock);
     };
 
 } // namespace RType

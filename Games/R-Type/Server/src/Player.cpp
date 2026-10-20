@@ -19,7 +19,6 @@
 
 namespace RType::Server {
 
-
     float elapsedSeconds(const Clock &clock)
     {
         return static_cast<float>(clock.getElapsed().count()) /
@@ -56,21 +55,15 @@ namespace RType::Server {
         const Entity explosion = gm.createEntity();
 
         gm.addComponent<Position2D>(explosion,
-            Position2D {position.x +
+            Position2D {position.x() +
                     (PLAYER_WIDTH - PLAYER_EXPLOSION_WIDTH * SCALE) / 2.f,
-                position.y +
-                    (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * SCALE) /
-                        2.f});
+                position.y() +
+                    (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * SCALE) / 2.f});
         gm.addComponent<Texture2D>(
             explosion, loadPixelTexture(gm, Asset::PLAYER_EXPLOSION));
         gm.addComponent<SpriteSheet2D>(explosion,
-            Size2D {1, PLAYER_EXPLOSION_FRAMES},
-            0,
+            Size2D(1, PLAYER_EXPLOSION_FRAMES),
             PLAYER_EXPLOSION_FRAME_MS,
-            std::chrono::milliseconds(PLAYER_EXPLOSION_FRAME_MS),
-            std::chrono::milliseconds(0),
-            Origin2D {},
-            true,
             SCALE);
         gm.addComponent<Clock>(explosion);
         gm.addComponent<PlayerExplosion>(
@@ -91,12 +84,11 @@ namespace RType::Server {
         health.hp = health.maxHp;
         position = Position2D {PLAYER_START_X, WINDOW_HEIGHT / 2.f};
         gm.getComponent<Velocity2D>(player) = {};
-        sheet.color.a = 255;
-        sheet.currentTile = FRAME_NEUTRAL;
+        sheet.color().a = 255;
+        sheet.currentTile() = FRAME_NEUTRAL;
         resetEnemies(gm);
         resetBackground(gm);
     }
-
 
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
         const Position2D &pos, const Keyboard &keyboard, const Clock &clock,
@@ -127,27 +119,27 @@ namespace RType::Server {
         const float maxX = WINDOW_WIDTH - PLAYER_WIDTH;
         const float maxY = WINDOW_HEIGHT - PLAYER_HEIGHT;
 
-        if (pos.x < 0.f || pos.x > maxX)
+        if (pos.x() < 0.f || pos.x() > maxX)
             velocity.x = 0.f;
-        if (pos.y < 0.f || pos.y > maxY)
+        if (pos.y() < 0.f || pos.y() > maxY)
             velocity.y = 0.f;
-        pos.x = std::clamp(pos.x, 0.f, maxX);
-        pos.y = std::clamp(pos.y, 0.f, maxY);
+        pos.x() = std::clamp(pos.x(), 0.f, maxX);
+        pos.y() = std::clamp(pos.y(), 0.f, maxY);
     }
 
     void playerAnimation(
         const Player &, const Velocity2D &velocity, SpriteSheet2D &sheet)
     {
         if (velocity.y < -TILT_HARD)
-            sheet.currentTile = FRAME_UP_MAX;
+            sheet.currentTile() = FRAME_UP_MAX;
         else if (velocity.y < -TILT_SOFT)
-            sheet.currentTile = FRAME_UP;
+            sheet.currentTile() = FRAME_UP;
         else if (velocity.y > TILT_HARD)
-            sheet.currentTile = FRAME_DOWN_MAX;
+            sheet.currentTile() = FRAME_DOWN_MAX;
         else if (velocity.y > TILT_SOFT)
-            sheet.currentTile = FRAME_DOWN;
+            sheet.currentTile() = FRAME_DOWN;
         else
-            sheet.currentTile = FRAME_NEUTRAL;
+            sheet.currentTile() = FRAME_NEUTRAL;
     }
 
     void playerDeath(GameManager &gm)
@@ -164,7 +156,7 @@ namespace RType::Server {
                 if (!state.dying) {
                     state.dying = true;
                     state.deathTimer = PLAYER_DEATH_DURATION;
-                    sheet.color.a = 0;
+                    sheet.color().a = 0;
                     spawnPlayerExplosion(gm, position);
                     return;
                 }
@@ -197,14 +189,11 @@ namespace RType::Server {
             ship, loadPixelTexture(gm, Asset::PLAYER_SHEET_1));
         gm.addComponent<Clock>(ship);
         gm.addComponent<SpriteSheet2D>(ship,
-            Size2D {1, PLAYER_FRAMES},
+            Size2D(1, PLAYER_FRAMES),
             FRAME_NEUTRAL,
             PLAYER_FRAME_MS,
-            std::chrono::milliseconds(PLAYER_FRAME_MS),
-            std::chrono::milliseconds(0),
-            Origin2D {},
-            false,
-            SCALE);
+            SCALE,
+            false);
         return ship;
     }
 

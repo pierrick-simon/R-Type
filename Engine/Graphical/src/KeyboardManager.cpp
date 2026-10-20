@@ -36,9 +36,6 @@ namespace RType {
     KeyboardManager::KeyboardManager(Key::Layout layout) :
         layout(layout)
     {
-        static bool onlyOne = true;
-        if (!onlyOne)
-            throw EngineException("You can only have one Keyboard Component");
     }
 
     void KeyboardManager::systemKeyboardManager(KeyboardManager &k)
@@ -74,6 +71,12 @@ namespace RType {
                 k.keyDown.end())
                 k.keyDown.push_back(v);
         }
+    }
+
+    void KeyboardManager::systemKeyboardManagerClear(KeyboardManager &k)
+    {
+        k.keyPressed.clear();
+        k.keyReleased.clear();
     }
 
     const std::unordered_map<int, Key::Value> Key::_keyMapAzerty {

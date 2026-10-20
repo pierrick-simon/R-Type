@@ -31,6 +31,9 @@ namespace RType {
             Extra, //!< The Extra Mouse Button
             Forward, //!< The Forward Mouse Button
             Back, //!< The Back Mouse Button
+
+            MouseButtonCount, //!< Keep last -- the total number of keyboard
+                              //!< keys
         };
 
         /**
@@ -68,11 +71,6 @@ namespace RType {
      */
     class MouseManager {
     public:
-        /**
-         * @brief Create a mouseManager with an empty state.
-         */
-        MouseManager();
-
         std::vector<MouseButton::Value> buttonPressed;
         std::vector<MouseButton::Value> buttonDown;
         std::vector<MouseButton::Value> buttonReleased;

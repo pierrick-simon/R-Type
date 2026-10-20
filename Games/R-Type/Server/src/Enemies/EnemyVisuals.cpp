@@ -17,13 +17,11 @@ namespace RType {
 
     SpriteSheet2D makeSheet(const SheetInfo &info, float scale = SPRITE_SCALE)
     {
-        return SpriteSheet2D {
-            .recNb = {1, info.frames},
-            .currentTile = 0,
-            .frameDurationTime = static_cast<unsigned int>(info.frameMs),
-            .origin = {},
-            .scale = scale,
-        };
+        SpriteSheet2D ss = {};
+        ss.recNb() = {1, info.frames};
+        ss.frameDuration() = std::chrono::milliseconds(info.frameMs);
+        ss.scale() = scale;
+        return ss;
     }
 
     void spawnExplosion(GameManager &gm, float cx, float cy)

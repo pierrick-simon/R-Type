@@ -9,6 +9,7 @@
 #define VELOCITY2D_HPP_
 
 #include "Clock.hpp"
+#include "GameManager.hpp"
 #include "Position2D.hpp"
 
 namespace RType {
@@ -35,6 +36,8 @@ namespace RType {
          */
         static void systemVelocity2D(
             const Velocity2D &velocity, Position2D &pos, const Clock &clock);
+        static void systemMasterVelocity2D(
+            GameManager &gm, const MasterClock &clock);
     };
 
 } // namespace RType

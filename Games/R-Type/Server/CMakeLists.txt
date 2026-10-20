@@ -37,7 +37,7 @@ if (TARGET criterion AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/tests_init.cp
     target_include_directories(server_tests_run_bin PRIVATE include)
     target_compile_options(server_tests_run_bin PRIVATE --coverage)
     target_link_options(server_tests_run_bin PRIVATE --coverage)
-    target_link_libraries(server_tests_run_bin PRIVATE criterion engine-system)
+    target_link_libraries(server_tests_run_bin PRIVATE criterion engine-system engine-network engine-graphical)
 
     add_custom_target(server_tests_run
             COMMAND find ${CMAKE_BINARY_DIR} -name "*.gcda" -delete

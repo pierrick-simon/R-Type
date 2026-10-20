@@ -27,13 +27,6 @@ namespace RType {
         throw EngineException("Key not found in the key map");
     }
 
-    MouseManager::MouseManager()
-    {
-        static bool onlyOne = true;
-        if (!onlyOne)
-            throw EngineException("You can only have one Mouse Component");
-    }
-
     void MouseManager::systemMouseManager(MouseManager &m)
     {
         m.buttonPressed.clear();
@@ -55,8 +48,8 @@ namespace RType {
                 m.buttonReleased.push_back(v);
         }
         m._wheel = raylib::Mouse::GetWheelMove();
-        m._pos.x = float(raylib::Mouse::GetX());
-        m._pos.y = float(raylib::Mouse::GetY());
+        m._pos.x() = float(raylib::Mouse::GetX());
+        m._pos.y() = float(raylib::Mouse::GetY());
     }
 
     const std::unordered_map<int, MouseButton::Value>
