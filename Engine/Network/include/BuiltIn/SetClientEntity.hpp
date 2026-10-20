@@ -13,8 +13,8 @@
 #include <vector>
 #include "GameManager.hpp"
 #include "Property.hpp"
-#include "SetProtocol.hpp"
 #include "ServerManager.hpp"
+#include "SetProtocol.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType {

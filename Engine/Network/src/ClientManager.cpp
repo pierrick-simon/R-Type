@@ -6,6 +6,12 @@
 */
 
 #include "ClientManager.hpp"
+#include "CreateProtocol.hpp"
+#include "DestroyProtocol.hpp"
+#include "MoveProtocol.hpp"
+#include "SetProtocol.hpp"
+#include "SoundProtocol.hpp"
+#include "TextProtocol.hpp"
 
 namespace RType {
     ClientManager::ClientManager(
@@ -17,6 +23,14 @@ namespace RType {
 
     void ClientManager::createDefaultProtocol()
     {
+        addContextManage(Opcode::CREATE, CreateProtocol::manageCreate);
+        addContextManage(Opcode::DESTROY, DestroyProtocol::manageDestroy);
+        addContextManage(Opcode::MOVE, MoveProtocol::manageMove);
+        addContextManage(Opcode::SET, SetProtocol::manageSet);
+        addContextManage(Opcode::PAUSE, SoundProtocol::managePause);
+        addContextManage(Opcode::PLAY, SoundProtocol::managePlay);
+        addContextManage(Opcode::STOP, SoundProtocol::manageStop);
+        addContextManage(Opcode::TEXT, TextProtocol::manageText);
     }
 
     void ClientManager::systemClientReceived(

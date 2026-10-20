@@ -11,8 +11,8 @@
 #include <concepts>
 #include <optional>
 #include <variant>
-#include "Network.hpp"
 #include "CreateProtocol.hpp"
+#include "Network.hpp"
 #include "ServerManager.hpp"
 
 namespace RType {

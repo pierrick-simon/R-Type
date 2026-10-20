@@ -10,9 +10,9 @@
 #include "CreateProtocol.hpp"
 #include "DestroyProtocol.hpp"
 #include "MoveProtocol.hpp"
+#include "SetClientEntity.hpp"
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
-#include "SetClientEntity.hpp"
 
 namespace RType {
     static void removeCommon(
