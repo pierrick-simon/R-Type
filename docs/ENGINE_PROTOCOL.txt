@@ -1,0 +1,709 @@
+R-Type Working Group                                         R-Type Team
+Request for Comments: 0001                                  October 2026
+Category: Informational
+
+
+               R-Type Network Protocol (RNP) - Version 1
+
+
+Status of This Memo
+
+   This document specifies the binary network protocol used between the
+   client and the server of the R-Type project, as implemented in the
+   current Engine/Network module.  It follows the formatting of IETF
+   RFCs (lines of at most 72 characters, ASCII diagrams, numbered
+   sections) but is not an IETF document.
+
+Abstract
+
+   This document describes the format of the messages exchanged over
+   UDP between the client and the server: the common header, the list
+   of opcodes, the exact layout of each message, the validation rules
+   and the behavior in case of packet loss.  The protocol is "thin
+   client" and server-authoritative: the server owns the game state and
+   sends entity and display updates, while the client creates local
+   engine entities and sends keyboard and mouse-button events.
+
+   This document describes the wire behavior that is actually
+   implemented, not planned protocol features.
+
+Table of Contents
+
+   1.  Introduction .................................................
+       1.1.  Terminology ............................................
+       1.2.  Conventions ............................................
+   2.  Transport ....................................................
+   3.  Data Types and Units .........................................
+   4.  General Message Format .......................................
+   5.  Opcode Table .................................................
+   6.  Message Definitions ..........................................
+   7.  Enumerations .................................................
+   8.  Error Handling ...............................................
+   9.  Reliability ..................................................
+   10. Complete Examples ............................................
+   11. Security Considerations ......................................
+   12. Open Issues ..................................................
+   Appendix A.  Features Not Implemented ............................
+1.  Introduction
+
+   The R-Type game consists of a server that manages the game state and
+   of clients that display this state and send the player's actions.
+   This document defines the binary language used between them.
+
+   The server is authoritative.  It decides which entities exist, where
+   they are and how they look.  The client only mirrors this state by
+   creating local entities, and reports the keyboard and mouse-button
+   events of the player.
+
+1.1.  Terminology
+
+   The key words "MUST", "MUST NOT", "SHOULD" and "MAY" are to be
+   interpreted as described in RFC 2119.
+
+1.2.  Conventions
+
+   In this document:
+
+   o  Hexadecimal values are prefixed with "0x".
+   o  Bits are numbered from 0 (most significant) to 31 in the
+      diagrams, 8 bits forming one octet.
+   o  "C" denotes the client and "S" denotes the server.
+
+   Message diagrams are read from left to right and from top to bottom,
+   32 bits per line.  A field that does not fit on one line continues
+   on the next one.
+
+
+2.  Transport
+
+   The protocol uses UDP over IPv4.  A message occupies exactly one
+   datagram.  The client uses an ephemeral port chosen by the operating
+   system.
+
+   The protocol does not define a maximum datagram size.  However, the
+   client currently receives into a buffer of 1024 octets.  A datagram
+   (header included) SHOULD NOT exceed 1024 octets.
+
+
+3.  Data Types and Units
+
+3.1.  Types
+
+   All multi-byte values are encoded in big-endian (network byte order).
+   Signed values use their fixed-width two's-complement representation.
+
+      Type     Size      Range
+      -------  --------  --------------------------
+      uint8    1 octet   0 to 255
+      uint16   2 octets  0 to 65535
+      uint32   4 octets  0 to 4294967295
+      int8     1 octet   -128 to 127
+      int16    2 octets  -32768 to 32767
+      int32    4 octets  -2147483648 to 2147483647
+      float32  4 octets  IEEE 754 binary32
+
+   A float32 is sent as its 32-bit IEEE 754 representation, in
+   big-endian order.
+
+3.2.  Units
+
+   Position (x, y)
+      In CREATE: uint32.  In MOVE: int32.  Position values are
+      coordinates of the server-side game code (the Position2D
+      component), rounded or cast to an integer before serialization.
+      They are NOT normalized percentages.
+
+   Velocity (x, y)
+      int32, rounded to an integer by the server.
+
+   Entity ID
+      uint32, assigned by the server-side game code.
+
+   Sender ID
+      uint16.  0 is the server ID and the client ID before login.
+
+   Asset ID
+      uint16, resolved by the client through its preloaded asset map
+      (see Section 7.5).  Asset paths are never transmitted.
+
+   Angle (ROTATION)
+      float32, in degrees.
+
+   Scale, Font Size, Spacing, Volume, Pitch
+      float32.
+
+   Color
+      uint32 RGBA: red, green, blue and alpha, from the most to the
+      least significant octet.
+
+   Layer
+      int8.
+
+   Boolean
+      uint8.  Zero means false, any other value means true.
+
+   Text
+      UTF-8 (intended), preceded by its length in octets (uint16).
+      There is no trailing null character.
+
+
+4.  General Message Format
+
+   Every message begins with a 9-octet header, followed by the payload,
+   whose structure depends on the opcode.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |    Opcode     |         Payload Size          |Sequence (1/4) |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |               Sequence (2-4/4)                |Sender ID (1/2)|
+   +-+-+-+-+-+-+-+-+
+   |Sender ID (2/2)|
+   +-+-+-+-+-+-+-+-+
+   |                Payload (Payload Size octets)                ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Opcode (8 bits)
+      Message type.  See Section 5.
+
+   Payload Size (16 bits)
+      Size of the payload in octets, header excluded.
+
+   Sequence (32 bits)
+      Outgoing message counter, filled in by the sender.  It is NOT
+      currently used for acknowledgement, retransmission, ordering or
+      duplicate suppression (see Section 9).
+
+   Sender ID (16 bits)
+      Identifier of the sender.  The server uses 0.  A client that is
+      not yet connected uses 0; after LOGIN, it MUST use the
+      identifier that the server assigned to it.
+
+   A datagram is invalid, and MUST be ignored, if:
+
+   o  its size is less than 9 octets;
+   o  Payload Size differs from (datagram size - 9).
+
+
+5.  Opcode Table
+
+   Opcode  Name                    Dir.   Payload Size
+   ------  ----------------------  -----  ---------------------------
+   0x01    LOGIN                   C<->S  0 (request), 2 (response)
+   0x02    LOGOUT                  C->S   0
+   0x03    HEALTH                  C<->S  0
+   0x0A    KEY_PRESSED             C->S   1
+   0x0B    KEY_RELEASED            C->S   1
+   0x0C    MOUSE_BUTTON_PRESSED    C->S   1
+   0x0D    MOUSE_BUTTON_RELEASED   C->S   1
+   0x14    CREATE                  S->C   15
+   0x15    MOVE                    S->C   20 (see Section 6.7)
+   0x16    SET                     S->C   5 + value size
+   0x17    TEXT                    S->C   6 + Text Length
+   0x18    PLAY                    S->C   4
+   0x19    PAUSE                   S->C   4
+   0x1A    STOP                    S->C   4
+   0x1B    DESTROY                 S->C   4
+   0x1C    MOVE_VELOCITY           -      (declared, not implemented)
+
+   Opcodes not listed are reserved.
+
+
+6.  Message Definitions
+
+   In the diagrams of this section, the first bit is the first bit of
+   the first octet of the payload (right after the header).
+
+6.1.  LOGIN (0x01)
+
+   Direction: C->S, then S->C.
+
+   The client sends LOGIN with a Sender ID equal to 0 and an empty
+   payload (Payload Size = 0).
+
+   The server replies with a LOGIN whose payload is:
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |           Client ID           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Client ID (16 bits)
+      Identifier assigned to the client.  The client MUST use it as
+      Sender ID in all of its subsequent messages.
+
+   Payload Size: 0 (request), 2 (response).
+
+   The client sends LOGIN again every 3 seconds (LOGIN_CHECK) until it
+   has received an assigned identifier.
+
+   The LOGIN request carries neither a protocol version nor an asset
+   manifest hash.  Repeated LOGIN requests are not guaranteed to reuse
+   an already assigned identifier.
+
+   Typical session:
+
+      Client                         Server
+        | LOGIN (empty) -------------> |
+        | <------------- LOGIN (u16 id)|
+        | HEALTH <-------------------> |
+        | KEY_PRESSED / RELEASED ----> |
+        | <--------- CREATE / MOVE ... |
+        | LOGOUT --------------------> |
+
+6.2.  LOGOUT (0x02)
+
+   Direction: C->S.  Empty payload.  The server removes the client.
+
+   Payload Size: 0.
+
+6.3.  HEALTH (0x03)
+
+   Direction: C->S and S->C.  Empty payload.
+
+   The server sends a HEALTH message periodically (HEALTH_CHECK_TIME,
+   currently 2 seconds) as a liveness check.  The client MUST echo it.
+   The server considers a client lost after TIMEOUT (currently 6
+   seconds) without answer.
+
+   Payload Size: 0.
+
+6.4.  KEY_PRESSED (0x0A) and KEY_RELEASED (0x0B)
+
+   Direction: C->S.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+
+   |   Key Code    |
+   +-+-+-+-+-+-+-+-+
+
+   Key Code (8 bits)
+      Ordinal value of Key::Value (see Section 7.2).  KeyCount is a
+      sentinel and is not a valid key.
+
+   Payload Size: 1.
+
+   The server tracks the down, pressed and released states of each
+   key.  The handler only checks that at least one payload octet is
+   present and validates the range of the first one.  Senders SHOULD
+   therefore send exactly one octet.
+
+6.5.  MOUSE_BUTTON_PRESSED (0x0C) and MOUSE_BUTTON_RELEASED (0x0D)
+
+   Direction: C->S.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+
+   |  Button Code  |
+   +-+-+-+-+-+-+-+-+
+
+   Button Code (8 bits)
+      Ordinal value of MouseButton::Value (see Section 7.3).
+
+   Payload Size: 1.
+
+   The server tracks the down, pressed and released states of each
+   button.  As for keys, only the first payload octet is inspected and
+   senders SHOULD send exactly one octet.
+
+6.6.  CREATE (0x14)
+
+   Direction: S->C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Entity ID                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Kind      |           Asset ID            |    X (1/4)    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                   X (2-4/4)                   |    Y (1/4)    |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                   Y (2-4/4)                   |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Entity ID (32 bits)
+      Network identifier of the entity.
+
+   Kind (8 bits)
+      Kind of the entity.  See Section 7.1.
+
+   Asset ID (16 bits)
+      Identifier of the resource in the client's asset map.
+
+   X, Y (32 bits each)
+      Initial position.  The server casts the Position2D coordinates
+      to uint32 before serialization.  These are not normalized
+      percentages (Section 3.2).
+
+   Payload Size: 15.
+
+   The client resolves the Asset ID through its preloaded asset map,
+   creates the local entity with the component matching Kind, and
+   stores the mapping from the Entity ID to the local entity.
+
+6.7.  MOVE (0x15)
+
+   Direction: S->C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Entity ID                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                               X                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                               Y                               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                          Velocity X                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                          Velocity Y                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Entity ID (32 bits)
+      Entity that moved.
+
+   X, Y (int32 each)
+      New position.
+
+   Velocity X, Velocity Y (int32 each)
+      New velocity.
+
+   Payload Size: 20.
+
+   The server rounds position and velocity values to integers before
+   serialization.  The client updates the Position2D and Velocity2D
+   components of the mapped entity.
+
+   Note: in the current implementation, the constant MovePayload::SIZE
+   is declared as 12 octets, whereas the serializer writes five 4-octet
+   fields (20 octets).  This is a defect: the serializer MUST be
+   corrected for this message to be reliable.
+
+6.8.  SET (0x16)
+
+   Direction: S->C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Entity ID                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |   Property    |              Value (variable)              ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Entity ID (32 bits)
+      Entity to modify.
+
+   Property (8 bits)
+      Property to modify.  See Section 7.4.
+
+   Value
+      New value.  Its type and size depend on Property.
+
+   Payload Size: 5 + size of the value.
+
+   An unknown Property code, or a value of the wrong size, is rejected
+   by the SET parser.  A property that does not match a component of
+   the target entity has no effect.
+
+6.9.  TEXT (0x17)
+
+   Direction: S->C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Entity ID                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |          Text Length          |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                 Text (Text Length octets)                  ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Entity ID (32 bits)
+      Entity whose text is replaced.
+
+   Text Length (16 bits)
+      Length of the text in octets, not in characters.
+
+   Text
+      UTF-8 text, without a trailing null character.
+
+   Payload Size: 6 + Text Length.
+
+   The client replaces the text of the mapped entity if it has a Text2D
+   component.  The sender truncates a text longer than 65535 octets
+   before serialization.
+
+6.10.  PLAY (0x18), PAUSE (0x19) and STOP (0x1A)
+
+   Direction: S->C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Entity ID                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Entity ID (32 bits)
+      Entity to control.
+
+   Payload Size: 4.
+
+   Behavior on the client:
+
+      Opcode  Sound                  SpriteSheet
+      ------  ---------------------  ------------------------------
+      PLAY    Start or resume        Start the animation
+      PAUSE   Pause the playback     Freeze the animation
+      STOP    Stop the playback      Stop and reset to tile 0
+
+6.11.  DESTROY (0x1B)
+
+   Direction: S->C.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |                           Entity ID                           |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Entity ID (32 bits)
+      Entity to destroy.
+
+   Payload Size: 4.
+
+   The client removes the network ID mapping and destroys the mapped
+   local entity if it still exists.  Each message carries exactly one
+   Entity ID; there is no batch count.
+
+6.12.  MOVE_VELOCITY (0x1C)
+
+   The opcode is declared in the Opcode enumeration but the current
+   Network module has no serializer and no handler for it.  It MUST NOT
+   be sent.
+
+
+7.  Enumerations
+
+7.1.  Entity Kinds
+
+      Value   Name          Client-side component
+      ------  ------------  ---------------------
+      0       SPRITE        Sprite2D
+      1       SPRITESHEET   SpriteSheet2D
+      2       SOUND         Sound
+      3       TEXT_ENTITY   Text2D
+
+   Other values are reserved.
+
+7.2.  Key Codes
+
+   Key codes are the zero-based ordinal values of Key::Value in
+   Engine/Graphical/include/Keyboard.hpp.  The order of the enumeration
+   in that source file is authoritative.  It begins with A to Z and
+   Num0 to Num9, followed by Escape, the modifier and navigation keys,
+   the punctuation and control keys, the arrows, Numpad0 to Numpad9,
+   F1 to F15 and Pause.  KeyCount is a sentinel and is not a valid key
+   code.
+
+   Compatibility warning: the order of Key::Value MUST NOT be changed
+   without updating all communicating builds.
+
+7.3.  Mouse Buttons
+
+   Button codes are the ordinal values of MouseButton::Value in
+   Engine/Graphical/include/MouseManager.hpp.
+
+      Value   Button
+      ------  -------
+      0       Left
+      1       Right
+      2       Middle
+      3       Side
+      4       Extra
+      5       Forward
+      6       Back
+
+7.4.  SET Properties
+
+      Value  Name            Value type          Size
+      -----  --------------  ------------------  ---------
+      0      SCALE           float32             4
+      1      FONT_SIZE       float32             4
+      2      ROTATION        float32             4
+      3      FLIP            uint8               1
+      4      COLOR           uint32 (RGBA)       4
+      5      LAYER           int8                1
+      6      VISIBLE         uint8               1
+      7      ORIGIN          int16 x, int16 y    4
+      8      FRAME           uint16              2
+      9      FRAME_DURATION  uint16 (ms)         2
+      10     SPACING         float32             4
+      11     VOLUME          float32             4
+      12     PITCH           float32             4
+      13     LOOP            uint8               1
+
+   Other values are reserved.  Details:
+
+   o  ROTATION is in degrees.
+   o  FLIP, VISIBLE and LOOP: zero is false, nonzero is true.
+   o  COLOR is a 32-bit RGBA value: red, green, blue, alpha, from the
+      most to the least significant octet.
+   o  VOLUME is clamped by the client to the range 0.0 to 1.0.
+   o  PITCH is applied by the client only when greater than zero.
+   o  ORIGIN carries the signed X value, then the signed Y value.
+
+7.5.  Asset Map
+
+   The protocol sends a uint16 Asset ID, not a path.  The client MUST
+   already have the corresponding resource in its asset map.  Both
+   peers MUST agree on the Asset IDs and on the ordinals of the entity
+   kinds: the LOGIN exchange neither negotiates nor validates any
+   manifest.
+
+
+8.  Error Handling
+
+   The receiver validates the common header of every datagram:
+
+   o  Datagram shorter than 9 octets: ignored without a reply.
+   o  Payload Size inconsistent with the received size: ignored
+      without a reply.
+   o  Sender ID unknown, or different from the one associated with the
+      source address of the datagram (non-LOGIN traffic): ignored.
+
+   Message handlers then validate payload sizes and values to varying
+   degrees:
+
+   o  Several handlers require an exact payload size.
+   o  The keyboard and mouse-button handlers only require a non-empty
+      payload and inspect the first octet; longer payloads are
+      accepted.
+   o  The SET parser rejects unknown properties and wrongly sized
+      values.
+
+   Malformed messages are generally ignored.  There is no error opcode
+   in this version (no UNKNOWN_COMMAND, no BAD_PARAMETER).  Unknown
+   entity IDs and unsupported operations are generally ignored by the
+   relevant handler.
+
+   The receiver MUST NEVER read beyond the size actually received.
+
+
+9.  Reliability
+
+   UDP guarantees neither delivery, nor ordering, nor the absence of
+   duplicates.  The Sequence field is populated by the sender but the
+   current implementation does not use it for reliability.  As a
+   result, a lost input event or entity update may not be recovered by
+   the protocol.
+
+   o  LOGIN without a reply: the client sends it again every 3 seconds
+      until it receives an identifier.
+   o  HEALTH: the server sends it every 2 seconds and the client echoes
+      it.  A client silent for 6 seconds times out.
+
+   The following features are NOT implemented:
+
+   o  ACK messages or retransmission queues.
+   o  Reliable and unreliable packet classes.
+   o  Sequence-based reordering or duplicate suppression.
+   o  RESYNC and state reconstruction requests.
+   o  Batched MOVE or DESTROY messages.
+   o  Full-state input snapshots that would recover a lost key-release
+      event.
+
+
+10.  Complete Examples
+
+10.1.  MOVE
+
+   MOVE for entity 5, at position (100, 200), with velocity (3, -2),
+   first message sent by the server:
+
+      Header (9 octets)
+         15            Opcode         MOVE
+         00 14         Payload Size   20
+         00 00 00 01   Sequence       1
+         00 00         Sender ID      0 (server)
+
+      Payload (20 octets)
+         00 00 00 05   Entity ID      5
+         00 00 00 64   X              100
+         00 00 00 C8   Y              200
+         00 00 00 03   Velocity X     3
+         FF FF FF FE   Velocity Y     -2
+
+   Datagram (29 octets):
+
+      15 00 14 00 00 00 01 00 00 00 00 00 05 00 00
+      00 64 00 00 00 C8 00 00 00 03 FF FF FF FE
+
+10.2.  KEY_PRESSED
+
+   Client 1 presses the key with code 0, as its third message:
+
+      Header (9 octets)
+         0A            Opcode         KEY_PRESSED
+         00 01         Payload Size   1
+         00 00 00 03   Sequence       3
+         00 01         Sender ID      1
+
+      Payload (1 octet)
+         00            Key Code       0
+
+   Datagram (10 octets):
+
+      0A 00 01 00 00 00 03 00 01 00
+
+
+11.  Security Considerations
+
+   This protocol is neither encrypted nor authenticated.
+
+   o  Sender ID is declarative and can be forged.  The server checks
+      the Sender ID and the source endpoint of non-LOGIN traffic, but
+      this is not a substitute for a cryptographic identity.
+   o  Any length read from a message (Text Length, Payload Size) MUST
+      be compared with the size actually received before use.
+   o  A public deployment SHOULD consider authentication, rate
+      limiting, strict validation and explicit datagram-size limits,
+      so that a single client cannot saturate the server.
+
+
+12.  Open Issues
+
+   o  MovePayload::SIZE is declared as 12 octets while MOVE is 20
+      octets (Section 6.7).
+   o  MOVE_VELOCITY (0x1C) is declared but has no serializer and no
+      handler.
+   o  LOGIN carries no protocol version and no asset manifest hash.
+   o  Repeated LOGIN requests do not necessarily reuse the existing
+      identifier.
+   o  No datagram size limit is defined by the protocol, and the
+      client buffer is limited to 1024 octets.
+   o  Sequence is not used for acknowledgement, ordering or duplicate
+      suppression.
+   o  Loss of critical messages (CREATE, DESTROY) and of input events
+      is not recovered.
+
+
+Appendix A.  Features Not Implemented
+
+   The earlier drafts of this protocol proposed additional messages
+   that are NOT present in the current implementation: LOGIN_OK,
+   LOGIN_REFUSED, ACK, RESYNC, INPUT and the error-response opcodes.
+   The following behaviors are likewise absent: reliable delivery,
+   state resynchronization, batched messages and error replies.
+
+
+Authors' Addresses
+
+   R-Type Team
+   See the project repository.
