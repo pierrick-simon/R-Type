@@ -39,6 +39,11 @@ namespace RType {
         }
     }
 
+    const std::vector<Property> &Text2D::getDefaultUpdate()
+    {
+        return _default;
+    }
+
     const std::vector<Property> Text2D::_default = {
         Property::FONT_SIZE,
         Property::ROTATION,

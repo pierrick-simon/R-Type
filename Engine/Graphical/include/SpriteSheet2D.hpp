@@ -202,10 +202,7 @@ namespace RType {
 
         /** @return The default update
          */
-        [[nodiscard]] static const std::vector<Property> &getDefaultUpdate()
-        {
-            return _default;
-        }
+        [[nodiscard]] static const std::vector<Property> &getDefaultUpdate();
 
         /** @brief Clear update
          */
