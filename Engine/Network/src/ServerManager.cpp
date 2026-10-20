@@ -28,7 +28,7 @@ namespace RType {
             },
             true);
         _udp->addManage(
-            LOGIN,
+            LOGOUT,
             [this](const Header &h, const std::vector<uint8_t> &p) {
                 deleteDefaultProtocol(h);
             },

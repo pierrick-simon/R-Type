@@ -16,7 +16,7 @@ namespace RType {
         if (!ctx.gm || payload.size() < ProtocolEntity::SIZE)
             return;
         auto e = parseEntity(payload);
-        if (!e)
+        if (!e || ctx.map.contains(e->id))
             return;
         if (e->type == EntityType::SPRITE)
             manageCreateSprite2D(e.value(), ctx);

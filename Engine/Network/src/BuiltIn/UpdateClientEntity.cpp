@@ -53,7 +53,7 @@ namespace RType {
         for (auto [entity, update] :
             gm.view<UpdateClientEntity>().getVector()) {
             ProtocolEntity pe = {};
-            if (update.active = true)
+            if (!update.active)
                 continue;
             checkConnectedClient(server, update);
             try {
