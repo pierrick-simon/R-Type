@@ -69,16 +69,21 @@ namespace RType {
             return _ctx.clients;
         }
 
+        [[nodiscard]] bool isRunning() const
+        {
+            return _udp->isRunning();
+        }
+
     private:
         /**
-         * @brief Add the default login manage function to the udp Server.
+         * @brief Add the default protocol to the udp Server.
          */
         void createDefaultProtocol();
 
         /**
          * @brief Add the default logout manage function to the udp Server.
          */
-        void deleteDefaultProtocol(const Header &h);
+        void deleteClient(const Header &h);
 
         void addContextManage(Opcode op,
             const std::function<void(const Header &,

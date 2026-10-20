@@ -30,7 +30,7 @@ namespace RType {
         _udp->addManage(
             LOGOUT,
             [this](const Header &h, const std::vector<uint8_t> &p) {
-                deleteDefaultProtocol(h);
+                deleteClient(h);
             },
             true);
         addContextManage(KEY_PRESSED, KeyboardProtocol::manageKeyPressed);
@@ -100,7 +100,7 @@ namespace RType {
             update.create.push_back(id);
     }
 
-    void ServerManager::deleteDefaultProtocol(const Header &h)
+    void ServerManager::deleteClient(const Header &h)
     {
         if (!_ctx.gm)
             return;
@@ -113,5 +113,6 @@ namespace RType {
                         [&](uint32_t v) { return h.senderId == v; }),
                 l.end());
         }
+        _ctx.clients.erase(h.senderId);
     }
 }; // namespace RType

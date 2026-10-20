@@ -44,6 +44,11 @@ namespace RType {
         uint16_t addNewClient();
         void removeClient(const Header &header);
 
+        [[nodiscard]] bool isRunning() const
+        {
+            return _running;
+        }
+
         class ServerException : public EngineException {
         public:
             ServerException(const std::string &str) :
@@ -69,10 +74,14 @@ namespace RType {
         uint16_t _nextId = 0;
         uint16_t _serverId = 0;
 
+        bool _running = true;
+
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
         static void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
+
+        static void handleSigint(int);
 
         std::map<uint8_t,
             std::function<void(const Header &, const std::vector<uint8_t> &)>>

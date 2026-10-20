@@ -18,6 +18,7 @@ namespace RType {
 
     UDPClient::~UDPClient()
     {
+        sendNow(Opcode::LOGOUT, {});
         stop();
     }
 
@@ -81,11 +82,11 @@ namespace RType {
             });
     }
 
-    void UDPClient::addManage(Opcode op, ManageFunc func)
+    void UDPClient::addManage(Opcode op, ManageFunc func, bool override)
     {
-        if (_protocolClient.count(op))
+        if (!override && _protocolClient.count(op))
             throw EngineException("Opcode already use for a manage function");
-        _protocolClient.emplace(op, func);
+        _protocolClient[op] = std::move(func);
     }
 
     void UDPClient::manageCommands(

@@ -6,18 +6,29 @@
 */
 
 #include "ServerUDP.hpp"
+#include <csignal>
+#include <thread>
 
 namespace RType {
+
+    volatile std::sig_atomic_t stopRequested = 0;
 
     UDPServer::UDPServer(short port) :
         _socket(_context, asio::ip::udp::endpoint(asio::ip::udp::v4(), port)),
         _healthTimer(_context)
     {
+        std::signal(SIGINT, handleSigint);
     }
 
     UDPServer::~UDPServer()
     {
+        broadcastNow(Opcode::LOGOUT, {});
         stop();
+    }
+
+    void UDPServer::handleSigint(int)
+    {
+        stopRequested = 1;
     }
 
     void UDPServer::start()
@@ -33,6 +44,7 @@ namespace RType {
 
     void UDPServer::received()
     {
+        _running = !stopRequested;
         if (_context.stopped())
             _context.restart();
         _context.poll();

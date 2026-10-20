@@ -26,7 +26,7 @@ namespace RType {
         [[nodiscard]] bool isConnected() const;
         [[nodiscard]] uint16_t getMyId() const;
 
-        void addManage(Opcode op, ManageFunc func);
+        void addManage(Opcode op, ManageFunc func, bool override = false);
 
         class ClientException : public EngineException {
         public:

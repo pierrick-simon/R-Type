@@ -7,12 +7,15 @@
 
 #include <iostream>
 #include "ClientManager.hpp"
+#include "Clock.hpp"
 #include "GameManager.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
 #include "Sprite2D.hpp"
+#include "Text2D.hpp"
+#include "Velocity2D.hpp"
 #include "Window.hpp"
 
 RType::Entity createWindow(RType::GameManager &gm)
@@ -57,6 +60,16 @@ RType::Entity createMouse(RType::GameManager &gm)
     return k;
 }
 
+RType::Entity createMasterClock(RType::GameManager &gm)
+{
+    RType::Entity mc = gm.createEntity();
+    gm.addComponent<RType::MasterClock>(mc);
+    gm.createSystem<RType::MasterClock>(RType::MasterClock::systemMasterClock);
+    gm.createSystem<RType::MasterClock>(
+        RType::Velocity2D::systemMasterVelocity2D);
+    return mc;
+}
+
 int main()
 {
     try {
@@ -65,7 +78,13 @@ int main()
         auto c = createClient(gm);
         auto k = createKeyboard(gm);
         auto m = createMouse(gm);
+        auto mc = createMasterClock(gm);
 
+        std::unordered_map<int, std::string> map = {
+            {0, "../loading.png"}, {1, "../font.ttf"}};
+        gm.setAssetsMap(map);
+        gm.createSystem<RType::Text2D, RType::Font, RType::Position2D>(
+            RType::Text2D::systemDrawText2D);
         gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(
             RType::Sprite2D::systemDrawSprite2D);
         while (!WindowShouldClose())
