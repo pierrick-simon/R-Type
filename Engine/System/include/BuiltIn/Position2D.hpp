@@ -18,6 +18,11 @@ namespace RType {
     struct Position2D {
         float x = 0.f;
         float y = 0.f;
+
+        bool operator==(const Position2D &other) const
+        {
+            return this->x == other.x && this->y == other.y;
+        };
     };
 }; // namespace RType
 

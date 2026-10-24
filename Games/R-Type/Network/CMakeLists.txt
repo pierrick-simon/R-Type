@@ -18,17 +18,22 @@ set(SRCS_NETWORK
     src/Protocol/MouseProtocol.cpp
     src/Protocol/CreateProtocol.cpp
     src/Protocol/MoveProtocol.cpp
-    src/Protocol/SetProtocol.cpp
     src/Protocol/SoundProtocol.cpp
     src/Protocol/TextProtocol.cpp
     src/Protocol/DestroyProtocol.cpp
-    src/Protocol/UpdateClientEntity.cpp
+    src/Protocol/Update/SetProtocol.cpp
+    src/Protocol/Update/UpdateClientEntity.cpp
+    src/Protocol/Update/UpdatePosition2D.cpp
+    src/Protocol/Update/UpdateSprite2D.cpp
+    src/Protocol/Update/UpdateSpriteSheet2D.cpp
+    src/Protocol/Update/UpdateText2D.cpp
 )
 
 
 set(INCLUDE_NETWORK
     include/
     include/Protocol/
+    include/Protocol/Update/
 )
 
 add_library(${NETWORK_LIB_NAME} STATIC ${SRCS_NETWORK})
