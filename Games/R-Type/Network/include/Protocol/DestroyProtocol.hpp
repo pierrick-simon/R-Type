@@ -40,6 +40,7 @@ namespace RType {
         static void sendDestroy(
             const std::vector<uint32_t> &ids, ServerManager &s, uint32_t id);
 
+    private:
         static std::vector<uint8_t> serializeDestroy(const DestroyPayload &e);
         static std::optional<DestroyPayload> parseDestroy(
             const std::vector<uint8_t> &payload);

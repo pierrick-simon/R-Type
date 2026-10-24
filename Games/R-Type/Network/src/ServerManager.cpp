@@ -6,6 +6,7 @@
 */
 
 #include "ServerManager.hpp"
+#include "CreatedProtocol.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "MouseManager.hpp"
@@ -34,6 +35,10 @@ namespace RType {
                 deleteClient(h);
             },
             true);
+        _udp->addManage(
+            CREATE, [this](const Header &h, const std::vector<uint8_t> &p) {
+                CreatedProtocol::manageCreated(h, p, *this);
+            });
         addContextManage(KEY_PRESSED, KeyboardProtocol::manageKeyPressed);
         addContextManage(KEY_RELEASED, KeyboardProtocol::manageKeyReleased);
         addContextManage(
@@ -112,6 +117,11 @@ namespace RType {
                         l.end(),
                         [&](uint32_t v) { return h.senderId == v; }),
                 l.end());
+            auto &i = update.getInits();
+            i.erase(std::remove_if(l.begin(),
+                        i.end(),
+                        [&](uint32_t v) { return h.senderId == v; }),
+                i.end());
         }
         _ctx.clients.erase(h.senderId);
     }

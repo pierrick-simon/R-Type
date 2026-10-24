@@ -47,7 +47,8 @@ namespace RType {
         /**
          * @brief System to update the components UpdateSprite2D
          */
-        static void systemUpdateSprite2D(UpdateSprite2D &update, const Sprite2D &s);
+        static void systemUpdateSprite2D(
+            UpdateSprite2D &update, const Sprite2D &s);
 
     private:
         std::vector<Property> _update;

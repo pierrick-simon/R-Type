@@ -17,6 +17,7 @@ set(SRCS_NETWORK
     src/Protocol/KeyboardProtocol.cpp
     src/Protocol/MouseProtocol.cpp
     src/Protocol/CreateProtocol.cpp
+    src/Protocol/CreatedProtocol.cpp
     src/Protocol/MoveProtocol.cpp
     src/Protocol/SoundProtocol.cpp
     src/Protocol/TextProtocol.cpp

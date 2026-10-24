@@ -39,7 +39,7 @@ namespace RType {
     public:
         CreateProtocol() = default;
         static void manageCreate(const Header &header,
-            const std::vector<uint8_t> &payload, Context &ctx);
+            const std::vector<uint8_t> &payload, ClientManager &client);
 
         static void manageCreateSprite2D(ProtocolEntity &e, Context &ctx);
         static void manageCreateSpriteSheet(ProtocolEntity &e, Context &ctx);

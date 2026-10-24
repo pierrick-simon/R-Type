@@ -7,6 +7,7 @@
 
 #include "ClientManager.hpp"
 #include "CreateProtocol.hpp"
+#include "CreatedProtocol.hpp"
 #include "DestroyProtocol.hpp"
 #include "MoveProtocol.hpp"
 #include "SetProtocol.hpp"
@@ -21,7 +22,10 @@ namespace RType {
 
     void ClientManager::createProtocol()
     {
-        addContextManage(OpcodeRType::CREATE, CreateProtocol::manageCreate);
+        _udp->addManage(
+            CREATE, [this](const Header &h, const std::vector<uint8_t> &p) {
+                CreateProtocol::manageCreate(h, p, *this);
+            });
         addContextManage(OpcodeRType::DESTROY, DestroyProtocol::manageDestroy);
         addContextManage(OpcodeRType::MOVE, MoveProtocol::manageMove);
         addContextManage(OpcodeRType::SET, SetProtocol::manageSet);
@@ -57,5 +61,18 @@ namespace RType {
             op, [this, func](const Header &h, const std::vector<uint8_t> &p) {
                 func(h, p, _ctx);
             });
+    }
+
+    void ClientManager::systemEntityCreated(ClientManager &c)
+    {
+        for (auto id : c._created) {
+            CreatedProtocol::sendCreated(c, id);
+        }
+    }
+
+    void ClientManager::addCreatedEntity(uint32_t id)
+    {
+        if (std::ranges::find(_created, id) == _created.end())
+            _created.push_back(id);
     }
 }; // namespace RType

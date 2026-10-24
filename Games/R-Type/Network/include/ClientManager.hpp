@@ -59,7 +59,16 @@ namespace RType {
         static void systemClientReceived(
             GameManager &gm, ClientManager &client);
 
+        static void systemEntityCreated(ClientManager &c);
+
         void send(uint8_t op, const std::vector<uint8_t> &payload);
+
+        void addCreatedEntity(uint32_t id);
+
+        [[nodiscard]] Context &getContext()
+        {
+            return _ctx;
+        }
 
     private:
         /**
@@ -73,6 +82,7 @@ namespace RType {
 
         std::unique_ptr<UDPClient> _udp;
         Context _ctx;
+        std::vector<uint32_t> _created;
         bool _first = true;
     };
 } // namespace RType

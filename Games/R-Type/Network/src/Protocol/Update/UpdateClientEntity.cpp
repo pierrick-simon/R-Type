@@ -6,6 +6,7 @@
 */
 
 #include "UpdateClientEntity.hpp"
+#include <algorithm>
 #include <unordered_set>
 #include "CreateProtocol.hpp"
 #include "DestroyProtocol.hpp"
@@ -13,6 +14,10 @@
 #include "SetClientEntity.hpp"
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
+#include "UpdatePosition2D.hpp"
+#include "UpdateSprite2D.hpp"
+#include "UpdateSpriteSheet2D.hpp"
+#include "UpdateText2D.hpp"
 
 namespace RType {
     static void removeCommon(
@@ -39,8 +44,8 @@ namespace RType {
         GameManager &gm, ServerManager &server)
     {
         for (auto [entity, pos, update] :
-            gm.view<Position2D, UpdateClientEntity>().getVector()) {
-            if (!update.active || !update._update)
+            gm.view<UpdatePosition2D, UpdateClientEntity>().getVector()) {
+            if (!pos.getUpdate() || !update.active || !update._update)
                 continue;
             if (!gm.hasComponent<Velocity2D>(entity))
                 MoveProtocol::sendMove(
@@ -50,6 +55,7 @@ namespace RType {
                 MoveProtocol::sendMove(
                     update._links, server, update.getId(), pos, v);
             }
+            pos.setUpdate(false);
         }
     }
 
@@ -60,45 +66,52 @@ namespace RType {
             gm.view<UpdateClientEntity>().getVector()) {
             ProtocolEntity pe = {};
             removeCommon(update.create, update._links);
+            removeCommon(update.create, update._inits);
             if (!update.active || !update._update || update.create.empty())
                 continue;
             checkConnectedClient(server, update);
-            try {
+            if (gm.hasComponent<Position2D>(entity)) {
                 auto tmp = gm.getComponent<Position2D>(entity);
                 pe.posX = uint32_t(tmp.x);
                 pe.posY = uint32_t(tmp.y);
-            } catch (NoSuchComponent &e) {
             }
             pe.assetId = update.asset;
             pe.id = update.getId();
             pe.type = update._type;
             CreateProtocol::sendCreate(update.create, server, pe);
-            setCreateEntity(gm, entity, server, update);
-            update._links.insert(update._links.end(),
+            update._inits.insert(update._inits.end(),
                 update.create.begin(),
                 update.create.end());
             update.create.clear();
         }
     }
 
-    void UpdateClientEntity::setCreateEntity(GameManager &gm, Entity entity,
-        ServerManager &server, UpdateClientEntity &update)
+    void UpdateClientEntity::initUpdateEntity(
+        GameManager &gm, Entity entity, ServerManager &server, uint32_t id)
     {
-        try {
+        auto iter = std::ranges::find(_inits, id);
+        if (iter == _inits.end())
+            return;
+        SetClientEntity::systemSetAllEntity<UpdateSprite2D,
+            UpdateSpriteSheet2D,
+            UpdateText2D>(gm, entity, server, *this, id);
+        if (gm.hasComponent<Text2D>(entity)) {
             auto text = gm.getComponent<Text2D>(entity);
-            TextProtocol::sendText(update.create, server, update._id, text.str);
-        } catch (NoSuchComponent &e) {
+            TextProtocol::sendText({id}, server, _id, text.str);
         }
+        _links.push_back(id);
+        _inits.erase(iter);
     }
 
     void UpdateClientEntity::systemUpdateTextEntity(
         GameManager &gm, ServerManager &server)
     {
         for (auto [_, text, update] :
-            gm.view<Text2D, UpdateClientEntity>().getVector()) {
-            if (!update.active || !update._update)
+            gm.view<UpdateText2D, UpdateClientEntity>().getVector()) {
+            if (!text.getUpdateText() || !update.active || !update._update)
                 continue;
             TextProtocol::sendText(update._links, server, update._id, text.str);
+            text.setUpdateText(false);
         }
     }
 
@@ -108,6 +121,16 @@ namespace RType {
             if (*iter != id)
                 continue;
             _links.erase(iter);
+            return;
+        }
+    }
+
+    void UpdateClientEntity::removeInit(uint32_t id)
+    {
+        for (auto iter = _inits.begin(); iter != _inits.end(); iter++) {
+            if (*iter != id)
+                continue;
+            _inits.erase(iter);
             return;
         }
     }

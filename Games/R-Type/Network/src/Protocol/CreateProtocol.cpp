@@ -11,22 +11,28 @@
 
 namespace RType {
 
-    void CreateProtocol::manageCreate(
-        const Header &header, const std::vector<uint8_t> &payload, Context &ctx)
+    void CreateProtocol::manageCreate(const Header &header,
+        const std::vector<uint8_t> &payload, ClientManager &client)
     {
+        auto &ctx = client.getContext();
         if (!ctx.gm || payload.size() < ProtocolEntity::SIZE)
             return;
         auto e = parseEntity(payload);
         if (!e || ctx.map.contains(e->id))
             return;
-        if (e->type == EntityType::SPRITE)
-            manageCreateSprite2D(e.value(), ctx);
-        else if (e->type == EntityType::SPRITESHEET)
-            manageCreateSpriteSheet(e.value(), ctx);
-        else if (e->type == EntityType::SOUND)
-            manageCreateSound(e.value(), ctx);
-        else if (e->type == EntityType::TEXT_ENTITY)
-            manageCreateText2D(e.value(), ctx);
+        switch (e->type) {
+            case EntityType::SPRITE:
+                manageCreateSprite2D(e.value(), ctx);
+            case EntityType::SPRITESHEET:
+                manageCreateSpriteSheet(e.value(), ctx);
+            case EntityType::SOUND:
+                manageCreateSound(e.value(), ctx);
+            case EntityType::TEXT_ENTITY:
+                manageCreateText2D(e.value(), ctx);
+            default:
+                return;
+        }
+        client.addCreatedEntity(e.value().id);
     }
 
     void CreateProtocol::manageCreateSprite2D(ProtocolEntity &e, Context &ctx)

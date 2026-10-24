@@ -13,6 +13,23 @@
 namespace RType {
     class UpdatePosition2D : public Position2D {
     public:
+        /** @return true if the pos changed since the last
+         * setUpdate(false). */
+        [[nodiscard]] bool getUpdate() const
+        {
+            return _update;
+        }
+
+        /**
+         * @brief Manually set the update flag.
+         *
+         * @param update New value of the flag (false once the change was sent).
+         */
+        void setUpdate(bool update = true)
+        {
+            _update = update;
+        }
+
         /**
          * @brief System to update the components UpdatePosition2D
          */
@@ -20,7 +37,7 @@ namespace RType {
             UpdatePosition2D &update, const Position2D &pos);
 
     private:
-        bool update = true;
+        bool _update = true;
     };
 } // namespace RType
 

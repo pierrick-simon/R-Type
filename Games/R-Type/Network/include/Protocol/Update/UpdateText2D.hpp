@@ -64,7 +64,8 @@ namespace RType {
         /**
          * @brief System to update the components UpdateText2D
          */
-        static void systemUpdateText2D(UpdateText2D &update, const Text2D &text);
+        static void systemUpdateText2D(
+            UpdateText2D &update, const Text2D &text);
 
     private:
         std::vector<Property> _update;

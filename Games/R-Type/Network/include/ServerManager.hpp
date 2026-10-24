@@ -74,6 +74,11 @@ namespace RType {
             return _udp->isRunning();
         }
 
+        [[nodiscard]] Context &getContext()
+        {
+            return _ctx;
+        }
+
     private:
         /**
          * @brief Add the protocol to the udp Server.

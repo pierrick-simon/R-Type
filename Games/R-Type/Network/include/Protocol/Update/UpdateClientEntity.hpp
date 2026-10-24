@@ -38,6 +38,9 @@ namespace RType {
         static void systemUpdateTextEntity(
             GameManager &gm, ServerManager &server);
 
+        void initUpdateEntity(
+            GameManager &gm, Entity entity, ServerManager &server, uint32_t id);
+
         [[nodiscard]] uint32_t getId() const
         {
             return _id;
@@ -53,12 +56,18 @@ namespace RType {
             return _links;
         }
 
+        [[nodiscard]] std::vector<uint32_t> &getInits()
+        {
+            return _inits;
+        }
+
         [[nodiscard]] bool getUpdate() const
         {
             return _update;
         }
 
         void removeLink(uint32_t id);
+        void removeInit(uint32_t id);
 
         static void destroyUpdateEntity(
             GameManager &gm, Entity e, ServerManager &server);
@@ -69,6 +78,7 @@ namespace RType {
     private:
         uint32_t _id;
         std::vector<uint32_t> _links;
+        std::vector<uint32_t> _inits;
         EntityType _type;
         std::chrono::milliseconds _sleep = std::chrono::milliseconds(0);
         bool _update = true;

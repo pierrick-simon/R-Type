@@ -46,7 +46,7 @@ namespace RType {
          */
         template<NetworkSynced C>
         static void systemSetEntity(GameManager &gm, Entity entity,
-            ServerManager &server, UpdateClientEntity &update)
+            ServerManager &server, UpdateClientEntity &update, uint32_t id)
         {
             try {
                 auto &comp = gm.getComponent<C>(entity);
@@ -55,7 +55,7 @@ namespace RType {
                     if (!value)
                         return;
                     SetPayload p {update.getId(), prop, *value};
-                    SetProtocol::sendSet(update.create, server, p);
+                    SetProtocol::sendSet({id}, server, p);
                 }
             } catch (NoSuchComponent &) {
             }
@@ -65,9 +65,9 @@ namespace RType {
          */
         template<NetworkSynced... Cs>
         static void systemSetAllEntity(GameManager &gm, Entity entity,
-            ServerManager &server, UpdateClientEntity &update)
+            ServerManager &server, UpdateClientEntity &update, uint32_t id)
         {
-            (systemSetEntity<Cs>(gm, entity, server, update), ...);
+            (systemSetEntity<Cs>(gm, entity, server, update, id), ...);
         }
 
         /**
