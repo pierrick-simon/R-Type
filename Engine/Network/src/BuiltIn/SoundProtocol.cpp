@@ -28,7 +28,7 @@ namespace RType {
             s.state = s.state == Sound::State::PAUSED ? Sound::State::START
                                                       : Sound::State::PLAY;
         } else if (gm.hasComponent<SpriteSheet2D>(*entity)) {
-            gm.getComponent<SpriteSheet2D>(*entity).animation() = true;
+            gm.getComponent<SpriteSheet2D>(*entity).animation = true;
         }
     }
 
@@ -49,7 +49,7 @@ namespace RType {
                 s.state == Sound::State::PLAY || s.state == Sound::State::START)
                 s.state = Sound::State::PAUSED;
         } else if (gm.hasComponent<SpriteSheet2D>(*entity)) {
-            gm.getComponent<SpriteSheet2D>(*entity).animation() = false;
+            gm.getComponent<SpriteSheet2D>(*entity).animation = false;
         }
     }
 
@@ -70,8 +70,8 @@ namespace RType {
             s.state = Sound::State::STOP;
         } else if (gm.hasComponent<SpriteSheet2D>(*entity)) {
             auto &sheet = gm.getComponent<SpriteSheet2D>(*entity);
-            sheet.animation() = false;
-            sheet.currentTile() = 0;
+            sheet.animation = false;
+            sheet.currentTile = 0;
         }
     }
 

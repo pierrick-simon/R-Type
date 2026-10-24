@@ -19,9 +19,9 @@ namespace RType::Server {
 
     void spawnBullet(GameManager &gm, const Position2D &shooter)
     {
-        const float x = shooter.x() + PLAYER_WIDTH - 35;
+        const float x = shooter.x + PLAYER_WIDTH - 35;
         const float y =
-            shooter.y() + ((PLAYER_HEIGHT - BULLET_HEIGHT) / 2.f) + 10;
+            shooter.y + ((PLAYER_HEIGHT - BULLET_HEIGHT) / 2.f) + 10;
         auto bullet = gm.createEntity();
 
         gm.addComponent<Bullet>(bullet);
@@ -41,11 +41,11 @@ namespace RType::Server {
         for (auto &[bullet, tag, sheet, pos] :
             gm.view<Bullet, SpriteSheet2D, Position2D>().getVector()) {
             (void) tag;
-            if (sheet.currentTile() >= BULLET_FRAMES - 1) {
-                sheet.currentTile() = BULLET_FRAMES - 1;
-                sheet.animation() = false;
+            if (sheet.currentTile >= BULLET_FRAMES - 1) {
+                sheet.currentTile = BULLET_FRAMES - 1;
+                sheet.animation = false;
             }
-            if (pos.x() > WINDOW_WIDTH)
+            if (pos.x > WINDOW_WIDTH)
                 gm.destroyEntity(bullet);
         }
     }

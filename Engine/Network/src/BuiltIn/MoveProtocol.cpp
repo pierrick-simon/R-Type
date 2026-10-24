@@ -32,8 +32,8 @@ namespace RType {
             return;
         auto &pos = gm.getComponent<Position2D>(it->second);
         auto &v = gm.getComponent<Velocity2D>(it->second);
-        pos.x() = static_cast<float>(e->posX);
-        pos.y() = static_cast<float>(e->posY);
+        pos.x = static_cast<float>(e->posX);
+        pos.y = static_cast<float>(e->posY);
         v.x = static_cast<float>(e->posX);
         v.y = static_cast<float>(e->posY);
     }
@@ -43,8 +43,8 @@ namespace RType {
         const Velocity2D &v)
     {
         MovePayload p {id,
-            static_cast<int32_t>(std::lround(pos.x())),
-            static_cast<int32_t>(std::lround(pos.y())),
+            static_cast<int32_t>(std::lround(pos.x)),
+            static_cast<int32_t>(std::lround(pos.y)),
             static_cast<int32_t>(std::lround(v.x)),
             static_cast<int32_t>(std::lround(v.y))};
         s.sendToClients(ids, Opcode::MOVE, serializeMove(p));

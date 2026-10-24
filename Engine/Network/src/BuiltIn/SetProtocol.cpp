@@ -74,56 +74,56 @@ namespace RType {
 
         switch (prop) {
             case Property::SCALE:
-                with<Sprite2D>(gm, e, [f](auto &c) { c.scale() = f; });
-                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.scale() = f; });
+                with<Sprite2D>(gm, e, [f](auto &c) { c.scale = f; });
+                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.scale = f; });
                 break;
             case Property::FONT_SIZE:
                 if (f > 0)
-                    with<Text2D>(gm, e, [f](auto &c) { c.fontSize() = f; });
+                    with<Text2D>(gm, e, [f](auto &c) { c.fontSize = f; });
                 break;
             case Property::ROTATION:
-                with<Sprite2D>(gm, e, [f](auto &c) { c.rotation() = f; });
-                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.rotation() = f; });
-                with<Text2D>(gm, e, [f](auto &c) { c.rotation() = f; });
+                with<Sprite2D>(gm, e, [f](auto &c) { c.rotation = f; });
+                with<SpriteSheet2D>(gm, e, [f](auto &c) { c.rotation = f; });
+                with<Text2D>(gm, e, [f](auto &c) { c.rotation = f; });
                 break;
             case Property::FLIP:
-                with<Sprite2D>(gm, e, [i](auto &c) { c.flip() = i != 0; });
-                with<SpriteSheet2D>(gm, e, [i](auto &c) { c.flip() = i != 0; });
+                with<Sprite2D>(gm, e, [i](auto &c) { c.flip = i != 0; });
+                with<SpriteSheet2D>(gm, e, [i](auto &c) { c.flip = i != 0; });
                 break;
             case Property::COLOR: {
                 const auto color = toColor(static_cast<uint32_t>(i));
-                with<Sprite2D>(gm, e, [color](auto &c) { c.color() = color; });
+                with<Sprite2D>(gm, e, [color](auto &c) { c.color = color; });
                 with<SpriteSheet2D>(
-                    gm, e, [color](auto &c) { c.color() = color; });
-                with<Text2D>(gm, e, [color](auto &c) { c.color() = color; });
+                    gm, e, [color](auto &c) { c.color = color; });
+                with<Text2D>(gm, e, [color](auto &c) { c.color = color; });
                 break;
             }
             case Property::ORIGIN:
                 with<Sprite2D>(gm, e, [pt](auto &c) {
-                    c.origin() = {static_cast<float>(pt.first),
+                    c.origin = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
                 });
                 with<SpriteSheet2D>(gm, e, [pt](auto &c) {
-                    c.origin() = {static_cast<float>(pt.first),
+                    c.origin = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
                 });
                 with<Text2D>(gm, e, [pt](auto &c) {
-                    c.origin() = {static_cast<float>(pt.first),
+                    c.origin = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
                 });
                 break;
             case Property::FRAME:
                 with<SpriteSheet2D>(gm, e, [i](auto &c) {
-                    c.currentTile() = static_cast<std::size_t>(i);
+                    c.currentTile = static_cast<std::size_t>(i);
                 });
                 break;
             case Property::FRAME_DURATION:
                 with<SpriteSheet2D>(gm, e, [i](auto &c) {
-                    c.frameDuration() = std::chrono::milliseconds(i);
+                    c.frameDuration = std::chrono::milliseconds(i);
                 });
                 break;
             case Property::SPACING:
-                with<Text2D>(gm, e, [f](auto &c) { c.spacing() = f; });
+                with<Text2D>(gm, e, [f](auto &c) { c.spacing = f; });
                 break;
             case Property::VOLUME:
                 with<Sound>(gm, e, [f](auto &c) {

@@ -40,9 +40,8 @@ namespace RType {
     {
         for (auto [entity, pos, update] :
             gm.view<Position2D, UpdateClientEntity>().getVector()) {
-            if (!pos.getUpdate() || !update.active || !update._update)
+            if (!update.active || !update._update)
                 continue;
-            pos.setUpdate(false);
             if (!gm.hasComponent<Velocity2D>(entity))
                 MoveProtocol::sendMove(
                     update._links, server, update.getId(), pos);
@@ -66,8 +65,8 @@ namespace RType {
             checkConnectedClient(server, update);
             try {
                 auto tmp = gm.getComponent<Position2D>(entity);
-                pe.posX = uint32_t(tmp.x());
-                pe.posY = uint32_t(tmp.y());
+                pe.posX = uint32_t(tmp.x);
+                pe.posY = uint32_t(tmp.y);
             } catch (NoSuchComponent &e) {
             }
             pe.assetId = update.asset;
@@ -85,12 +84,9 @@ namespace RType {
     void UpdateClientEntity::setCreateEntity(GameManager &gm, Entity entity,
         ServerManager &server, UpdateClientEntity &update)
     {
-        SetClientEntity::systemSetAllEntity<Sprite2D, SpriteSheet2D, Text2D>(
-            gm, entity, server, update);
         try {
             auto text = gm.getComponent<Text2D>(entity);
-            TextProtocol::sendText(
-                update.create, server, update._id, text.str());
+            TextProtocol::sendText(update.create, server, update._id, text.str);
         } catch (NoSuchComponent &e) {
         }
     }
@@ -100,11 +96,9 @@ namespace RType {
     {
         for (auto [_, text, update] :
             gm.view<Text2D, UpdateClientEntity>().getVector()) {
-            if (!update.active || !update._update || text.getUpdateText())
+            if (!update.active || !update._update)
                 continue;
-            TextProtocol::sendText(
-                update._links, server, update._id, text.str());
-            text.setUpdateText(false);
+            TextProtocol::sendText(update._links, server, update._id, text.str);
         }
     }
 

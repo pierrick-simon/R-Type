@@ -23,7 +23,7 @@ namespace RType {
         auto &gm = ctx.gm->get();
         if (!gm.hasComponent<Text2D>(*entity))
             return;
-        gm.getComponent<Text2D>(*entity).str() = std::move(e->text);
+        gm.getComponent<Text2D>(*entity).str = std::move(e->text);
     }
 
     void TextProtocol::sendText(const std::vector<uint32_t> &ids,

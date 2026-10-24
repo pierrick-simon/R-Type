@@ -97,8 +97,8 @@ namespace RType {
 
         Rect rectOf(const Position2D &pos, const Hitbox &box)
         {
-            return {pos.x() + box.offsetX,
-                pos.y() + box.offsetY,
+            return {pos.x + box.offsetX,
+                pos.y + box.offsetY,
                 box.width,
                 box.height};
         }
@@ -132,8 +132,8 @@ namespace RType {
                     Hitbox &box) {
                     if (found || health.hp <= 0)
                         return;
-                    x = pos.x() + box.offsetX + box.width / 2.f;
-                    y = pos.y() + box.offsetY + box.height / 2.f;
+                    x = pos.x + box.offsetX + box.width / 2.f;
+                    y = pos.y + box.offsetY + box.height / 2.f;
                     found = true;
                 });
             return found;
@@ -144,8 +144,8 @@ namespace RType {
         {
             if (hooks.onEnemyDeath)
                 hooks.onEnemyDeath(gm,
-                    pos.x() + box.offsetX + box.width / 2.f,
-                    pos.y() + box.offsetY + box.height / 2.f);
+                    pos.x + box.offsetX + box.width / 2.f,
+                    pos.y + box.offsetY + box.height / 2.f);
             gm.destroyEntity(enemy);
         }
 
@@ -160,8 +160,8 @@ namespace RType {
         weapon.timer += elapsedSeconds(clock);
         if (weapon.timer < weapon.cooldown)
             return;
-        const float muzzleX = pos.x() + hitbox.offsetX;
-        const float muzzleY = pos.y() + hitbox.offsetY + hitbox.height / 2.f;
+        const float muzzleX = pos.x + hitbox.offsetX;
+        const float muzzleY = pos.y + hitbox.offsetY + hitbox.height / 2.f;
         if (muzzleX > SCREEN_WIDTH)
             return;
 
