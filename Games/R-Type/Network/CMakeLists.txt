@@ -39,6 +39,4 @@ target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system engine-graphical 
 if (MSVC)
     target_compile_options(${NETWORK_LIB_NAME} PRIVATE /W4 /permissive- /wd4251)
     target_compile_definitions(${NETWORK_LIB_NAME} PRIVATE _CRT_SECURE_NO_WARNINGS NOMINMAX)
-else ()
-    target_compile_options(${NETWORK_LIB_NAME} PRIVATE -Wall -Wextra)
 endif ()

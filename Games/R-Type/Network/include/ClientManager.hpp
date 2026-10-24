@@ -38,12 +38,10 @@ namespace RType {
          *
          * @param host Hostname or IP address of the server.
          * @param port UDP port of the server.
-         * @param defaultProtocole apply the default protocole for the client
          * @throws asio::system_error If the host cannot be resolved or the
          * socket cannot be opened.
          */
-        ClientManager(
-            const std::string &host, short port, bool defaultProtocole = true);
+        ClientManager(const std::string &host, short port);
 
         /**
          * @brief ECS system that processes pending network events.
@@ -65,9 +63,9 @@ namespace RType {
 
     private:
         /**
-         * @brief Add the default manage function to the udp Client.
+         * @brief Add the manage function to the udp Client.
          */
-        void createDefaultProtocol();
+        void createProtocol();
 
         void addContextManage(uint8_t op,
             const std::function<void(const Header &,
@@ -75,7 +73,6 @@ namespace RType {
 
         std::unique_ptr<UDPClient> _udp;
         Context _ctx;
-        bool _defaultProtocole;
         bool _first = true;
     };
 } // namespace RType

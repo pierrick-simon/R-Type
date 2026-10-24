@@ -13,13 +13,12 @@
 #include "UpdateClientEntity.hpp"
 
 namespace RType {
-    ServerManager::ServerManager(short port, bool defaultProtocole) :
-        _udp(std::make_unique<UDPServer>(port)),
-        _defaultProtocole(defaultProtocole)
+    ServerManager::ServerManager(short port) :
+        _udp(std::make_unique<UDPServer>(port))
     {
     }
 
-    void ServerManager::createDefaultProtocol()
+    void ServerManager::createProtocol()
     {
         _udp->addManage(
             LOGIN,
@@ -48,8 +47,7 @@ namespace RType {
     {
         if (server._first) {
             server._first = false;
-            if (server._defaultProtocole)
-                server.createDefaultProtocol();
+            server.createProtocol();
             server._udp->start();
         }
         server._ctx.gm = std::ref(gm);

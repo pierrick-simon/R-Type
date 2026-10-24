@@ -14,14 +14,12 @@
 #include "TextProtocol.hpp"
 
 namespace RType {
-    ClientManager::ClientManager(
-        const std::string &host, short port, bool defaultProtocole) :
-        _udp(std::make_unique<UDPClient>(host, port)),
-        _defaultProtocole(defaultProtocole)
+    ClientManager::ClientManager(const std::string &host, short port) :
+        _udp(std::make_unique<UDPClient>(host, port))
     {
     }
 
-    void ClientManager::createDefaultProtocol()
+    void ClientManager::createProtocol()
     {
         addContextManage(OpcodeRType::CREATE, CreateProtocol::manageCreate);
         addContextManage(OpcodeRType::DESTROY, DestroyProtocol::manageDestroy);
@@ -38,8 +36,7 @@ namespace RType {
     {
         if (client._first) {
             client._first = false;
-            if (client._defaultProtocole)
-                client.createDefaultProtocol();
+            client.createProtocol();
             client._udp->start();
         }
         client._ctx.gm = std::ref(gm);

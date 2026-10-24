@@ -38,10 +38,9 @@ namespace RType {
          * thread inside systemServerReceived().
          *
          * @param port UDP port to bind to.
-         * @param defaultProtocole apply the default protocole for the client
          * @throws asio::system_error If the socket cannot be bound to the port.
          */
-        ServerManager(short port, bool defaultProtocole = true);
+        ServerManager(short port);
 
         /**
          * @brief ECS system that processes pending network events.
@@ -77,9 +76,9 @@ namespace RType {
 
     private:
         /**
-         * @brief Add the default protocol to the udp Server.
+         * @brief Add the protocol to the udp Server.
          */
-        void createDefaultProtocol();
+        void createProtocol();
 
         /**
          * @brief Add the default logout manage function to the udp Server.
@@ -94,7 +93,6 @@ namespace RType {
 
         std::unique_ptr<UDPServer> _udp;
         Context _ctx;
-        bool _defaultProtocole;
         bool _first = true;
     };
 
