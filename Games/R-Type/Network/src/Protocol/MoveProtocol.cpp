@@ -47,7 +47,7 @@ namespace RType {
             static_cast<int32_t>(std::lround(pos.y)),
             static_cast<int32_t>(std::lround(v.x)),
             static_cast<int32_t>(std::lround(v.y))};
-        s.sendToClients(ids, Opcode::MOVE, serializeMove(p));
+        s.sendToClients(ids, OpcodeRType::MOVE, serializeMove(p));
     }
 
     std::vector<uint8_t> MoveProtocol::serializeMove(const MovePayload &e)

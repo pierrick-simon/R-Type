@@ -129,17 +129,6 @@ set(SRCS_NETWORK
     ${NETWORK}/src/ClientUDP.cpp
     ${NETWORK}/src/ServerUDP.cpp
     ${NETWORK}/src/Utils.cpp
-    ${NETWORK}/src/ServerManager.cpp
-    ${NETWORK}/src/ClientManager.cpp
-    ${NETWORK}/src/BuiltIn/KeyboardProtocol.cpp
-    ${NETWORK}/src/BuiltIn/MouseProtocol.cpp
-    ${NETWORK}/src/BuiltIn/CreateProtocol.cpp
-    ${NETWORK}/src/BuiltIn/MoveProtocol.cpp
-    ${NETWORK}/src/BuiltIn/SetProtocol.cpp
-    ${NETWORK}/src/BuiltIn/SoundProtocol.cpp
-    ${NETWORK}/src/BuiltIn/TextProtocol.cpp
-    ${NETWORK}/src/BuiltIn/DestroyProtocol.cpp
-    ${NETWORK}/src/BuiltIn/UpdateClientEntity.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
@@ -147,4 +136,4 @@ target_include_directories(${NETWORK_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include/BuiltIn
 )
-target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system engine-graphical asio::asio)
+target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system asio::asio)

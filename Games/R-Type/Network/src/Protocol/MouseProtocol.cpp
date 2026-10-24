@@ -63,9 +63,9 @@ namespace RType {
             auto &pressed = mm.buttonPressed;
             auto &released = mm.buttonReleased;
             for (auto &value : pressed)
-                c.send(Opcode::MOUSE_BUTTON_PRESSED, {toByte(value)});
+                c.send(OpcodeRType::MOUSE_BUTTON_PRESSED, {toByte(value)});
             for (auto &value : released)
-                c.send(Opcode::MOUSE_BUTTON_RELEASED, {toByte(value)});
+                c.send(OpcodeRType::MOUSE_BUTTON_RELEASED, {toByte(value)});
         });
     }
 

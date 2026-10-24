@@ -120,7 +120,7 @@ namespace RType {
     void CreateProtocol::sendCreate(const std::vector<uint32_t> &ids,
         ServerManager &server, ProtocolEntity &pe)
     {
-        server.sendToClients(ids, Opcode::CREATE, serializeEntity(pe));
+        server.sendToClients(ids, OpcodeRType::CREATE, serializeEntity(pe));
     }
 
 } // namespace RType

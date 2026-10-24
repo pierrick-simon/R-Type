@@ -23,13 +23,15 @@ namespace RType {
     {
         _udp->addManage(
             LOGIN,
-            [this](const Header &h, const std::vector<uint8_t> &p) {
+            [this]([[maybe_unused]] const Header &h,
+                [[maybe_unused]] const std::vector<uint8_t> &p) {
                 defaultClient();
             },
             true);
         _udp->addManage(
             LOGOUT,
-            [this](const Header &h, const std::vector<uint8_t> &p) {
+            [this](const Header &h,
+                [[maybe_unused]] const std::vector<uint8_t> &p) {
                 deleteClient(h);
             },
             true);
@@ -55,7 +57,7 @@ namespace RType {
         server._ctx.gm.reset();
     }
 
-    void ServerManager::addContextManage(Opcode op,
+    void ServerManager::addContextManage(uint8_t op,
         const std::function<void(
             const Header &, const std::vector<uint8_t> &, Context &)> &func)
     {
@@ -66,20 +68,20 @@ namespace RType {
     }
 
     void ServerManager::sendToClients(const std::vector<uint32_t> &ids,
-        Opcode op, const std::vector<uint8_t> &payload)
+        uint8_t op, const std::vector<uint8_t> &payload)
     {
         for (auto id : ids)
             sendToClient(id, op, payload);
     }
 
     void ServerManager::sendToClient(
-        uint32_t id, Opcode op, const std::vector<uint8_t> &payload)
+        uint32_t id, uint8_t op, const std::vector<uint8_t> &payload)
     {
         _udp->sendToClient(id, op, payload);
     }
 
     void ServerManager::broadcast(
-        Opcode op, const std::vector<uint8_t> &payload)
+        uint8_t op, const std::vector<uint8_t> &payload)
     {
         for (auto [id, _] : _ctx.clients)
             sendToClient(id, op, payload);

@@ -31,7 +31,7 @@ namespace RType {
     void DestroyProtocol::sendDestroy(
         const std::vector<uint32_t> &ids, ServerManager &s, uint32_t id)
     {
-        s.sendToClients(ids, Opcode::DESTROY, serializeDestroy({id}));
+        s.sendToClients(ids, OpcodeRType::DESTROY, serializeDestroy({id}));
     }
 
     std::vector<uint8_t> DestroyProtocol::serializeDestroy(

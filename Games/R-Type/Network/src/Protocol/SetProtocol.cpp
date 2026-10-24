@@ -173,7 +173,7 @@ namespace RType {
     void SetProtocol::sendSet(
         const std::vector<uint32_t> &ids, ServerManager &s, const SetPayload &p)
     {
-        s.sendToClients(ids, Opcode::SET, serializeSet(p));
+        s.sendToClients(ids, OpcodeRType::SET, serializeSet(p));
     }
 
     std::vector<uint8_t> SetProtocol::serializeSet(const SetPayload &e)

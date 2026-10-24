@@ -9,6 +9,7 @@
 #define CLIENTMANAGER_HPP_
 
 #include "ClientUDP.hpp"
+#include "Context.hpp"
 #include "GameManager.hpp"
 
 namespace RType {
@@ -60,7 +61,7 @@ namespace RType {
         static void systemClientReceived(
             GameManager &gm, ClientManager &client);
 
-        void send(Opcode op, const std::vector<uint8_t> &payload);
+        void send(uint8_t op, const std::vector<uint8_t> &payload);
 
     private:
         /**
@@ -68,7 +69,7 @@ namespace RType {
          */
         void createDefaultProtocol();
 
-        void addContextManage(Opcode op,
+        void addContextManage(uint8_t op,
             const std::function<void(const Header &,
                 const std::vector<uint8_t> &, Context &)> &func);
 

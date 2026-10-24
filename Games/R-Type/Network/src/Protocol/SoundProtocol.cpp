@@ -77,17 +77,17 @@ namespace RType {
 
     void SoundProtocol::sendPlay(ServerManager &s, uint32_t id)
     {
-        s.broadcast(Opcode::PLAY, serializeSound({id}));
+        s.broadcast(OpcodeRType::PLAY, serializeSound({id}));
     }
 
     void SoundProtocol::sendPause(ServerManager &s, uint32_t id)
     {
-        s.broadcast(Opcode::PAUSE, serializeSound({id}));
+        s.broadcast(OpcodeRType::PAUSE, serializeSound({id}));
     }
 
     void SoundProtocol::sendStop(ServerManager &s, uint32_t id)
     {
-        s.broadcast(Opcode::STOP, serializeSound({id}));
+        s.broadcast(OpcodeRType::STOP, serializeSound({id}));
     }
 
     std::vector<uint8_t> SoundProtocol::serializeSound(const SoundPayload &e)

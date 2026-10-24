@@ -23,14 +23,14 @@ namespace RType {
 
     void ClientManager::createDefaultProtocol()
     {
-        addContextManage(Opcode::CREATE, CreateProtocol::manageCreate);
-        addContextManage(Opcode::DESTROY, DestroyProtocol::manageDestroy);
-        addContextManage(Opcode::MOVE, MoveProtocol::manageMove);
-        addContextManage(Opcode::SET, SetProtocol::manageSet);
-        addContextManage(Opcode::PAUSE, SoundProtocol::managePause);
-        addContextManage(Opcode::PLAY, SoundProtocol::managePlay);
-        addContextManage(Opcode::STOP, SoundProtocol::manageStop);
-        addContextManage(Opcode::TEXT, TextProtocol::manageText);
+        addContextManage(OpcodeRType::CREATE, CreateProtocol::manageCreate);
+        addContextManage(OpcodeRType::DESTROY, DestroyProtocol::manageDestroy);
+        addContextManage(OpcodeRType::MOVE, MoveProtocol::manageMove);
+        addContextManage(OpcodeRType::SET, SetProtocol::manageSet);
+        addContextManage(OpcodeRType::PAUSE, SoundProtocol::managePause);
+        addContextManage(OpcodeRType::PLAY, SoundProtocol::managePlay);
+        addContextManage(OpcodeRType::STOP, SoundProtocol::manageStop);
+        addContextManage(OpcodeRType::TEXT, TextProtocol::manageText);
     }
 
     void ClientManager::systemClientReceived(
@@ -47,12 +47,12 @@ namespace RType {
         client._ctx.gm.reset();
     }
 
-    void ClientManager::send(Opcode op, const std::vector<uint8_t> &payload)
+    void ClientManager::send(uint8_t op, const std::vector<uint8_t> &payload)
     {
         _udp->send(op, payload);
     }
 
-    void ClientManager::addContextManage(Opcode op,
+    void ClientManager::addContextManage(uint8_t op,
         const std::function<void(
             const Header &, const std::vector<uint8_t> &, Context &)> &func)
     {

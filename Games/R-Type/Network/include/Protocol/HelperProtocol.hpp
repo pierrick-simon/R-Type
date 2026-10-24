@@ -9,6 +9,7 @@
     #define HELPERPROTOCOL_HPP_
 
 #include <optional>
+#include "Context.hpp"
 #include "GameManager.hpp"
 #include "Network.hpp"
 

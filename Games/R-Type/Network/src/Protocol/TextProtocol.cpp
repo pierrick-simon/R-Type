@@ -29,7 +29,7 @@ namespace RType {
     void TextProtocol::sendText(const std::vector<uint32_t> &ids,
         ServerManager &s, uint32_t id, const std::string &text)
     {
-        s.sendToClients(ids, Opcode::TEXT, serializeText({id, text}));
+        s.sendToClients(ids, OpcodeRType::TEXT, serializeText({id, text}));
     }
 
     std::vector<uint8_t> TextProtocol::serializeText(const TextPayload &e)

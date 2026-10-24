@@ -64,9 +64,9 @@ namespace RType {
             auto &pressed = km.keyPressed;
             auto &released = km.keyReleased;
             for (auto &value : pressed)
-                c.send(Opcode::KEY_PRESSED, {toByte(value)});
+                c.send(OpcodeRType::KEY_PRESSED, {toByte(value)});
             for (auto &value : released)
-                c.send(Opcode::KEY_RELEASED, {toByte(value)});
+                c.send(OpcodeRType::KEY_RELEASED, {toByte(value)});
         });
     }
 

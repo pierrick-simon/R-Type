@@ -8,6 +8,7 @@
 #ifndef SERVERMANAGER_HPP_
 #define SERVERMANAGER_HPP_
 
+#include "Context.hpp"
 #include "GameManager.hpp"
 #include "ServerUDP.hpp"
 
@@ -58,10 +59,10 @@ namespace RType {
             GameManager &gm, ServerManager &server);
 
         void sendToClient(
-            uint32_t id, Opcode op, const std::vector<uint8_t> &payload);
-        void sendToClients(const std::vector<uint32_t> &ids, Opcode op,
+            uint32_t id, uint8_t op, const std::vector<uint8_t> &payload);
+        void sendToClients(const std::vector<uint32_t> &ids, uint8_t op,
             const std::vector<uint8_t> &payload);
-        void broadcast(Opcode op, const std::vector<uint8_t> &payload);
+        void broadcast(uint8_t op, const std::vector<uint8_t> &payload);
 
         [[nodiscard]] const std::unordered_map<uint16_t, Entity> &
         getClients() const
@@ -85,7 +86,7 @@ namespace RType {
          */
         void deleteClient(const Header &h);
 
-        void addContextManage(Opcode op,
+        void addContextManage(uint8_t op,
             const std::function<void(const Header &,
                 const std::vector<uint8_t> &, Context &)> &func);
 
