@@ -12,7 +12,7 @@
 #include "Config.hpp"
 #include "Enemies/EnemyComponents.hpp"
 #include "SpriteSheet2D.hpp"
-#include "Texture.hpp"
+#include "UpdateClientEntity.hpp"
 #include "Velocity2D.hpp"
 
 namespace RType::Server {
@@ -29,11 +29,14 @@ namespace RType::Server {
         gm.addComponent<Hitbox>(bullet, Hitbox {BULLET_WIDTH, BULLET_HEIGHT});
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
-        gm.addComponent<Texture2D>(
-            bullet, loadPixelTexture(gm, Asset::PLAYER_BULLET));
         gm.addComponent<Clock>(bullet);
         gm.addComponent<SpriteSheet2D>(
             bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
+        gm.addComponent<UpdateClientEntity>(bullet,
+                EntityType::SPRITESHEET,
+                Asset::PLAYER_BULLET,
+                gm,
+                bullet);
     }
 
     void bulletSystem(GameManager &gm)

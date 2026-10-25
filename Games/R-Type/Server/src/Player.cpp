@@ -15,7 +15,7 @@
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
-#include "Texture.hpp"
+#include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
 
@@ -59,8 +59,6 @@ namespace RType::Server {
                     (PLAYER_WIDTH - PLAYER_EXPLOSION_WIDTH * SCALE) / 2.f,
                 position.y +
                     (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * SCALE) / 2.f});
-        gm.addComponent<Texture2D>(
-            explosion, loadPixelTexture(gm, Asset::PLAYER_EXPLOSION));
         gm.addComponent<SpriteSheet2D>(explosion,
             Size2D(1, PLAYER_EXPLOSION_FRAMES),
             PLAYER_EXPLOSION_FRAME_MS,
@@ -68,6 +66,11 @@ namespace RType::Server {
         gm.addComponent<Clock>(explosion);
         gm.addComponent<PlayerExplosion>(
             explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
+        gm.addComponent<UpdateClientEntity>(explosion,
+                EntityType::SPRITESHEET,
+                Asset::PLAYER_EXPLOSION,
+                gm,
+                explosion);
     }
 
     void respawnPlayer(GameManager &gm, Entity player)
@@ -185,8 +188,6 @@ namespace RType::Server {
         gm.addComponent<Friction2D>(ship, PLAYER_FRICTION);
         gm.addComponent<Keyboard>(
             ship, gm.getComponent<KeyboardManager>(keyboardManager));
-        gm.addComponent<Texture2D>(
-            ship, loadPixelTexture(gm, Asset::PLAYER_SHEET_1));
         gm.addComponent<Clock>(ship);
         gm.addComponent<SpriteSheet2D>(ship,
             Size2D(1, PLAYER_FRAMES),
@@ -194,6 +195,11 @@ namespace RType::Server {
             PLAYER_FRAME_MS,
             SCALE,
             false);
+        gm.addComponent<UpdateClientEntity>(ship,
+                EntityType::SPRITESHEET,
+                Asset::PLAYER_SHEET_1,
+                gm,
+                ship);
         return ship;
     }
 
