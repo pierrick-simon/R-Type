@@ -68,6 +68,7 @@ namespace RType {
         for (auto id : c._created) {
             CreatedProtocol::sendCreated(c, id);
         }
+        c._created.clear();
     }
 
     void ClientManager::addCreatedEntity(uint32_t id)

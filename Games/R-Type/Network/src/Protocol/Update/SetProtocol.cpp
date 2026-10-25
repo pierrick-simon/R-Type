@@ -49,8 +49,10 @@ namespace RType {
 
     raylib::Color toColor(uint32_t u)
     {
-        return static_cast<uint8_t>(u >> 24), static_cast<uint8_t>(u >> 16),
-               static_cast<uint8_t>(u >> 8), static_cast<uint8_t>(u);
+        return {static_cast<uint8_t>(u >> 24),
+            static_cast<uint8_t>(u >> 16),
+            static_cast<uint8_t>(u >> 8),
+            static_cast<uint8_t>(u)};
     }
 
     /** Applies `fn` to the component T of `e`, if it has one. */

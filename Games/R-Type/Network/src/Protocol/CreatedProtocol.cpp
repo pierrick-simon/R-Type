@@ -11,6 +11,19 @@
 #include "Velocity2D.hpp"
 
 namespace RType {
+    std::optional<Entity> CreatedProtocol::getEntity(
+        GameManager &gm, uint32_t id)
+    {
+        std::optional<Entity> entity;
+        for (auto [e, u] : gm.view<UpdateClientEntity>().getVector()) {
+            if (u.getId() == id) {
+                entity = e;
+                break;
+            }
+        }
+        return entity;
+    }
+
     void CreatedProtocol::manageCreated(const Header &header,
         const std::vector<uint8_t> &payload, ServerManager &server)
     {
@@ -20,19 +33,18 @@ namespace RType {
         auto e = parseCreated(payload);
         if (!e)
             return;
-        auto it = ctx.map.find(e->id);
-        if (it == ctx.map.end())
-            return;
         auto &gm = ctx.gm->get();
-        const Entity entity = it->second;
-
-        if (gm.hasEntity(entity)) {
-            if (gm.hasComponent<UpdateClientEntity>(entity)) {
-                auto &comp = gm.getComponent<UpdateClientEntity>(entity);
-                comp.initUpdateEntity(gm, entity, server, header.senderId);
+        auto entity = getEntity(ctx.gm->get(), e->id);
+        if (!entity)
+            return;
+        if (gm.hasEntity(entity.value())) {
+            if (gm.hasComponent<UpdateClientEntity>(entity.value())) {
+                auto &comp =
+                    gm.getComponent<UpdateClientEntity>(entity.value());
+                comp.initUpdateEntity(
+                    gm, entity.value(), server, header.senderId);
             }
         }
-        gm.destroyEntity(entity);
     }
 
     void CreatedProtocol::sendCreated(ClientManager &c, uint32_t id)

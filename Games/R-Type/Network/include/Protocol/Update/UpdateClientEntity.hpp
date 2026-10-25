@@ -22,13 +22,12 @@ namespace RType {
 
     class UpdateClientEntity {
     public:
-        UpdateClientEntity(EntityType type, int asset, bool active = true,
-            std::size_t rate = 30);
+        UpdateClientEntity(EntityType type, int asset, GameManager &gm,
+            Entity entity, std::size_t rate = 30);
 
         std::vector<uint32_t> create;
 
         int asset;
-        bool active;
         std::size_t rate;
 
         static void systemUpdateEntityPos(

@@ -31,13 +31,26 @@ namespace RType {
             a.end());
     }
 
-    UpdateClientEntity::UpdateClientEntity(
-        EntityType type, int asset, bool active, std::size_t rate) :
-        _type(type), asset(asset), active(active), rate(rate)
+    UpdateClientEntity::UpdateClientEntity(EntityType type, int asset,
+        GameManager &gm, Entity entity, std::size_t rate) :
+        _type(type), asset(asset), rate(rate)
     {
         static uint32_t id = 0;
         _id = id;
         id++;
+        if (type != EntityType::SOUND)
+            gm.addComponent<UpdatePosition2D>(entity);
+        switch (type) {
+            case EntityType::SPRITE:
+                gm.addComponent<UpdateSprite2D>(entity);
+                break;
+            case EntityType::SPRITESHEET:
+                gm.addComponent<UpdateSpriteSheet2D>(entity);
+                break;
+            case EntityType::TEXT_ENTITY:
+                gm.addComponent<UpdateText2D>(entity);
+                break;
+        }
     };
 
     void UpdateClientEntity::systemUpdateEntityPos(
@@ -45,7 +58,7 @@ namespace RType {
     {
         for (auto [entity, pos, update] :
             gm.view<UpdatePosition2D, UpdateClientEntity>().getVector()) {
-            if (!pos.getUpdate() || !update.active || !update._update)
+            if (!pos.getUpdate() || !update._update)
                 continue;
             if (!gm.hasComponent<Velocity2D>(entity))
                 MoveProtocol::sendMove(
@@ -67,7 +80,7 @@ namespace RType {
             ProtocolEntity pe = {};
             removeCommon(update.create, update._links);
             removeCommon(update.create, update._inits);
-            if (!update.active || !update._update || update.create.empty())
+            if (!update._update || update.create.empty())
                 continue;
             checkConnectedClient(server, update);
             if (gm.hasComponent<Position2D>(entity)) {
@@ -108,7 +121,7 @@ namespace RType {
     {
         for (auto [_, text, update] :
             gm.view<UpdateText2D, UpdateClientEntity>().getVector()) {
-            if (!text.getUpdateText() || !update.active || !update._update)
+            if (!text.getUpdateText() || !update._update)
                 continue;
             TextProtocol::sendText(update._links, server, update._id, text.str);
             text.setUpdateText(false);

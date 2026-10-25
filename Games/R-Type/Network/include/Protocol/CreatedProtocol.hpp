@@ -35,6 +35,7 @@ namespace RType {
         static std::vector<uint8_t> serializeCreated(const CreatedPayload &e);
         static std::optional<CreatedPayload> parseCreated(
             const std::vector<uint8_t> &payload);
+        static std::optional<Entity> getEntity(GameManager &gm, uint32_t id);
     };
 
 } // namespace RType

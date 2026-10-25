@@ -83,7 +83,7 @@ namespace RType {
         static void systemUpdateEntity(
             ServerManager &server, C &comp, UpdateClientEntity &update)
         {
-            if (!update.active || !update.getUpdate())
+            if (!update.getUpdate())
                 return;
             for (Property prop : comp.getUpdate()) {
                 auto value = comp.getProperty(prop);

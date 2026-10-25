@@ -23,12 +23,16 @@ namespace RType {
         switch (e->type) {
             case EntityType::SPRITE:
                 manageCreateSprite2D(e.value(), ctx);
+                break;
             case EntityType::SPRITESHEET:
                 manageCreateSpriteSheet(e.value(), ctx);
+                break;
             case EntityType::SOUND:
                 manageCreateSound(e.value(), ctx);
+                break;
             case EntityType::TEXT_ENTITY:
                 manageCreateText2D(e.value(), ctx);
+                break;
             default:
                 return;
         }

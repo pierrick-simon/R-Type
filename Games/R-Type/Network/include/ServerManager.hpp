@@ -111,8 +111,19 @@ namespace RType {
             return _id;
         }
 
+        [[nodiscard]] bool getInit() const
+        {
+            return _init;
+        }
+
+        void init()
+        {
+            _init = true;
+        }
+
     private:
         uint32_t _id;
+        bool _init = false;
     };
 } // namespace RType
 
