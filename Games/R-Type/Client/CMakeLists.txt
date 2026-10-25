@@ -4,8 +4,8 @@ project(r-type_client CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (NOT TARGET r-type_network)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Network ${CMAKE_BINARY_DIR}/Protocol)
+if (NOT TARGET r-type_shared)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../Shared ${CMAKE_BINARY_DIR}/Shared)
 endif ()
 
 set(MAIN
@@ -17,7 +17,7 @@ set(SRCS
 
 add_executable(r-type_client ${MAIN} ${SRCS})
 target_include_directories(r-type_client PRIVATE include)
-target_link_libraries(r-type_client PRIVATE r-type::network engine-system engine-network engine-graphical)
+target_link_libraries(r-type_client PRIVATE r-type::shared engine-system engine-network engine-graphical)
 
 # criterion
 if (TARGET criterion)
@@ -25,7 +25,7 @@ if (TARGET criterion)
 
     add_executable(client_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS})
     target_include_directories(client_tests_run_bin PRIVATE include)
-    target_link_libraries(client_tests_run_bin PRIVATE criterion r-type::network engine-system engine-network engine-graphical)
+    target_link_libraries(client_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical)
 
     # --coverage and `find` are GCC/Clang + Unix only
     if (NOT MSVC)
