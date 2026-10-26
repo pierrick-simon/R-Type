@@ -12,7 +12,7 @@
 #include "Config.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Friction2D.hpp"
-#include "Keyboard.hpp"
+#include "KeyboardManager.hpp"
 #include "Player.hpp"
 #include "ServerManager.hpp"
 #include "SetClientEntity.hpp"
@@ -29,25 +29,6 @@
 
 namespace RType::Server {
 
-    // Entity createWindow(GameManager &gm)
-    // {
-    //     auto window = gm.createEntity();
-
-    //     gm.addComponent<Window>(window, WINDOW_WIDTH, WINDOW_HEIGHT,
-    //     "R-type"); gm.createSystem<Window>(Window::systemClearWindow); return
-    //     window;
-    // }
-
-    // Entity createKeyboardManager(GameManager &gm)
-    // {
-    //     auto keyboardManager = gm.createEntity();
-
-    //     gm.addComponent<KeyboardManager>(keyboardManager);
-    //     gm.createSystem<KeyboardManager>(
-    //         KeyboardManager::systemKeyboardManager);
-    //     return keyboardManager;
-    // }
-
     Entity createServer(GameManager &gm)
     {
         auto server = gm.createEntity();
@@ -60,29 +41,32 @@ namespace RType::Server {
             UpdateSpriteSheet2D::systemUpdateSpriteSheet2D);
         gm.createSystem<UpdatePosition2D, Position2D>(
             UpdatePosition2D::systemUpdatePosition2D);
-        gm.createSystem<RType::ServerManager>(
-            RType::UpdateClientEntity::systemUpdateEntityPos);
-        gm.createSystem<RType::ServerManager>(
-            RType::UpdateClientEntity::systemCreateClientEntity);
-        gm.createSystem<RType::ServerManager>(
-            RType::UpdateClientEntity::systemUpdateTextEntity);
-        gm.createSystem<RType::MasterClock>(
-            RType::UpdateClientEntity::systemMasterUpdateClientEntitySleep);
-        gm.createSystem<RType::ServerManager>(
-            RType::SetClientEntity::systemUpdatesAllEntity<RType::UpdateText2D,
-                RType::UpdateSprite2D,
-                RType::UpdateSpriteSheet2D>);
+        gm.createSystem<ServerManager>(
+            UpdateClientEntity::systemUpdateEntityPos);
+        gm.createSystem<ServerManager>(
+            UpdateClientEntity::systemCreateClientEntity);
+        gm.createSystem<ServerManager>(
+            UpdateClientEntity::systemUpdateTextEntity);
+        gm.createSystem<MasterClock>(
+            UpdateClientEntity::systemMasterUpdateClientEntitySleep);
+        gm.createSystem<ServerManager>(
+            SetClientEntity::systemUpdatesAllEntity<UpdateText2D,
+                UpdateSprite2D,
+                UpdateSpriteSheet2D>);
+        gm.createSystem<ServerManager>([&gm](ServerManager &s) {
+            for (auto [_, u] : gm.view<UpdateClientEntity>().getVector())
+                for (auto [id, _] : s.getContext().clients)
+                    u.create.push_back(id);
+        });
         return server;
     }
 
-    RType::Entity createMasterClock(RType::GameManager &gm)
+    RType::Entity createMasterClock(GameManager &gm)
     {
-        RType::Entity mc = gm.createEntity();
-        gm.addComponent<RType::MasterClock>(mc);
-        gm.createSystem<RType::MasterClock>(
-            RType::MasterClock::systemMasterClock);
-        gm.createSystem<RType::MasterClock>(
-            RType::Velocity2D::systemMasterVelocity2D);
+        Entity mc = gm.createEntity();
+        gm.addComponent<MasterClock>(mc);
+        gm.createSystem<MasterClock>(MasterClock::systemMasterClock);
+        gm.createSystem<MasterClock>(Velocity2D::systemMasterVelocity2D);
         return mc;
     }
 
@@ -90,22 +74,17 @@ namespace RType::Server {
     {
         gm.createSystem<Clock>(Clock::systemClock);
         registerEnemySystems(gm, enemyHooks);
-        // gm.createSystem<Player,
-        //     Velocity2D,
-        //     Position2D,
-        //     Keyboard,
-        //     Clock,
-        //     Health>(playerHandle);
-        gm.createSystem<Friction2D, Velocity2D, Clock>(
-            Friction2D::systemFriction2D);
-        // gm.createSystem<Velocity2D, Position2D, Clock>(
-        //     Velocity2D::systemVelocity2D);
+        gm.createSystem<>(systemCreateSpaceShip);
+        gm.createSystem<Player,
+            Velocity2D,
+            Position2D,
+            KeyboardManager,
+            Clock,
+            Health>(playerHandle);
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
         gm.createSystem<>(playerDeath);
-        gm.createSystem<SpriteSheet2D, Clock>(
-            SpriteSheet2D::systemAnimateSpriteSheet2D);
         gm.createSystem<>(bulletSystem);
     }
 

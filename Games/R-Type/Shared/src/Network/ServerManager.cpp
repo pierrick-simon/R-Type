@@ -110,6 +110,8 @@ namespace RType {
         if (!_ctx.gm)
             return;
         _udp->removeClient(h);
+        if (_ctx.clients.count(h.senderId) == 0)
+            return;
         for (auto [_, update] :
             _ctx.gm->get().view<UpdateClientEntity>().getVector()) {
             auto &l = update.getLinks();
@@ -118,11 +120,17 @@ namespace RType {
                         [&](uint32_t v) { return h.senderId == v; }),
                 l.end());
             auto &i = update.getInits();
-            i.erase(std::remove_if(l.begin(),
+            i.erase(std::remove_if(i.begin(),
                         i.end(),
                         [&](uint32_t v) { return h.senderId == v; }),
                 i.end());
+            auto &c = update.create;
+            c.erase(std::remove_if(c.begin(),
+                        c.end(),
+                        [&](uint32_t v) { return h.senderId == v; }),
+                c.end());
         }
+        _ctx.gm->get().destroyEntity(_ctx.clients.at(h.senderId));
         _ctx.clients.erase(h.senderId);
     }
 }; // namespace RType

@@ -33,6 +33,7 @@ namespace RType {
         VOLUME = 11, //!< f32, 0 to 1
         PITCH = 12, //!< f32
         LOOP = 13, //!< u8
+        REC_NB = 14, //!< i16 width, i16 height
         Count
     };
 

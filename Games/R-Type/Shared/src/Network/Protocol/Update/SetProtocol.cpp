@@ -41,6 +41,7 @@ namespace RType {
             case Property::COLOR:
                 return Kind::U32;
             case Property::ORIGIN:
+            case Property::REC_NB:
                 return Kind::POINT16;
             default:
                 return Kind::U8;
@@ -112,6 +113,12 @@ namespace RType {
                 with<Text2D>(gm, e, [pt](auto &c) {
                     c.origin = {static_cast<float>(pt.first),
                         static_cast<float>(pt.second)};
+                });
+                break;
+            case Property::REC_NB:
+                with<SpriteSheet2D>(gm, e, [pt](auto &c) {
+                    c.recNb = {static_cast<int>(pt.first),
+                        static_cast<int>(pt.second)};
                 });
                 break;
             case Property::FRAME:

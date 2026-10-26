@@ -15,6 +15,7 @@
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
+#include "KeyboardManager.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
@@ -67,10 +68,10 @@ namespace RType::Server {
         gm.addComponent<PlayerExplosion>(
             explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
         gm.addComponent<UpdateClientEntity>(explosion,
-                EntityType::SPRITESHEET,
-                Asset::PLAYER_EXPLOSION,
-                gm,
-                explosion);
+            EntityType::SPRITESHEET,
+            Asset::PLAYER_EXPLOSION,
+            gm,
+            explosion);
     }
 
     void respawnPlayer(GameManager &gm, Entity player)
@@ -79,11 +80,11 @@ namespace RType::Server {
         auto &health = gm.getComponent<Health>(player);
         auto &position = gm.getComponent<Position2D>(player);
         auto &sheet = gm.getComponent<SpriteSheet2D>(player);
-        const auto &keyboard = gm.getComponent<Keyboard>(player);
+        const auto &keyboard = gm.getComponent<KeyboardManager>(player);
 
         state = Player {};
-        for (const auto key : keyboard.manager.keyDown)
-            setHeld(state, key, true);
+        // for (const auto key : keyboard.keyPressed)
+        //     setHeld(state, key, true);
         health.hp = health.maxHp;
         position = Position2D {PLAYER_START_X, WINDOW_HEIGHT / 2.f};
         gm.getComponent<Velocity2D>(player) = {};
@@ -94,9 +95,12 @@ namespace RType::Server {
     }
 
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, const Keyboard &keyboard, const Clock &clock,
-        const Health &health)
+        const Position2D &pos, const KeyboardManager &keyboard,
+        const Clock &clock, const Health &health)
     {
+        for (auto [entity, player, velocity] :
+            gm.view<Player, Velocity2D>().getVector()) {
+        }
         if (player.dying || health.hp <= 0) {
             velocity = {};
             return;
@@ -105,14 +109,14 @@ namespace RType::Server {
         const float speed = player.acceleration * elapsed;
 
         player.cooldown = std::max(0.f, player.cooldown - elapsed);
-        for (const auto &key : keyboard.manager.keyPressed) {
+        for (const auto &key : keyboard.keyPressed) {
             setHeld(player, key, true);
             if (key == Key::Value::Space && player.cooldown <= 0.f) {
                 spawnBullet(gm, pos);
                 player.cooldown = SHOOT_COOLDOWN;
             }
         }
-        for (const auto &key : keyboard.manager.keyReleased)
+        for (const auto &key : keyboard.keyReleased)
             setHeld(player, key, false);
         applyMovement(player, velocity, speed);
     }
@@ -175,32 +179,30 @@ namespace RType::Server {
             });
     }
 
-    Entity createSpaceShip(GameManager &gm, Entity keyboardManager)
+    void systemCreateSpaceShip(GameManager &gm)
     {
-        const Entity ship = gm.createEntity();
+        for (auto [e, d] : gm.view<DefaulClient>().getVector()) {
+            if (d.getInit())
+                continue;
+            d.init();
 
-        gm.addComponent<Player>(ship);
-        gm.addComponent<EnemyTarget>(ship);
-        gm.addComponent<Health>(ship, Health {PLAYER_HP, PLAYER_HP});
-        gm.addComponent<Hitbox>(ship, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
-        gm.addComponent<Position2D>(ship, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
-        gm.addComponent<Velocity2D>(ship);
-        gm.addComponent<Friction2D>(ship, PLAYER_FRICTION);
-        gm.addComponent<Keyboard>(
-            ship, gm.getComponent<KeyboardManager>(keyboardManager));
-        gm.addComponent<Clock>(ship);
-        gm.addComponent<SpriteSheet2D>(ship,
-            Size2D(1, PLAYER_FRAMES),
-            FRAME_NEUTRAL,
-            PLAYER_FRAME_MS,
-            SCALE,
-            false);
-        gm.addComponent<UpdateClientEntity>(ship,
-                EntityType::SPRITESHEET,
-                Asset::PLAYER_SHEET_1,
-                gm,
-                ship);
-        return ship;
+            gm.addComponent<Player>(e);
+            gm.addComponent<EnemyTarget>(e);
+            gm.addComponent<Health>(e, Health {PLAYER_HP, PLAYER_HP});
+            gm.addComponent<Hitbox>(e, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
+            gm.addComponent<Position2D>(e, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
+            gm.addComponent<Velocity2D>(e);
+            gm.addComponent<Friction2D>(e, PLAYER_FRICTION);
+            gm.addComponent<Clock>(e);
+            gm.addComponent<SpriteSheet2D>(e,
+                Size2D(1, PLAYER_FRAMES),
+                FRAME_NEUTRAL,
+                PLAYER_FRAME_MS,
+                SCALE,
+                false);
+            gm.addComponent<UpdateClientEntity>(
+                e, EntityType::SPRITESHEET, Asset::PLAYER_SHEET_1, gm, e);
+        }
     }
 
 } // namespace RType::Server

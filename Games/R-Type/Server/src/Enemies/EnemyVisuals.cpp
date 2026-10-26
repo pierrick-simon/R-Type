@@ -33,11 +33,8 @@ namespace RType {
         gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
         gm.addComponent<Clock>(e);
         gm.addComponent<Lifetime>(e, Lifetime {duration});
-        gm.addComponent<UpdateClientEntity>(e,
-                EntityType::SPRITESHEET,
-                info.asset,
-                gm,
-                e);
+        gm.addComponent<UpdateClientEntity>(
+            e, EntityType::SPRITESHEET, info.asset, gm, e);
     }
 
     EnemyHooks makeEnemyVisualHooks()
@@ -47,19 +44,13 @@ namespace RType {
         hooks.onEnemySpawn =
             [](GameManager &gm, Entity e, const EnemyDef &def) {
                 gm.addComponent<SpriteSheet2D>(e, makeSheet(*def.sheet));
-                gm.addComponent<UpdateClientEntity>(e,
-                EntityType::SPRITESHEET,
-                def.sheet->asset,
-                gm,
-                e);
+                gm.addComponent<UpdateClientEntity>(
+                    e, EntityType::SPRITESHEET, def.sheet->asset, gm, e);
             };
         hooks.onBulletSpawn = [](GameManager &gm, Entity e) {
             gm.addComponent<SpriteSheet2D>(e, makeSheet(ENEMY_BULLET_SHEET));
-            gm.addComponent<UpdateClientEntity>(e,
-                EntityType::SPRITESHEET,
-                ENEMY_BULLET_SHEET.asset,
-                gm,
-                e);
+            gm.addComponent<UpdateClientEntity>(
+                e, EntityType::SPRITESHEET, ENEMY_BULLET_SHEET.asset, gm, e);
         };
         hooks.onEnemyDeath = spawnExplosion;
         return hooks;

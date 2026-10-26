@@ -32,11 +32,8 @@ namespace RType::Server {
         gm.addComponent<Clock>(bullet);
         gm.addComponent<SpriteSheet2D>(
             bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
-        gm.addComponent<UpdateClientEntity>(bullet,
-                EntityType::SPRITESHEET,
-                Asset::PLAYER_BULLET,
-                gm,
-                bullet);
+        gm.addComponent<UpdateClientEntity>(
+            bullet, EntityType::SPRITESHEET, Asset::PLAYER_BULLET, gm, bullet);
     }
 
     void bulletSystem(GameManager &gm)

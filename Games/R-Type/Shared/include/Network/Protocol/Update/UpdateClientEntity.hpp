@@ -82,8 +82,6 @@ namespace RType {
         std::chrono::milliseconds _sleep = std::chrono::milliseconds(0);
         bool _update = true;
 
-        static void setCreateEntity(GameManager &gm, Entity entity,
-            ServerManager &server, UpdateClientEntity &update);
         static void checkConnectedClient(
             ServerManager &server, UpdateClientEntity &update);
     };

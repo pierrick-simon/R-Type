@@ -48,8 +48,7 @@ int main()
         auto ms = RType::Server::createMasterClock(gm);
         RType::Server::createSystems(gm, RType::makeEnemyVisualHooks());
 
-        // RType::Server::createSpaceShip(gm, keyboard);
-        RType::createEnemyDirector(gm);
+        // RType::createEnemyDirector(gm);
         auto &server = gm.getComponent<RType::ServerManager>(s);
         while (server.isRunning()) {
             gm.update();

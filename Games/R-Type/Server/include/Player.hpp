@@ -12,17 +12,17 @@
 #include "Components.hpp"
 #include "Enemies/EnemyComponents.hpp"
 #include "GameManager.hpp"
-#include "Keyboard.hpp"
+#include "KeyboardManager.hpp"
 #include "Position2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Velocity2D.hpp"
 
 namespace RType::Server {
 
-    Entity createSpaceShip(GameManager &gm, Entity keyboardManager);
+    void systemCreateSpaceShip(GameManager &gm);
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, const Keyboard &keyboard, const Clock &clock,
-        const Health &health);
+        const Position2D &pos, const KeyboardManager &keyboard,
+        const Clock &clock, const Health &health);
     void playerClamp(
         const Player &player, Position2D &pos, Velocity2D &velocity);
     void playerAnimation(

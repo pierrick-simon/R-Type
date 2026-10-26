@@ -25,6 +25,7 @@ namespace RType {
         track(&SpriteSheet2D::origin, Property::ORIGIN);
         track(&SpriteSheet2D::currentTile, Property::FRAME);
         track(&SpriteSheet2D::frameDuration, Property::FRAME_DURATION);
+        track(&SpriteSheet2D::recNb, Property::REC_NB);
     }
 
     std::optional<SetValue> UpdateSpriteSheet2D::getProperty(
@@ -45,6 +46,8 @@ namespace RType {
                 return int64_t(currentTile);
             case Property::FRAME_DURATION:
                 return int64_t(frameDuration.count());
+            case Property::REC_NB:
+                return Point16 {int16_t(recNb.height), int16_t(recNb.width)};
             default:
                 return std::nullopt;
         }
@@ -58,5 +61,6 @@ namespace RType {
         Property::ORIGIN,
         Property::FRAME,
         Property::FRAME_DURATION,
+        Property::REC_NB,
     };
 } // namespace RType
