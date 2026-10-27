@@ -6,6 +6,7 @@
 */
 
 #include "Player.hpp"
+#include "Destroy.hpp"
 
 #include <algorithm>
 
@@ -173,7 +174,7 @@ namespace RType::Server {
             [&gm](Entity explosion, PlayerExplosion &state, Clock &clock) {
                 state.remaining -= elapsedSeconds(clock);
                 if (state.remaining <= 0.f)
-                    gm.destroyEntity(explosion);
+                    destroyNetworked(gm, explosion);
             });
     }
 

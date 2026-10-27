@@ -46,7 +46,7 @@ namespace RType::Server {
     inline constexpr float BULLET_WIDTH = 54.f / BULLET_FRAMES * SCALE;
     inline constexpr float BULLET_HEIGHT = 20.f * SCALE;
     inline constexpr float BULLET_SPEED = 1500.f;
-    inline constexpr unsigned int BULLET_FRAME_MS = 15;
+    inline constexpr unsigned int BULLET_FRAME_MS = 60;
     inline constexpr float SHOOT_COOLDOWN = 0.2f;
 
 } // namespace RType::Server

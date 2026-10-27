@@ -21,7 +21,7 @@ namespace RType::Server {
 
     void spawnBullet(GameManager &gm, const Position2D &shooter)
     {
-        const float x = shooter.x + PLAYER_WIDTH - 35;
+        const float x = shooter.x + PLAYER_WIDTH / 2;
         const float y =
             shooter.y + ((PLAYER_HEIGHT - BULLET_HEIGHT) / 2.f) + 10;
         auto bullet = gm.createEntity();
