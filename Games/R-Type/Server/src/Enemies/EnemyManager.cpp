@@ -6,6 +6,7 @@
 */
 
 #include "Enemies/EnemyManager.hpp"
+#include "Destroy.hpp"
 
 #include <algorithm>
 
@@ -37,7 +38,7 @@ namespace RType {
             gm.view<Component>().each(
                 [&entities](Entity e, Component &) { entities.push_back(e); });
             for (const Entity e : entities)
-                gm.destroyEntity(e);
+                destroyNetworked(gm, e);
         }
     } // namespace
 
