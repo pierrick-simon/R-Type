@@ -95,7 +95,7 @@ namespace RType {
     }
 
     void UDPServer::sendToClient(
-        Client &client, Opcode op, const std::vector<uint8_t> &payload)
+        Client &client, uint8_t op, const std::vector<uint8_t> &payload)
     {
         client.sendBuffer =
             serializeHeader(Header {op,
@@ -112,7 +112,7 @@ namespace RType {
     }
 
     void UDPServer::sendToClient(
-        uint32_t &id, Opcode op, const std::vector<uint8_t> &payload)
+        uint32_t &id, uint8_t op, const std::vector<uint8_t> &payload)
     {
         if (!_clients.count(id))
             throw(
@@ -120,7 +120,7 @@ namespace RType {
         sendToClient(_clients.at(id), op, payload);
     }
 
-    void UDPServer::broadcast(Opcode op, const std::vector<uint8_t> &payload)
+    void UDPServer::broadcast(uint8_t op, const std::vector<uint8_t> &payload)
     {
         asio::post(_context, [this, op, payload]() {
             for (auto &[id, client] : _clients)
@@ -128,7 +128,8 @@ namespace RType {
         });
     }
 
-    void UDPServer::broadcastNow(Opcode op, const std::vector<uint8_t> &payload)
+    void UDPServer::broadcastNow(
+        uint8_t op, const std::vector<uint8_t> &payload)
     {
         for (auto &[id, client] : _clients)
             sendToClient(client, op, payload);

@@ -33,11 +33,11 @@ namespace RType {
 
         void received();
 
-        void broadcast(Opcode op, const std::vector<uint8_t> &payload);
+        void broadcast(uint8_t op, const std::vector<uint8_t> &payload);
         void sendToClient(
-            Client &client, Opcode op, const std::vector<uint8_t> &payload);
+            Client &client, uint8_t op, const std::vector<uint8_t> &payload);
         void sendToClient(
-            uint32_t &id, Opcode op, const std::vector<uint8_t> &payload);
+            uint32_t &id, uint8_t op, const std::vector<uint8_t> &payload);
 
         void addManage(uint8_t opCode, ManageFunc func, bool override = false);
 
@@ -61,7 +61,7 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void scheduleHealthCheck();
         void checkClients();
-        void broadcastNow(Opcode op, const std::vector<uint8_t> &payload);
+        void broadcastNow(uint8_t op, const std::vector<uint8_t> &payload);
 
         asio::io_context _context;
         asio::ip::udp::socket _socket;
@@ -91,7 +91,8 @@ namespace RType {
                         manageLogin(h, p);
                     }},
                 {Opcode::LOGOUT,
-                    [this](const Header &h, const std::vector<uint8_t> &p) {
+                    [this](const Header &h,
+                        [[maybe_unused]] const std::vector<uint8_t> &p) {
                         removeClient(h);
                     }},
                 {Opcode::HEALTH,

@@ -48,8 +48,8 @@ namespace RType {
                 m.buttonReleased.push_back(v);
         }
         m._wheel = raylib::Mouse::GetWheelMove();
-        m._pos.x() = float(raylib::Mouse::GetX());
-        m._pos.y() = float(raylib::Mouse::GetY());
+        m._pos.x = float(raylib::Mouse::GetX());
+        m._pos.y = float(raylib::Mouse::GetY());
     }
 
     const std::unordered_map<int, MouseButton::Value>

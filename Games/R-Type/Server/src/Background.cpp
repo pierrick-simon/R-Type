@@ -11,14 +11,17 @@
 #include "Config.hpp"
 #include "Sprite2D.hpp"
 #include "Texture.hpp"
+#include "UpdateClientEntity.hpp"
+#include "UpdatePosition2D.hpp"
+#include "UpdateSprite2D.hpp"
 #include "Velocity2D.hpp"
 
 namespace RType::Server {
 
     void backgroundLoop(const Background &, Position2D &pos)
     {
-        if (pos.x() <= -BACKGROUND_PERIOD)
-            pos.x() += 2.f * BACKGROUND_PERIOD;
+        if (pos.x <= -BACKGROUND_PERIOD)
+            pos.x += 2.f * BACKGROUND_PERIOD;
     }
 
     void resetBackground(GameManager &gm)
@@ -27,7 +30,7 @@ namespace RType::Server {
 
         gm.view<Background, Position2D>().each(
             [&index](Entity, Background &, Position2D &pos) {
-                pos.x() = index * BACKGROUND_PERIOD;
+                pos.x = index * BACKGROUND_PERIOD;
                 index += 1.f;
             });
     }
@@ -38,15 +41,16 @@ namespace RType::Server {
             auto background = gm.createEntity();
 
             gm.addComponent<Background>(background);
-            gm.addComponent<Texture2D>(
-                background, loadPixelTexture(gm, Asset::LEVEL1_BACKGROUND));
-            gm.addComponent<Sprite2D>(background);
-            auto &ss = gm.getComponent<Sprite2D>(background);
-            ss.scale() = SCALE;
+            gm.addComponent<Sprite2D>(background, SCALE);
             gm.addComponent<Position2D>(
                 background, static_cast<float>(i) * BACKGROUND_PERIOD, 0.f);
             gm.addComponent<Velocity2D>(background, -BACKGROUND_SPEED, 0.f);
             gm.addComponent<Clock>(background);
+            gm.addComponent<UpdateClientEntity>(background,
+                EntityType::SPRITE,
+                Asset::LEVEL1_BACKGROUND,
+                gm,
+                background);
         }
     }
 

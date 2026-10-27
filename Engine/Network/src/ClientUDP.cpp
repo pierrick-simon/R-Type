@@ -52,12 +52,12 @@ namespace RType {
         });
     }
 
-    void UDPClient::send(Opcode op, const std::vector<uint8_t> &msg)
+    void UDPClient::send(uint8_t op, const std::vector<uint8_t> &msg)
     {
         asio::post(_context, [this, op, msg]() { sendNow(op, msg); });
     }
 
-    void UDPClient::sendNow(Opcode op, const std::vector<uint8_t> &msg)
+    void UDPClient::sendNow(uint8_t op, const std::vector<uint8_t> &msg)
     {
         _sendBuffer = serializeHeader(Header {op, 0, _seq++, _myId}, msg);
         _socket.async_send_to(asio::buffer(_sendBuffer),
@@ -82,7 +82,7 @@ namespace RType {
             });
     }
 
-    void UDPClient::addManage(Opcode op, ManageFunc func, bool override)
+    void UDPClient::addManage(uint8_t op, ManageFunc func, bool override)
     {
         if (!override && _protocolClient.count(op))
             throw EngineException("Opcode already use for a manage function");

@@ -6,6 +6,7 @@
 */
 
 #include "Enemies/EnemySystems.hpp"
+#include "Destroy.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -14,8 +15,6 @@
 namespace RType {
 
     namespace {
-
-        constexpr float PI = 3.14159265358979323846f;
 
         float elapsedSeconds(const Clock &clock)
         {
@@ -97,8 +96,8 @@ namespace RType {
 
         Rect rectOf(const Position2D &pos, const Hitbox &box)
         {
-            return {pos.x() + box.offsetX,
-                pos.y() + box.offsetY,
+            return {pos.x + box.offsetX,
+                pos.y + box.offsetY,
                 box.width,
                 box.height};
         }
@@ -132,8 +131,8 @@ namespace RType {
                     Hitbox &box) {
                     if (found || health.hp <= 0)
                         return;
-                    x = pos.x() + box.offsetX + box.width / 2.f;
-                    y = pos.y() + box.offsetY + box.height / 2.f;
+                    x = pos.x + box.offsetX + box.width / 2.f;
+                    y = pos.y + box.offsetY + box.height / 2.f;
                     found = true;
                 });
             return found;
@@ -144,9 +143,9 @@ namespace RType {
         {
             if (hooks.onEnemyDeath)
                 hooks.onEnemyDeath(gm,
-                    pos.x() + box.offsetX + box.width / 2.f,
-                    pos.y() + box.offsetY + box.height / 2.f);
-            gm.destroyEntity(enemy);
+                    pos.x + box.offsetX + box.width / 2.f,
+                    pos.y + box.offsetY + box.height / 2.f);
+            destroyNetworked(gm, enemy);
         }
 
     } // namespace
@@ -160,8 +159,8 @@ namespace RType {
         weapon.timer += elapsedSeconds(clock);
         if (weapon.timer < weapon.cooldown)
             return;
-        const float muzzleX = pos.x() + hitbox.offsetX;
-        const float muzzleY = pos.y() + hitbox.offsetY + hitbox.height / 2.f;
+        const float muzzleX = pos.x + hitbox.offsetX;
+        const float muzzleY = pos.y + hitbox.offsetY + hitbox.height / 2.f;
         if (muzzleX > SCREEN_WIDTH)
             return;
 
@@ -218,17 +217,17 @@ namespace RType {
         gm.view<Enemy, Position2D, Hitbox>().each(
             [&](Entity e, Enemy &, Position2D &pos, Hitbox &box) {
                 if (leftScreen(rectOf(pos, box), false))
-                    gm.destroyEntity(e);
+                    destroyNetworked(gm, e);
             });
         gm.view<Projectile, Position2D, Hitbox>().each(
             [&](Entity e, Projectile &, Position2D &pos, Hitbox &box) {
                 if (leftScreen(rectOf(pos, box), true))
-                    gm.destroyEntity(e);
+                    destroyNetworked(gm, e);
             });
         gm.view<Lifetime>().each([&](Entity e, Lifetime &life) {
             life.remaining -= delta;
             if (life.remaining <= 0.f)
-                gm.destroyEntity(e);
+                destroyNetworked(gm, e);
         });
     }
 
@@ -272,7 +271,7 @@ namespace RType {
                         });
                 }
                 if (consumed)
-                    gm.destroyEntity(bullet);
+                    destroyNetworked(gm, bullet);
             });
 
         gm.view<Enemy, Health, Position2D, Hitbox>().each([&](Entity enemy,

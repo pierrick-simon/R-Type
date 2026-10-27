@@ -21,6 +21,11 @@ namespace RType {
     struct Origin2D {
         float x = 0;
         float y = 0;
+
+        bool operator==(const Origin2D &other) const
+        {
+            return this->x == other.x && this->y == other.y;
+        };
     };
 }; // namespace RType
 

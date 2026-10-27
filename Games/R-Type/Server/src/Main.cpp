@@ -5,14 +5,18 @@
 ** Main
 */
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "Assets.hpp"
 #include "Background.hpp"
+#include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
 #include "Player.hpp"
+#include "ServerManager.hpp"
 #include "Setup.hpp"
 #include "Texture.hpp"
 #include "Window.hpp"
@@ -41,16 +45,15 @@ int main()
 
         gm.setAssetsMap(assets);
         const TextureCleanup cleanup {gm};
-        RType::Server::createWindow(gm);
-        const RType::Entity keyboard = RType::Server::createKeyboardManager(gm);
 
         RType::Server::createBackground(gm);
-        RType::Server::createSpaceShip(gm, keyboard);
-        RType::createEnemyDirector(gm);
+        auto s = RType::Server::createServer(gm);
+        auto ms = RType::Server::createMasterClock(gm);
         RType::Server::createSystems(gm, RType::makeEnemyVisualHooks());
+        RType::createEnemyDirector(gm);
+        auto &server = gm.getComponent<RType::ServerManager>(s);
 
-        while (!WindowShouldClose())
-            gm.update();
+        gm.run(60, [&] { return server.isRunning(); });
     } catch (const RType::EngineException &e) {
         std::cout << e.what() << std::endl;
         return 84;
