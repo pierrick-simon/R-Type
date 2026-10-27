@@ -53,10 +53,7 @@ int main()
         RType::createEnemyDirector(gm);
         auto &server = gm.getComponent<RType::ServerManager>(s);
 
-        gm.run(60, [&] 
-            {
-            return server.isRunning(); 
-            });
+        gm.run(60, [&] { return server.isRunning(); });
     } catch (const RType::EngineException &e) {
         std::cout << e.what() << std::endl;
         return 84;

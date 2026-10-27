@@ -102,7 +102,8 @@ namespace RType {
             flush();
     }
 
-    void GameManager::run(int fps, const std::function<bool()> &keepRunning = [] { return true; })
+    void GameManager::run(
+        int fps, const std::function<bool()> &keepRunning = [] { return true; })
     {
         using clock = std::chrono::steady_clock;
         const auto step = std::chrono::nanoseconds(1'000'000'000 / fps);

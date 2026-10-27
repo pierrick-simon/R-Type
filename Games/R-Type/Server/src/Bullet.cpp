@@ -7,11 +7,11 @@
 
 #include <iostream>
 
-#include "Bullet.hpp"
-#include "Destroy.hpp"
 #include "Assets.hpp"
+#include "Bullet.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
+#include "Destroy.hpp"
 #include "Enemies/EnemyComponents.hpp"
 #include "SpriteSheet2D.hpp"
 #include "UpdateClientEntity.hpp"

@@ -95,8 +95,8 @@ namespace RType::Server {
     }
 
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, KeyboardManager &keyboard,
-        const Clock &clock, const Health &health)
+        const Position2D &pos, KeyboardManager &keyboard, const Clock &clock,
+        const Health &health)
     {
         const float elapsed = elapsedSeconds(clock);
         const bool alive = !player.dying && health.hp > 0;

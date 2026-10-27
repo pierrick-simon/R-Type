@@ -8,11 +8,11 @@
 #ifndef GAMEMANAGER_HPP_
 #define GAMEMANAGER_HPP_
 
-#include <memory>
-#include <type_traits>
 #include <chrono>
-#include <utility>
+#include <memory>
 #include <thread>
+#include <type_traits>
+#include <utility>
 
 #include "ComponentManager.hpp"
 #include "Entity.hpp"

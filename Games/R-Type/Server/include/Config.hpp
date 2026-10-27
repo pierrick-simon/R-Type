@@ -23,7 +23,7 @@ namespace RType::Server {
     inline constexpr int PLAYER_FRAMES = 5;
     inline constexpr float PLAYER_WIDTH = 166.f / PLAYER_FRAMES * SCALE;
     inline constexpr float PLAYER_HEIGHT = 17.f * SCALE;
-    //inline constexpr float PLAYER_FRICTION = 120.f;
+    // inline constexpr float PLAYER_FRICTION = 120.f;
     inline constexpr int PLAYER_HP = 1;
     inline constexpr unsigned int PLAYER_FRAME_MS = 200;
     inline constexpr int PLAYER_EXPLOSION_FRAMES = 6;

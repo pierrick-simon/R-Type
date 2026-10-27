@@ -73,7 +73,8 @@ namespace RType::Server {
     void createSystems(GameManager &gm, const EnemyHooks &enemyHooks)
     {
         gm.createSystem<Clock>(Clock::systemClock);
-        gm.createSystem<SpriteSheet2D, Clock>(SpriteSheet2D::systemAnimateSpriteSheet2D);
+        gm.createSystem<SpriteSheet2D, Clock>(
+            SpriteSheet2D::systemAnimateSpriteSheet2D);
         registerEnemySystems(gm, enemyHooks);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<Player,
@@ -82,7 +83,8 @@ namespace RType::Server {
             KeyboardManager,
             Clock,
             Health>(playerHandle);
-        gm.createSystem<Friction2D, Velocity2D, Clock>(Friction2D::systemFriction2D);
+        gm.createSystem<Friction2D, Velocity2D, Clock>(
+            Friction2D::systemFriction2D);
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
