@@ -199,8 +199,9 @@ namespace RType::Server {
                 PLAYER_FRAME_MS,
                 SCALE,
                 false);
+            AssetId spaceShipSpriteSheet = Asset::PLAYER_SHEET_1 + gm.view<DefaulClient>().getVector().size() - 1;
             gm.addComponent<UpdateClientEntity>(
-                e, EntityType::SPRITESHEET, Asset::PLAYER_SHEET_1, gm, e);
+                e, EntityType::SPRITESHEET, spaceShipSpriteSheet, gm, e);
         }
     }
 
