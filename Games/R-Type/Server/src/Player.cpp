@@ -80,11 +80,10 @@ namespace RType::Server {
         auto &health = gm.getComponent<Health>(player);
         auto &position = gm.getComponent<Position2D>(player);
         auto &sheet = gm.getComponent<SpriteSheet2D>(player);
-        const auto &keyboard = gm.getComponent<KeyboardManager>(player);
 
-        state = Player {};
-        // for (const auto key : keyboard.keyPressed)
-        //     setHeld(state, key, true);
+        state.dying = false;
+        state.deathTimer = 0.f;
+        state.cooldown = 0.f;
         health.hp = health.maxHp;
         position = Position2D {PLAYER_START_X, WINDOW_HEIGHT / 2.f};
         gm.getComponent<Velocity2D>(player) = {};
@@ -95,30 +94,29 @@ namespace RType::Server {
     }
 
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, const KeyboardManager &keyboard,
+        const Position2D &pos, KeyboardManager &keyboard,
         const Clock &clock, const Health &health)
     {
-        for (auto [entity, player, velocity] :
-            gm.view<Player, Velocity2D>().getVector()) {
-        }
-        if (player.dying || health.hp <= 0) {
-            velocity = {};
-            return;
-        }
         const float elapsed = elapsedSeconds(clock);
-        const float speed = player.acceleration * elapsed;
+        const bool alive = !player.dying && health.hp > 0;
 
-        player.cooldown = std::max(0.f, player.cooldown - elapsed);
         for (const auto &key : keyboard.keyPressed) {
             setHeld(player, key, true);
-            if (key == Key::Value::Space && player.cooldown <= 0.f) {
+            if (alive && key == Key::Value::Space && player.cooldown <= 0.f) {
                 spawnBullet(gm, pos);
                 player.cooldown = SHOOT_COOLDOWN;
             }
         }
         for (const auto &key : keyboard.keyReleased)
             setHeld(player, key, false);
-        applyMovement(player, velocity, speed);
+        keyboard.keyPressed.clear();
+        keyboard.keyReleased.clear();
+        if (!alive) {
+            velocity = {};
+            return;
+        }
+        player.cooldown = std::max(0.f, player.cooldown - elapsed);
+        applyMovement(player, velocity, player.acceleration * elapsed);
     }
 
     void playerClamp(const Player &, Position2D &pos, Velocity2D &velocity)

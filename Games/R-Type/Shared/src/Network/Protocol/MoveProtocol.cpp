@@ -34,8 +34,8 @@ namespace RType {
         auto &v = gm.getComponent<Velocity2D>(it->second);
         pos.x = static_cast<float>(e->posX);
         pos.y = static_cast<float>(e->posY);
-        v.x = static_cast<float>(e->posX);
-        v.y = static_cast<float>(e->posY);
+        v.x = static_cast<float>(e->vX);
+        v.y = static_cast<float>(e->vY);
     }
 
     void MoveProtocol::sendMove(const std::vector<uint32_t> &ids,

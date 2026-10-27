@@ -12,7 +12,9 @@ namespace RType {
     void UpdatePosition2D::systemUpdatePosition2D(
         UpdatePosition2D &update, const Position2D &pos)
     {
-        update._update =
-            syncField(update.x, pos.x) || syncField(update.y, pos.y);
+        const bool xChanged = syncField(update.x, pos.x);
+        const bool yChanged = syncField(update.y, pos.y);
+
+        update._update = update._update || xChanged || yChanged;
     }
 }; // namespace RType

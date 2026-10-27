@@ -9,6 +9,7 @@
 #define COMPONENTS_HPP_
 
 #include "Config.hpp"
+#include "PlayerPhysics.hpp"
 
 namespace RType::Server {
 

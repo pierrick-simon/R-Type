@@ -10,7 +10,9 @@
 
 #include <memory>
 #include <type_traits>
+#include <chrono>
 #include <utility>
+#include <thread>
 
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
@@ -294,6 +296,8 @@ namespace RType {
         {
             _assetsMap = map;
         }
+
+        void run(int fps, const std::function<bool()> &keepRunning);
 
     private:
         ComponentManager _cm;

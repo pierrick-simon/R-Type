@@ -5,8 +5,10 @@
 ** Bullet
 */
 
-#include "Bullet.hpp"
 #include <iostream>
+
+#include "Bullet.hpp"
+#include "Destroy.hpp"
 #include "Assets.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
@@ -46,7 +48,7 @@ namespace RType::Server {
                 sheet.animation = false;
             }
             if (pos.x > WINDOW_WIDTH)
-                gm.destroyEntity(bullet);
+                destroyNetworked(gm, bullet);
         }
     }
 

@@ -17,6 +17,7 @@
 #include "Text2D.hpp"
 #include "Velocity2D.hpp"
 #include "Window.hpp"
+#include "Friction2D.hpp"
 
 namespace RType::Client {
     Entity createWindow(GameManager &gm)
@@ -61,6 +62,8 @@ namespace RType::Client {
 
     void createSystems(GameManager &gm)
     {
+        gm.createSystem<Clock>(Clock::systemClock);
+        gm.createSystem<Friction2D, Velocity2D, Clock>(Friction2D::systemFriction2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);

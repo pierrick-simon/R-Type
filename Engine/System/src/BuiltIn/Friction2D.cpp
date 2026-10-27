@@ -5,16 +5,19 @@
 ** Friction2D
 */
 
-#include "Friction2D.hpp"
 #include <iostream>
+#include <cmath>
+
+#include "Friction2D.hpp"
 
 namespace RType {
     void Friction2D::systemFriction2D(
         const Friction2D &friction, Velocity2D &velocity, const Clock &clock)
     {
-        auto elapsedSec = float(clock.getElapsed().count()) / MILLI_IN_SEC;
-        velocity.x *= elapsedSec * friction.f;
-        velocity.y *= elapsedSec * friction.f;
+        const float dt = static_cast<float>(clock.getElapsed().count()) / MILLI_IN_SEC;
+        const float k = std::exp(-friction.f * dt);
+        velocity.x *= k;
+        velocity.y *= k;
     }
 
     void Friction2D::systemMasterFriction2D(

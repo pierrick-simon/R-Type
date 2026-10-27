@@ -16,15 +16,14 @@ namespace RType::Server {
     inline constexpr int WINDOW_HEIGHT = 1080;
     inline constexpr float SCALE = 4.5f;
 
-    inline constexpr float BACKGROUND_SPEED = 25.f;
+    inline constexpr float BACKGROUND_SPEED = 75.f;
     inline constexpr int BACKGROUND_WIDTH = 4224;
     inline constexpr float BACKGROUND_PERIOD = BACKGROUND_WIDTH * SCALE - 2.f;
 
     inline constexpr int PLAYER_FRAMES = 5;
     inline constexpr float PLAYER_WIDTH = 166.f / PLAYER_FRAMES * SCALE;
     inline constexpr float PLAYER_HEIGHT = 17.f * SCALE;
-    inline constexpr float PLAYER_ACCELERATION = 3000.f;
-    inline constexpr float PLAYER_FRICTION = 120.f;
+    //inline constexpr float PLAYER_FRICTION = 120.f;
     inline constexpr int PLAYER_HP = 1;
     inline constexpr unsigned int PLAYER_FRAME_MS = 200;
     inline constexpr int PLAYER_EXPLOSION_FRAMES = 6;

@@ -6,6 +6,10 @@
 */
 
 #include "CreateProtocol.hpp"
+#include "Assets.hpp"
+#include "Clock.hpp"
+#include "Friction2D.hpp"
+#include "PlayerPhysics.hpp"
 #include "ServerManager.hpp"
 #include "Velocity2D.hpp"
 
@@ -63,10 +67,17 @@ namespace RType {
         if (asset == gm.getAssetsMap().end())
             return;
         auto s = ctx.gm->get().createEntity();
-        gm.addComponent<RType::SpriteSheet2D>(s);
+        RType::SpriteSheet2D sheet;
+        sheet.color.a = 0;
+        gm.addComponent<RType::SpriteSheet2D>(s, sheet);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
         gm.addComponent<RType::Texture2D>(s, asset->second);
+        if (e.assetId >= Asset::PLAYER_SHEET_1 &&
+            e.assetId <= Asset::PLAYER_SHEET_5) {
+            gm.addComponent<RType::Friction2D>(s, PLAYER_FRICTION);
+            gm.addComponent<RType::Clock>(s);
+        }
         ctx.map.emplace(e.id, s);
     }
 

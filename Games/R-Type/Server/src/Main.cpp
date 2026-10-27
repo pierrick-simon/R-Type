@@ -5,10 +5,13 @@
 ** Main
 */
 
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 #include "Assets.hpp"
 #include "Background.hpp"
+#include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
@@ -47,13 +50,13 @@ int main()
         auto s = RType::Server::createServer(gm);
         auto ms = RType::Server::createMasterClock(gm);
         RType::Server::createSystems(gm, RType::makeEnemyVisualHooks());
-
-        // RType::createEnemyDirector(gm);
+        RType::createEnemyDirector(gm);
         auto &server = gm.getComponent<RType::ServerManager>(s);
-        while (server.isRunning()) {
-            gm.update();
-            usleep(2);
-        }
+
+        gm.run(60, [&] 
+            {
+            return server.isRunning(); 
+            });
     } catch (const RType::EngineException &e) {
         std::cout << e.what() << std::endl;
         return 84;

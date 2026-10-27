@@ -21,7 +21,7 @@ namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm);
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, const KeyboardManager &keyboard,
+        const Position2D &pos, KeyboardManager &keyboard,
         const Clock &clock, const Health &health);
     void playerClamp(
         const Player &player, Position2D &pos, Velocity2D &velocity);

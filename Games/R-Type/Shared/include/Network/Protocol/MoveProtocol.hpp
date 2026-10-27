@@ -23,7 +23,7 @@ namespace RType {
      * of a networked entity. Positions are signed (int32, logical pixels).
      */
     struct MovePayload {
-        static constexpr std::size_t SIZE = 4 + 4 + 4;
+        static constexpr std::size_t SIZE = 4 + 4 + 4 + 4 + 4;
         uint32_t id;
         int32_t posX;
         int32_t posY;
