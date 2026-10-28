@@ -46,11 +46,9 @@ int main()
         gm.setAssetsMap(assets);
         const TextureCleanup cleanup {gm};
 
-        RType::Server::createBackground(gm);
         auto s = RType::Server::createServer(gm);
         auto ms = RType::Server::createMasterClock(gm);
         RType::Server::createSystems(gm, RType::makeEnemyVisualHooks());
-        RType::createEnemyDirector(gm);
         auto &server = gm.getComponent<RType::ServerManager>(s);
 
         gm.run(60, [&] { return server.isRunning(); });

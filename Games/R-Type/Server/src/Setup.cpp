@@ -26,8 +26,20 @@
 #include "UpdateText2D.hpp"
 #include "Velocity2D.hpp"
 #include "Window.hpp"
+#include "Enemies/EnemyManager.hpp"
 
 namespace RType::Server {
+
+    void systemStartLevel(GameManager &gm)
+    {
+        static bool started = false;
+
+        if (started || gm.view<DefaulClient>().getVector().empty())
+            return;
+        started = true;
+        createBackground(gm);
+        createEnemyDirector(gm);
+    }
 
     Entity createServer(GameManager &gm)
     {
@@ -72,6 +84,7 @@ namespace RType::Server {
 
     void createSystems(GameManager &gm, const EnemyHooks &enemyHooks)
     {
+        gm.createSystem<>(systemStartLevel);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<SpriteSheet2D, Clock>(
             SpriteSheet2D::systemAnimateSpriteSheet2D);

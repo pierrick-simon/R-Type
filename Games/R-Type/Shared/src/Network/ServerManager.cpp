@@ -12,6 +12,7 @@
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
 #include "UpdateClientEntity.hpp"
+#include "DestroyProtocol.hpp"
 
 namespace RType {
     ServerManager::ServerManager(short port) :
@@ -112,8 +113,9 @@ namespace RType {
         _udp->removeClient(h);
         if (_ctx.clients.count(h.senderId) == 0)
             return;
-        for (auto [_, update] :
-            _ctx.gm->get().view<UpdateClientEntity>().getVector()) {
+        auto &gm = _ctx.gm->get();
+
+        for (auto [_, update] : gm.view<UpdateClientEntity>().getVector()) {
             auto &l = update.getLinks();
             l.erase(std::remove_if(l.begin(),
                         l.end(),
@@ -130,7 +132,17 @@ namespace RType {
                         [&](uint32_t v) { return h.senderId == v; }),
                 c.end());
         }
-        _ctx.gm->get().destroyEntity(_ctx.clients.at(h.senderId));
+        const Entity player = _ctx.clients.at(h.senderId);
+
+        if (gm.hasComponent<UpdateClientEntity>(player)) {
+            auto &update = gm.getComponent<UpdateClientEntity>(player);
+            std::vector<uint32_t> ids = update.getLinks();
+
+            ids.insert(
+                ids.end(), update.getInits().begin(), update.getInits().end());
+            DestroyProtocol::sendDestroy(ids, *this, update.getId());
+        }
+        gm.destroyEntity(player);
         _ctx.clients.erase(h.senderId);
     }
 }; // namespace RType

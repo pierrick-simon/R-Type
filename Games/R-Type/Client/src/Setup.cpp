@@ -12,6 +12,7 @@
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "MouseManager.hpp"
+#include "Menu.hpp"
 #include "MouseProtocol.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
@@ -28,16 +29,13 @@ namespace RType::Client {
         return w;
     }
 
-    Entity createClient(GameManager &gm)
+    void createClientSystems(GameManager &gm)
     {
-        auto c = gm.createEntity();
-        gm.addComponent<ClientManager>(c, "127.0.0.1", 12345);
         gm.createSystem<ClientManager>(ClientManager::systemClientReceived);
         gm.createSystem<ClientManager>(
             KeyboardProtocol::systemKeyboardProtocol);
         gm.createSystem<ClientManager>(MouseProtocol::systemMouseProtocol);
         gm.createSystem<ClientManager>(ClientManager::systemEntityCreated);
-        return c;
     }
 
     Entity createControl(GameManager &gm)
@@ -70,5 +68,7 @@ namespace RType::Client {
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
+        gm.createSystem<>(systemButtons);
+        gm.createSystem<>(systemDrawMenu);
     }
 } // namespace RType::Client
