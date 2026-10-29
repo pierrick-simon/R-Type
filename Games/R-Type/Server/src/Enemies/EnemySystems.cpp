@@ -16,7 +16,7 @@ namespace RType {
 
     namespace {
 
-        float elapsedSeconds(const Clock &clock)
+        float elapsedSeconds(const MasterClock &clock)
         {
             return static_cast<float>(clock.getElapsed().count()) /
                 static_cast<float>(MILLI_IN_SEC);
@@ -65,7 +65,7 @@ namespace RType {
     } // namespace
 
     void systemEnemyPattern(
-        MovementPattern &pattern, Velocity2D &velocity, const Clock &clock)
+        MovementPattern &pattern, Velocity2D &velocity, const MasterClock &clock)
     {
         const float delta = elapsedSeconds(clock);
 
@@ -151,7 +151,7 @@ namespace RType {
     } // namespace
 
     void systemEnemyWeapon(GameManager &gm, const Enemy &enemy, Weapon &weapon,
-        const Position2D &pos, const Hitbox &hitbox, const Clock &clock,
+        const Position2D &pos, const Hitbox &hitbox, const MasterClock &clock,
         const EnemyHooks &hooks)
     {
         if (enemy.type != EnemyType::Gunner)
@@ -188,7 +188,7 @@ namespace RType {
     }
 
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
-        const Clock &clock, const EnemyHooks &hooks)
+        const MasterClock &clock, const EnemyHooks &hooks)
     {
         if (director.timeline.empty())
             return;
@@ -210,7 +210,7 @@ namespace RType {
     }
 
     void systemEnemyCleanup(
-        GameManager &gm, EnemyDirector &, const Clock &clock)
+        GameManager &gm, EnemyDirector &, const MasterClock &clock)
     {
         const float delta = elapsedSeconds(clock);
 
@@ -303,22 +303,30 @@ namespace RType {
     {
         const auto h = std::make_shared<const EnemyHooks>(std::move(hooks));
 
-        gm.createSystem<MovementPattern, Velocity2D, Clock>(systemEnemyPattern);
-        gm.createSystem<Enemy, Weapon, Position2D, Hitbox, Clock>(
-            [h](GameManager &g,
-                Enemy &e,
-                Weapon &w,
-                Position2D &p,
-                Hitbox &b,
-                Clock &c) { systemEnemyWeapon(g, e, w, p, b, c, *h); });
-        gm.createSystem<EnemyDirector, Clock>(
-            [h](GameManager &g, EnemyDirector &d, Clock &c) {
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            g.view<MovementPattern, Velocity2D>().each(
+                [&c](Entity, MovementPattern &m, Velocity2D &v) {
+                    systemEnemyPattern(m, v, c);
+                });
+        });
+        gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
+            g.view<Enemy, Weapon, Position2D, Hitbox>().each(
+                [&g, &c, &h](Entity,
+                    Enemy &e,
+                    Weapon &w,
+                    Position2D &p,
+                    Hitbox &b) { systemEnemyWeapon(g, e, w, p, b, c, *h); });
+        });
+        gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
+            g.view<EnemyDirector>().each([&g, &c, &h](Entity, EnemyDirector &d) {
                 systemEnemyDirector(g, d, c, *h);
             });
-        gm.createSystem<EnemyDirector, Clock>(
-            [](GameManager &g, EnemyDirector &d, Clock &c) {
+        });
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            g.view<EnemyDirector>().each([&g, &c](Entity, EnemyDirector &d) {
                 systemEnemyCleanup(g, d, c);
             });
+        });
         gm.createSystem<EnemyDirector>([h](GameManager &g, EnemyDirector &d) {
             systemEnemyCombat(g, d, *h);
         });

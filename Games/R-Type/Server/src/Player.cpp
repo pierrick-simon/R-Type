@@ -21,7 +21,7 @@
 
 namespace RType::Server {
 
-    float elapsedSeconds(const Clock &clock)
+    float elapsedSeconds(const MasterClock &clock)
     {
         return static_cast<float>(clock.getElapsed().count()) /
             static_cast<float>(MILLI_IN_SEC);
@@ -65,7 +65,6 @@ namespace RType::Server {
             Size2D(1, PLAYER_EXPLOSION_FRAMES),
             PLAYER_EXPLOSION_FRAME_MS,
             SCALE);
-        gm.addComponent<Clock>(explosion);
         gm.addComponent<PlayerExplosion>(
             explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
         gm.addComponent<UpdateClientEntity>(explosion,
@@ -95,8 +94,8 @@ namespace RType::Server {
     }
 
     void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, KeyboardManager &keyboard, const Clock &clock,
-        const Health &health)
+        const Position2D &pos, KeyboardManager &keyboard, const Health &health,
+        const MasterClock &clock)
     {
         const float elapsed = elapsedSeconds(clock);
         const bool alive = !player.dying && health.hp > 0;
@@ -118,6 +117,19 @@ namespace RType::Server {
         }
         player.cooldown = std::max(0.f, player.cooldown - elapsed);
         applyMovement(player, velocity, player.acceleration * elapsed);
+    }
+
+    void systemMasterPlayerHandle(GameManager &gm, const MasterClock &clock)
+    {
+        gm.view<Player, Velocity2D, Position2D, KeyboardManager, Health>().each(
+            [&gm, &clock](Entity,
+                Player &player,
+                Velocity2D &velocity,
+                Position2D &pos,
+                KeyboardManager &keyboard,
+                Health &health) {
+                playerHandle(gm, player, velocity, pos, keyboard, health, clock);
+            });
     }
 
     void playerClamp(const Player &, Position2D &pos, Velocity2D &velocity)
@@ -148,15 +160,14 @@ namespace RType::Server {
             sheet.currentTile = FRAME_NEUTRAL;
     }
 
-    void playerDeath(GameManager &gm)
+    void playerDeath(GameManager &gm, const MasterClock &clock)
     {
-        gm.view<Player, Health, Position2D, SpriteSheet2D, Clock>().each(
-            [&gm](Entity player,
+        gm.view<Player, Health, Position2D, SpriteSheet2D>().each(
+            [&gm, &clock](Entity player,
                 Player &state,
                 Health &health,
                 Position2D &position,
-                SpriteSheet2D &sheet,
-                Clock &clock) {
+                SpriteSheet2D &sheet) {
                 if (health.hp > 0)
                     return;
                 if (!state.dying) {
@@ -170,8 +181,8 @@ namespace RType::Server {
                 if (state.deathTimer <= 0.f)
                     respawnPlayer(gm, player);
             });
-        gm.view<PlayerExplosion, Clock>().each(
-            [&gm](Entity explosion, PlayerExplosion &state, Clock &clock) {
+        gm.view<PlayerExplosion>().each(
+            [&gm, &clock](Entity explosion, PlayerExplosion &state) {
                 state.remaining -= elapsedSeconds(clock);
                 if (state.remaining <= 0.f)
                     destroyNetworked(gm, explosion);
@@ -180,27 +191,25 @@ namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm)
     {
-        for (auto [e, d] : gm.view<DefaulClient>().getVector()) {
-            if (d.getInit())
+        for (auto [entity, defaultClient] : gm.view<DefaulClient>().getVector()) {
+            if (defaultClient.getInit())
                 continue;
-            d.init();
+            defaultClient.init();
 
-            gm.addComponent<Player>(e);
-            gm.addComponent<EnemyTarget>(e);
-            gm.addComponent<Health>(e, Health {PLAYER_HP, PLAYER_HP});
-            gm.addComponent<Hitbox>(e, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
-            gm.addComponent<Position2D>(e, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
-            gm.addComponent<Velocity2D>(e);
-            gm.addComponent<Friction2D>(e, PLAYER_FRICTION);
-            gm.addComponent<Clock>(e);
-            gm.addComponent<SpriteSheet2D>(e,
-                Size2D(1, PLAYER_FRAMES),
+            gm.addComponent<Player>(entity);
+            gm.addComponent<EnemyTarget>(entity);
+            gm.addComponent<Health>(entity, Health {PLAYER_HP, PLAYER_HP});
+            gm.addComponent<Hitbox>(entity, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
+            gm.addComponent<Position2D>(entity, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
+            gm.addComponent<Velocity2D>(entity);
+            gm.addComponent<Friction2D>(entity, PLAYER_FRICTION);
+            gm.addComponent<SpriteSheet2D>(entity, Size2D(1, PLAYER_FRAMES),
                 FRAME_NEUTRAL,
                 PLAYER_FRAME_MS,
                 SCALE,
                 false);
             gm.addComponent<UpdateClientEntity>(
-                e, EntityType::SPRITESHEET, Asset::PLAYER_SHEET_1, gm, e);
+                entity, EntityType::SPRITESHEET, Asset::PLAYER_SHEET_1, gm, entity);
         }
     }
 

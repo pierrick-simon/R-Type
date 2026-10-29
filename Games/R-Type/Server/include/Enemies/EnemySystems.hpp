@@ -20,17 +20,17 @@ namespace RType {
     constexpr float PI = 3.14159265358979323846f;
 
     void systemEnemyPattern(
-        MovementPattern &pattern, Velocity2D &velocity, const Clock &clock);
+        MovementPattern &pattern, Velocity2D &velocity, const MasterClock &clock);
 
     void systemEnemyWeapon(GameManager &gm, const Enemy &enemy, Weapon &weapon,
-        const Position2D &pos, const Hitbox &hitbox, const Clock &clock,
+        const Position2D &pos, const Hitbox &hitbox, const MasterClock &clock,
         const EnemyHooks &hooks);
 
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
-        const Clock &clock, const EnemyHooks &hooks);
+        const MasterClock &clock, const EnemyHooks &hooks);
 
     void systemEnemyCleanup(
-        GameManager &gm, EnemyDirector &director, const Clock &clock);
+        GameManager &gm, EnemyDirector &director, const MasterClock &clock);
 
     void systemEnemyCombat(
         GameManager &gm, EnemyDirector &director, const EnemyHooks &hooks);

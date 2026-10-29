@@ -10,7 +10,6 @@
 
 #include <algorithm>
 
-#include "Clock.hpp"
 #include "Position2D.hpp"
 #include "Velocity2D.hpp"
 
@@ -19,7 +18,7 @@ namespace RType {
     namespace {
         Hitbox centeredHitbox(const SheetInfo &sheet)
         {
-            Hitbox hitbox;
+            Hitbox hitbox = {0};
 
             hitbox.width = float(sheet.hitboxW) * SPRITE_SCALE;
             hitbox.height = float(sheet.hitboxH) * SPRITE_SCALE;
@@ -73,7 +72,6 @@ namespace RType {
         gm.addComponent<Health>(entity, Health {def.hp, def.hp});
         gm.addComponent<Position2D>(entity, Position2D {x, y});
         gm.addComponent<Velocity2D>(entity);
-        gm.addComponent<Clock>(entity);
         gm.addComponent<MovementPattern>(entity, pattern);
         gm.addComponent<Hitbox>(entity, hitbox);
         if (type == EnemyType::Gunner && def.fireCooldown > 0.f) {
@@ -98,7 +96,6 @@ namespace RType {
             Position2D {x - float(sheet.cellW) * SPRITE_SCALE / 2.f,
                 y - float(sheet.cellH) * SPRITE_SCALE / 2.f});
         gm.addComponent<Velocity2D>(bullet, Velocity2D {vx, vy});
-        gm.addComponent<Clock>(bullet);
         gm.addComponent<Projectile>(bullet, Projectile {damage, false});
         gm.addComponent<Hitbox>(bullet, centeredHitbox(sheet));
         if (hooks.onBulletSpawn)
@@ -128,7 +125,6 @@ namespace RType {
         director.addWave(EnemyType::Gunner, 540.f, 2, 1.5f, 10.f);
         director.addWave(EnemyType::Scout, 540.f, 8, 0.4f, 15.f);
         gm.addComponent<EnemyDirector>(entity, std::move(director));
-        gm.addComponent<Clock>(entity);
         return entity;
     }
 

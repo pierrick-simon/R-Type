@@ -9,7 +9,6 @@
 
 #include "Assets.hpp"
 #include "Bullet.hpp"
-#include "Clock.hpp"
 #include "Config.hpp"
 #include "Destroy.hpp"
 #include "Enemies/EnemyComponents.hpp"
@@ -31,7 +30,6 @@ namespace RType::Server {
         gm.addComponent<Hitbox>(bullet, Hitbox {BULLET_WIDTH, BULLET_HEIGHT});
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
-        gm.addComponent<Clock>(bullet);
         gm.addComponent<SpriteSheet2D>(
             bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
         gm.addComponent<UpdateClientEntity>(

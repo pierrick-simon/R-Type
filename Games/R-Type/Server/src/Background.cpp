@@ -7,7 +7,6 @@
 
 #include "Background.hpp"
 #include "Assets.hpp"
-#include "Clock.hpp"
 #include "Config.hpp"
 #include "Sprite2D.hpp"
 #include "Texture.hpp"
@@ -45,7 +44,6 @@ namespace RType::Server {
             gm.addComponent<Position2D>(
                 background, static_cast<float>(i) * BACKGROUND_PERIOD, 0.f);
             gm.addComponent<Velocity2D>(background, -BACKGROUND_SPEED, 0.f);
-            gm.addComponent<Clock>(background);
             gm.addComponent<UpdateClientEntity>(background,
                 EntityType::SPRITE,
                 Asset::LEVEL1_BACKGROUND,
