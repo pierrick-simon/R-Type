@@ -64,8 +64,8 @@ namespace RType {
 
     } // namespace
 
-    void systemEnemyPattern(
-        MovementPattern &pattern, Velocity2D &velocity, const MasterClock &clock)
+    void systemEnemyPattern(MovementPattern &pattern, Velocity2D &velocity,
+        const MasterClock &clock)
     {
         const float delta = elapsedSeconds(clock);
 
@@ -311,16 +311,16 @@ namespace RType {
         });
         gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
             g.view<Enemy, Weapon, Position2D, Hitbox>().each(
-                [&g, &c, &h](Entity,
-                    Enemy &e,
-                    Weapon &w,
-                    Position2D &p,
-                    Hitbox &b) { systemEnemyWeapon(g, e, w, p, b, c, *h); });
+                [&g, &c, &h](
+                    Entity, Enemy &e, Weapon &w, Position2D &p, Hitbox &b) {
+                    systemEnemyWeapon(g, e, w, p, b, c, *h);
+                });
         });
         gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
-            g.view<EnemyDirector>().each([&g, &c, &h](Entity, EnemyDirector &d) {
-                systemEnemyDirector(g, d, c, *h);
-            });
+            g.view<EnemyDirector>().each(
+                [&g, &c, &h](Entity, EnemyDirector &d) {
+                    systemEnemyDirector(g, d, c, *h);
+                });
         });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<EnemyDirector>().each([&g, &c](Entity, EnemyDirector &d) {

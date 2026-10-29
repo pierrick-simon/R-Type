@@ -32,19 +32,16 @@ namespace RType::Server {
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
         gm.addComponent<SpriteSheet2D>(
             bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
+        gm.addComponent<PlayOnce>(bullet);
         gm.addComponent<UpdateClientEntity>(
             bullet, EntityType::SPRITESHEET, Asset::PLAYER_BULLET, gm, bullet);
     }
 
     void bulletSystem(GameManager &gm)
     {
-        for (auto &[bullet, tag, sheet, pos] :
-            gm.view<Bullet, SpriteSheet2D, Position2D>().getVector()) {
+        for (auto &[bullet, tag, pos] :
+            gm.view<Bullet, Position2D>().getVector()) {
             (void) tag;
-            if (sheet.currentTile >= BULLET_FRAMES - 1) {
-                sheet.currentTile = BULLET_FRAMES - 1;
-                sheet.animation = false;
-            }
             if (pos.x > WINDOW_WIDTH)
                 destroyNetworked(gm, bullet);
         }

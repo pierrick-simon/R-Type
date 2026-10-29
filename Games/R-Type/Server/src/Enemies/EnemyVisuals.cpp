@@ -7,6 +7,7 @@
 
 #include "Enemies/EnemyVisuals.hpp"
 
+#include "Components.hpp"
 #include "Position2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Texture.hpp"
@@ -30,6 +31,7 @@ namespace RType {
             Position2D {cx - float(info.cellW) * SPRITE_SCALE / 2.f,
                 cy - float(info.cellH) * SPRITE_SCALE / 2.f});
         gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
+        gm.addComponent<Server::PlayOnce>(e);
         gm.addComponent<Lifetime>(e, Lifetime {duration});
         gm.addComponent<UpdateClientEntity>(
             e, EntityType::SPRITESHEET, info.asset, gm, e);

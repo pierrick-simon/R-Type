@@ -6,6 +6,7 @@
 */
 
 #include "Setup.hpp"
+#include "Animation.hpp"
 #include "Background.hpp"
 #include "Bullet.hpp"
 #include "Clock.hpp"
@@ -74,6 +75,7 @@ namespace RType::Server {
     {
         gm.createSystem<MasterClock>(
             SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
+        gm.createSystem<PlayOnce, SpriteSheet2D>(playOnceAnimation);
         registerEnemySystems(gm, enemyHooks);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);

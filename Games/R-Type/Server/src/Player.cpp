@@ -65,6 +65,7 @@ namespace RType::Server {
             Size2D(1, PLAYER_EXPLOSION_FRAMES),
             PLAYER_EXPLOSION_FRAME_MS,
             SCALE);
+        gm.addComponent<PlayOnce>(explosion);
         gm.addComponent<PlayerExplosion>(
             explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
         gm.addComponent<UpdateClientEntity>(explosion,
@@ -128,7 +129,8 @@ namespace RType::Server {
                 Position2D &pos,
                 KeyboardManager &keyboard,
                 Health &health) {
-                playerHandle(gm, player, velocity, pos, keyboard, health, clock);
+                playerHandle(
+                    gm, player, velocity, pos, keyboard, health, clock);
             });
     }
 
