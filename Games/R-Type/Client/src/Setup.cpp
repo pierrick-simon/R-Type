@@ -60,6 +60,8 @@ namespace RType::Client {
 
     void createSystems(GameManager &gm)
     {
+        gm.createSystem<>(systemConnecting);
+        gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<Friction2D, Velocity2D, Clock>(
             Friction2D::systemFriction2D);

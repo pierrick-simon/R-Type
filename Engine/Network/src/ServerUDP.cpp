@@ -63,15 +63,20 @@ namespace RType {
 
     void UDPServer::checkClients()
     {
-        auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
+        std::vector<uint16_t> lost;
 
         for (auto it = _clients.begin(); it != _clients.end();) {
             if (now - it->second.lastSeen > std::chrono::seconds(TIMEOUT)) {
-                std::cout << "Timeout from client nb " << it->second.id
-                          << " ..." << std::endl;
+                std::cout << "Timeout from client " << it->second.id << " ..." << std::endl;
+                lost.push_back(it->second.id);
                 it = _clients.erase(it);
             } else
                 ++it;
+        }
+        for (const uint16_t id : lost) {
+            if (onClientRemoved)
+                onClientRemoved(Header {Opcode::LOGOUT, 0, 0, id});
         }
         broadcastNow(Opcode::HEALTH, {});
         std::cout << "Health check from serv" << std::endl;

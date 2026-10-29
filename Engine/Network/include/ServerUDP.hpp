@@ -54,6 +54,8 @@ namespace RType {
             ServerException(const std::string &str) :
                 EngineException("Server error: " + str) {};
         };
+        
+        std::function<void(const Header &)> onClientRemoved;
 
     private:
         void startReceive();

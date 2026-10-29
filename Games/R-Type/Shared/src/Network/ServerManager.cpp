@@ -36,6 +36,7 @@ namespace RType {
                 deleteClient(h);
             },
             true);
+        _udp->onClientRemoved = [this](const Header &h) { deleteClient(h); };
         _udp->addManage(
             CREATE, [this](const Header &h, const std::vector<uint8_t> &p) {
                 CreatedProtocol::manageCreated(h, p, *this);

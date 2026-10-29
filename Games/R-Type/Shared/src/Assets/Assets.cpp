@@ -33,6 +33,8 @@ namespace RType::Asset {
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet4.gif"},
             {PLAYER_SHEET_5,
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet5.gif"},
+            {FONT,
+                "R-Type/sprites/Fonts/r-type.otf"},
         };
     }
 

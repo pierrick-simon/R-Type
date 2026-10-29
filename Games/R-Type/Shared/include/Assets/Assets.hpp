@@ -36,6 +36,7 @@ namespace RType::Asset {
     inline constexpr AssetId PLAYER_SHEET_3 = 110;
     inline constexpr AssetId PLAYER_SHEET_4 = 111;
     inline constexpr AssetId PLAYER_SHEET_5 = 112;
+    inline constexpr AssetId FONT = 200;
 
     [[nodiscard]] AssetList makeAssetList();
 

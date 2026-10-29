@@ -24,6 +24,7 @@ namespace RType {
 
     void UDPClient::start()
     {
+        _lastReceived = std::chrono::steady_clock::now();
         receive();
         asio::post(_context, [this]() { scheduleLogin(); });
     }
@@ -72,6 +73,7 @@ namespace RType {
             [this](std::error_code ec, std::size_t bytesRecvd) {
                 if (!ec && bytesRecvd > 0) {
                     if (auto h = parseHeader(_recvBuffer, bytesRecvd)) {
+                        _lastReceived = std::chrono::steady_clock::now();
                         manageCommands(h.value(),
                             std::vector<uint8_t>(
                                 _recvBuffer.begin() + Header::SIZE,
@@ -114,6 +116,19 @@ namespace RType {
     {
         std::cout << "Health check from server" << std::endl;
         sendNow(Opcode::HEALTH, {});
+    }
+
+    void UDPClient::manageLogout(const Header &, const std::vector<uint8_t> &)
+    {
+        _closedByServer = true;
+    }
+
+    bool UDPClient::isTimedOut() const
+    {
+        if (_closedByServer)
+            return true;
+        return std::chrono::steady_clock::now() - _lastReceived >
+            std::chrono::seconds(TIMEOUT);
     }
 
     uint16_t UDPClient::getMyId() const

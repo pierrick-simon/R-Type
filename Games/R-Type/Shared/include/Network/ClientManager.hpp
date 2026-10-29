@@ -70,6 +70,8 @@ namespace RType {
             return _ctx;
         }
 
+        [[nodiscard]] bool isTimedOut() const { return _udp->isTimedOut(); }
+
     private:
         /**
          * @brief Add the manage function to the udp Client.

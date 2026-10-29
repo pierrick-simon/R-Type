@@ -5,48 +5,92 @@
 ** Menu
 */
 
-#include "Menu.hpp"
 #include <vector>
+
 #include "ClientManager.hpp"
+#include "Menu.hpp"
+#include "Text2D.hpp"
+#include "Assets.hpp"
+
 
 namespace RType::Client {
 
-    namespace {
+    void showConnecting(GameManager &gm)
+    {
+        const Entity e = gm.createEntity();
+        Text2D text;
 
-        constexpr float BUTTON_WIDTH = 400.f;
-        constexpr float BUTTON_HEIGHT = 90.f;
-        constexpr float BUTTON_GAP = 40.f;
-        constexpr int TITLE_SIZE = 120;
-        constexpr int LABEL_SIZE = 48;
+        text.fontSize = 40;
+        text.str = "Connexion...";
+        gm.addComponent<ConnectingText>(e);
+        gm.addComponent<Text2D>(e, text);
+        gm.addComponent<Font>(e, gm.getAssetsMap().at(Asset::FONT));
+        gm.addComponent<Position2D>(e, 1920.f / 2.f - 230.f, 1080.f / 2.f - 30.f);
+    }
 
-        void addButton(GameManager &gm, float y, const std::string &label,
-            std::function<void(GameManager &)> onClick)
-        {
-            const Entity e = gm.createEntity();
-            const float x = (1920.f - BUTTON_WIDTH) / 2.f;
+    void systemConnecting(GameManager &gm)
+    {
+        bool connected = false;
 
-            gm.addComponent<MenuItem>(e);
-            gm.addComponent<Button>(e,
-                Button {{x, y, BUTTON_WIDTH, BUTTON_HEIGHT},
-                    label,
-                    std::move(onClick),
-                    false});
-        }
+        gm.view<ClientManager>().each([&](Entity, ClientManager &c) {
+            connected = !c.getContext().map.empty();
+        });
+        if (!connected)
+            return;
+        gm.view<ConnectingText>().each(
+            [&gm](Entity e, ConnectingText &) { gm.destroyEntity(e); });
+    }
 
-        void startGame(GameManager &gm)
-        {
-            if (!gm.view<ClientManager>().getVector().empty())
+    void systemServerLost(GameManager &gm)
+    {
+        std::vector<Entity> toDestroy;
+        bool lost = false;
+
+        gm.view<ClientManager>().each([&](Entity e, ClientManager &c) {
+            if (!c.isTimedOut())
                 return;
-            std::vector<Entity> items;
+            lost = true;
+            toDestroy.push_back(e);
+            for (auto &[id, entity] : c.getContext().map)
+                if (gm.hasEntity(entity))
+                    toDestroy.push_back(entity);
+        });
+        if (!lost)
+            return;
+        gm.view<ConnectingText>().each(
+            [&](Entity e, ConnectingText &) { toDestroy.push_back(e); });
+        for (const Entity e : toDestroy)
+            gm.destroyEntity(e);
+        createMenu(gm);
+    }
 
-            gm.view<MenuItem>().each(
-                [&items](Entity e, MenuItem &) { items.push_back(e); });
-            for (const Entity e : items)
-                gm.destroyEntity(e);
-            connectToServer(gm);
-        }
+    void addButton(GameManager &gm, float y, const std::string &label,
+        std::function<void(GameManager &)> onClick)
+    {
+        const Entity e = gm.createEntity();
+        const float x = (1920.f - BUTTON_WIDTH) / 2.f;
 
-    } // namespace
+        gm.addComponent<MenuItem>(e);
+        gm.addComponent<Button>(e,
+            Button {{x, y, BUTTON_WIDTH, BUTTON_HEIGHT},
+                label,
+                std::move(onClick),
+                false});
+    }
+
+    void startGame(GameManager &gm)
+    {
+        if (!gm.view<ClientManager>().getVector().empty())
+            return;
+        std::vector<Entity> items;
+
+        gm.view<MenuItem>().each(
+            [&items](Entity e, MenuItem &) { items.push_back(e); });
+        for (const Entity e : items)
+            gm.destroyEntity(e);
+        connectToServer(gm);
+        showConnecting(gm);
+    }
 
     void createMenu(GameManager &gm)
     {
