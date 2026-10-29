@@ -17,7 +17,7 @@
 
 namespace RType {
 
-    constexpr float PI = 3.14159265358979323846f;
+    constexpr float pi = 3.14159265358979323846f;
 
     void systemEnemyPattern(
         MovementPattern &pattern, Velocity2D &velocity, const Clock &clock);

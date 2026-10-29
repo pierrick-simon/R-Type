@@ -44,7 +44,7 @@ namespace RType::Server {
     Entity createServer(GameManager &gm)
     {
         auto server = gm.createEntity();
-        gm.addComponent<ServerManager>(server, 12345);
+        gm.addComponent<ServerManager>(server, LOGIN_SERVER_PORT);
         gm.createSystem<ServerManager>(ServerManager::systemServerReceived);
         gm.createSystem<UpdateText2D, Text2D>(UpdateText2D::systemUpdateText2D);
         gm.createSystem<UpdateSprite2D, Sprite2D>(

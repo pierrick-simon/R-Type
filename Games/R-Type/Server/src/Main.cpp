@@ -5,37 +5,16 @@
 ** Main
 */
 
-#include <chrono>
 #include <iostream>
-#include <thread>
 
 #include "Assets.hpp"
-#include "Background.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
-#include "Player.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
-#include "Texture.hpp"
-#include "Window.hpp"
 
-namespace {
-
-    struct TextureCleanup {
-        RType::GameManager &gm;
-
-        ~TextureCleanup()
-        {
-            try {
-                RType::Server::unloadTextures(gm);
-            } catch (...) {
-            }
-        }
-    };
-
-} // namespace
 
 int main()
 {
@@ -44,7 +23,7 @@ int main()
         RType::AssetList assets = RType::Asset::makeAssetList();
 
         gm.setAssetsMap(assets);
-        const TextureCleanup cleanup {gm};
+        const RType::Server::TextureCleanup cleanup {gm};
 
         auto s = RType::Server::createServer(gm);
         auto ms = RType::Server::createMasterClock(gm);

@@ -16,7 +16,7 @@ namespace RType::Server {
     inline constexpr int WINDOW_HEIGHT = 1080;
     inline constexpr float SCALE = 4.5f;
 
-    inline constexpr float BACKGROUND_SPEED = 75.f;
+    inline constexpr float BACKGROUND_SPEED = 125.f;
     inline constexpr int BACKGROUND_WIDTH = 4224;
     inline constexpr float BACKGROUND_PERIOD = BACKGROUND_WIDTH * SCALE - 2.f;
 

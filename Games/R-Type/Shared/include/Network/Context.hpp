@@ -13,6 +13,8 @@
 
 namespace RType {
 
+    inline constexpr int LOGIN_SERVER_PORT = 4242;
+
     enum OpcodeRType : uint8_t {
         KEY_PRESSED = 10,
         KEY_RELEASED = 11,

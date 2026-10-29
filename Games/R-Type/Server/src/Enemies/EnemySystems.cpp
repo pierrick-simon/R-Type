@@ -37,7 +37,7 @@ namespace RType {
                 velocity.y = 0.f;
                 return;
             }
-            const float angularFrequency = 2.f * PI / pattern.period;
+            const float angularFrequency = 2.f * pi / pattern.period;
 
             velocity.y = pattern.amplitude * angularFrequency *
                 std::cos(angularFrequency * pattern.elapsed + pattern.phase);
