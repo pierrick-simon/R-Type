@@ -19,7 +19,6 @@ namespace RType {
         try {
             _window = std::make_unique<raylib::Window>();
             _window->Init(width, height, name, LOG_WARNING);
-            _audioDevice = std::make_unique<raylib::AudioDevice>();
         } catch (raylib::RaylibException &e) {
             throw(EngineException(e.what()));
         }

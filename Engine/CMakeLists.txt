@@ -37,7 +37,14 @@ FetchContent_Declare(raylib
     GIT_SHALLOW    TRUE
 )
 
-FetchContent_MakeAvailable(asio plf-colony raylib-cpp)
+FetchContent_Declare(miniaudio
+    GIT_REPOSITORY https://github.com/mackron/miniaudio.git
+    GIT_TAG        0.11.22
+    GIT_SHALLOW    TRUE
+    SOURCE_SUBDIR  _no_cmake
+)
+
+FetchContent_MakeAvailable(asio plf-colony raylib-cpp miniaudio)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
@@ -64,6 +71,15 @@ add_library(raylib-cpp INTERFACE)
 add_library(raylib-cpp::raylib-cpp ALIAS raylib-cpp)
 target_include_directories(raylib-cpp SYSTEM INTERFACE ${raylib-cpp_SOURCE_DIR}/include)
 target_link_libraries(raylib-cpp INTERFACE raylib)
+
+# --- miniaudio (single header) ---
+add_library(miniaudio INTERFACE)
+add_library(miniaudio::miniaudio ALIAS miniaudio)
+target_include_directories(miniaudio SYSTEM INTERFACE ${miniaudio_SOURCE_DIR})
+target_link_libraries(miniaudio INTERFACE Threads::Threads ${CMAKE_DL_LIBS})
+if (UNIX)
+    target_link_libraries(miniaudio INTERFACE m)
+endif ()
 
 # Create System engine lib
 
@@ -102,7 +118,6 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/Text2D.cpp
     ${GRAPHICAL}/src/Sprite2D.cpp
     ${GRAPHICAL}/src/SpriteSheet2D.cpp
-    ${GRAPHICAL}/src/Sound.cpp
     ${GRAPHICAL}/src/Font.cpp
     ${GRAPHICAL}/src/Texture2D.cpp
     ${GRAPHICAL}/src/KeyboardManager.cpp
@@ -137,3 +152,24 @@ target_include_directories(${NETWORK_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include/BuiltIn
 )
 target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system asio::asio)
+
+# Create Audio engine lib
+
+set(AUDIO_LIB_NAME engine-audio)
+set(AUDIO Audio)
+
+set(SRCS_AUDIO
+    ${AUDIO}/src/MiniaudioImpl.cpp
+    ${AUDIO}/src/Listener.cpp
+    ${AUDIO}/src/Sound.cpp
+)
+
+set_source_files_properties(${AUDIO}/src/MiniaudioImpl.cpp PROPERTIES
+    COMPILE_OPTIONS "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fvisibility=hidden;-w>"
+)
+
+add_library(${AUDIO_LIB_NAME} SHARED ${SRCS_AUDIO} ${SRCS_SHARED})
+target_include_directories(${AUDIO_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AUDIO}/include
+)
+target_link_libraries(${AUDIO_LIB_NAME} PUBLIC engine-system miniaudio::miniaudio)
