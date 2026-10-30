@@ -5,6 +5,7 @@
 #include <miniaudio.h>
 #include <string>
 #include "Listener.hpp"
+#include "Position2D.hpp"
 #include "SoundInfo.hpp"
 
 namespace RType {
@@ -24,6 +25,7 @@ namespace RType {
         Sound(Listener &l, const std::string &path, SoundInfo info);
 
         static void systemSound(Sound &s);
+        static void systemSound2D(Sound &s, const Position2D &pos);
 
         void setVolume(float volume);
         void setPitch(float pitch);

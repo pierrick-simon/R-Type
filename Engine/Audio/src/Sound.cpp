@@ -25,7 +25,7 @@ namespace RType {
         }
 
         ma_sound_set_looping(_sound.get(), loop ? MA_TRUE : MA_FALSE);
-        
+
         if (stereo) {
             ma_sound_set_attenuation_model(
                 _sound.get(), ma_attenuation_model(attenuation));
@@ -83,6 +83,12 @@ namespace RType {
             ma_sound_set_spatialization_enabled(sound, MA_TRUE);
         } else
             ma_sound_set_spatialization_enabled(sound, MA_FALSE);
+        s.handleState();
+    }
+
+    void Sound::systemSound2D(Sound &s, const Position2D &pos)
+    {
+        ma_sound_set_position(s._sound.get(), pos.x, pos.y, 0.f);
     }
 
     void Sound::setVolume(float volume)
