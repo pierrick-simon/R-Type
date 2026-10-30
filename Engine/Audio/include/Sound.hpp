@@ -5,7 +5,7 @@
 #include <miniaudio.h>
 #include <string>
 #include "Listener.hpp"
-#include "SoundState.hpp"
+#include "SoundInfo.hpp"
 
 namespace RType {
     /**
@@ -16,16 +16,14 @@ namespace RType {
      *
      * @warning The Listener that created the sound must outlive it.
      */
-    class Sound {
+    class Sound : public SoundInfo {
     public:
         /**
          * @throw EngineException If the sound cannot be loaded.
          */
-        Sound(Listener &l, const std::string &path, bool loop = false);
+        Sound(Listener &l, const std::string &path, SoundInfo info);
 
-        bool loop = false;
-
-        static void systemSound(Sound &s, SoundState &state);
+        static void systemSound(Sound &s);
 
         [[nodiscard]] ma_sound &getSound()
         {

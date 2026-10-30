@@ -9,8 +9,8 @@
 #include "Exceptions.hpp"
 
 namespace RType {
-    Sound::Sound(Listener &l, const std::string &path, bool loop) :
-        loop(loop), _sound(new ma_sound())
+    Sound::Sound(Listener &l, const std::string &path, SoundInfo info) :
+        SoundInfo(info), _sound(new ma_sound())
     {
         ma_result result = ma_sound_init_from_file(&l.getEngine(),
             path.c_str(),
@@ -24,45 +24,46 @@ namespace RType {
                 ma_result_description(result));
         }
 
-        ma_sound_set_looping(_sound.get(), loop ? MA_TRUE : MA_FALSE);
-        ma_sound_set_attenuation_model(
-            _sound.get(), ma_attenuation_model_inverse);
-        ma_sound_set_min_distance(_sound.get(), 1.0f);
-        ma_sound_set_max_distance(_sound.get(), 50.0f);
+        if (stereo) {
+            ma_sound_set_looping(_sound.get(), loop ? MA_TRUE : MA_FALSE);
+            ma_sound_set_attenuation_model(
+                _sound.get(), ma_attenuation_model(attenuation));
+            ma_sound_set_min_distance(_sound.get(), minDistance);
+            ma_sound_set_max_distance(_sound.get(), maxDistance);
+        } else
+            ma_sound_set_spatialization_enabled(_sound.get(), MA_FALSE);
     }
 
-    void Sound::systemSound(Sound &s, SoundState &state)
+    void Sound::systemSound(Sound &s)
     {
-        if (!s._sound.get())
+        auto sound = s._sound.get();
+        if (!sound)
             return;
-
-        ma_sound_set_looping(s._sound.get(), s.loop ? MA_TRUE : MA_FALSE);
-
-        switch (state.state) {
-            case SoundState::State::PLAY:
-                ma_sound_seek_to_pcm_frame(s._sound.get(), 0);
-                ma_sound_start(s._sound.get());
-                state.state = SoundState::State::PLAYING;
+        switch (s.state) {
+            case SoundInfo::State::PLAY:
+                ma_sound_seek_to_pcm_frame(sound, 0);
+                ma_sound_start(sound);
+                s.state = SoundInfo::State::PLAYING;
                 break;
-            case SoundState::State::START:
-                ma_sound_start(s._sound.get());
-                state.state = SoundState::State::PLAYING;
+            case SoundInfo::State::START:
+                ma_sound_start(sound);
+                s.state = SoundInfo::State::PLAYING;
                 break;
-            case SoundState::State::PLAYING:
-                if (ma_sound_at_end(s._sound.get()))
-                    state.state = SoundState::State::STOP;
+            case SoundInfo::State::PLAYING:
+                if (ma_sound_at_end(sound))
+                    s.state = SoundInfo::State::STOP;
                 break;
-            case SoundState::State::PAUSED:
-                if (ma_sound_is_playing(s._sound.get()))
-                    ma_sound_stop(s._sound.get());
+            case SoundInfo::State::PAUSED:
+                if (ma_sound_is_playing(sound))
+                    ma_sound_stop(sound);
                 break;
-            case SoundState::State::STOP: {
-                if (ma_sound_is_playing(s._sound.get()))
-                    ma_sound_stop(s._sound.get());
+            case SoundInfo::State::STOP: {
+                if (ma_sound_is_playing(sound))
+                    ma_sound_stop(sound);
                 ma_uint64 cursor = 0;
-                ma_sound_get_cursor_in_pcm_frames(s._sound.get(), &cursor);
+                ma_sound_get_cursor_in_pcm_frames(sound, &cursor);
                 if (cursor != 0)
-                    ma_sound_seek_to_pcm_frame(s._sound.get(), 0);
+                    ma_sound_seek_to_pcm_frame(sound, 0);
                 break;
             }
         }

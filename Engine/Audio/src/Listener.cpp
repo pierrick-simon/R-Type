@@ -6,8 +6,8 @@
 */
 
 #include "Listener.hpp"
-#include "Exceptions.hpp"
 #include <iostream>
+#include "Exceptions.hpp"
 
 namespace RType {
     Listener::Listener() :
