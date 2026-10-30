@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include "Position2D.hpp"
+#include "Terrain.hpp"
 #include "Velocity2D.hpp"
 
 namespace RType {
@@ -68,13 +69,23 @@ namespace RType {
 
         const Hitbox hitbox = centeredHitbox(sheet);
 
+        if (def.pattern == PatternType::WalkJump) {
+            const auto platform =
+                Server::platformAt(gm, x + hitbox.offsetX + hitbox.width / 2.f);
+
+            if (platform)
+                y = platform->top - float(sheet.cellH) * SPRITE_SCALE;
+        }
         gm.addComponent<Enemy>(entity, Enemy {type, def.scoreValue});
         gm.addComponent<Health>(entity, Health {def.hp, def.hp});
         gm.addComponent<Position2D>(entity, Position2D {x, y});
         gm.addComponent<Velocity2D>(entity);
-        gm.addComponent<MovementPattern>(entity, pattern);
+        if (def.pattern == PatternType::WalkJump)
+            gm.addComponent<Walker>(entity);
+        else
+            gm.addComponent<MovementPattern>(entity, pattern);
         gm.addComponent<Hitbox>(entity, hitbox);
-        if (type == EnemyType::Gunner && def.fireCooldown > 0.f) {
+        if (def.fireCooldown > 0.f) {
             Weapon weapon;
             weapon.cooldown = def.fireCooldown;
             weapon.bulletSpeed = def.bulletSpeed;
@@ -121,6 +132,7 @@ namespace RType {
         EnemyDirector director;
 
         director.addWave(EnemyType::Scout, 300.f, 5, 0.5f, 2.f);
+        director.addWave(EnemyType::Walker, 0.f, 1, 0.f, 4.f);
         director.addWave(EnemyType::Scout, 800.f, 5, 0.5f, 6.f);
         director.addWave(EnemyType::Gunner, 540.f, 2, 1.5f, 10.f);
         director.addWave(EnemyType::Scout, 540.f, 8, 0.4f, 15.f);

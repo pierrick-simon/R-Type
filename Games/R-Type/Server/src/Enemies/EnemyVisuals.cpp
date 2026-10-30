@@ -17,7 +17,32 @@ namespace RType {
 
     SpriteSheet2D makeSheet(const SheetInfo &info, float scale = SPRITE_SCALE)
     {
-        return SpriteSheet2D({1, info.frames}, info.frameMs, scale);
+        return SpriteSheet2D(
+            {info.rows, info.frames / info.rows}, info.frameMs, scale);
+    }
+
+    void systemWalkerAnimation(const Walker &walker, SpriteSheet2D &sheet)
+    {
+        const WalkerFrames &frames = WALKER_FRAMES[walker.facingLeft ? 0 : 1];
+
+        switch (walker.state) {
+            case WalkerState::Crouch:
+            case WalkerState::Land:
+                sheet.currentTile = frames.crouch;
+                break;
+            case WalkerState::Jump: {
+                const auto step = std::size_t(
+                    walker.timer * 2000.f / float(WALKER_SHEET.frameMs));
+                sheet.currentTile = frames.jump[step % frames.jump.size()];
+                break;
+            }
+            case WalkerState::Walk: {
+                const auto step = std::size_t(
+                    walker.stride * 1000.f / float(WALKER_SHEET.frameMs));
+                sheet.currentTile = frames.walk[step % frames.walk.size()];
+                break;
+            }
+        }
     }
 
     void spawnExplosion(GameManager &gm, float cx, float cy)
@@ -43,7 +68,10 @@ namespace RType {
 
         hooks.onEnemySpawn =
             [](GameManager &gm, Entity e, const EnemyDef &def) {
-                gm.addComponent<SpriteSheet2D>(e, makeSheet(*def.sheet));
+                SpriteSheet2D sheet = makeSheet(*def.sheet);
+
+                sheet.animation = def.pattern != PatternType::WalkJump;
+                gm.addComponent<SpriteSheet2D>(e, sheet);
                 gm.addComponent<UpdateClientEntity>(
                     e, EntityType::SPRITESHEET, def.sheet->asset, gm, e);
             };
@@ -54,6 +82,11 @@ namespace RType {
         };
         hooks.onEnemyDeath = spawnExplosion;
         return hooks;
+    }
+
+    void registerEnemyVisualSystems(GameManager &gm)
+    {
+        gm.createSystem<Walker, SpriteSheet2D>(systemWalkerAnimation);
     }
 
 } // namespace RType

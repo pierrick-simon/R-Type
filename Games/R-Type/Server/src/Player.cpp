@@ -17,6 +17,7 @@
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
+#include "Terrain.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
@@ -162,6 +163,33 @@ namespace RType::Server {
             sheet.currentTile = FRAME_NEUTRAL;
     }
 
+    void createPlayerMasks(GameManager &gm)
+    {
+        for (AssetId sheet = Asset::PLAYER_SHEET_1;
+            sheet <= Asset::PLAYER_SHEET_5;
+            ++sheet)
+            createSpriteMasks(gm, sheet, PLAYER_FRAMES);
+    }
+
+    void playerTerrainCollision(GameManager &gm)
+    {
+        gm.view<Player, Health, Position2D, SpriteSheet2D, UpdateClientEntity>()
+            .each([&gm](Entity,
+                      Player &state,
+                      Health &health,
+                      Position2D &pos,
+                      SpriteSheet2D &sheet,
+                      UpdateClientEntity &update) {
+                if (state.dying || health.hp <= 0)
+                    return;
+                const CollisionMask *shape =
+                    spriteMask(gm, update.asset, sheet.currentTile);
+
+                if (shape && touchesTerrain(gm, pos, *shape))
+                    health.hp = 0;
+            });
+    }
+
     void playerDeath(GameManager &gm, const MasterClock &clock)
     {
         gm.view<Player, Health, Position2D, SpriteSheet2D>().each(
@@ -193,7 +221,8 @@ namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm)
     {
-        for (auto [entity, defaultClient] : gm.view<DefaulClient>().getVector()) {
+        for (auto [entity, defaultClient] :
+            gm.view<DefaulClient>().getVector()) {
             if (defaultClient.getInit())
                 continue;
             defaultClient.init();
@@ -201,17 +230,23 @@ namespace RType::Server {
             gm.addComponent<Player>(entity);
             gm.addComponent<EnemyTarget>(entity);
             gm.addComponent<Health>(entity, Health {PLAYER_HP, PLAYER_HP});
-            gm.addComponent<Hitbox>(entity, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
-            gm.addComponent<Position2D>(entity, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
+            gm.addComponent<Hitbox>(
+                entity, Hitbox {PLAYER_WIDTH, PLAYER_HEIGHT});
+            gm.addComponent<Position2D>(
+                entity, PLAYER_START_X, WINDOW_HEIGHT / 2.f);
             gm.addComponent<Velocity2D>(entity);
             gm.addComponent<Friction2D>(entity, PLAYER_FRICTION);
-            gm.addComponent<SpriteSheet2D>(entity, Size2D(1, PLAYER_FRAMES),
+            gm.addComponent<SpriteSheet2D>(entity,
+                Size2D(1, PLAYER_FRAMES),
                 FRAME_NEUTRAL,
                 PLAYER_FRAME_MS,
                 SCALE,
                 false);
-            gm.addComponent<UpdateClientEntity>(
-                entity, EntityType::SPRITESHEET, Asset::PLAYER_SHEET_1, gm, entity);
+            gm.addComponent<UpdateClientEntity>(entity,
+                EntityType::SPRITESHEET,
+                Asset::PLAYER_SHEET_1,
+                gm,
+                entity);
         }
     }
 

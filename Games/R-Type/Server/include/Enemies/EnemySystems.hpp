@@ -26,6 +26,14 @@ namespace RType {
         const Position2D &pos, const Hitbox &hitbox, const MasterClock &clock,
         const EnemyHooks &hooks);
 
+    void systemWalkerMovement(GameManager &gm, Walker &walker,
+        Velocity2D &velocity, Position2D &pos, const Hitbox &hitbox,
+        const MasterClock &clock);
+
+    void systemWalkerWeapon(GameManager &gm, Walker &walker, Weapon &weapon,
+        const Position2D &pos, const Hitbox &hitbox, const MasterClock &clock,
+        const EnemyHooks &hooks);
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks);
 

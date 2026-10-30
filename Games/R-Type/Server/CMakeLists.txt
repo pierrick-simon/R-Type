@@ -27,6 +27,7 @@ set(GAME_SRCS
         src/Bullet.cpp
         src/Player.cpp
         src/Setup.cpp
+        src/Terrain.cpp
         src/Texture.cpp
 )
 

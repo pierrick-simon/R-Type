@@ -15,6 +15,7 @@ namespace RType {
     enum class EnemyType : std::uint8_t {
         Scout,
         Gunner,
+        Walker,
         Count,
     };
 
@@ -22,6 +23,7 @@ namespace RType {
         Straight,
         SineWave,
         ZigZag,
+        WalkJump,
     };
 
     struct MovementPattern {
@@ -32,6 +34,27 @@ namespace RType {
         float phase = 0.f;
         float elapsed = 0.f;
         float zigZagDirection = 1.f;
+    };
+
+    enum class WalkerState : std::uint8_t {
+        Walk,
+        Crouch,
+        Jump,
+        Land,
+    };
+
+    /**
+     * @brief Robot walking along the floor platforms, turning back in front
+     * of higher ones and jumping down onto lower ones
+     * (PatternType::WalkJump).
+     */
+    struct Walker {
+        WalkerState state = WalkerState::Walk;
+        float timer = 0.f;
+        float stride = 0.f;
+        bool facingLeft = true;
+        float jumpVelocityX = 0.f;
+        float landY = 0.f;
     };
 
     struct Enemy {

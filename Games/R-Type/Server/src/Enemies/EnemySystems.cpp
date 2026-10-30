@@ -6,11 +6,14 @@
 */
 
 #include "Enemies/EnemySystems.hpp"
+#include "Config.hpp"
 #include "Destroy.hpp"
+#include "Terrain.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <memory>
+#include <optional>
 
 namespace RType {
 
@@ -80,6 +83,8 @@ namespace RType {
             case PatternType::ZigZag:
                 applyZigZagPattern(pattern, velocity, delta);
                 break;
+            case PatternType::WalkJump:
+                break;
         }
     }
 
@@ -148,6 +153,25 @@ namespace RType {
             destroyNetworked(gm, enemy);
         }
 
+        void fireToward(GameManager &gm, Weapon &weapon, float x, float y,
+            float targetX, float targetY, const EnemyHooks &hooks)
+        {
+            const float dx = targetX - x;
+            const float dy = targetY - y;
+            const float length = std::sqrt(dx * dx + dy * dy);
+
+            if (length <= 0.f)
+                return;
+            weapon.timer = 0.f;
+            fireEnemyBullet(gm,
+                x,
+                y,
+                dx / length * weapon.bulletSpeed,
+                dy / length * weapon.bulletSpeed,
+                weapon.damage,
+                hooks);
+        }
+
     } // namespace
 
     void systemEnemyWeapon(GameManager &gm, const Enemy &enemy, Weapon &weapon,
@@ -164,27 +188,173 @@ namespace RType {
         if (muzzleX > SCREEN_WIDTH)
             return;
 
-        float dirX = -1.f;
-        float dirY = 0.f;
+        float targetX = muzzleX - 1.f;
+        float targetY = muzzleY;
+        if (findTarget(gm, targetX, targetY) && targetX >= muzzleX)
+            return;
+        fireToward(gm, weapon, muzzleX, muzzleY, targetX, targetY, hooks);
+    }
+
+    namespace {
+
+        // On the ground, the walker moves relative to the scrolling floor.
+        constexpr float FLOOR_VELOCITY = -Server::BACKGROUND_SPEED;
+        constexpr float WALKER_HEIGHT =
+            float(WALKER_SHEET.cellH) * SPRITE_SCALE;
+
+        float centerX(const Position2D &pos, const Hitbox &hitbox)
+        {
+            return pos.x + hitbox.offsetX + hitbox.width / 2.f;
+        }
+
+        void setWalkerState(Walker &walker, WalkerState state)
+        {
+            walker.state = state;
+            walker.timer = 0.f;
+        }
+
+        struct Ledge {
+            Server::Platform current;
+            Server::Platform next;
+            float edge;
+        };
+
+        /** @brief Platform under the walker and the one past its front. */
+        std::optional<Ledge> findLedge(
+            GameManager &gm, const Walker &walker, float x)
+        {
+            const float dir = walker.facingLeft ? -1.f : 1.f;
+            const auto current = Server::platformAt(gm, x);
+
+            if (!current)
+                return std::nullopt;
+            const float edge =
+                walker.facingLeft ? current->left : current->right;
+            const auto next = Server::platformAt(gm, edge + dir);
+
+            if (!next)
+                return std::nullopt;
+            return Ledge {*current, *next, edge};
+        }
+
+        void walkerWalk(GameManager &gm, Walker &walker, Velocity2D &velocity,
+            Position2D &pos, const Hitbox &hitbox)
+        {
+            const float dir = walker.facingLeft ? -1.f : 1.f;
+            const float x = centerX(pos, hitbox);
+            const auto ledge = findLedge(gm, walker, x);
+
+            velocity.x += dir * enemyDef(EnemyType::Walker).speed;
+            if (!ledge)
+                return;
+            pos.y = ledge->current.top - WALKER_HEIGHT;
+            const float front = x + dir * hitbox.width / 2.f;
+            if (walker.facingLeft ? front > ledge->edge : front < ledge->edge)
+                return;
+            const float drop = ledge->next.top - ledge->current.top;
+            if (drop > WALKER_DEF.stepHeight) {
+                velocity.x = FLOOR_VELOCITY;
+                setWalkerState(walker, WalkerState::Crouch);
+            } else if (drop < -WALKER_DEF.stepHeight &&
+                walker.timer >= WALKER_DEF.turnDelay) {
+                walker.facingLeft = !walker.facingLeft;
+                setWalkerState(walker, WalkerState::Walk);
+            }
+        }
+
+        /**
+         * @brief Jumps down onto the lower platform in front of the walker,
+         * along a ballistic arc landing a bit past the edge.
+         */
+        void startWalkerJump(GameManager &gm, Walker &walker,
+            Velocity2D &velocity, const Position2D &pos, const Hitbox &hitbox)
+        {
+            const float dir = walker.facingLeft ? -1.f : 1.f;
+            const float x = centerX(pos, hitbox);
+            const auto ledge = findLedge(gm, walker, x);
+
+            if (!ledge || ledge->next.top <= ledge->current.top) {
+                setWalkerState(walker, WalkerState::Walk);
+                return;
+            }
+            const float half = hitbox.width / 2.f;
+            float landX =
+                ledge->edge + dir * hitbox.width * WALKER_DEF.landingDistance;
+            if (ledge->next.right - ledge->next.left < hitbox.width)
+                landX = (ledge->next.left + ledge->next.right) / 2.f;
+            else
+                landX = std::clamp(
+                    landX, ledge->next.left + half, ledge->next.right - half);
+            const float g = WALKER_DEF.gravity;
+            const float drop = ledge->next.top - ledge->current.top;
+            const float vy = -std::sqrt(2.f * g * WALKER_DEF.jumpApex);
+            const float duration =
+                (-vy + std::sqrt(vy * vy + 2.f * g * drop)) / g;
+
+            // The landing spot scrolls with the floor during the jump.
+            walker.jumpVelocityX = (landX - x) / duration + FLOOR_VELOCITY;
+            walker.landY = ledge->next.top;
+            velocity = {walker.jumpVelocityX, vy};
+            setWalkerState(walker, WalkerState::Jump);
+        }
+
+    } // namespace
+
+    void systemWalkerMovement(GameManager &gm, Walker &walker,
+        Velocity2D &velocity, Position2D &pos, const Hitbox &hitbox,
+        const MasterClock &clock)
+    {
+        const float delta = elapsedSeconds(clock);
+
+        walker.timer += delta;
+        switch (walker.state) {
+            case WalkerState::Walk:
+                velocity = {FLOOR_VELOCITY, 0.f};
+                walker.stride += delta;
+                walkerWalk(gm, walker, velocity, pos, hitbox);
+                break;
+            case WalkerState::Crouch:
+                velocity = {FLOOR_VELOCITY, 0.f};
+                if (walker.timer >= WALKER_DEF.crouchTime)
+                    startWalkerJump(gm, walker, velocity, pos, hitbox);
+                break;
+            case WalkerState::Jump:
+                velocity.x = walker.jumpVelocityX;
+                velocity.y += WALKER_DEF.gravity * delta;
+                if (velocity.y > 0.f && pos.y + WALKER_HEIGHT >= walker.landY) {
+                    pos.y = walker.landY - WALKER_HEIGHT;
+                    velocity = {FLOOR_VELOCITY, 0.f};
+                    setWalkerState(walker, WalkerState::Land);
+                }
+                break;
+            case WalkerState::Land:
+                velocity = {FLOOR_VELOCITY, 0.f};
+                if (walker.timer >= WALKER_DEF.crouchTime)
+                    setWalkerState(walker, WalkerState::Walk);
+                break;
+        }
+    }
+
+    void systemWalkerWeapon(GameManager &gm, Walker &walker, Weapon &weapon,
+        const Position2D &pos, const Hitbox &hitbox, const MasterClock &clock,
+        const EnemyHooks &hooks)
+    {
         float targetX = 0.f;
         float targetY = 0.f;
-        if (findTarget(gm, targetX, targetY)) {
-            if (targetX >= muzzleX)
-                return;
-            const float dx = targetX - muzzleX;
-            const float dy = targetY - muzzleY;
-            const float length = std::sqrt(dx * dx + dy * dy);
-            dirX = dx / length;
-            dirY = dy / length;
-        }
-        weapon.timer = 0.f;
-        fireEnemyBullet(gm,
-            muzzleX,
-            muzzleY,
-            dirX * weapon.bulletSpeed,
-            dirY * weapon.bulletSpeed,
-            weapon.damage,
-            hooks);
+
+        if (walker.state == WalkerState::Crouch ||
+            walker.state == WalkerState::Land)
+            return;
+        weapon.timer += elapsedSeconds(clock);
+        if (weapon.timer < weapon.cooldown || !findTarget(gm, targetX, targetY))
+            return;
+        const bool targetLeft = targetX < centerX(pos, hitbox);
+        const float muzzleX =
+            pos.x + hitbox.offsetX + (targetLeft ? 0.f : hitbox.width);
+        const float muzzleY = pos.y + hitbox.offsetY + hitbox.height / 2.f;
+        if (muzzleX < 0.f || muzzleX > SCREEN_WIDTH)
+            return;
+        fireToward(gm, weapon, muzzleX, muzzleY, targetX, targetY, hooks);
     }
 
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
@@ -320,6 +490,21 @@ namespace RType {
             g.view<EnemyDirector>().each(
                 [&g, &c, &h](Entity, EnemyDirector &d) {
                     systemEnemyDirector(g, d, c, *h);
+                });
+        });
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            g.view<Walker, Velocity2D, Position2D, Hitbox>().each(
+                [&g, &c](Entity,
+                    Walker &w,
+                    Velocity2D &v,
+                    Position2D &p,
+                    Hitbox &b) { systemWalkerMovement(g, w, v, p, b, c); });
+        });
+        gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
+            g.view<Walker, Weapon, Position2D, Hitbox>().each(
+                [&g, &c, &h](
+                    Entity, Walker &w, Weapon &wp, Position2D &p, Hitbox &b) {
+                    systemWalkerWeapon(g, w, wp, p, b, c, *h);
                 });
         });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {

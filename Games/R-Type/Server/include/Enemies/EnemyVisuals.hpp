@@ -13,7 +13,8 @@
 namespace RType {
 
     EnemyHooks makeEnemyVisualHooks();
+    void registerEnemyVisualSystems(GameManager &gm);
 
-}
+} // namespace RType
 
 #endif

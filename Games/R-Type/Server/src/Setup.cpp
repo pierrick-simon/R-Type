@@ -12,6 +12,7 @@
 #include "Clock.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemySystems.hpp"
+#include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "Player.hpp"
@@ -77,6 +78,7 @@ namespace RType::Server {
             SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
         gm.createSystem<PlayOnce, SpriteSheet2D>(playOnceAnimation);
         registerEnemySystems(gm, enemyHooks);
+        registerEnemyVisualSystems(gm);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
@@ -86,6 +88,7 @@ namespace RType::Server {
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
+        gm.createSystem<>(playerTerrainCollision);
         gm.createSystem<MasterClock>(playerDeath);
         gm.createSystem<>(bulletSystem);
     }

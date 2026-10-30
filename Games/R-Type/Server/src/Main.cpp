@@ -18,6 +18,7 @@
 #include "Player.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
+#include "Terrain.hpp"
 #include "Texture.hpp"
 #include "Window.hpp"
 
@@ -47,6 +48,8 @@ int main()
         const TextureCleanup cleanup {gm};
 
         RType::Server::createBackground(gm);
+        RType::Server::createTerrain(gm);
+        RType::Server::createPlayerMasks(gm);
         auto s = RType::Server::createServer(gm);
         auto ms = RType::Server::createMasterClock(gm);
         RType::Server::createSystems(gm, RType::makeEnemyVisualHooks());

@@ -28,6 +28,8 @@ namespace RType::Server {
         const Player &player, Position2D &pos, Velocity2D &velocity);
     void playerAnimation(
         const Player &player, const Velocity2D &velocity, SpriteSheet2D &sheet);
+    void createPlayerMasks(GameManager &gm);
+    void playerTerrainCollision(GameManager &gm);
     void playerDeath(GameManager &gm, const MasterClock &clock);
 
 } // namespace RType::Server
