@@ -5,6 +5,7 @@
 #include <miniaudio.h>
 #include <string>
 #include "Listener.hpp"
+#include "SoundState.hpp"
 
 namespace RType {
     /**
@@ -17,23 +18,14 @@ namespace RType {
      */
     class Sound {
     public:
-        enum class State {
-            PLAY, //!< Request to play the sound
-            PLAYING, //!< The sound is currently playing
-            PAUSED, //!< The sound is paused
-            START, //!< The sound is about to start
-            STOP, //!< The sound is stopped
-        };
-
         /**
          * @throw EngineException If the sound cannot be loaded.
          */
         Sound(Listener &l, const std::string &path, bool loop = false);
 
         bool loop = false;
-        State state = State::STOP;
 
-        void Sound::systemSound(Sound &s);
+        static void systemSound(Sound &s, SoundState &state);
 
         [[nodiscard]] ma_sound &getSound()
         {
@@ -41,7 +33,11 @@ namespace RType {
         }
 
     private:
-        std::unique_ptr<ma_sound> _sound;
+        struct SoundDeleter {
+            void operator()(ma_sound *s) const;
+        };
+
+        std::unique_ptr<ma_sound, SoundDeleter> _sound;
     };
 } // namespace RType
 

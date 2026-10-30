@@ -7,10 +7,11 @@
 
 #include "Listener.hpp"
 #include "Exceptions.hpp"
+#include <iostream>
 
 namespace RType {
     Listener::Listener() :
-        _engine(std::make_unique<ma_engine>())
+        _engine(new ma_engine())
     {
         static bool created = false;
         if (created)
@@ -25,5 +26,10 @@ namespace RType {
     void Listener::systemListener2D(Listener &l, const Position2D &pos)
     {
         ma_engine_listener_set_position(l._engine.get(), 0, pos.x, pos.y, 0.0f);
+    }
+
+    void Listener::EngineDeleter::operator()(ma_engine *e) const
+    {
+        ma_engine_uninit(e);
     }
 } // namespace RType

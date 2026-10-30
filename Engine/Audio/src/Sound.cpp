@@ -10,7 +10,7 @@
 
 namespace RType {
     Sound::Sound(Listener &l, const std::string &path, bool loop) :
-        loop(loop), _sound(std::make_unique<ma_sound>())
+        loop(loop), _sound(new ma_sound())
     {
         ma_result result = ma_sound_init_from_file(&l.getEngine(),
             path.c_str(),
@@ -31,32 +31,32 @@ namespace RType {
         ma_sound_set_max_distance(_sound.get(), 50.0f);
     }
 
-    void Sound::systemSound(Sound &s)
+    void Sound::systemSound(Sound &s, SoundState &state)
     {
         if (!s._sound.get())
             return;
 
         ma_sound_set_looping(s._sound.get(), s.loop ? MA_TRUE : MA_FALSE);
 
-        switch (s.state) {
-            case State::PLAY:
+        switch (state.state) {
+            case SoundState::State::PLAY:
                 ma_sound_seek_to_pcm_frame(s._sound.get(), 0);
                 ma_sound_start(s._sound.get());
-                s.state = State::PLAYING;
+                state.state = SoundState::State::PLAYING;
                 break;
-            case State::START:
+            case SoundState::State::START:
                 ma_sound_start(s._sound.get());
-                s.state = State::PLAYING;
+                state.state = SoundState::State::PLAYING;
                 break;
-            case State::PLAYING:
+            case SoundState::State::PLAYING:
                 if (ma_sound_at_end(s._sound.get()))
-                    s.state = State::STOP;
+                    state.state = SoundState::State::STOP;
                 break;
-            case State::PAUSED:
+            case SoundState::State::PAUSED:
                 if (ma_sound_is_playing(s._sound.get()))
                     ma_sound_stop(s._sound.get());
                 break;
-            case State::STOP: {
+            case SoundState::State::STOP: {
                 if (ma_sound_is_playing(s._sound.get()))
                     ma_sound_stop(s._sound.get());
                 ma_uint64 cursor = 0;
@@ -66,5 +66,10 @@ namespace RType {
                 break;
             }
         }
+    }
+
+    void Sound::SoundDeleter::operator()(ma_sound *s) const
+    {
+        ma_sound_uninit(s);
     }
 }; // namespace RType

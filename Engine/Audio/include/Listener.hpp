@@ -18,7 +18,11 @@ namespace RType {
         static void systemListener2D(Listener &l, const Position2D &pos);
 
     private:
-        std::unique_ptr<ma_engine> _engine;
+        struct EngineDeleter {
+            void operator()(ma_engine *e) const;
+        };
+
+        std::unique_ptr<ma_engine, EngineDeleter> _engine;
     };
 } // namespace RType
 
