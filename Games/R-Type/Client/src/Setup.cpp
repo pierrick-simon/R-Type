@@ -71,7 +71,7 @@ namespace RType::Client {
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<>(systemButtons);
-        gm.createSystem<>(systemChangingUsername);
+        gm.createSystem<>(systemTextFields);
         gm.createSystem<>(systemDrawMenu);
     }
 } // namespace RType::Client
