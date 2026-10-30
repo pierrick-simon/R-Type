@@ -25,12 +25,17 @@ namespace RType {
 
         static void systemSound(Sound &s);
 
+        void setVolume(float volume);
+        void setPitch(float pitch);
+
         [[nodiscard]] ma_sound &getSound()
         {
             return *_sound;
         }
 
     private:
+        void handleState();
+
         struct SoundDeleter {
             void operator()(ma_sound *s) const;
         };
