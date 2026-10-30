@@ -22,7 +22,7 @@ namespace RType {
         /**
          * @throw EngineException If the sound cannot be loaded.
          */
-        Sound(Listener &l, const std::string &path, SoundInfo info);
+        Sound(Listener &l, const std::string &path, SoundInfo info = {});
 
         static void systemSound(Sound &s);
         static void systemSound2D(Sound &s, const Position2D &pos);

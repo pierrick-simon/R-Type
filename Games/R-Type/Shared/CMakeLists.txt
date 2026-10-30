@@ -45,7 +45,7 @@ set(INCLUDE_SHARED
 add_library(${SHARED_LIB_NAME} STATIC ${SRCS_NETWORK} ${SRCS_ASSETS})
 add_library(r-type::shared ALIAS ${SHARED_LIB_NAME})
 target_include_directories(${SHARED_LIB_NAME} PUBLIC ${INCLUDE_SHARED})
-target_link_libraries(${SHARED_LIB_NAME} PUBLIC engine-system engine-graphical engine-network)
+target_link_libraries(${SHARED_LIB_NAME} PUBLIC engine-system engine-graphical engine-network engine-audio)
 
 if (MSVC)
     target_compile_options(${SHARED_LIB_NAME} PRIVATE /W4 /permissive- /wd4251)

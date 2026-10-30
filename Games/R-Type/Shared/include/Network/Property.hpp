@@ -34,6 +34,7 @@ namespace RType {
         PITCH = 12, //!< f32
         LOOP = 13, //!< u8
         REC_NB = 14, //!< i16 width, i16 height
+        STEREO = 15, //!< u8
         Count
     };
 

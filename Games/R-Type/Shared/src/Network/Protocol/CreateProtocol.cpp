@@ -9,6 +9,7 @@
 #include "Assets.hpp"
 #include "Clock.hpp"
 #include "Friction2D.hpp"
+#include "Listener.hpp"
 #include "PlayerPhysics.hpp"
 #include "ServerManager.hpp"
 #include "Velocity2D.hpp"
@@ -88,11 +89,13 @@ namespace RType {
 
         if (asset == gm.getAssetsMap().end())
             return;
-        auto s = ctx.gm->get().createEntity();
-        gm.addComponent<RType::Sound>(s, asset->second, false);
-        gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
-        gm.addComponent<RType::Velocity2D>(s);
-        ctx.map.emplace(e.id, s);
+        for (auto [_, l] : gm.view<Listener>().getVector()) {
+            auto s = ctx.gm->get().createEntity();
+            gm.addComponent<RType::Sound>(s, l, asset->second);
+            gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+            gm.addComponent<RType::Velocity2D>(s);
+            ctx.map.emplace(e.id, s);
+        }
     }
 
     void CreateProtocol::manageCreateText2D(ProtocolEntity &e, Context &ctx)

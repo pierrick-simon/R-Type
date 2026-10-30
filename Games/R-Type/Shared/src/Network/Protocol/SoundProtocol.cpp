@@ -66,7 +66,6 @@ namespace RType {
 
         if (gm.hasComponent<Sound>(*entity)) {
             auto &s = gm.getComponent<Sound>(*entity);
-            s.Stop();
             s.state = Sound::State::STOP;
         } else if (gm.hasComponent<SpriteSheet2D>(*entity)) {
             auto &sheet = gm.getComponent<SpriteSheet2D>(*entity);
