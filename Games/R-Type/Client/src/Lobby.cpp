@@ -158,6 +158,9 @@ namespace RType::Client {
         void updateTexts(
             GameManager &gm, const LobbyState &state, const bool isHost)
         {
+            // Room left for the name between the row start and the "HOST"
+            // tag + "NOT READY" status: longer names get a smaller font.
+            constexpr float NAME_MAX_WIDTH = 360.f;
             const int total = static_cast<int>(state.players.size());
             std::vector<float> nameWidth(LOBBY_MAX_ROWS, 0.f);
 
@@ -174,12 +177,21 @@ namespace RType::Client {
                         case LobbyTextId::Status:
                             text.str = statusLine(state, isHost, text.color);
                             break;
-                        case LobbyTextId::RowName:
+                        case LobbyTextId::RowName: {
+                            float width = 0.f;
+
                             text.str = p ? p->name : "";
+                            text.fontSize = LOBBY_NAME_SIZE;
+                            width = font.MeasureText(
+                                text.str, text.fontSize, text.spacing).x;
+                            if (width > NAME_MAX_WIDTH) {
+                                text.fontSize *= NAME_MAX_WIDTH / width;
+                                width = NAME_MAX_WIDTH;
+                            }
                             if (id.row < nameWidth.size())
-                                nameWidth[id.row] = font.MeasureText(text.str,
-                                    text.fontSize, text.spacing).x;
+                                nameWidth[id.row] = width;
                             break;
+                        }
                         case LobbyTextId::RowHost:
                             text.str = p && p->id == state.hostId ? "HOST" : "";
                             break;

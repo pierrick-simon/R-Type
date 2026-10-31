@@ -125,6 +125,7 @@ namespace RType::Client {
             [](GameManager &) { quitRequested = true; });
         const Entity usernameButton = addMenuButton(gm, 20, 1080 - (BUTTON_HEIGHT * 2), _clInfos._username,
             [](GameManager &) { activeField = Field::Username; });
+        const Entity usernameText = addText(gm, 20 + (BUTTON_WIDTH / 2), 1080 - (BUTTON_HEIGHT * 2.3), "Username", 25.f); 
         gm.addComponent<TextField>(usernameButton, TextField {Field::Username});
         gm.addComponent<Clock>(usernameButton);
     }
