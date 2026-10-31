@@ -28,7 +28,10 @@ namespace RType {
         PAUSE = 25,
         STOP = 26,
         DESTROY = 27,
-        MOVE_VELOCITY = 28
+        MOVE_VELOCITY = 28,
+        LOBBY_INFO = 30,
+        LOBBY_START = 31,
+        LOBBY_STATE = 32
     };
 
     struct Context {

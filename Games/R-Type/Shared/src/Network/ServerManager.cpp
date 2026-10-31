@@ -13,6 +13,7 @@
 #include "MouseProtocol.hpp"
 #include "UpdateClientEntity.hpp"
 #include "DestroyProtocol.hpp"
+#include "LobbyProtocol.hpp"
 
 namespace RType {
     ServerManager::ServerManager(short port) :
@@ -47,6 +48,8 @@ namespace RType {
             MOUSE_BUTTON_PRESSED, MouseProtocol::manageButtonPressed);
         addContextManage(
             MOUSE_BUTTON_RELEASED, MouseProtocol::manageButtonReleased);
+        addContextManage(LOBBY_INFO, LobbyProtocol::manageInfo);
+        addContextManage(LOBBY_START, LobbyProtocol::manageStart);
     }
 
     void ServerManager::systemServerReceived(
@@ -102,6 +105,7 @@ namespace RType {
         _ctx.gm->get().addComponent<DefaulClient>(entity, id);
         _ctx.gm->get().addComponent<KeyboardManager>(entity);
         _ctx.gm->get().addComponent<MouseManager>(entity);
+        _ctx.gm->get().addComponent<LobbyMember>(entity);
         for (auto [_, update] :
             _ctx.gm->get().view<UpdateClientEntity>().getVector())
             update.create.push_back(id);

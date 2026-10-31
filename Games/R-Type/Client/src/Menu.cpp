@@ -8,10 +8,14 @@
 #include <vector>
 
 #include "ClientManager.hpp"
+#include "Lobby.hpp"
+#include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "Text2D.hpp"
 #include "Assets.hpp"
 #include "Clock.hpp"
+#include "SpriteSheet2D.hpp"
+#include "Texture2D.hpp"
 
 namespace RType::Client {
 
@@ -37,16 +41,55 @@ namespace RType::Client {
         gm.addComponent<Position2D>(e, 1920.f / 2.f - 230.f, 1080.f / 2.f - 30.f);
     }
 
-    Entity addButton(GameManager &gm, float x, float y, const std::string &label,
-        std::function<void(GameManager &)> onClick, float width = BUTTON_WIDTH)
+    Entity addText(GameManager &gm, float x, float y, const std::string &str,
+        float size, TextAnchor anchor, raylib::Color color)
     {
         const Entity e = gm.createEntity();
+        Text2D text;
 
-        gm.addComponent<MenuItem>(e);
-        gm.addComponent<Button>(e, Button {{x, y, width, BUTTON_HEIGHT},
-                label, std::move(onClick), false, false});
+        text.fontSize = size;
+        text.str = str;
+        text.color = color;
+        text.spacing = 1.f;
+        gm.addComponent<Text2D>(e, text);
+        gm.addComponent<Font>(e, gm.getAssetsMap().at(Asset::FONT));
+        gm.addComponent<Position2D>(e, x, y);
+        gm.addComponent<TextAnchor>(e, anchor);
         return e;
     }
+
+    Entity addButton(GameManager &gm, float x, float y,
+        const std::string &label, std::function<void(GameManager &)> onClick,
+        float width)
+    {
+        const Entity e = gm.createEntity();
+        const float scale = width / BUTTON_SPRITE_WIDTH;
+        const float height = BUTTON_HEIGHT * scale;
+
+        gm.addComponent<Button>(e, Button {{x, y, width, height},
+                label, std::move(onClick), false, false, false});
+        gm.addComponent<Position2D>(e, x, y);
+        gm.addComponent<SpriteSheet2D>(
+            e, Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, scale, false);
+        gm.addComponent<Texture2D>(e, gm.getAssetsMap().at(Asset::MENU_BUTTON));
+        const Entity text =
+            addText(gm, x + width / 2.f, y + height / 2.f, label, LABEL_SIZE);
+        gm.addComponent<ButtonLabel>(text, ButtonLabel {e});
+        return e;
+    }
+
+    namespace {
+        Entity addMenuButton(GameManager &gm, float x, float y,
+            const std::string &label,
+            std::function<void(GameManager &)> onClick,
+            float width = BUTTON_WIDTH)
+        {
+            const Entity e = addButton(gm, x, y, label, std::move(onClick), width);
+
+            gm.addComponent<MenuItem>(e);
+            return e;
+        }
+    } // namespace
 
     void startGame(GameManager &gm)
     {
@@ -73,14 +116,14 @@ namespace RType::Client {
         const float firstX = (1920.f - BUTTON_WIDTH) / 2.f;
         const float ipX = (1920.f - IP_BUTTON_WIDTH) / 2.f;
 
-        addButton(gm, firstX, firstY, "Jouer", startGame);
-        const Entity ipButton = addButton(gm, ipX, firstY + step, _clInfos._ip,
+        addMenuButton(gm, firstX, firstY, "Start Game", startGame);
+        const Entity ipButton = addMenuButton(gm, ipX, firstY + step, _clInfos._ip,
             [](GameManager &) { activeField = Field::Ip; }, IP_BUTTON_WIDTH);
         gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
         gm.addComponent<Clock>(ipButton);
-        addButton(gm, firstX, firstY + 2 * step, "Quitter",
+        addMenuButton(gm, firstX, firstY + 2 * step, "Leave Game",
             [](GameManager &) { quitRequested = true; });
-        const Entity usernameButton = addButton(gm, 20, 1080 - (BUTTON_HEIGHT * 2), _clInfos._username,
+        const Entity usernameButton = addMenuButton(gm, 20, 1080 - (BUTTON_HEIGHT * 2), _clInfos._username,
             [](GameManager &) { activeField = Field::Username; });
         gm.addComponent<TextField>(usernameButton, TextField {Field::Username});
         gm.addComponent<Clock>(usernameButton);
@@ -92,6 +135,8 @@ namespace RType::Client {
         const Entity c = gm.createEntity();
 
         gm.addComponent<ClientManager>(c, host, port);
+        gm.addComponent<LobbyState>(c);
+        gm.addComponent<LobbyClient>(c);
     }
 
 } // namespace RType::Client

@@ -24,6 +24,7 @@ set(SRCS_GFX
 set(GAME_SRCS
         src/Background.cpp
         src/Bullet.cpp
+        src/Lobby.cpp
         src/Player.cpp
         src/Setup.cpp
         src/Texture.cpp

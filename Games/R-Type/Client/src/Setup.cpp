@@ -12,6 +12,7 @@
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "MouseManager.hpp"
+#include "Lobby.hpp"
 #include "Menu.hpp"
 #include "MouseProtocol.hpp"
 #include "Sprite2D.hpp"
@@ -61,17 +62,21 @@ namespace RType::Client {
     void createSystems(GameManager &gm)
     {
         gm.createSystem<>(systemConnecting);
+        gm.createSystem<>(systemLobby);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<Friction2D, Velocity2D, Clock>(
             Friction2D::systemFriction2D);
-        gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
+        gm.createSystem<>(systemButtons);
+        gm.createSystem<>(systemTextFields);
+        gm.createSystem<>(systemButtonVisuals);
+        gm.createSystem<>(systemMenuBackground);
+        gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
+        // Draw order: background / sprites first, texts last (on top).
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
-        gm.createSystem<>(systemButtons);
-        gm.createSystem<>(systemTextFields);
-        gm.createSystem<>(systemDrawMenu);
+        gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
     }
 } // namespace RType::Client

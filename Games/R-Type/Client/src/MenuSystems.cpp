@@ -8,10 +8,16 @@
 #include <vector>
 
 #include "ClientManager.hpp"
+#include "Lobby.hpp"
+#include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "Text2D.hpp"
 #include "Assets.hpp"
 #include "Clock.hpp"
+#include "MouseManager.hpp"
+#include "Sprite2D.hpp"
+#include "SpriteSheet2D.hpp"
+#include "Texture2D.hpp"
 
 namespace RType::Client {
 
@@ -39,6 +45,12 @@ namespace RType::Client {
             return key >= 32 && key <= 125;
         }
 
+        bool contains(const Rectangle &rect, const Vector2 &point)
+        {
+            return point.x >= rect.x && point.x <= rect.x + rect.width
+                && point.y >= rect.y && point.y <= rect.y + rect.height;
+        }
+
         void stopEditing()
         {
             if (activeField == Field::None)
@@ -56,9 +68,10 @@ namespace RType::Client {
     {
         bool connected = false;
 
-        gm.view<ClientManager>().each([&](Entity, ClientManager &c) {
-            connected = !c.getContext().map.empty();
-        });
+        gm.view<ClientManager, LobbyState>().each(
+            [&](Entity, ClientManager &, LobbyState &state) {
+                connected = state.received;
+            });
         gm.view<ConnectingText, Text2D, Clock>().each([](Entity, ConnectingText &c, Text2D &text, Clock &clock) {
             c.elapsed += clock.getElapsed();
             const auto dots = (c.elapsed.count() / 400) % 4;
@@ -100,72 +113,116 @@ namespace RType::Client {
 
     void systemServerLost(GameManager &gm)
     {
-        std::vector<Entity> toDestroy;
         bool lost = false;
 
-        gm.view<ClientManager>().each([&](Entity e, ClientManager &c) {
-            if (!c.isTimedOut())
-                return;
-            lost = true;
-            toDestroy.push_back(e);
-            for (auto &[id, entity] : c.getContext().map)
-                if (gm.hasEntity(entity))
-                    toDestroy.push_back(entity);
+        gm.view<ClientManager>().each([&](Entity, ClientManager &c) {
+            if (c.isTimedOut())
+                lost = true;
         });
-        if (!lost)
-            return;
-        gm.view<ConnectingText>().each(
-            [&](Entity e, ConnectingText &) { toDestroy.push_back(e); });
-        for (const Entity e : toDestroy)
-            gm.destroyEntity(e);
-        createMenu(gm);
+        if (lost)
+            returnToMenu(gm);
     }
 
     void systemButtons(GameManager &gm)
     {
+        // The engine does not expose the cursor position: only raylib call
+        // left here. Clicks come from the engine MouseManager.
         const Vector2 mouse = ::GetMousePosition();
-        const bool pressed = ::IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+        bool pressed = false;
         std::vector<std::function<void(GameManager &)>> clicked;
+
+        gm.view<MouseManager>().each([&pressed](Entity, MouseManager &m) {
+            for (const auto button : m.buttonPressed)
+                if (button == MouseButton::Value::Left)
+                    pressed = true;
+        });
 
         if (activeField != Field::None && pressed) {
             bool onActiveField = false;
             gm.view<TextField, Button>().each(
                 [&](Entity, TextField &f, Button &button) {
-                    if (f.id == activeField && ::CheckCollisionPointRec(mouse, button.rect))
+                    if (f.id == activeField && contains(button.rect, mouse))
                         onActiveField = true;
                 });
             if (!onActiveField)
                 stopEditing();
         }
         gm.view<Button>().each([&](Entity, Button &button) {
-            button.hovered = ::CheckCollisionPointRec(mouse, button.rect);
-            if (button.hovered && pressed)
+            button.hovered = contains(button.rect, mouse);
+            if (button.hovered && pressed && !button.disabled)
                 clicked.push_back(button.onClick);
         });
         for (auto &callback : clicked)
             callback(gm);
     }
 
-    void systemDrawMenu(GameManager &gm)
+    void systemButtonVisuals(GameManager &gm)
     {
-        const auto buttons = gm.view<Button>().getVector();
-        if (buttons.empty())
-            return;
-        const char *title = "R-TYPE";
-        const int titleWidth = ::MeasureText(title, TITLE_SIZE);
+        std::vector<Entity> orphans;
 
-        DrawText(title, (1920 - titleWidth) / 2, 200, TITLE_SIZE, WHITE);
-        gm.view<Button>().each([](Entity, Button &button) {
-            Color fill = button.hovered ? Color {70, 120, 220, 255} : Color {40, 50, 90, 255};
-            if (button.error)
-                fill = button.hovered ? Color {200, 70, 70, 255} : Color {150, 40, 40, 255};
-            const int textWidth = ::MeasureText(button.label.c_str(), LABEL_SIZE);
-            ::DrawRectangleRec(button.rect, fill);
-            ::DrawRectangleLinesEx(button.rect, 3.f, WHITE);
-            ::DrawText(button.label.c_str(), static_cast<int>(button.rect.x + (button.rect.width - textWidth) / 2),
-                static_cast<int>(button.rect.y + (button.rect.height - LABEL_SIZE) / 2),
-                LABEL_SIZE, WHITE);
+        gm.view<Button, SpriteSheet2D>().each(
+            [](Entity, Button &button, SpriteSheet2D &sheet) {
+                if (button.disabled)
+                    sheet.currentTile = BUTTON_TILE_DISABLED;
+                else if (button.hovered)
+                    sheet.currentTile = BUTTON_TILE_HOVERED;
+                else
+                    sheet.currentTile = BUTTON_TILE_NORMAL;
+                sheet.color = button.error ? raylib::Color(255, 110, 110, 255)
+                                           : raylib::Color::White();
+            });
+        gm.view<ButtonLabel, Text2D, Font>().each(
+            [&](Entity e, ButtonLabel &label, Text2D &text, Font &font) {
+                if (!gm.hasComponent<Button>(label.owner)) {
+                    orphans.push_back(e);
+                    return;
+                }
+                const Button &button = gm.getComponent<Button>(label.owner);
+                const float maxWidth = button.rect.width - 2.f * BUTTON_TEXT_PADDING;
+                float width = 0.f;
+
+                text.str = button.label;
+                text.fontSize = LABEL_SIZE;
+                width = font.MeasureText(text.str, text.fontSize, text.spacing).x;
+                if (width > maxWidth && width > 0.f)
+                    text.fontSize = LABEL_SIZE * maxWidth / width;
+            });
+        for (const Entity e : orphans)
+            gm.destroyEntity(e);
+    }
+
+    void systemTextAnchor(Text2D &text, Font &font, const TextAnchor &anchor)
+    {
+        const auto size = font.MeasureText(text.str, text.fontSize, text.spacing);
+
+        text.origin.x = size.x * anchor.x;
+        text.origin.y = size.y * anchor.y;
+    }
+
+        void systemMenuBackground(GameManager &gm)
+    {
+        bool hidden = false;
+        std::vector<Entity> backgrounds;
+
+        gm.view<LobbyClient>().each([&hidden](Entity, LobbyClient &l) {
+            hidden = hidden || l.inGame || l.shown;
         });
+        gm.view<MenuBackground>().each(
+            [&backgrounds](Entity e, MenuBackground &) { backgrounds.push_back(e); });
+        if (hidden) {
+            for (const Entity e : backgrounds)
+                gm.destroyEntity(e);
+            return;
+        }
+        if (!backgrounds.empty())
+            return;
+        const Entity e = gm.createEntity();
+
+        gm.addComponent<MenuBackground>(e);
+        gm.addComponent<Sprite2D>(e, 1.f);
+        gm.addComponent<Texture2D>(
+            e, gm.getAssetsMap().at(Asset::MENU_BACKGROUND));
+        gm.addComponent<Position2D>(e, 0.f, 0.f);
     }
 
 } // namespace RType::Client

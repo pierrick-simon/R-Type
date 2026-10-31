@@ -35,6 +35,10 @@ namespace RType::Asset {
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet5.gif"},
             {FONT,
                 "R-Type/sprites/Fonts/r-type.otf"},
+
+            {MENU_BACKGROUND, "R-Type/sprites/Menu/Background.png"},
+            {MENU_BUTTON, "R-Type/sprites/Menu/Buttons.png"},
+            {MENU_PLAYER_BACK, "R-Type/sprites/Menu/PlayerBack.png"},
         };
     }
 

@@ -9,6 +9,7 @@
 #include "CreateProtocol.hpp"
 #include "CreatedProtocol.hpp"
 #include "DestroyProtocol.hpp"
+#include "LobbyProtocol.hpp"
 #include "MoveProtocol.hpp"
 #include "SetProtocol.hpp"
 #include "SoundProtocol.hpp"
@@ -33,6 +34,8 @@ namespace RType {
         addContextManage(OpcodeRType::PLAY, SoundProtocol::managePlay);
         addContextManage(OpcodeRType::STOP, SoundProtocol::manageStop);
         addContextManage(OpcodeRType::TEXT, TextProtocol::manageText);
+        addContextManage(
+            OpcodeRType::LOBBY_STATE, LobbyProtocol::manageState);
     }
 
     void ClientManager::systemClientReceived(

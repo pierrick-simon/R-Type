@@ -9,6 +9,7 @@
 #include "Destroy.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include "Assets.hpp"
 #include "Background.hpp"
@@ -17,6 +18,7 @@
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
+#include "Lobby.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
@@ -180,8 +182,22 @@ namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm)
     {
+        constexpr std::size_t PLAYER_SHEETS =
+            Asset::PLAYER_SHEET_5 - Asset::PLAYER_SHEET_1 + 1;
+        std::size_t index = gm.view<Player>().getVector().size();
+
+        std::unordered_set<uint32_t> connected;
+
+        if (!isGameStarted())
+            return;
+        gm.view<ServerManager>().each([&connected](Entity, ServerManager &s) {
+            for (const auto &[id, _] : s.getClients())
+                connected.insert(id);
+        });
         for (auto [e, d] : gm.view<DefaulClient>().getVector()) {
-            if (d.getInit())
+            // A client that logged out this frame is still in the view (its
+            // destruction is deferred): adding components to it would throw.
+            if (d.getInit() || !connected.contains(d.getId()))
                 continue;
             d.init();
 
@@ -199,7 +215,9 @@ namespace RType::Server {
                 PLAYER_FRAME_MS,
                 SCALE,
                 false);
-            AssetId spaceShipSpriteSheet = Asset::PLAYER_SHEET_1 + gm.view<DefaulClient>().getVector().size() - 1;
+            const AssetId spaceShipSpriteSheet = Asset::PLAYER_SHEET_1 +
+                static_cast<AssetId>(index % PLAYER_SHEETS);
+            index++;
             gm.addComponent<UpdateClientEntity>(
                 e, EntityType::SPRITESHEET, spaceShipSpriteSheet, gm, e);
         }
