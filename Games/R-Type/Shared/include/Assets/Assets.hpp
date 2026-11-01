@@ -41,6 +41,8 @@ namespace RType::Asset {
     inline constexpr AssetId ENEMY_ALIEN = 115;
     inline constexpr AssetId ALIEN_BEAM = 116;
     inline constexpr AssetId ALIEN_CHARGE = 117;
+    inline constexpr AssetId PLAYER_CHARGE = 118;
+    inline constexpr AssetId PLAYER_CHARGED_SHOT = 119;
 
     [[nodiscard]] AssetList makeAssetList();
 

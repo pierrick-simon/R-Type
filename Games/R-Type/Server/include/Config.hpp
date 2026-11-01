@@ -8,6 +8,7 @@
 #ifndef CONFIG_HPP_
 #define CONFIG_HPP_
 
+#include <array>
 #include <cstddef>
 
 namespace RType::Server {
@@ -48,6 +49,37 @@ namespace RType::Server {
     inline constexpr float BULLET_SPEED = 1500.f;
     inline constexpr unsigned int BULLET_FRAME_MS = 60;
     inline constexpr float SHOOT_COOLDOWN = 0.2f;
+
+    inline constexpr float PLAYER_NOSE_Y = 10.f * SCALE;
+
+    inline constexpr int CHARGE_FRAMES = 8;
+    inline constexpr float CHARGE_SIZE = 32.f * SCALE;
+    inline constexpr float CHARGE_OVERLAP = 4.f * SCALE;
+    inline constexpr unsigned int CHARGE_FRAME_MS = 60;
+    inline constexpr float CHARGE_LEVEL_TIME = 0.35f;
+    inline constexpr int CHARGE_MAX_LEVEL = 5;
+
+    inline constexpr int CHARGED_SHOT_FRAMES = 2;
+    inline constexpr float CHARGED_SHOT_CELL_WIDTH = 80.f * SCALE;
+    inline constexpr float CHARGED_SHOT_CELL_HEIGHT = 16.f * SCALE;
+    inline constexpr float CHARGED_SHOT_SPEED = 1500.f;
+    inline constexpr unsigned int CHARGED_SHOT_FRAME_MS = 60;
+
+    /** @brief Beam size in sheet pixels and damage of one charge level. */
+    struct ChargedShotLevel {
+        float width;
+        float height;
+        int damage;
+    };
+
+    inline constexpr std::array<ChargedShotLevel, CHARGE_MAX_LEVEL>
+        CHARGED_SHOT_LEVELS = {{
+            {16.f, 12.f, 2},
+            {32.f, 12.f, 3},
+            {48.f, 14.f, 5},
+            {64.f, 14.f, 8},
+            {80.f, 16.f, 12},
+        }};
 
 } // namespace RType::Server
 

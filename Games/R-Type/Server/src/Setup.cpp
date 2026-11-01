@@ -91,6 +91,8 @@ namespace RType::Server {
         gm.createSystem<>(playerTerrainCollision);
         gm.createSystem<MasterClock>(playerDeath);
         gm.createSystem<>(bulletSystem);
+        gm.createSystem<>(chargeEffectSystem);
+        gm.createSystem<ChargedShot, SpriteSheet2D>(chargedShotAnimation);
     }
 
 } // namespace RType::Server

@@ -86,6 +86,8 @@ namespace RType::Server {
         state.dying = false;
         state.deathTimer = 0.f;
         state.cooldown = 0.f;
+        state.charging = false;
+        state.charge = 0.f;
         health.hp = health.maxHp;
         position = Position2D {PLAYER_START_X, WINDOW_HEIGHT / 2.f};
         gm.getComponent<Velocity2D>(player) = {};
@@ -95,43 +97,81 @@ namespace RType::Server {
         resetBackground(gm);
     }
 
-    void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, KeyboardManager &keyboard, const Health &health,
-        const MasterClock &clock)
+    void pressFire(GameManager &gm, Player &player, const Position2D &pos)
+    {
+        if (player.cooldown <= 0.f) {
+            spawnBullet(gm, pos);
+            player.cooldown = SHOOT_COOLDOWN;
+        }
+        player.charging = true;
+        player.charge = 0.f;
+    }
+
+    void releaseFire(GameManager &gm, Player &player, const Position2D &pos)
+    {
+        const int level =
+            std::min(int(player.charge / CHARGE_LEVEL_TIME), CHARGE_MAX_LEVEL);
+
+        player.charging = false;
+        player.charge = 0.f;
+        if (level <= 0)
+            return;
+        spawnChargedShot(gm, pos, level);
+        player.cooldown = SHOOT_COOLDOWN;
+    }
+
+    void updateCharge(
+        GameManager &gm, Entity entity, Player &player, const float elapsed)
+    {
+        const float before = player.charge;
+
+        if (!player.charging)
+            return;
+        player.charge += elapsed;
+        if (before < CHARGE_LEVEL_TIME && player.charge >= CHARGE_LEVEL_TIME)
+            spawnChargeEffect(gm, entity);
+    }
+
+    void playerHandle(GameManager &gm, Entity entity, Player &player,
+        Velocity2D &velocity, const Position2D &pos, KeyboardManager &keyboard,
+        const Health &health, const MasterClock &clock)
     {
         const float elapsed = elapsedSeconds(clock);
         const bool alive = !player.dying && health.hp > 0;
 
         for (const auto &key : keyboard.keyPressed) {
             setHeld(player, key, true);
-            if (alive && key == Key::Value::Space && player.cooldown <= 0.f) {
-                spawnBullet(gm, pos);
-                player.cooldown = SHOOT_COOLDOWN;
-            }
+            if (alive && key == Key::Value::Space)
+                pressFire(gm, player, pos);
         }
-        for (const auto &key : keyboard.keyReleased)
+        for (const auto &key : keyboard.keyReleased) {
             setHeld(player, key, false);
+            if (alive && key == Key::Value::Space && player.charging)
+                releaseFire(gm, player, pos);
+        }
         keyboard.keyPressed.clear();
         keyboard.keyReleased.clear();
         if (!alive) {
+            player.charging = false;
             velocity = {};
             return;
         }
         player.cooldown = std::max(0.f, player.cooldown - elapsed);
+        updateCharge(gm, entity, player, elapsed);
         applyMovement(player, velocity, player.acceleration * elapsed);
     }
 
     void systemMasterPlayerHandle(GameManager &gm, const MasterClock &clock)
     {
         gm.view<Player, Velocity2D, Position2D, KeyboardManager, Health>().each(
-            [&gm, &clock](Entity,
+            [&gm, &clock](Entity entity,
                 Player &player,
                 Velocity2D &velocity,
                 Position2D &pos,
                 KeyboardManager &keyboard,
                 Health &health) {
                 playerHandle(
-                    gm, player, velocity, pos, keyboard, health, clock);
+                    gm, entity, player, velocity, pos, keyboard, health, clock);
             });
     }
 

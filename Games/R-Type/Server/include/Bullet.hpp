@@ -12,10 +12,19 @@
 #include "GameManager.hpp"
 #include "Position2D.hpp"
 
+namespace RType {
+    struct SpriteSheet2D;
+} // namespace RType
+
 namespace RType::Server {
 
     void spawnBullet(GameManager &gm, const Position2D &shooter);
+    void spawnChargedShot(
+        GameManager &gm, const Position2D &shooter, int level);
+    void spawnChargeEffect(GameManager &gm, Entity player);
     void bulletSystem(GameManager &gm);
+    void chargeEffectSystem(GameManager &gm);
+    void chargedShotAnimation(const ChargedShot &shot, SpriteSheet2D &sheet);
 } // namespace RType::Server
 
 #endif

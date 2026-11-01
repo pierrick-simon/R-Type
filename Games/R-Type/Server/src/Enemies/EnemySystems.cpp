@@ -588,8 +588,10 @@ namespace RType {
                             if (consumed || health.hp <= 0 ||
                                 !overlap(bulletRect, rectOf(ep, eb)))
                                 return;
-                            consumed = true;
+                            const int hp = health.hp;
                             health.hp -= shot.damage;
+                            shot.damage -= hp;
+                            consumed = !shot.piercing || shot.damage <= 0;
                             if (health.hp > 0)
                                 return;
                             director.score += info.scoreValue;

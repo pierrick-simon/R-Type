@@ -109,6 +109,7 @@ namespace RType {
     struct Projectile {
         int damage = 1;
         bool fromPlayer = false;
+        bool piercing = false;
     };
 
     struct EnemyTarget {};
