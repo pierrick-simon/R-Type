@@ -82,6 +82,8 @@ namespace RType {
         gm.addComponent<Velocity2D>(entity);
         if (def.pattern == PatternType::WalkJump)
             gm.addComponent<Walker>(entity);
+        else if (def.pattern == PatternType::AlienBeam)
+            gm.addComponent<Alien>(entity);
         else
             gm.addComponent<MovementPattern>(entity, pattern);
         gm.addComponent<Hitbox>(entity, hitbox);
@@ -114,6 +116,30 @@ namespace RType {
         return bullet;
     }
 
+    Entity fireAlienBeam(GameManager &gm, float x, float y, bool facingLeft,
+        const EnemyHooks &hooks)
+    {
+        const Entity beam = gm.createEntity();
+        const SheetInfo &sheet = ALIEN_BEAM_SHEET;
+        const float width = float(sheet.cellW) * SPRITE_SCALE;
+        const float head = float(sheet.cellH) * SPRITE_SCALE / 2.f;
+        Hitbox hitbox = centeredHitbox(sheet);
+
+        // The beam's head is on the side it travels to.
+        hitbox.offsetX = facingLeft ? 0.f : width - hitbox.width;
+        gm.addComponent<Position2D>(beam,
+            Position2D {facingLeft ? x - head : x - width + head, y - head});
+        gm.addComponent<Velocity2D>(beam,
+            Velocity2D {
+                facingLeft ? -ALIEN_DEF.beamSpeed : ALIEN_DEF.beamSpeed, 0.f});
+        gm.addComponent<Projectile>(
+            beam, Projectile {ALIEN_DEF.beamDamage, false});
+        gm.addComponent<Hitbox>(beam, hitbox);
+        if (hooks.onBeamSpawn)
+            hooks.onBeamSpawn(gm, beam, facingLeft);
+        return beam;
+    }
+
     void resetEnemies(GameManager &gm)
     {
         destroyAll<Enemy>(gm);
@@ -134,6 +160,7 @@ namespace RType {
         director.addWave(EnemyType::Scout, 300.f, 5, 0.5f, 2.f);
         director.addWave(EnemyType::Walker, 0.f, 1, 0.f, 4.f);
         director.addWave(EnemyType::Scout, 800.f, 5, 0.5f, 6.f);
+        director.addWave(EnemyType::Alien, 350.f, 1, 0.f, 8.f);
         director.addWave(EnemyType::Gunner, 540.f, 2, 1.5f, 10.f);
         director.addWave(EnemyType::Scout, 540.f, 8, 0.4f, 15.f);
         gm.addComponent<EnemyDirector>(entity, std::move(director));

@@ -9,38 +9,13 @@
     #define ENEMYDEFS_HPP_
     #include <array>
     #include <cstddef>
-    #include "EnemyComponents.hpp"
-    #include "EnemySheets.hpp"
+    #include "AlienDef.hpp"
+    #include "DimensionsDef.hpp"
+    #include "Enemies/EnemyComponents.hpp"
+    #include "Enemies/EnemySheets.hpp"
+    #include "WalkerDef.hpp"
 
 namespace RType {
-    constexpr float SPRITE_SCALE = 3.f;
-    constexpr float HITBOX_RATIO = 0.8f;
-
-    constexpr float SCREEN_WIDTH = 1920.f;
-    constexpr float SCREEN_HEIGHT = 1080.f;
-    constexpr float SPAWN_MARGIN = 80.f;
-
-    struct WalkerDef {
-        float stepHeight;
-        float crouchTime;
-        float turnDelay;
-        float jumpApex;
-        float gravity;
-        float landingDistance;
-    };
-
-    /**
-     * @brief Walker tuning, in screen pixels. A gap of at most stepHeight
-     * between two platforms is walked over; a lower one is jumped down to,
-     * landing landingDistance widths past the edge; a higher one makes the
-     * walker turn back.
-     */
-    inline constexpr WalkerDef WALKER_DEF = {.stepHeight = 45.f,
-        .crouchTime = 0.25f,
-        .turnDelay = 0.3f,
-        .jumpApex = 140.f,
-        .gravity = 2500.f,
-        .landingDistance = 0.8f};
 
     struct EnemyDef {
         const char *name;
@@ -86,6 +61,12 @@ namespace RType {
                 .fireCooldown = 1.2f,
                 .bulletSpeed = 450.f,
                 .bulletDamage = 1},
+            {.name = "Alien",
+                .sheet = &ALIEN_SHEET,
+                .hp = 6,
+                .scoreValue = 600,
+                .speed = 260.f,
+                .pattern = PatternType::AlienBeam},
         }};
 
     [[nodiscard]] constexpr const EnemyDef &enemyDef(EnemyType type)

@@ -16,6 +16,7 @@ namespace RType {
         Scout,
         Gunner,
         Walker,
+        Alien,
         Count,
     };
 
@@ -24,6 +25,7 @@ namespace RType {
         SineWave,
         ZigZag,
         WalkJump,
+        AlienBeam,
     };
 
     struct MovementPattern {
@@ -55,6 +57,28 @@ namespace RType {
         bool facingLeft = true;
         float jumpVelocityX = 0.f;
         float landY = 0.f;
+    };
+
+    enum class AlienState : std::uint8_t {
+        Fly,
+        Charge,
+        Cooldown,
+        Descend,
+        Landed,
+        TakeOff,
+        Exit,
+    };
+
+    /**
+     * @brief Alien flying in line with a player, charging then firing a
+     * beam, and landing from time to time (PatternType::AlienBeam).
+     */
+    struct Alien {
+        AlienState state = AlienState::Fly;
+        float timer = 0.f;
+        bool facingLeft = true;
+        bool grounded = false;
+        int shots = 0;
     };
 
     struct Enemy {

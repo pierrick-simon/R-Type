@@ -7,7 +7,10 @@
 
 #include "Enemies/EnemyVisuals.hpp"
 
+#include <algorithm>
+
 #include "Components.hpp"
+#include "Destroy.hpp"
 #include "Position2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Texture.hpp"
@@ -45,6 +48,65 @@ namespace RType {
         }
     }
 
+    void systemAlienAnimation(const Alien &alien, SpriteSheet2D &sheet)
+    {
+        sheet.currentTile = alienTile(alien);
+        sheet.flip = !alien.facingLeft;
+    }
+
+    /** @brief Glow growing at the gun tip of an alien charging its beam. */
+    struct AlienCharge {
+        Entity alien;
+        float duration = 0.f;
+    };
+
+    void placeAlienCharge(GameManager &gm, const AlienCharge &charge,
+        const Lifetime &life, SpriteSheet2D &sheet, Position2D &pos)
+    {
+        const float progress =
+            std::clamp(1.f - life.remaining / charge.duration, 0.f, 1.f);
+        const auto [x, y] = alienMuzzle(gm.getComponent<Alien>(charge.alien),
+            gm.getComponent<Position2D>(charge.alien));
+        sheet.scale = SPRITE_SCALE * (0.3f + 0.9f * progress);
+        const float half = float(ALIEN_CHARGE_SHEET.cellW) * sheet.scale / 2.f;
+
+        pos = Position2D {x - half, y - half};
+    }
+
+    void systemAlienCharge(GameManager &gm)
+    {
+        gm.view<AlienCharge, Lifetime, SpriteSheet2D, Position2D>().each(
+            [&gm](Entity e,
+                AlienCharge &charge,
+                Lifetime &life,
+                SpriteSheet2D &sheet,
+                Position2D &pos) {
+                if (!gm.hasComponent<Alien>(charge.alien)) {
+                    destroyNetworked(gm, e);
+                    return;
+                }
+                placeAlienCharge(gm, charge, life, sheet, pos);
+            });
+    }
+
+    void spawnAlienCharge(GameManager &gm, Entity alien, float duration)
+    {
+        const Entity e = gm.createEntity();
+        const AlienCharge charge {alien, duration};
+        const Lifetime life {duration};
+        SpriteSheet2D sheet = makeSheet(ALIEN_CHARGE_SHEET);
+        Position2D pos;
+
+        sheet.animation = false;
+        placeAlienCharge(gm, charge, life, sheet, pos);
+        gm.addComponent<Position2D>(e, pos);
+        gm.addComponent<SpriteSheet2D>(e, sheet);
+        gm.addComponent<AlienCharge>(e, charge);
+        gm.addComponent<Lifetime>(e, life);
+        gm.addComponent<UpdateClientEntity>(
+            e, EntityType::SPRITESHEET, ALIEN_CHARGE_SHEET.asset, gm, e);
+    }
+
     void spawnExplosion(GameManager &gm, float cx, float cy)
     {
         const SheetInfo &info = EXPLOSION_SHEET;
@@ -70,7 +132,8 @@ namespace RType {
             [](GameManager &gm, Entity e, const EnemyDef &def) {
                 SpriteSheet2D sheet = makeSheet(*def.sheet);
 
-                sheet.animation = def.pattern != PatternType::WalkJump;
+                sheet.animation = def.pattern != PatternType::WalkJump &&
+                    def.pattern != PatternType::AlienBeam;
                 gm.addComponent<SpriteSheet2D>(e, sheet);
                 gm.addComponent<UpdateClientEntity>(
                     e, EntityType::SPRITESHEET, def.sheet->asset, gm, e);
@@ -81,12 +144,23 @@ namespace RType {
                 e, EntityType::SPRITESHEET, ENEMY_BULLET_SHEET.asset, gm, e);
         };
         hooks.onEnemyDeath = spawnExplosion;
+        hooks.onAlienCharge = spawnAlienCharge;
+        hooks.onBeamSpawn = [](GameManager &gm, Entity e, bool facingLeft) {
+            SpriteSheet2D sheet = makeSheet(ALIEN_BEAM_SHEET);
+
+            sheet.flip = !facingLeft;
+            gm.addComponent<SpriteSheet2D>(e, sheet);
+            gm.addComponent<UpdateClientEntity>(
+                e, EntityType::SPRITESHEET, ALIEN_BEAM_SHEET.asset, gm, e);
+        };
         return hooks;
     }
 
     void registerEnemyVisualSystems(GameManager &gm)
     {
         gm.createSystem<Walker, SpriteSheet2D>(systemWalkerAnimation);
+        gm.createSystem<Alien, SpriteSheet2D>(systemAlienAnimation);
+        gm.createSystem<>(systemAlienCharge);
     }
 
 } // namespace RType

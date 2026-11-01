@@ -38,6 +38,9 @@ namespace RType::Asset {
     inline constexpr AssetId PLAYER_SHEET_5 = 112;
     inline constexpr AssetId ENEMY_WALKER = 113;
     inline constexpr AssetId LEVEL1_MASK = 114;
+    inline constexpr AssetId ENEMY_ALIEN = 115;
+    inline constexpr AssetId ALIEN_BEAM = 116;
+    inline constexpr AssetId ALIEN_CHARGE = 117;
 
     [[nodiscard]] AssetList makeAssetList();
 

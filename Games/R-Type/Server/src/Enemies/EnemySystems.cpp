@@ -84,6 +84,7 @@ namespace RType {
                 applyZigZagPattern(pattern, velocity, delta);
                 break;
             case PatternType::WalkJump:
+            case PatternType::AlienBeam:
                 break;
         }
     }
@@ -357,6 +358,174 @@ namespace RType {
         fireToward(gm, weapon, muzzleX, muzzleY, targetX, targetY, hooks);
     }
 
+    namespace {
+
+        constexpr float ALIEN_HEIGHT = float(ALIEN_SHEET.cellH) * SPRITE_SCALE;
+
+        void setAlienState(Alien &alien, AlienState state)
+        {
+            alien.state = state;
+            alien.timer = 0.f;
+        }
+
+        /** @brief Alive target whose center is the closest to height y. */
+        bool findClosestTarget(GameManager &gm, float y, float &tx, float &ty)
+        {
+            bool found = false;
+
+            gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
+                [&](Entity,
+                    EnemyTarget &,
+                    Health &health,
+                    Position2D &pos,
+                    Hitbox &box) {
+                    const float cy = pos.y + box.offsetY + box.height / 2.f;
+
+                    if (health.hp <= 0 ||
+                        (found && std::fabs(cy - y) >= std::fabs(ty - y)))
+                        return;
+                    tx = pos.x + box.offsetX + box.width / 2.f;
+                    ty = cy;
+                    found = true;
+                });
+            return found;
+        }
+
+        float floorUnder(GameManager &gm, float x)
+        {
+            const auto platform = Server::platformAt(gm, x);
+
+            return platform ? platform->top : SCREEN_HEIGHT;
+        }
+
+        /** @brief Heads to (dx, dy) away without overshooting it. */
+        void moveToward(
+            Velocity2D &velocity, float dx, float dy, float speed, float delta)
+        {
+            const float length = std::sqrt(dx * dx + dy * dy);
+
+            if (length < 1.f || delta <= 0.f) {
+                velocity = {0.f, 0.f};
+                return;
+            }
+            const float v = std::min(speed, length / delta);
+            velocity = {dx / length * v, dy / length * v};
+        }
+
+        /**
+         * @brief Gets in line with the closest player, then starts charging.
+         * @return true once the alien starts charging.
+         */
+        bool alienAim(GameManager &gm, Alien &alien, Velocity2D &velocity,
+            const Position2D &pos, const Hitbox &hitbox, float delta)
+        {
+            const float x = centerX(pos, hitbox);
+            float targetX = 0.f;
+            float targetY = 0.f;
+            const bool found = findClosestTarget(
+                gm, alienMuzzle(alien, pos).second, targetX, targetY);
+
+            if (found)
+                alien.facingLeft = targetX < x;
+            const float gap =
+                found ? targetY - alienMuzzle(alien, pos).second : 0.f;
+
+            if (alien.grounded) {
+                velocity = {FLOOR_VELOCITY, 0.f};
+                return found && std::fabs(gap) <= ALIEN_DEF.alignTolerance;
+            }
+            const float goalY = std::clamp(
+                pos.y + gap, ALIEN_DEF.minY, floorUnder(gm, x) - ALIEN_HEIGHT);
+
+            moveToward(velocity,
+                ALIEN_DEF.hoverX - x,
+                goalY - pos.y,
+                enemyDef(EnemyType::Alien).speed,
+                delta);
+            return found && x < SCREEN_WIDTH - hitbox.width &&
+                std::fabs(gap) <= ALIEN_DEF.alignTolerance;
+        }
+
+        void alienAfterShot(Alien &alien)
+        {
+            if (alien.grounded)
+                setAlienState(alien, AlienState::TakeOff);
+            else if (alien.shots >= ALIEN_DEF.maxShots)
+                setAlienState(alien, AlienState::Exit);
+            else if (alien.shots % ALIEN_DEF.shotsBeforeLanding == 0)
+                setAlienState(alien, AlienState::Descend);
+            else
+                setAlienState(alien, AlienState::Fly);
+        }
+
+    } // namespace
+
+    void systemAlien(GameManager &gm, Entity entity, Alien &alien,
+        Velocity2D &velocity, Position2D &pos, const Hitbox &hitbox,
+        const MasterClock &clock, const EnemyHooks &hooks)
+    {
+        const float delta = elapsedSeconds(clock);
+        const Velocity2D still = {alien.grounded ? FLOOR_VELOCITY : 0.f, 0.f};
+
+        alien.timer += delta;
+        switch (alien.state) {
+            case AlienState::Fly:
+            case AlienState::Landed:
+                if (alienAim(gm, alien, velocity, pos, hitbox, delta) &&
+                    alien.timer >= ALIEN_DEF.cooldown) {
+                    velocity = still;
+                    setAlienState(alien, AlienState::Charge);
+                    if (hooks.onAlienCharge)
+                        hooks.onAlienCharge(gm, entity, ALIEN_DEF.chargeTime);
+                } else if (alien.state == AlienState::Landed &&
+                    alien.timer >= ALIEN_DEF.landedTime)
+                    setAlienState(alien, AlienState::TakeOff);
+                if (alien.grounded)
+                    pos.y = floorUnder(gm, centerX(pos, hitbox)) - ALIEN_HEIGHT;
+                break;
+            case AlienState::Charge:
+                velocity = still;
+                if (alien.timer >= ALIEN_DEF.chargeTime) {
+                    const auto [x, y] = alienMuzzle(alien, pos);
+
+                    fireAlienBeam(gm, x, y, alien.facingLeft, hooks);
+                    ++alien.shots;
+                    setAlienState(alien, AlienState::Cooldown);
+                }
+                break;
+            case AlienState::Cooldown:
+                velocity = still;
+                if (alien.timer >= ALIEN_DEF.cooldown)
+                    alienAfterShot(alien);
+                break;
+            case AlienState::Descend: {
+                const float floor = floorUnder(gm, centerX(pos, hitbox));
+
+                velocity = {0.f, ALIEN_DEF.landSpeed};
+                if (pos.y + ALIEN_HEIGHT >= floor) {
+                    pos.y = floor - ALIEN_HEIGHT;
+                    velocity = {FLOOR_VELOCITY, 0.f};
+                    alien.grounded = true;
+                    setAlienState(alien, AlienState::Landed);
+                }
+                break;
+            }
+            case AlienState::TakeOff:
+                alien.grounded = false;
+                velocity = {0.f, -ALIEN_DEF.landSpeed};
+                if (alien.timer >= ALIEN_DEF.takeOffTime)
+                    setAlienState(alien,
+                        alien.shots >= ALIEN_DEF.maxShots ? AlienState::Exit
+                                                          : AlienState::Fly);
+                break;
+            case AlienState::Exit:
+                alien.facingLeft = true;
+                velocity = {-1.5f * enemyDef(EnemyType::Alien).speed,
+                    -0.3f * enemyDef(EnemyType::Alien).speed};
+                break;
+        }
+    }
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks)
     {
@@ -506,6 +675,14 @@ namespace RType {
                     Entity, Walker &w, Weapon &wp, Position2D &p, Hitbox &b) {
                     systemWalkerWeapon(g, w, wp, p, b, c, *h);
                 });
+        });
+        gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
+            g.view<Alien, Velocity2D, Position2D, Hitbox>().each(
+                [&g, &c, &h](Entity e,
+                    Alien &a,
+                    Velocity2D &v,
+                    Position2D &p,
+                    Hitbox &b) { systemAlien(g, e, a, v, p, b, c, *h); });
         });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<EnemyDirector>().each([&g, &c](Entity, EnemyDirector &d) {
