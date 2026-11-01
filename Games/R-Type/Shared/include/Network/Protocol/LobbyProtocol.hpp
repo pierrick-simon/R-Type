@@ -13,9 +13,9 @@
 #include <string>
 #include <vector>
 
+#include "ClientManager.hpp"
 #include "Context.hpp"
 #include "Network.hpp"
-#include "ClientManager.hpp"
 
 namespace RType {
 
@@ -38,6 +38,7 @@ namespace RType {
         bool started = false;
         uint16_t hostId = 0;
         std::vector<LobbyPlayerInfo> players;
+
         [[nodiscard]] bool allReady() const
         {
             if (players.empty())
@@ -58,11 +59,13 @@ namespace RType {
         static void manageState(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        static void sendInfo(ClientManager &c, const std::string &name, bool ready);
+        static void sendInfo(
+            ClientManager &c, const std::string &name, bool ready);
         static void sendStart(ClientManager &c);
 
         static std::vector<uint8_t> serializeState(const LobbyState &s);
-        static std::optional<LobbyState> parseState(const std::vector<uint8_t> &payload);
+        static std::optional<LobbyState> parseState(
+            const std::vector<uint8_t> &payload);
 
         static std::string sanitizeName(const std::string &name);
     };

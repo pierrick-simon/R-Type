@@ -70,7 +70,10 @@ namespace RType {
             return _ctx;
         }
 
-        [[nodiscard]] bool isTimedOut() const { return _udp->isTimedOut(); }
+        [[nodiscard]] bool isTimedOut() const
+        {
+            return _udp->isTimedOut();
+        }
 
         [[nodiscard]] bool isConnected() const
         {

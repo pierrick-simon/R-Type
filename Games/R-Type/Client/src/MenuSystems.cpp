@@ -7,16 +7,16 @@
 
 #include <vector>
 
+#include "Assets.hpp"
 #include "ClientManager.hpp"
+#include "Clock.hpp"
 #include "Lobby.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
-#include "Text2D.hpp"
-#include "Assets.hpp"
-#include "Clock.hpp"
 #include "MouseManager.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
+#include "Text2D.hpp"
 #include "Texture2D.hpp"
 
 namespace RType::Client {
@@ -47,8 +47,8 @@ namespace RType::Client {
 
         bool contains(const Rectangle &rect, const Vector2 &point)
         {
-            return point.x >= rect.x && point.x <= rect.x + rect.width
-                && point.y >= rect.y && point.y <= rect.y + rect.height;
+            return point.x >= rect.x && point.x <= rect.x + rect.width &&
+                point.y >= rect.y && point.y <= rect.y + rect.height;
         }
 
         void stopEditing()
@@ -60,9 +60,7 @@ namespace RType::Client {
             activeField = Field::None;
         }
 
-
     } // namespace
-
 
     void systemConnecting(GameManager &gm)
     {
@@ -72,11 +70,13 @@ namespace RType::Client {
             [&](Entity, ClientManager &, LobbyState &state) {
                 connected = state.received;
             });
-        gm.view<ConnectingText, Text2D, Clock>().each([](Entity, ConnectingText &c, Text2D &text, Clock &clock) {
-            c.elapsed += clock.getElapsed();
-            const auto dots = (c.elapsed.count() / 400) % 4;
-            text.str = "Connexion" + std::string(static_cast<std::size_t>(dots), '.');
-        });        
+        gm.view<ConnectingText, Text2D, Clock>().each(
+            [](Entity, ConnectingText &c, Text2D &text, Clock &clock) {
+                c.elapsed += clock.getElapsed();
+                const auto dots = (c.elapsed.count() / 400) % 4;
+                text.str = "Connexion" +
+                    std::string(static_cast<std::size_t>(dots), '.');
+            });
         if (!connected)
             return;
         gm.view<ConnectingText>().each(
@@ -92,8 +92,8 @@ namespace RType::Client {
                 ipInvalid = false;
             for (int key = ::GetCharPressed(); key > 0;
                 key = ::GetCharPressed()) {
-                if (fieldAccepts(activeField, key)
-                    && value.size() < fieldMaxLength(activeField))
+                if (fieldAccepts(activeField, key) &&
+                    value.size() < fieldMaxLength(activeField))
                     value += static_cast<char>(key);
             }
             if (::IsKeyPressed(KEY_BACKSPACE) && !value.empty())
@@ -104,8 +104,8 @@ namespace RType::Client {
         gm.view<TextField, Button, Clock>().each(
             [](Entity, TextField &f, Button &button, Clock &clock) {
                 f.elapsed += clock.getElapsed();
-                const bool blink = activeField == f.id
-                    && (f.elapsed.count() / 400) % 2 == 0;
+                const bool blink =
+                    activeField == f.id && (f.elapsed.count() / 400) % 2 == 0;
                 button.label = fieldValue(f.id) + (blink ? "_" : "");
                 button.error = f.id == Field::Ip && ipInvalid;
             });
@@ -125,8 +125,6 @@ namespace RType::Client {
 
     void systemButtons(GameManager &gm)
     {
-        // The engine does not expose the cursor position: only raylib call
-        // left here. Clicks come from the engine MouseManager.
         const Vector2 mouse = ::GetMousePosition();
         bool pressed = false;
         std::vector<std::function<void(GameManager &)>> clicked;
@@ -178,12 +176,14 @@ namespace RType::Client {
                     return;
                 }
                 const Button &button = gm.getComponent<Button>(label.owner);
-                const float maxWidth = button.rect.width - 2.f * BUTTON_TEXT_PADDING;
+                const float maxWidth =
+                    button.rect.width - 2.f * BUTTON_TEXT_PADDING;
                 float width = 0.f;
 
                 text.str = button.label;
                 text.fontSize = LABEL_SIZE;
-                width = font.MeasureText(text.str, text.fontSize, text.spacing).x;
+                width =
+                    font.MeasureText(text.str, text.fontSize, text.spacing).x;
                 if (width > maxWidth && width > 0.f)
                     text.fontSize = LABEL_SIZE * maxWidth / width;
             });
@@ -193,13 +193,14 @@ namespace RType::Client {
 
     void systemTextAnchor(Text2D &text, Font &font, const TextAnchor &anchor)
     {
-        const auto size = font.MeasureText(text.str, text.fontSize, text.spacing);
+        const auto size =
+            font.MeasureText(text.str, text.fontSize, text.spacing);
 
         text.origin.x = size.x * anchor.x;
         text.origin.y = size.y * anchor.y;
     }
 
-        void systemMenuBackground(GameManager &gm)
+    void systemMenuBackground(GameManager &gm)
     {
         bool hidden = false;
         std::vector<Entity> backgrounds;
@@ -207,8 +208,11 @@ namespace RType::Client {
         gm.view<LobbyClient>().each([&hidden](Entity, LobbyClient &l) {
             hidden = hidden || l.inGame || l.shown;
         });
+        if (!gm.view<ConnectingText>().getVector().empty())
+            hidden = true;
         gm.view<MenuBackground>().each(
-            [&backgrounds](Entity e, MenuBackground &) { backgrounds.push_back(e); });
+            [&backgrounds](
+                Entity e, MenuBackground &) { backgrounds.push_back(e); });
         if (hidden) {
             for (const Entity e : backgrounds)
                 gm.destroyEntity(e);

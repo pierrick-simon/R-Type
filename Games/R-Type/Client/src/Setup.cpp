@@ -11,9 +11,9 @@
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
-#include "MouseManager.hpp"
 #include "Lobby.hpp"
 #include "Menu.hpp"
+#include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
@@ -72,7 +72,6 @@ namespace RType::Client {
         gm.createSystem<>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
         gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
-        // Draw order: background / sprites first, texts last (on top).
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(

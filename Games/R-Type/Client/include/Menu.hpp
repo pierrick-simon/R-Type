@@ -97,7 +97,7 @@ namespace RType::Client {
     void connectToServer(
         GameManager &gm, const std::string &host, const int port);
     bool isValidIp(const std::string &ip);
-    
+
     void systemButtons(GameManager &gm);
     void systemButtonVisuals(GameManager &gm);
     void systemTextAnchor(Text2D &text, Font &font, const TextAnchor &anchor);

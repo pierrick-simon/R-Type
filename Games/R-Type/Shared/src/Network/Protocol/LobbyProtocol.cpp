@@ -40,7 +40,8 @@ namespace RType {
             return;
         auto &member = gm.getComponent<LobbyMember>(it->second);
         member.ready = payload[0] != 0;
-        member.name = sanitizeName(std::string(payload.begin() + 2, payload.end()));
+        member.name =
+            sanitizeName(std::string(payload.begin() + 2, payload.end()));
     }
 
     void LobbyProtocol::manageStart(
@@ -65,7 +66,8 @@ namespace RType {
         auto state = parseState(payload);
         if (!state)
             return;
-        ctx.gm->get().view<LobbyState>().each([&state](Entity, LobbyState &s) { s = *state; });
+        ctx.gm->get().view<LobbyState>().each(
+            [&state](Entity, LobbyState &s) { s = *state; });
     }
 
     void LobbyProtocol::sendInfo(

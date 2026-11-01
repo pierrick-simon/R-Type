@@ -10,11 +10,11 @@
 #include <string>
 #include <vector>
 
-#include "Lobby.hpp"
 #include "Background.hpp"
 #include "Components.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "KeyboardManager.hpp"
+#include "Lobby.hpp"
 #include "LobbyProtocol.hpp"
 #include "MouseManager.hpp"
 #include "ServerManager.hpp"
@@ -44,7 +44,8 @@ namespace RType::Server {
             std::vector<std::pair<uint16_t, Entity>> clients(
                 server.getClients().begin(), server.getClients().end());
 
-            std::sort(clients.begin(), clients.end(),
+            std::sort(clients.begin(),
+                clients.end(),
                 [](const auto &a, const auto &b) { return a.first < b.first; });
             state.started = gameStarted;
             state.hostId = clients.empty() ? 0 : clients.front().first;
@@ -84,8 +85,8 @@ namespace RType::Server {
             destroyAllOf<PlayerExplosion>(gm);
         }
 
-        void handleStartRequests(GameManager &gm, ServerManager &server,
-            const LobbyState &state)
+        void handleStartRequests(
+            GameManager &gm, ServerManager &server, const LobbyState &state)
         {
             for (const auto &[id, entity] : server.getClients()) {
                 if (!gm.hasComponent<LobbyMember>(entity))
@@ -125,7 +126,8 @@ namespace RType::Server {
             const auto now = std::chrono::steady_clock::now();
             std::vector<uint8_t> payload = LobbyProtocol::serializeState(state);
 
-            if (payload == lastPayload && now - lastBroadcast < LOBBY_BROADCAST_RATE)
+            if (payload == lastPayload &&
+                now - lastBroadcast < LOBBY_BROADCAST_RATE)
                 return;
             lastBroadcast = now;
             lastPayload = payload;

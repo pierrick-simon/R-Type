@@ -34,8 +34,7 @@ namespace RType {
         addContextManage(OpcodeRType::PLAY, SoundProtocol::managePlay);
         addContextManage(OpcodeRType::STOP, SoundProtocol::manageStop);
         addContextManage(OpcodeRType::TEXT, TextProtocol::manageText);
-        addContextManage(
-            OpcodeRType::LOBBY_STATE, LobbyProtocol::manageState);
+        addContextManage(OpcodeRType::LOBBY_STATE, LobbyProtocol::manageState);
     }
 
     void ClientManager::systemClientReceived(

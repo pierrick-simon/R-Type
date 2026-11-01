@@ -7,13 +7,13 @@
 
 #include <iostream>
 #include "Assets.hpp"
+#include "Font.hpp"
 #include "GameManager.hpp"
 #include "Menu.hpp"
 #include "Setup.hpp"
-#include "Window.hpp"
 #include "Sound.hpp"
 #include "Texture2D.hpp"
-#include "Font.hpp"
+#include "Window.hpp"
 
 namespace {
 

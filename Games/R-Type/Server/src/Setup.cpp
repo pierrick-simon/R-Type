@@ -10,6 +10,7 @@
 #include "Bullet.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
+#include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
@@ -27,7 +28,6 @@
 #include "UpdateText2D.hpp"
 #include "Velocity2D.hpp"
 #include "Window.hpp"
-#include "Enemies/EnemyManager.hpp"
 
 namespace RType::Server {
 

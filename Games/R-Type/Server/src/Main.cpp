@@ -15,7 +15,6 @@
 #include "ServerManager.hpp"
 #include "Setup.hpp"
 
-
 int main()
 {
     try {

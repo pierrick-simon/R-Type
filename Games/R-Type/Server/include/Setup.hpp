@@ -17,8 +17,9 @@ namespace RType {
 
 namespace RType::Server {
 
-     struct TextureCleanup {
+    struct TextureCleanup {
         RType::GameManager &gm;
+
         ~TextureCleanup()
         {
             try {

@@ -41,9 +41,9 @@ namespace RType::Client {
 
         float rowCenterY(const std::size_t row)
         {
-            return LOBBY_FIRST_ROW_Y
-                + static_cast<float>(row) * (LOBBY_ROW_HEIGHT + LOBBY_ROW_GAP)
-                + LOBBY_ROW_HEIGHT / 2.f;
+            return LOBBY_FIRST_ROW_Y +
+                static_cast<float>(row) * (LOBBY_ROW_HEIGHT + LOBBY_ROW_GAP) +
+                LOBBY_ROW_HEIGHT / 2.f;
         }
 
         void addLobbyText(GameManager &gm, float x, float y, float size,
@@ -70,7 +70,8 @@ namespace RType::Client {
         {
             const Entity back = gm.createEntity();
             const float y = rowCenterY(row);
-            SpriteSheet2D sheet(Size2D {1, 2}, LOBBY_ROW_TILE_OTHER, 0, 1.f, false);
+            SpriteSheet2D sheet(
+                Size2D {1, 2}, LOBBY_ROW_TILE_OTHER, 0, 1.f, false);
 
             sheet.color.a = 0;
             gm.addComponent<LobbyItem>(back);
@@ -78,14 +79,26 @@ namespace RType::Client {
             gm.addComponent<SpriteSheet2D>(back, sheet);
             gm.addComponent<Texture2D>(
                 back, gm.getAssetsMap().at(Asset::MENU_PLAYER_BACK));
-            gm.addComponent<Position2D>(back, rowX(), y - LOBBY_ROW_HEIGHT / 2.f);
-            addLobbyText(gm, rowX() + LOBBY_ROW_PADDING, y, LOBBY_NAME_SIZE,
-                TextAnchor {0.f, 0.5f}, LobbyText {LobbyTextId::RowName, row});
-            addLobbyText(gm, rowX() + LOBBY_ROW_PADDING, y, LOBBY_HOST_SIZE,
-                TextAnchor {0.f, 0.5f}, LobbyText {LobbyTextId::RowHost, row},
+            gm.addComponent<Position2D>(
+                back, rowX(), y - LOBBY_ROW_HEIGHT / 2.f);
+            addLobbyText(gm,
+                rowX() + LOBBY_ROW_PADDING,
+                y,
+                LOBBY_NAME_SIZE,
+                TextAnchor {0.f, 0.5f},
+                LobbyText {LobbyTextId::RowName, row});
+            addLobbyText(gm,
+                rowX() + LOBBY_ROW_PADDING,
+                y,
+                LOBBY_HOST_SIZE,
+                TextAnchor {0.f, 0.5f},
+                LobbyText {LobbyTextId::RowHost, row},
                 COLOR_HOST);
-            addLobbyText(gm, rowX() + LOBBY_ROW_WIDTH - LOBBY_ROW_PADDING, y,
-                LOBBY_NAME_SIZE, TextAnchor {1.f, 0.5f},
+            addLobbyText(gm,
+                rowX() + LOBBY_ROW_WIDTH - LOBBY_ROW_PADDING,
+                y,
+                LOBBY_NAME_SIZE,
+                TextAnchor {1.f, 0.5f},
                 LobbyText {LobbyTextId::RowStatus, row});
         }
 
@@ -125,8 +138,8 @@ namespace RType::Client {
             if (state.allReady())
                 return isHost ? "Everyone is ready, start the game!"
                               : "Everyone is ready, waiting for the host...";
-            return "Players ready  " + std::to_string(countReady(state)) + " / "
-                + std::to_string(total);
+            return "Players ready  " + std::to_string(countReady(state)) +
+                " / " + std::to_string(total);
         }
 
         void updateButtons(GameManager &gm, const LobbyState &state,
@@ -149,7 +162,8 @@ namespace RType::Client {
                     const bool used = row.row < state.players.size();
 
                     sheet.color.a = used ? 255 : 0;
-                    sheet.currentTile = used && state.players[row.row].id == myId
+                    sheet.currentTile =
+                        used && state.players[row.row].id == myId
                         ? LOBBY_ROW_TILE_ME
                         : LOBBY_ROW_TILE_OTHER;
                 });
@@ -170,7 +184,9 @@ namespace RType::Client {
 
                     switch (id.id) {
                         case LobbyTextId::Subtitle:
-                            text.str = "Server " + _clInfos._ip + "   " + std::to_string(total) + (total > 1 ? " players" : " player");
+                            text.str = "Server " + _clInfos._ip + "   " +
+                                std::to_string(total) +
+                                (total > 1 ? " players" : " player");
                             break;
                         case LobbyTextId::Status:
                             text.str = statusLine(state, isHost, text.color);
@@ -180,8 +196,10 @@ namespace RType::Client {
 
                             text.str = p ? p->name : "";
                             text.fontSize = LOBBY_NAME_SIZE;
-                            width = font.MeasureText(
-                                text.str, text.fontSize, text.spacing).x;
+                            width =
+                                font.MeasureText(
+                                        text.str, text.fontSize, text.spacing)
+                                    .x;
                             if (width > NAME_MAX_WIDTH) {
                                 text.fontSize *= NAME_MAX_WIDTH / width;
                                 width = NAME_MAX_WIDTH;
@@ -194,16 +212,19 @@ namespace RType::Client {
                             text.str = p && p->id == state.hostId ? "HOST" : "";
                             break;
                         case LobbyTextId::RowStatus:
-                            text.str = p ? (p->ready ? "READY" : "NOT READY") : "";
-                            text.color = p && p->ready ? COLOR_READY
-                                                       : COLOR_NOT_READY;
+                            text.str =
+                                p ? (p->ready ? "READY" : "NOT READY") : "";
+                            text.color =
+                                p && p->ready ? COLOR_READY : COLOR_NOT_READY;
                             break;
                     }
                 });
             gm.view<LobbyText, Position2D>().each(
                 [&](Entity, LobbyText &id, Position2D &pos) {
-                    if (id.id == LobbyTextId::RowHost && id.row < nameWidth.size())
-                        pos.x = rowX() + LOBBY_ROW_PADDING + nameWidth[id.row] + 20.f;
+                    if (id.id == LobbyTextId::RowHost &&
+                        id.row < nameWidth.size())
+                        pos.x = rowX() + LOBBY_ROW_PADDING + nameWidth[id.row] +
+                            20.f;
                 });
         }
 
@@ -218,17 +239,33 @@ namespace RType::Client {
 
         activeField = Field::None;
         gm.addComponent<LobbyItem>(title);
-        addLobbyText(gm, center, LOBBY_SUBTITLE_Y, LOBBY_INFO_SIZE, TextAnchor {},
-            LobbyText {LobbyTextId::Subtitle}, COLOR_INFO);
+        addLobbyText(gm,
+            center,
+            LOBBY_SUBTITLE_Y,
+            LOBBY_INFO_SIZE,
+            TextAnchor {},
+            LobbyText {LobbyTextId::Subtitle},
+            COLOR_INFO);
         for (std::size_t row = 0; row < LOBBY_MAX_ROWS; row++)
             addRow(gm, row);
-        addLobbyText(gm, center, LOBBY_STATUS_Y, LOBBY_INFO_SIZE,
-            TextAnchor {}, LobbyText {LobbyTextId::Status}, COLOR_INFO);
+        addLobbyText(gm,
+            center,
+            LOBBY_STATUS_Y,
+            LOBBY_INFO_SIZE,
+            TextAnchor {},
+            LobbyText {LobbyTextId::Status},
+            COLOR_INFO);
         addLobbyButton(gm, x, "Ready", toggleReady, LobbyButtonId::Ready);
-        addLobbyButton(gm, x + BUTTON_WIDTH + BUTTON_GAP, "Start Game",
-            requestStart, LobbyButtonId::Start);
-        addLobbyButton(gm, x + 2.f * (BUTTON_WIDTH + BUTTON_GAP), "Leave Game",
-            returnToMenu, LobbyButtonId::Leave);
+        addLobbyButton(gm,
+            x + BUTTON_WIDTH + BUTTON_GAP,
+            "Start Game",
+            requestStart,
+            LobbyButtonId::Start);
+        addLobbyButton(gm,
+            x + 2.f * (BUTTON_WIDTH + BUTTON_GAP),
+            "Leave Game",
+            returnToMenu,
+            LobbyButtonId::Leave);
     }
 
     void destroyLobby(GameManager &gm)
@@ -264,10 +301,14 @@ namespace RType::Client {
         bool hide = false;
 
         gm.view<ClientManager, LobbyState, LobbyClient>().each(
-            [&](Entity, ClientManager &c, LobbyState &state, LobbyClient &lobby) {
+            [&](Entity,
+                ClientManager &c,
+                LobbyState &state,
+                LobbyClient &lobby) {
                 const auto now = std::chrono::steady_clock::now();
 
-                if (c.isConnected() && now - lobby.lastInfo >= LOBBY_RESEND_RATE) {
+                if (c.isConnected() &&
+                    now - lobby.lastInfo >= LOBBY_RESEND_RATE) {
                     LobbyProtocol::sendInfo(c, _clInfos._username, lobby.ready);
                     lobby.lastInfo = now;
                 }
@@ -287,8 +328,8 @@ namespace RType::Client {
 
                 if (!isHost || !state.allReady())
                     lobby.startRequested = false;
-                if (lobby.startRequested
-                    && now - lobby.lastStart >= LOBBY_RESEND_RATE) {
+                if (lobby.startRequested &&
+                    now - lobby.lastStart >= LOBBY_RESEND_RATE) {
                     LobbyProtocol::sendStart(c);
                     lobby.lastStart = now;
                 }
