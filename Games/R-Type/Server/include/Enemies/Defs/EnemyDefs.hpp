@@ -9,16 +9,13 @@
     #define ENEMYDEFS_HPP_
     #include <array>
     #include <cstddef>
-    #include "EnemyComponents.hpp"
-    #include "EnemySheets.hpp"
+    #include "AlienDef.hpp"
+    #include "DimensionsDef.hpp"
+    #include "Enemies/EnemyComponents.hpp"
+    #include "Enemies/EnemySheets.hpp"
+    #include "WalkerDef.hpp"
 
 namespace RType {
-    constexpr float SPRITE_SCALE = 3.f;
-    constexpr float HITBOX_RATIO = 0.8f;
-
-    constexpr float SCREEN_WIDTH = 1920.f;
-    constexpr float SCREEN_HEIGHT = 1080.f;
-    constexpr float SPAWN_MARGIN = 80.f;
 
     struct EnemyDef {
         const char *name;
@@ -46,7 +43,7 @@ namespace RType {
                 .pattern = PatternType::SineWave},
             {.name = "RobotGunner",
                 .sheet = &GUNNER_SHEET,
-                .hp = 3,
+                .hp = 1,
                 .scoreValue = 300,
                 .speed = 180.f,
                 .amplitude = 140.f,
@@ -55,6 +52,21 @@ namespace RType {
                 .fireCooldown = 1.6f,
                 .bulletSpeed = 420.f,
                 .bulletDamage = 1},
+            {.name = "Walker",
+                .sheet = &WALKER_SHEET,
+                .hp = 1,
+                .scoreValue = 400,
+                .speed = 110.f,
+                .pattern = PatternType::WalkJump,
+                .fireCooldown = 1.2f,
+                .bulletSpeed = 450.f,
+                .bulletDamage = 1},
+            {.name = "Alien",
+                .sheet = &ALIEN_SHEET,
+                .hp = 6,
+                .scoreValue = 600,
+                .speed = 260.f,
+                .pattern = PatternType::AlienBeam},
         }};
 
     [[nodiscard]] constexpr const EnemyDef &enemyDef(EnemyType type)

@@ -22,10 +22,12 @@ set(SRCS_GFX
 )
 
 set(GAME_SRCS
+        src/Animation.cpp
         src/Background.cpp
         src/Bullet.cpp
         src/Player.cpp
         src/Setup.cpp
+        src/Terrain.cpp
         src/Texture.cpp
 )
 

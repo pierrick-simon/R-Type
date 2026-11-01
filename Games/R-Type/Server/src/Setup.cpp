@@ -6,11 +6,13 @@
 */
 
 #include "Setup.hpp"
+#include "Animation.hpp"
 #include "Background.hpp"
 #include "Bullet.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemySystems.hpp"
+#include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "Player.hpp"
@@ -72,23 +74,22 @@ namespace RType::Server {
 
     void createSystems(GameManager &gm, const EnemyHooks &enemyHooks)
     {
-        gm.createSystem<Clock>(Clock::systemClock);
-        gm.createSystem<SpriteSheet2D, Clock>(
-            SpriteSheet2D::systemAnimateSpriteSheet2D);
+        gm.createSystem<MasterClock>(
+            SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
+        gm.createSystem<PlayOnce, SpriteSheet2D>(playOnceAnimation);
         registerEnemySystems(gm, enemyHooks);
+        registerEnemyVisualSystems(gm);
         gm.createSystem<>(systemCreateSpaceShip);
-        gm.createSystem<Player,
-            Velocity2D,
-            Position2D,
-            KeyboardManager,
-            Clock,
-            Health>(playerHandle);
-        gm.createSystem<Friction2D, Velocity2D, Clock>(
-            Friction2D::systemFriction2D);
+        gm.createSystem<MasterClock>(systemMasterPlayerHandle);
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
+                Friction2D::systemFriction2D(f, v, c);
+        });
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
-        gm.createSystem<>(playerDeath);
+        gm.createSystem<>(playerTerrainCollision);
+        gm.createSystem<MasterClock>(playerDeath);
         gm.createSystem<>(bulletSystem);
     }
 
