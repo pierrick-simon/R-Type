@@ -89,43 +89,90 @@ namespace RType::Client {
             gm.addComponent<MenuItem>(e);
             return e;
         }
-    } // namespace
 
-    void startGame(GameManager &gm)
-    {
-        if (!gm.view<ClientManager>().getVector().empty())
-            return;
-        if (!isValidIp(_clInfos._ip)) {
-            ipInvalid = true;
-            return;
+        template<typename Tag>
+        void destroyAllTagged(GameManager &gm)
+        {
+            std::vector<Entity> items;
+
+            gm.view<Tag>().each([&items](Entity e, Tag &) { items.push_back(e); });
+            for (const Entity e : items)
+                gm.destroyEntity(e);
         }
-        activeField = Field::None;
-        std::vector<Entity> items;
 
-        gm.view<MenuItem>().each([&items](Entity e, MenuItem &) { items.push_back(e); });
-        for (const Entity e : items)
-            gm.destroyEntity(e);
-        connectToServer(gm, _clInfos._ip, LOGIN_SERVER_PORT);
-        showConnecting(gm);
-    }
+        Entity addServerButton(GameManager &gm, float x, float y,
+            const std::string &label, std::function<void(GameManager &)> onClick)
+        {
+            const Entity e = addButton(gm, x, y, label, std::move(onClick));
+
+            gm.addComponent<ServerItem>(e);
+            return e;
+        }
+
+        void connectToGame(GameManager &gm)
+        {
+            if (!gm.view<ClientManager>().getVector().empty())
+                return;
+            if (!isValidIp(_clInfos._ip)) {
+                ipInvalid = true;
+                return;
+            }
+            activeField = Field::None;
+            destroyAllTagged<ServerItem>(gm);
+            connectToServer(gm, _clInfos._ip, LOGIN_SERVER_PORT);
+            showConnecting(gm);
+        }
+
+        void leaveServerPage(GameManager &gm)
+        {
+            activeField = Field::None;
+            ipInvalid = false;
+            destroyAllTagged<ServerItem>(gm);
+            createMenu(gm);
+        }
+
+        void createServerPage(GameManager &gm)
+        {
+            const float centerX = 1920.f / 2.f;
+            const float fieldY = (1080.f - BUTTON_HEIGHT) / 2.f;
+            const float step = BUTTON_HEIGHT + BUTTON_GAP;
+            const Entity title = addText(
+                gm, centerX, fieldY - 40.f, "Server IP Address", SERVER_LABEL_SIZE);
+            const Entity ipButton = addServerButton(gm,
+                (1920.f - IP_BUTTON_WIDTH) / 2.f, fieldY, _clInfos._ip,
+                [](GameManager &) { activeField = Field::Ip; });
+
+            gm.addComponent<ServerItem>(title);
+            gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
+            gm.addComponent<Clock>(ipButton);
+            addServerButton(gm, (1920.f - BUTTON_WIDTH) / 2.f, fieldY + step * 1.5,
+                "Connect to Server", connectToGame);
+            addServerButton(gm, 1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
+                1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP, "Go back to menu", leaveServerPage);
+        }
+
+        void openServerPage(GameManager &gm)
+        {
+            activeField = Field::None;
+            destroyAllTagged<MenuItem>(gm);
+            createServerPage(gm);
+        }
+
+    } // namespace
 
     void createMenu(GameManager &gm)
     {
         const float firstY = 480.f;
         const float step = BUTTON_HEIGHT + BUTTON_GAP;
         const float firstX = (1920.f - BUTTON_WIDTH) / 2.f;
-        const float ipX = (1920.f - IP_BUTTON_WIDTH) / 2.f;
 
-        addMenuButton(gm, firstX, firstY, "Start Game", startGame);
-        const Entity ipButton = addMenuButton(gm, ipX, firstY + step, _clInfos._ip,
-            [](GameManager &) { activeField = Field::Ip; }, IP_BUTTON_WIDTH);
-        gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
-        gm.addComponent<Clock>(ipButton);
-        addMenuButton(gm, firstX, firstY + 2 * step, "Leave Game",
+        addMenuButton(gm, firstX, firstY, "Start Game", openServerPage);
+        addMenuButton(gm, firstX, firstY + step, "Leave Game",
             [](GameManager &) { quitRequested = true; });
         const Entity usernameButton = addMenuButton(gm, 20, 1080 - (BUTTON_HEIGHT * 2), _clInfos._username,
             [](GameManager &) { activeField = Field::Username; });
-        const Entity usernameText = addText(gm, 20 + (BUTTON_WIDTH / 2), 1080 - (BUTTON_HEIGHT * 2.3), "Username", 25.f); 
+        const Entity usernameText = addText(gm, 20 + (BUTTON_WIDTH / 2), 1080 - (BUTTON_HEIGHT * 2.3), "Username", 25.f);
+        gm.addComponent<MenuItem>(usernameText);
         gm.addComponent<TextField>(usernameButton, TextField {Field::Username});
         gm.addComponent<Clock>(usernameButton);
     }

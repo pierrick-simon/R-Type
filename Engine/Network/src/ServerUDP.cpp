@@ -79,7 +79,7 @@ namespace RType {
                 onClientRemoved(Header {Opcode::LOGOUT, 0, 0, id});
         }
         broadcastNow(Opcode::HEALTH, {});
-        std::cout << "Health check from serv" << std::endl;
+        std::cout << "[Debug] Health check from server to client" << std::endl;
     }
 
     void UDPServer::startReceive()
@@ -168,7 +168,7 @@ namespace RType {
 
     void UDPServer::removeClient(const Header &header)
     {
-        std::cout << "Client " << header.senderId << " logged out" << std::endl;
+        std::cout << "[Debug] Client ID " << header.senderId << " logged out." << std::endl;
         _clients.erase(header.senderId);
     }
 

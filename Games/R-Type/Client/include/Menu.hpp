@@ -33,12 +33,14 @@ namespace RType::Client {
     constexpr std::size_t BUTTON_TILE_NORMAL = 0;
     constexpr std::size_t BUTTON_TILE_HOVERED = 1;
     constexpr std::size_t BUTTON_TILE_DISABLED = 2;
-    /** @brief Labels shrink below LABEL_SIZE to keep this margin. */
     constexpr float BUTTON_TEXT_PADDING = 30.f;
 
     struct MenuItem {};
 
-    /** @brief Tag of the background sprite shown outside of the game. */
+    struct ServerItem {};
+
+    constexpr float SERVER_LABEL_SIZE = 32.f;
+
     struct MenuBackground {};
 
     /**
@@ -50,10 +52,6 @@ namespace RType::Client {
         float y = 0.5f;
     };
 
-    /**
-     * @brief Put on the Text2D entity displaying the label of a Button.
-     * Destroyed automatically when its button is destroyed.
-     */
     struct ButtonLabel {
         Entity owner;
     };

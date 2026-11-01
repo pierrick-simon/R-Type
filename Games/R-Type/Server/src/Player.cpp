@@ -195,8 +195,6 @@ namespace RType::Server {
                 connected.insert(id);
         });
         for (auto [e, d] : gm.view<DefaulClient>().getVector()) {
-            // A client that logged out this frame is still in the view (its
-            // destruction is deferred): adding components to it would throw.
             if (d.getInit() || !connected.contains(d.getId()))
                 continue;
             d.init();

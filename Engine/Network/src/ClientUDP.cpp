@@ -114,7 +114,7 @@ namespace RType {
     void UDPClient::manageHealth(
         const Header &header, const std::vector<uint8_t> &payload)
     {
-        std::cout << "Health check from server" << std::endl;
+        std::cout << "[Debug] Health check from server to client" << std::endl;
         sendNow(Opcode::HEALTH, {});
     }
 
