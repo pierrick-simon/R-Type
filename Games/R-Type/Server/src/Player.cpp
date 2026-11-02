@@ -16,6 +16,7 @@
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
+#include "Hud.hpp"
 #include "KeyboardManager.hpp"
 #include "Terrain.hpp"
 #include "UpdateClientEntity.hpp"
@@ -76,6 +77,16 @@ namespace RType::Server {
             explosion);
     }
 
+    void makeInvincible(GameManager &gm, Entity player)
+    {
+        if (gm.hasComponent<Invincible>(player))
+            gm.getComponent<Invincible>(player).remaining =
+                RESPAWN_INVINCIBILITY;
+        else
+            gm.addComponent<Invincible>(
+                player, Invincible {RESPAWN_INVINCIBILITY});
+    }
+
     void respawnPlayer(GameManager &gm, Entity player)
     {
         auto &state = gm.getComponent<Player>(player);
@@ -93,6 +104,27 @@ namespace RType::Server {
         gm.getComponent<Velocity2D>(player) = {};
         sheet.color.a = 255;
         sheet.currentTile = FRAME_NEUTRAL;
+        makeInvincible(gm, player);
+    }
+
+    bool isGameOver(GameManager &gm)
+    {
+        bool anyPlayer = false;
+
+        for (auto [_, player] : gm.view<Player>().getVector()) {
+            anyPlayer = true;
+            if (player.lives > 0 || player.deathTimer > 0.f)
+                return false;
+        }
+        return anyPlayer;
+    }
+
+    void restartGame(GameManager &gm)
+    {
+        for (auto [entity, player] : gm.view<Player>().getVector()) {
+            player.lives = PLAYER_LIVES;
+            respawnPlayer(gm, entity);
+        }
         resetEnemies(gm);
         resetBackground(gm);
     }
@@ -214,13 +246,14 @@ namespace RType::Server {
     void playerTerrainCollision(GameManager &gm)
     {
         gm.view<Player, Health, Position2D, SpriteSheet2D, UpdateClientEntity>()
-            .each([&gm](Entity,
+            .each([&gm](Entity player,
                       Player &state,
                       Health &health,
                       Position2D &pos,
                       SpriteSheet2D &sheet,
                       UpdateClientEntity &update) {
-                if (state.dying || health.hp <= 0)
+                if (state.dying || health.hp <= 0 ||
+                    gm.hasComponent<Invincible>(player))
                     return;
                 const CollisionMask *shape =
                     spriteMask(gm, update.asset, sheet.currentTile);
@@ -228,6 +261,24 @@ namespace RType::Server {
                 if (shape && touchesTerrain(gm, pos, *shape))
                     health.hp = 0;
             });
+    }
+
+    void playerInvincibility(GameManager &gm, const MasterClock &clock)
+    {
+        const float elapsed = elapsedSeconds(clock);
+
+        for (auto [player, shield, sheet] :
+            gm.view<Invincible, SpriteSheet2D>().getVector()) {
+            shield.remaining -= elapsed;
+            if (shield.remaining <= 0.f) {
+                sheet.color.a = 255;
+                gm.removeComponent<Invincible>(player);
+                continue;
+            }
+            const bool dim = int(shield.remaining / INVINCIBLE_BLINK) % 2 != 0;
+
+            sheet.color.a = dim ? INVINCIBLE_ALPHA : 255;
+        }
     }
 
     void playerDeath(GameManager &gm, const MasterClock &clock)
@@ -243,20 +294,40 @@ namespace RType::Server {
                 if (!state.dying) {
                     state.dying = true;
                     state.deathTimer = PLAYER_DEATH_DURATION;
+                    state.lives = std::max(0, state.lives - 1);
                     sheet.color.a = 0;
                     spawnPlayerExplosion(gm, position);
                     return;
                 }
-                state.deathTimer -= elapsedSeconds(clock);
                 if (state.deathTimer <= 0.f)
+                    return;
+                state.deathTimer =
+                    std::max(0.f, state.deathTimer - elapsedSeconds(clock));
+                if (state.deathTimer <= 0.f && state.lives > 0)
                     respawnPlayer(gm, player);
             });
+        if (isGameOver(gm))
+            restartGame(gm);
         gm.view<PlayerExplosion>().each(
             [&gm, &clock](Entity explosion, PlayerExplosion &state) {
                 state.remaining -= elapsedSeconds(clock);
                 if (state.remaining <= 0.f)
                     destroyNetworked(gm, explosion);
             });
+    }
+
+    std::size_t freePlayerSlot(GameManager &gm)
+    {
+        std::size_t slot = 0;
+        bool taken = true;
+
+        while (taken) {
+            taken = false;
+            for (auto [_, player] : gm.view<Player>().getVector())
+                taken = taken || player.slot == slot;
+            slot += taken ? 1 : 0;
+        }
+        return slot;
     }
 
     void systemCreateSpaceShip(GameManager &gm)
@@ -266,8 +337,10 @@ namespace RType::Server {
             if (defaultClient.getInit())
                 continue;
             defaultClient.init();
+            const Player state {.slot = freePlayerSlot(gm)};
 
-            gm.addComponent<Player>(entity);
+            gm.addComponent<Player>(entity, state);
+            spawnLifeIcons(gm, entity, state);
             gm.addComponent<EnemyTarget>(entity);
             gm.addComponent<Health>(entity, Health {PLAYER_HP, PLAYER_HP});
             gm.addComponent<Hitbox>(
@@ -284,9 +357,10 @@ namespace RType::Server {
                 false);
             gm.addComponent<UpdateClientEntity>(entity,
                 EntityType::SPRITESHEET,
-                Asset::PLAYER_SHEET_1,
+                Asset::PLAYER_SHEET_1 + AssetId(state.slot % PLAYER_COLORS),
                 gm,
                 entity);
+            makeInvincible(gm, entity);
         }
     }
 

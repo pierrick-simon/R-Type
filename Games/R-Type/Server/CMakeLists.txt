@@ -25,6 +25,7 @@ set(GAME_SRCS
         src/Animation.cpp
         src/Background.cpp
         src/Bullet.cpp
+        src/Hud.cpp
         src/Player.cpp
         src/Setup.cpp
         src/Terrain.cpp
@@ -36,7 +37,10 @@ target_include_directories(r-type_server PRIVATE include)
 target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical engine-network)
 
 if (TARGET criterion)
-    set(SRCS_TESTS tests/tests_init.cpp)
+    set(SRCS_TESTS
+            tests/tests_init.cpp
+            tests/tests_lives.cpp
+    )
 
     add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
     target_include_directories(server_tests_run_bin PRIVATE include)

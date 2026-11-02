@@ -599,12 +599,13 @@ namespace RType {
                         });
                 } else {
                     gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
-                        [&](Entity,
+                        [&](Entity target,
                             EnemyTarget &,
                             Health &health,
                             Position2D &tp,
                             Hitbox &tb) {
                             if (consumed || health.hp <= 0 ||
+                                gm.hasComponent<Invincible>(target) ||
                                 !overlap(bulletRect, rectOf(tp, tb)))
                                 return;
                             consumed = true;
@@ -625,12 +626,13 @@ namespace RType {
             const Rect enemyRect = rectOf(ep, eb);
 
             gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
-                [&](Entity,
+                [&](Entity target,
                     EnemyTarget &,
                     Health &targetHealth,
                     Position2D &tp,
                     Hitbox &tb) {
                     if (health.hp <= 0 || targetHealth.hp <= 0 ||
+                        gm.hasComponent<Invincible>(target) ||
                         !overlap(enemyRect, rectOf(tp, tb)))
                         return;
                     targetHealth.hp = 0;

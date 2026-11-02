@@ -130,7 +130,13 @@ namespace RType {
                         [&](uint32_t v) { return h.senderId == v; }),
                 c.end());
         }
-        _ctx.gm->get().destroyEntity(_ctx.clients.at(h.senderId));
+        auto &gm = _ctx.gm->get();
+        const Entity entity = _ctx.clients.at(h.senderId);
+
+        if (gm.hasComponent<UpdateClientEntity>(entity))
+            UpdateClientEntity::destroyUpdateEntity(gm, entity, *this);
+        else
+            gm.destroyEntity(entity);
         _ctx.clients.erase(h.senderId);
     }
 }; // namespace RType

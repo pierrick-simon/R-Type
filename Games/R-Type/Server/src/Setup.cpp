@@ -14,6 +14,7 @@
 #include "Enemies/EnemySystems.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
+#include "Hud.hpp"
 #include "KeyboardManager.hpp"
 #include "Player.hpp"
 #include "ServerManager.hpp"
@@ -89,9 +90,11 @@ namespace RType::Server {
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
         gm.createSystem<>(playerTerrainCollision);
+        gm.createSystem<MasterClock>(playerInvincibility);
         gm.createSystem<MasterClock>(playerDeath);
         gm.createSystem<>(bulletSystem);
         gm.createSystem<>(chargeEffectSystem);
+        gm.createSystem<>(livesHudSystem);
         gm.createSystem<ChargedShot, SpriteSheet2D>(chargedShotAnimation);
     }
 

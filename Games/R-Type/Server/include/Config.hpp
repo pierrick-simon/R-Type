@@ -26,6 +26,11 @@ namespace RType::Server {
     inline constexpr float PLAYER_HEIGHT = 17.f * SCALE;
     // inline constexpr float PLAYER_FRICTION = 120.f;
     inline constexpr int PLAYER_HP = 1;
+    inline constexpr int PLAYER_LIVES = 3;
+    inline constexpr float RESPAWN_INVINCIBILITY = 3.f;
+    inline constexpr float INVINCIBLE_BLINK = 0.1f;
+    inline constexpr unsigned char INVINCIBLE_ALPHA = 70;
+    inline constexpr std::size_t PLAYER_COLORS = 5;
     inline constexpr unsigned int PLAYER_FRAME_MS = 200;
     inline constexpr int PLAYER_EXPLOSION_FRAMES = 6;
     inline constexpr float PLAYER_EXPLOSION_WIDTH = 33.f;
@@ -52,6 +57,14 @@ namespace RType::Server {
 
     inline constexpr float PLAYER_NOSE_Y = 10.f * SCALE;
 
+    inline constexpr float LIFE_ICON_SCALE = 2.f;
+    inline constexpr float LIFE_ICON_WIDTH =
+        PLAYER_WIDTH / SCALE * LIFE_ICON_SCALE;
+    inline constexpr float LIFE_ICON_HEIGHT =
+        PLAYER_HEIGHT / SCALE * LIFE_ICON_SCALE;
+    inline constexpr float HUD_MARGIN = 20.f;
+    inline constexpr float HUD_SPACING = 8.f;
+
     inline constexpr int CHARGE_FRAMES = 8;
     inline constexpr float CHARGE_SIZE = 32.f * SCALE;
     inline constexpr float CHARGE_OVERLAP = 4.f * SCALE;
@@ -65,7 +78,6 @@ namespace RType::Server {
     inline constexpr float CHARGED_SHOT_SPEED = 1500.f;
     inline constexpr unsigned int CHARGED_SHOT_FRAME_MS = 60;
 
-    /** @brief Beam size in sheet pixels and damage of one charge level. */
     struct ChargedShotLevel {
         float width;
         float height;

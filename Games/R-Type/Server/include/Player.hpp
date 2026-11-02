@@ -30,6 +30,7 @@ namespace RType::Server {
         const Player &player, const Velocity2D &velocity, SpriteSheet2D &sheet);
     void createPlayerMasks(GameManager &gm);
     void playerTerrainCollision(GameManager &gm);
+    void playerInvincibility(GameManager &gm, const MasterClock &clock);
     void playerDeath(GameManager &gm, const MasterClock &clock);
 
 } // namespace RType::Server

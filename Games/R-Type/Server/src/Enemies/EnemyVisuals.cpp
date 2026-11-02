@@ -54,7 +54,6 @@ namespace RType {
         sheet.flip = !alien.facingLeft;
     }
 
-    /** @brief Glow growing at the gun tip of an alien charging its beam. */
     struct AlienCharge {
         Entity alien;
         float duration = 0.f;

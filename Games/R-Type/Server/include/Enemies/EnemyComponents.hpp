@@ -45,11 +45,6 @@ namespace RType {
         Land,
     };
 
-    /**
-     * @brief Robot walking along the floor platforms, turning back in front
-     * of higher ones and jumping down onto lower ones
-     * (PatternType::WalkJump).
-     */
     struct Walker {
         WalkerState state = WalkerState::Walk;
         float timer = 0.f;
@@ -69,10 +64,6 @@ namespace RType {
         Exit,
     };
 
-    /**
-     * @brief Alien flying in line with a player, charging then firing a
-     * beam, and landing from time to time (PatternType::AlienBeam).
-     */
     struct Alien {
         AlienState state = AlienState::Fly;
         float timer = 0.f;
@@ -113,6 +104,10 @@ namespace RType {
     };
 
     struct EnemyTarget {};
+
+    struct Invincible {
+        float remaining = 0.f;
+    };
 
     struct Lifetime {
         float remaining = 0.f;
