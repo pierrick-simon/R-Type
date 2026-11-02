@@ -8,8 +8,8 @@
 #ifndef GAME_HPP_
 #define GAME_HPP_
 
-#include <list>
 #include <functional>
+#include <list>
 #include <string>
 
 #include "GameManager.hpp"
@@ -27,6 +27,6 @@ namespace RType {
 
     extern GameInfo Game;
 
-}
+} // namespace RType
 
 #endif /* !GAME_HPP_ */
