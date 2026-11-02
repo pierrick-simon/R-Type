@@ -5,18 +5,18 @@
 ** Instance
 */
 
-#include "Instance.hpp"
-
 #include <atomic>
 #include <exception>
 #include <iostream>
 
+#include "Instance.hpp"
 #include "Assets.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
+#include "InstanceLink.hpp"
 
 namespace RType::Server {
 
@@ -33,14 +33,20 @@ namespace RType::Server {
                 gm.setAssetsMap(assets);
                 const TextureCleanup cleanup {gm};
                 const Entity s = createServer(gm, std::move(manager));
+                const Entity l = gm.createEntity();
 
+                gm.addComponent<InstanceLink>(l, port);
+                gm.createSystem<>(systemInstanceLink);
                 std::cout << "[Instance " << port << "] Lobby started"
                           << std::endl;
                 createMasterClock(gm);
                 createSystems(gm, makeEnemyVisualHooks());
                 auto &server = gm.getComponent<ServerManager>(s);
-                gm.run(
-                    60, [&] { return server.isRunning() && !stopInstances; });
+                auto &link = gm.getComponent<InstanceLink>(l);
+                gm.run(60, [&] {
+                    return server.isRunning() && !stopInstances
+                        && !link.stopRequested;
+                });
                 std::cout << "[Instance " << port << "] Stopped" << std::endl;
             } catch (const std::exception &e) {
                 std::cerr << "[Instance " << port << "] " << e.what()
@@ -55,9 +61,22 @@ namespace RType::Server {
         if (threads.empty())
             return;
         stopInstances = true;
-        for (auto &thread : threads)
+        for (auto &[port, thread] : threads)
             if (thread.joinable())
                 thread.join();
+    }
+
+    void reapInstance(InstanceManager &instances, uint16_t port)
+    {
+        auto it = instances.threads.find(port);
+
+        if (it != instances.threads.end()) {
+            if (it->second.joinable())
+                it->second.join();
+            instances.threads.erase(it);
+        }
+        std::erase_if(instances.portByClient,
+            [port](const auto &entry) { return entry.second == port; });
     }
 
     std::optional<uint16_t> startInstance(InstanceManager &instances)
@@ -72,8 +91,10 @@ namespace RType::Server {
                 : static_cast<uint16_t>(port + 1);
             try {
                 ServerManager manager(static_cast<short>(port));
-                instances.threads.emplace_back(
-                    runInstance, port, std::move(manager));
+
+                reapInstance(instances, port);
+                instances.threads.emplace(port,
+                    std::thread(runInstance, port, std::move(manager)));
                 return port;
             } catch (const std::exception &) {
             }

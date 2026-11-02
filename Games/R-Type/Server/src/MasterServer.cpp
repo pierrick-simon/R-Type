@@ -14,6 +14,8 @@
 #include "MasterProtocol.hpp"
 #include "MouseManager.hpp"
 #include "ServerManager.hpp"
+#include "MasterLink.hpp"
+#include "InstanceLink.hpp"
 
 namespace RType::Server {
 
@@ -67,10 +69,13 @@ namespace RType::Server {
 
         gm.addComponent<ServerManager>(master, LOGIN_SERVER_PORT);
         gm.addComponent<InstanceManager>(master);
+        gm.addComponent<MasterLink>(master);
         gm.createSystem<ServerManager>(ServerManager::systemServerReceived);
         gm.createSystem<>(systemMasterRequests);
+        gm.createSystem<>(systemMasterLink);
         std::cout << "[Master] Listening on port " << LOGIN_SERVER_PORT
-                  << std::endl;
+                  << " (UDP, clients) and " << MASTER_LINK_PORT
+                  << " (TCP, instances)" << std::endl;
         return master;
     }
 

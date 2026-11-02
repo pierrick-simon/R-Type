@@ -12,7 +12,6 @@
 #include <optional>
 #include <thread>
 #include <unordered_map>
-#include <vector>
 
 namespace RType::Server {
 
@@ -27,12 +26,14 @@ namespace RType::Server {
         InstanceManager &operator=(const InstanceManager &) = delete;
         ~InstanceManager();
 
-        std::vector<std::thread> threads;
+        std::unordered_map<uint16_t, std::thread> threads;
         std::unordered_map<uint32_t, uint16_t> portByClient;
         uint16_t nextPort = FIRST_INSTANCE_PORT;
     };
 
     std::optional<uint16_t> startInstance(InstanceManager &instances);
+
+    void reapInstance(InstanceManager &instances, uint16_t port);
 
 } // namespace RType::Server
 

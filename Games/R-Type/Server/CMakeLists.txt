@@ -25,10 +25,13 @@ set(GAME_SRCS
         src/Background.cpp
         src/Bullet.cpp
         src/Instance.cpp
+        src/InstanceLink.cpp
         src/Lobby.cpp
+        src/MasterLink.cpp
         src/MasterServer.cpp
         src/Player.cpp
         src/Setup.cpp
+        src/TcpConnection.cpp
         src/Texture.cpp
 )
 
