@@ -94,6 +94,7 @@ namespace RType::Client {
     Entity addText(GameManager &gm, float x, float y, const std::string &str,
         float size, TextAnchor anchor = {},
         raylib::Color color = raylib::Color::White());
+    void showConnecting(GameManager &gm);
     void connectToServer(
         GameManager &gm, const std::string &host, const int port);
     bool isValidIp(const std::string &ip);

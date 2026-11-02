@@ -5,9 +5,11 @@
 ** UpdateClientEntity
 */
 
-#include "UpdateClientEntity.hpp"
 #include <algorithm>
+#include <atomic>
 #include <unordered_set>
+
+#include "UpdateClientEntity.hpp"
 #include "CreateProtocol.hpp"
 #include "DestroyProtocol.hpp"
 #include "MoveProtocol.hpp"
@@ -35,9 +37,8 @@ namespace RType {
         GameManager &gm, Entity entity, std::size_t rate) :
         _type(type), asset(asset), rate(rate)
     {
-        static uint32_t id = 0;
-        _id = id;
-        id++;
+        static std::atomic<uint32_t> id = 0;
+        _id = id++;
         if (type != EntityType::SOUND)
             gm.addComponent<UpdatePosition2D>(entity);
         switch (type) {

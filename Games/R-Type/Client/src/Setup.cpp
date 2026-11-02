@@ -12,6 +12,7 @@
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "Lobby.hpp"
+#include "LobbyListPage.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
@@ -63,6 +64,7 @@ namespace RType::Client {
     {
         gm.createSystem<>(systemConnecting);
         gm.createSystem<>(systemLobby);
+        gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<Friction2D, Velocity2D, Clock>(

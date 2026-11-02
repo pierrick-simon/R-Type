@@ -31,10 +31,15 @@
 
 namespace RType::Server {
 
-    Entity createServer(GameManager &gm)
+    Entity createServer(GameManager &gm, short port)
+    {
+        return createServer(gm, ServerManager(port));
+    }
+
+    Entity createServer(GameManager &gm, ServerManager &&manager)
     {
         auto server = gm.createEntity();
-        gm.addComponent<ServerManager>(server, LOGIN_SERVER_PORT);
+        gm.addComponent<ServerManager>(server, std::move(manager));
         gm.createSystem<ServerManager>(ServerManager::systemServerReceived);
         gm.createSystem<UpdateText2D, Text2D>(UpdateText2D::systemUpdateText2D);
         gm.createSystem<UpdateSprite2D, Sprite2D>(

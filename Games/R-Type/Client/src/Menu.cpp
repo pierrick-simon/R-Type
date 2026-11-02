@@ -11,6 +11,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Lobby.hpp"
+#include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "SpriteSheet2D.hpp"
@@ -128,7 +129,7 @@ namespace RType::Client {
             }
             activeField = Field::None;
             destroyAllTagged<ServerItem>(gm);
-            connectToServer(gm, _clInfos._ip, LOGIN_SERVER_PORT);
+            connectToMaster(gm, _clInfos._ip, LOGIN_SERVER_PORT);
             showConnecting(gm);
         }
 

@@ -13,6 +13,7 @@
 #include "Assets.hpp"
 #include "Client.hpp"
 #include "ClientManager.hpp"
+#include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "SpriteSheet2D.hpp"
@@ -288,6 +289,7 @@ namespace RType::Client {
                     toDestroy.push_back(entity);
         });
         collect<LobbyItem>(gm, toDestroy);
+        collect<LobbyListItem>(gm, toDestroy);
         collect<ConnectingText>(gm, toDestroy);
         for (const Entity e : toDestroy)
             gm.destroyEntity(e);

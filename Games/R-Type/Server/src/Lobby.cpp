@@ -23,9 +23,9 @@ namespace RType::Server {
 
     namespace {
 
-        bool gameStarted = false;
-        std::chrono::steady_clock::time_point lastBroadcast {};
-        std::vector<uint8_t> lastPayload;
+        thread_local bool gameStarted = false;
+        thread_local std::chrono::steady_clock::time_point lastBroadcast {};
+        thread_local std::vector<uint8_t> lastPayload;
 
         template<typename Component>
         void destroyAllOf(GameManager &gm)

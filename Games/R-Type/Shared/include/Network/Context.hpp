@@ -31,7 +31,9 @@ namespace RType {
         MOVE_VELOCITY = 28,
         LOBBY_INFO = 30,
         LOBBY_START = 31,
-        LOBBY_STATE = 32
+        LOBBY_STATE = 32,
+        CREATE_LOBBY = 40,
+        LOBBY_PORT = 41
     };
 
     struct Context {
