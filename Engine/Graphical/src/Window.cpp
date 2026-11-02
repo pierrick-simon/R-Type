@@ -38,4 +38,25 @@ namespace RType {
         w._window->ClearBackground(w.clearScreenColor);
         w._window->EndDrawing();
     }
+
+    void Window::beginDrawing()
+    {
+        this->_window->BeginDrawing();
+        this->_window->ClearBackground(this->clearScreenColor);
+    }
+
+    void Window::endDrawing()
+    {
+        this->_window->EndDrawing();
+    }
+
+    void Window::setTargetFps()
+    {
+        static int fps = this->_window->GetFPS();
+
+        if (fps != this->fps) {
+            fps = this->fps;
+            this->_window->SetTargetFPS(this->fps);
+        }
+    }
 } // namespace RType

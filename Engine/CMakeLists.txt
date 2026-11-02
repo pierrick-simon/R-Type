@@ -108,6 +108,12 @@ set(SRCS_GRAPHICAL
     ${GRAPHICAL}/src/KeyboardManager.cpp
     ${GRAPHICAL}/src/MouseManager.cpp
     ${GRAPHICAL}/src/Keybind.cpp
+    ${GRAPHICAL}/src/Camera3D.cpp
+    ${GRAPHICAL}/src/Model3D.cpp
+    ${GRAPHICAL}/src/Sprite3D.cpp
+    ${GRAPHICAL}/src/ModelAnimation3D.cpp
+    ${GRAPHICAL}/src/SpriteSheet3D.cpp
+    ${GRAPHICAL}/src/Draw3D.cpp
 )
 
 add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
