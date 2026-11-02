@@ -10,7 +10,7 @@
     #include <cstddef>
     #include <functional>
     #include <vector>
-    #include "EnemyDefs.hpp"
+    #include "Defs/EnemyDefs.hpp"
     #include "GameManager.hpp"
 
 namespace RType {
@@ -20,6 +20,10 @@ namespace RType {
             onEnemySpawn;
         std::function<void(GameManager &, Entity)> onBulletSpawn;
         std::function<void(GameManager &, float x, float y)> onEnemyDeath;
+        std::function<void(GameManager &, Entity alien, float duration)>
+            onAlienCharge;
+        std::function<void(GameManager &, Entity beam, bool facingLeft)>
+            onBeamSpawn;
     };
 
     struct SpawnEvent {
@@ -44,6 +48,9 @@ namespace RType {
 
     Entity fireEnemyBullet(GameManager &gm, float x, float y, float vx,
         float vy, int damage, const EnemyHooks &hooks = {});
+
+    Entity fireAlienBeam(GameManager &gm, float x, float y, bool facingLeft,
+        const EnemyHooks &hooks = {});
 
     void resetEnemies(GameManager &gm);
 

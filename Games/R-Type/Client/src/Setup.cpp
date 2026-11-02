@@ -64,9 +64,10 @@ namespace RType::Client {
 
     void createSystems(GameManager &gm)
     {
-        gm.createSystem<Clock>(Clock::systemClock);
-        gm.createSystem<Friction2D, Velocity2D, Clock>(
-            Friction2D::systemFriction2D);
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
+                Friction2D::systemFriction2D(f, v, c);
+        });
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);

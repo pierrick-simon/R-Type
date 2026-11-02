@@ -28,6 +28,8 @@ namespace RType::Server {
 
     struct Background {};
 
+    struct PlayOnce {};
+
     struct PlayerExplosion {
         float remaining = 0.f;
     };

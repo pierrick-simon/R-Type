@@ -12,12 +12,17 @@ namespace RType::Asset {
     AssetList makeAssetList()
     {
         return {
+            {ALIEN_BEAM, "R-Type/sprites/Enemies/AlienBeam.png"},
+            {ALIEN_CHARGE, "R-Type/sprites/Enemies/AlienCharge.png"},
+            {ENEMY_ALIEN, "R-Type/sprites/Enemies/Alien.png"},
             {ENEMY_BULLET, "R-Type/sprites/Enemies/EnemyBullet.gif"},
             {ENEMY_EXPLOSION, "R-Type/sprites/Enemies/ExplosionDead.gif"},
             {ENEMY_ROBOT, "R-Type/sprites/Enemies/RobotEnemy.gif"},
             {ENEMY_SCOUT, "R-Type/sprites/Enemies/scout.gif"},
+            {ENEMY_WALKER, "R-Type/sprites/r-typesheet7.gif"},
 
             {LEVEL1_BACKGROUND, "R-Type/sprites/Levels/Level1_Background.png"},
+            {LEVEL1_MASK, "R-Type/sprites/Levels/Level1_Background_Masque.png"},
 
             {PLAYER_EXPLOSION,
                 "R-Type/sprites/PlayerSheets/ExplosionPlayerDead.gif"},
