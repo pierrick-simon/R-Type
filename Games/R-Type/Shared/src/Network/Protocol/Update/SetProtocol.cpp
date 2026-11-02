@@ -32,7 +32,7 @@ namespace RType {
             case Property::FLIP:
             case Property::VISIBLE:
             case Property::LOOP:
-            case Property::STEREO:
+            case Property::SOUND_STATE:
                 return Kind::U8;
             case Property::LAYER:
                 return Kind::I8;
@@ -147,8 +147,8 @@ namespace RType {
             case Property::LOOP:
                 with<Sound>(gm, e, [i](auto &c) { c.loop = i != 0; });
                 break;
-            case Property::STEREO:
-                with<Sound>(gm, e, [i](auto &c) { c.stereo = i != 0; });
+            case Property::SOUND_STATE:
+                with<Sound>(gm, e, [i](auto &c) {c.state = static_cast<SoundInfo::State>(i);});
                 break;
             default:
                 break;

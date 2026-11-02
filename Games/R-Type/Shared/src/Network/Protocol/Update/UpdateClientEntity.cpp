@@ -18,6 +18,7 @@
 #include "UpdateSprite2D.hpp"
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
+#include "UpdateSound.hpp"
 
 namespace RType {
     static void removeCommon(
@@ -50,6 +51,8 @@ namespace RType {
             case EntityType::TEXT_ENTITY:
                 gm.addComponent<UpdateText2D>(entity);
                 break;
+            case EntityType::SOUND:
+                gm.addComponent<UpdateSound>(entity);
         }
     };
 
@@ -107,7 +110,7 @@ namespace RType {
             return;
         SetClientEntity::systemSetAllEntity<UpdateSprite2D,
             UpdateSpriteSheet2D,
-            UpdateText2D>(gm, entity, server, *this, id);
+            UpdateText2D, UpdateSound>(gm, entity, server, *this, id);
         if (gm.hasComponent<Text2D>(entity)) {
             auto text = gm.getComponent<Text2D>(entity);
             TextProtocol::sendText({id}, server, _id, text.str);

@@ -19,7 +19,6 @@ set(SRCS_NETWORK
     src/Network/Protocol/CreateProtocol.cpp
     src/Network/Protocol/CreatedProtocol.cpp
     src/Network/Protocol/MoveProtocol.cpp
-    src/Network/Protocol/SoundProtocol.cpp
     src/Network/Protocol/TextProtocol.cpp
     src/Network/Protocol/DestroyProtocol.cpp
     src/Network/Protocol/Update/SetProtocol.cpp
@@ -28,6 +27,7 @@ set(SRCS_NETWORK
     src/Network/Protocol/Update/UpdateSprite2D.cpp
     src/Network/Protocol/Update/UpdateSpriteSheet2D.cpp
     src/Network/Protocol/Update/UpdateText2D.cpp
+    src/Network/Protocol/Update/UpdateSound.cpp
 )
 
 set(SRCS_ASSETS

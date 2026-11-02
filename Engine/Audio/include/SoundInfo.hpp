@@ -13,12 +13,13 @@
 
 namespace RType {
     struct SoundInfo {
-        enum class State {
+        enum State : uint8_t {
             PLAY, //!< Request to play the sound
             PLAYING, //!< The sound is currently playing
             PAUSED, //!< The sound is paused
             START, //!< The sound is about to start
             STOP, //!< The sound is stopped
+            Count
         };
 
         enum Attenuation {
