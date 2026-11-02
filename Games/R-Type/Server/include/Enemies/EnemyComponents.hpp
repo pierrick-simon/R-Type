@@ -17,6 +17,7 @@ namespace RType {
         Gunner,
         Walker,
         Alien,
+        Boss,
         Count,
     };
 
@@ -26,6 +27,7 @@ namespace RType {
         ZigZag,
         WalkJump,
         AlienBeam,
+        Boss,
     };
 
     struct MovementPattern {
@@ -70,6 +72,23 @@ namespace RType {
         bool facingLeft = true;
         bool grounded = false;
         int shots = 0;
+    };
+
+    enum class BossState : std::uint8_t {
+        Enter,
+        Closed,
+        Opening,
+        Open,
+        Closing,
+        Dying,
+    };
+
+    struct Boss {
+        BossState state = BossState::Enter;
+        float timer = 0.f;
+        float fireTimer = 0.f;
+        int stage = 0;
+        int explosions = 0;
     };
 
     struct Enemy {

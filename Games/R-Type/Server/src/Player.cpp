@@ -306,7 +306,7 @@ namespace RType::Server {
                 if (state.deathTimer <= 0.f && state.lives > 0)
                     respawnPlayer(gm, player);
             });
-        if (isGameOver(gm))
+        if (isGameOver(gm) || levelCleared(gm))
             restartGame(gm);
         gm.view<PlayerExplosion>().each(
             [&gm, &clock](Entity explosion, PlayerExplosion &state) {

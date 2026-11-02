@@ -38,6 +38,10 @@ namespace RType {
         Velocity2D &velocity, Position2D &pos, const Hitbox &hitbox,
         const MasterClock &clock, const EnemyHooks &hooks);
 
+    void systemBoss(GameManager &gm, Entity entity, Boss &boss,
+        Velocity2D &velocity, Position2D &pos, const MasterClock &clock,
+        const EnemyHooks &hooks);
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks);
 

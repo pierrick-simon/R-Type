@@ -6,6 +6,7 @@
 */
 
 #include "Enemies/EnemySystems.hpp"
+#include "Background.hpp"
 #include "Config.hpp"
 #include "Destroy.hpp"
 #include "Terrain.hpp"
@@ -16,6 +17,9 @@
 #include <optional>
 
 namespace RType {
+
+    static_assert(LEVEL_SCALE == Server::SCALE,
+        "the boss is placed on the level's wall, both must match");
 
     namespace {
 
@@ -144,9 +148,23 @@ namespace RType {
             return found;
         }
 
+        bool bossShielded(GameManager &gm, Entity enemy)
+        {
+            return gm.hasComponent<Boss>(enemy) &&
+                !bossExposed(gm.getComponent<Boss>(enemy));
+        }
+
         void killEnemy(GameManager &gm, const EnemyHooks &hooks, Entity enemy,
             const Position2D &pos, const Hitbox &box)
         {
+            if (gm.hasComponent<Boss>(enemy)) {
+                // Explodes for a while before vanishing, see systemBoss.
+                auto &boss = gm.getComponent<Boss>(enemy);
+
+                boss.state = BossState::Dying;
+                boss.timer = 0.f;
+                return;
+            }
             if (hooks.onEnemyDeath)
                 hooks.onEnemyDeath(gm,
                     pos.x + box.offsetX + box.width / 2.f,
@@ -526,12 +544,136 @@ namespace RType {
         }
     }
 
+    namespace {
+
+        void setBossState(Boss &boss, BossState state)
+        {
+            boss.state = state;
+            boss.timer = 0.f;
+        }
+
+        void bossVolley(
+            GameManager &gm, const Position2D &pos, const EnemyHooks &hooks)
+        {
+            const auto [x, y] = bossMuzzle(pos);
+            float targetX = 0.f;
+            float targetY = 0.f;
+
+            if (!findClosestTarget(gm, y, targetX, targetY))
+                return;
+            const float aim = std::atan2(targetY - y, targetX - x);
+
+            for (int i = 0; i < BOSS_DEF.burst; ++i) {
+                const float angle =
+                    aim + BOSS_DEF.spread * float(i - BOSS_DEF.burst / 2);
+
+                fireEnemyBullet(gm,
+                    x,
+                    y,
+                    std::cos(angle) * BOSS_DEF.bulletSpeed,
+                    std::sin(angle) * BOSS_DEF.bulletSpeed,
+                    BOSS_DEF.bulletDamage,
+                    hooks,
+                    BOSS_BULLET_SHEET);
+            }
+        }
+
+        void bossDying(GameManager &gm, Entity entity, Boss &boss,
+            const Position2D &pos, const EnemyHooks &hooks)
+        {
+            while (boss.timer < BOSS_DEF.deathTime &&
+                boss.timer >=
+                    float(boss.explosions) * BOSS_DEF.explosionInterval) {
+                // R2 low-discrepancy sequence: blasts spread over the body.
+                const float n = float(++boss.explosions);
+                const float u = std::fmod(n * 0.7548777f, 1.f);
+                const float v = std::fmod(n * 0.5698403f, 1.f);
+
+                if (hooks.onBossExplosion)
+                    hooks.onBossExplosion(gm,
+                        pos.x + BOSS_WIDTH * (0.2f + 0.7f * u),
+                        pos.y + BOSS_HEIGHT * (0.1f + 0.8f * v));
+            }
+            if (boss.timer < BOSS_DEF.deathTime)
+                return;
+            for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+                director.victoryTimer = BOSS_DEF.victoryDelay;
+            destroyNetworked(gm, entity);
+        }
+
+    } // namespace
+
+    void systemBoss(GameManager &gm, Entity entity, Boss &boss,
+        Velocity2D &velocity, Position2D &pos, const MasterClock &clock,
+        const EnemyHooks &hooks)
+    {
+        const float delta = elapsedSeconds(clock);
+        const float stagesTime = BOSS_DEF.stageTime * float(BOSS_STAGES - 1);
+
+        boss.timer += delta;
+        velocity = {0.f, 0.f};
+        switch (boss.state) {
+            case BossState::Enter:
+                velocity.x = -BOSS_DEF.enterSpeed;
+                if (pos.x <= BOSS_DEF.x) {
+                    pos.x = BOSS_DEF.x;
+                    velocity.x = 0.f;
+                    setBossState(boss, BossState::Closed);
+                }
+                break;
+            case BossState::Closed:
+                if (boss.timer >= BOSS_DEF.closedTime)
+                    setBossState(boss, BossState::Opening);
+                break;
+            case BossState::Opening:
+                boss.stage = std::min(
+                    BOSS_STAGES - 1, int(boss.timer / BOSS_DEF.stageTime));
+                if (boss.timer >= stagesTime) {
+                    boss.fireTimer = 0.f;
+                    setBossState(boss, BossState::Open);
+                }
+                break;
+            case BossState::Open:
+                boss.fireTimer += delta;
+                if (boss.fireTimer >= BOSS_DEF.fireCooldown) {
+                    boss.fireTimer = 0.f;
+                    bossVolley(gm, pos, hooks);
+                }
+                if (boss.timer >= BOSS_DEF.openTime)
+                    setBossState(boss, BossState::Closing);
+                break;
+            case BossState::Closing:
+                boss.stage = std::max(
+                    0, BOSS_STAGES - 1 - int(boss.timer / BOSS_DEF.stageTime));
+                if (boss.timer >= stagesTime)
+                    setBossState(boss, BossState::Closed);
+                break;
+            case BossState::Dying:
+                bossDying(gm, entity, boss, pos, hooks);
+                break;
+        }
+    }
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks)
     {
+        const float delta = elapsedSeconds(clock);
+
+        if (director.victoryTimer > 0.f) {
+            director.victoryTimer -= delta;
+            if (director.victoryTimer <= 0.f)
+                director.levelCleared = true;
+        }
+        if (Server::levelEnded(gm)) {
+            if (!director.bossSpawned)
+                spawnEnemy(
+                    gm, EnemyType::Boss, SCREEN_WIDTH, BOSS_DEF.y, hooks);
+            director.bossSpawned = true;
+            return;
+        }
         if (director.timeline.empty())
             return;
-        director.elapsed += elapsedSeconds(clock);
+        director.elapsed += delta;
         while (director.next < director.timeline.size() &&
             director.timeline[director.next].time <= director.elapsed) {
             const SpawnEvent &event = director.timeline[director.next++];
@@ -588,6 +730,10 @@ namespace RType {
                             if (consumed || health.hp <= 0 ||
                                 !overlap(bulletRect, rectOf(ep, eb)))
                                 return;
+                            if (bossShielded(gm, enemy)) {
+                                consumed = true;
+                                return;
+                            }
                             const int hp = health.hp;
                             health.hp -= shot.damage;
                             shot.damage -= hp;
@@ -636,6 +782,8 @@ namespace RType {
                         !overlap(enemyRect, rectOf(tp, tb)))
                         return;
                     targetHealth.hp = 0;
+                    if (gm.hasComponent<Boss>(enemy))
+                        return;
                     health.hp = 0;
                     killEnemy(gm, hooks, enemy, ep, eb);
                 });
@@ -687,6 +835,12 @@ namespace RType {
                     Velocity2D &v,
                     Position2D &p,
                     Hitbox &b) { systemAlien(g, e, a, v, p, b, c, *h); });
+        });
+        gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
+            g.view<Boss, Velocity2D, Position2D>().each(
+                [&g, &c, &h](Entity e, Boss &b, Velocity2D &v, Position2D &p) {
+                    systemBoss(g, e, b, v, p, c, *h);
+                });
         });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<EnemyDirector>().each([&g, &c](Entity, EnemyDirector &d) {

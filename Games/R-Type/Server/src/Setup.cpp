@@ -86,7 +86,7 @@ namespace RType::Server {
             for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
                 Friction2D::systemFriction2D(f, v, c);
         });
-        gm.createSystem<Background, Position2D>(backgroundLoop);
+        gm.createSystem<>(backgroundScroll);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
         gm.createSystem<>(playerTerrainCollision);

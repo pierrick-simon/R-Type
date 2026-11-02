@@ -21,13 +21,21 @@ namespace RType {
         {
             Hitbox hitbox = {0};
 
-            hitbox.width = float(sheet.hitboxW) * SPRITE_SCALE;
-            hitbox.height = float(sheet.hitboxH) * SPRITE_SCALE;
+            hitbox.width = float(sheet.hitboxW) * sheet.scale;
+            hitbox.height = float(sheet.hitboxH) * sheet.scale;
             hitbox.offsetX =
-                float(sheet.cellW - sheet.hitboxW) * SPRITE_SCALE / 2.f;
+                float(sheet.cellW - sheet.hitboxW) * sheet.scale / 2.f;
             hitbox.offsetY =
-                float(sheet.cellH - sheet.hitboxH) * SPRITE_SCALE / 2.f;
+                float(sheet.cellH - sheet.hitboxH) * sheet.scale / 2.f;
             return hitbox;
+        }
+
+        Hitbox bossHitbox()
+        {
+            return {.width = BOSS_DEF.hitboxWidth * LEVEL_SCALE,
+                .height = BOSS_DEF.hitboxHeight * LEVEL_SCALE,
+                .offsetX = BOSS_DEF.hitboxLeft * LEVEL_SCALE,
+                .offsetY = BOSS_DEF.hitboxTop * LEVEL_SCALE};
         }
 
         template<typename Component>
@@ -67,7 +75,9 @@ namespace RType {
         pattern.amplitude = def.amplitude;
         pattern.period = def.period;
 
-        const Hitbox hitbox = centeredHitbox(sheet);
+        const Hitbox hitbox = def.pattern == PatternType::Boss
+            ? bossHitbox()
+            : centeredHitbox(sheet);
 
         if (def.pattern == PatternType::WalkJump) {
             const auto platform =
@@ -84,6 +94,8 @@ namespace RType {
             gm.addComponent<Walker>(entity);
         else if (def.pattern == PatternType::AlienBeam)
             gm.addComponent<Alien>(entity);
+        else if (def.pattern == PatternType::Boss)
+            gm.addComponent<Boss>(entity);
         else
             gm.addComponent<MovementPattern>(entity, pattern);
         gm.addComponent<Hitbox>(entity, hitbox);
@@ -100,19 +112,18 @@ namespace RType {
     }
 
     Entity fireEnemyBullet(GameManager &gm, float x, float y, float vx,
-        float vy, int damage, const EnemyHooks &hooks)
+        float vy, int damage, const EnemyHooks &hooks, const SheetInfo &sheet)
     {
         const Entity bullet = gm.createEntity();
-        const SheetInfo &sheet = ENEMY_BULLET_SHEET;
 
         gm.addComponent<Position2D>(bullet,
-            Position2D {x - float(sheet.cellW) * SPRITE_SCALE / 2.f,
-                y - float(sheet.cellH) * SPRITE_SCALE / 2.f});
+            Position2D {x - float(sheet.cellW) * sheet.scale / 2.f,
+                y - float(sheet.cellH) * sheet.scale / 2.f});
         gm.addComponent<Velocity2D>(bullet, Velocity2D {vx, vy});
         gm.addComponent<Projectile>(bullet, Projectile {damage, false});
         gm.addComponent<Hitbox>(bullet, centeredHitbox(sheet));
         if (hooks.onBulletSpawn)
-            hooks.onBulletSpawn(gm, bullet);
+            hooks.onBulletSpawn(gm, bullet, sheet);
         return bullet;
     }
 
@@ -149,7 +160,18 @@ namespace RType {
             director.elapsed = 0.f;
             director.next = 0;
             director.score = 0;
+            director.bossSpawned = false;
+            director.victoryTimer = 0.f;
+            director.levelCleared = false;
         });
+    }
+
+    bool levelCleared(GameManager &gm)
+    {
+        for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+            if (director.levelCleared)
+                return true;
+        return false;
     }
 
     Entity createEnemyDirector(GameManager &gm)

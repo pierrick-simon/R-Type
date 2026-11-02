@@ -10,6 +10,7 @@
     #include <array>
     #include <cstddef>
     #include "AlienDef.hpp"
+    #include "BossDef.hpp"
     #include "DimensionsDef.hpp"
     #include "Enemies/EnemyComponents.hpp"
     #include "Enemies/EnemySheets.hpp"
@@ -67,6 +68,12 @@ namespace RType {
                 .scoreValue = 600,
                 .speed = 260.f,
                 .pattern = PatternType::AlienBeam},
+            {.name = "Boss",
+                .sheet = &BOSS_SHEET,
+                .hp = 60,
+                .scoreValue = 5000,
+                .speed = BOSS_DEF.enterSpeed,
+                .pattern = PatternType::Boss},
         }};
 
     [[nodiscard]] constexpr const EnemyDef &enemyDef(EnemyType type)

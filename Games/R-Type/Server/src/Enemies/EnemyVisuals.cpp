@@ -18,10 +18,10 @@
 
 namespace RType {
 
-    SpriteSheet2D makeSheet(const SheetInfo &info, float scale = SPRITE_SCALE)
+    SpriteSheet2D makeSheet(const SheetInfo &info)
     {
         return SpriteSheet2D(
-            {info.rows, info.frames / info.rows}, info.frameMs, scale);
+            {info.rows, info.frames / info.rows}, info.frameMs, info.scale);
     }
 
     void systemWalkerAnimation(const Walker &walker, SpriteSheet2D &sheet)
@@ -52,6 +52,18 @@ namespace RType {
     {
         sheet.currentTile = alienTile(alien);
         sheet.flip = !alien.facingLeft;
+    }
+
+    void systemBossAnimation(const Boss &boss, SpriteSheet2D &sheet)
+    {
+        const bool flash =
+            boss.state == BossState::Dying && int(boss.timer / 0.08f) % 2 != 0;
+
+        // The row is how far the belly is open, the columns an idle loop.
+        sheet.currentTile = std::size_t(boss.stage * BOSS_IDLE_FRAMES) +
+            sheet.currentTile % BOSS_IDLE_FRAMES;
+        sheet.color =
+            flash ? raylib::Color {255, 90, 90, 255} : raylib::Color::White();
     }
 
     struct AlienCharge {
@@ -106,16 +118,16 @@ namespace RType {
             e, EntityType::SPRITESHEET, ALIEN_CHARGE_SHEET.asset, gm, e);
     }
 
-    void spawnExplosion(GameManager &gm, float cx, float cy)
+    void spawnExplosion(
+        GameManager &gm, const SheetInfo &info, float cx, float cy)
     {
-        const SheetInfo &info = EXPLOSION_SHEET;
         const Entity e = gm.createEntity();
         const float duration =
             float(info.frames * (info.frameMs + 17)) / 1000.f;
 
         gm.addComponent<Position2D>(e,
-            Position2D {cx - float(info.cellW) * SPRITE_SCALE / 2.f,
-                cy - float(info.cellH) * SPRITE_SCALE / 2.f});
+            Position2D {cx - float(info.cellW) * info.scale / 2.f,
+                cy - float(info.cellH) * info.scale / 2.f});
         gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
         gm.addComponent<Server::PlayOnce>(e);
         gm.addComponent<Lifetime>(e, Lifetime {duration});
@@ -137,12 +149,18 @@ namespace RType {
                 gm.addComponent<UpdateClientEntity>(
                     e, EntityType::SPRITESHEET, def.sheet->asset, gm, e);
             };
-        hooks.onBulletSpawn = [](GameManager &gm, Entity e) {
-            gm.addComponent<SpriteSheet2D>(e, makeSheet(ENEMY_BULLET_SHEET));
-            gm.addComponent<UpdateClientEntity>(
-                e, EntityType::SPRITESHEET, ENEMY_BULLET_SHEET.asset, gm, e);
+        hooks.onBulletSpawn =
+            [](GameManager &gm, Entity e, const SheetInfo &info) {
+                gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
+                gm.addComponent<UpdateClientEntity>(
+                    e, EntityType::SPRITESHEET, info.asset, gm, e);
+            };
+        hooks.onEnemyDeath = [](GameManager &gm, float x, float y) {
+            spawnExplosion(gm, EXPLOSION_SHEET, x, y);
         };
-        hooks.onEnemyDeath = spawnExplosion;
+        hooks.onBossExplosion = [](GameManager &gm, float x, float y) {
+            spawnExplosion(gm, BOSS_EXPLOSION_SHEET, x, y);
+        };
         hooks.onAlienCharge = spawnAlienCharge;
         hooks.onBeamSpawn = [](GameManager &gm, Entity e, bool facingLeft) {
             SpriteSheet2D sheet = makeSheet(ALIEN_BEAM_SHEET);
@@ -159,6 +177,7 @@ namespace RType {
     {
         gm.createSystem<Walker, SpriteSheet2D>(systemWalkerAnimation);
         gm.createSystem<Alien, SpriteSheet2D>(systemAlienAnimation);
+        gm.createSystem<Boss, SpriteSheet2D>(systemBossAnimation);
         gm.createSystem<>(systemAlienCharge);
     }
 

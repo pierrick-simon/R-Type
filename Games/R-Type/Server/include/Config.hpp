@@ -20,6 +20,8 @@ namespace RType::Server {
     inline constexpr float BACKGROUND_SPEED = 75.f;
     inline constexpr int BACKGROUND_WIDTH = 4224;
     inline constexpr float BACKGROUND_PERIOD = BACKGROUND_WIDTH * SCALE - 2.f;
+    inline constexpr float LEVEL_END_X =
+        WINDOW_WIDTH - BACKGROUND_WIDTH * SCALE;
 
     inline constexpr int PLAYER_FRAMES = 5;
     inline constexpr float PLAYER_WIDTH = 166.f / PLAYER_FRAMES * SCALE;

@@ -39,6 +39,7 @@ target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-
 if (TARGET criterion)
     set(SRCS_TESTS
             tests/tests_init.cpp
+            tests/tests_boss.cpp
             tests/tests_lives.cpp
     )
 
