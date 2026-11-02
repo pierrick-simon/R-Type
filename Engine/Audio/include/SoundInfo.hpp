@@ -9,6 +9,7 @@
 #define SOUNDINFO_HPP_
 
 #include <cfloat>
+#include <cstdint>
 #include <miniaudio.h>
 
 namespace RType {
