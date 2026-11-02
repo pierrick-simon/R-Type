@@ -15,7 +15,8 @@
 
 namespace RType::Client {
 
-    /** @brief Rate at which CREATE_LOBBY is re-sent until LOBBY_PORT arrives. */
+    /** @brief Rate at which CREATE_LOBBY is re-sent until LOBBY_PORT arrives.
+     */
     inline constexpr std::chrono::milliseconds LOBBY_LIST_RESEND_RATE {500};
 
     /** @brief Tag of the lobby list page entities. */

@@ -9,13 +9,13 @@
 #include <atomic>
 #include <unordered_set>
 
-#include "UpdateClientEntity.hpp"
 #include "CreateProtocol.hpp"
 #include "DestroyProtocol.hpp"
 #include "MoveProtocol.hpp"
 #include "SetClientEntity.hpp"
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
+#include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
 #include "UpdateSprite2D.hpp"
 #include "UpdateSpriteSheet2D.hpp"

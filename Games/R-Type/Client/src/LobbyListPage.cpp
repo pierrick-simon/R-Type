@@ -74,7 +74,9 @@ namespace RType::Client {
         std::optional<std::pair<Entity, uint16_t>> target;
 
         gm.view<ClientManager, LobbyListClient, LobbyPortInfo>().each(
-            [&](Entity e, ClientManager &c, LobbyListClient &l,
+            [&](Entity e,
+                ClientManager &c,
+                LobbyListClient &l,
                 LobbyPortInfo &info) {
                 const auto now = std::chrono::steady_clock::now();
 
@@ -88,8 +90,8 @@ namespace RType::Client {
                     l.shown = true;
                     show = true;
                 }
-                if (l.createRequested
-                    && now - l.lastRequest >= LOBBY_LIST_RESEND_RATE) {
+                if (l.createRequested &&
+                    now - l.lastRequest >= LOBBY_LIST_RESEND_RATE) {
                     MasterProtocol::sendCreateLobby(c);
                     l.lastRequest = now;
                 }
@@ -99,9 +101,8 @@ namespace RType::Client {
             std::vector<Entity> connecting;
 
             gm.view<ConnectingText>().each(
-                [&connecting](Entity e, ConnectingText &) {
-                    connecting.push_back(e);
-                });
+                [&connecting](
+                    Entity e, ConnectingText &) { connecting.push_back(e); });
             for (const Entity e : connecting)
                 gm.destroyEntity(e);
             createLobbyListPage(gm);

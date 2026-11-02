@@ -39,9 +39,8 @@ namespace RType::Server {
                 createMasterClock(gm);
                 createSystems(gm, makeEnemyVisualHooks());
                 auto &server = gm.getComponent<ServerManager>(s);
-                gm.run(60, [&] {
-                    return server.isRunning() && !stopInstances;
-                });
+                gm.run(
+                    60, [&] { return server.isRunning() && !stopInstances; });
                 std::cout << "[Instance " << port << "] Stopped" << std::endl;
             } catch (const std::exception &e) {
                 std::cerr << "[Instance " << port << "] " << e.what()

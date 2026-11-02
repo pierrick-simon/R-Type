@@ -9,8 +9,8 @@
 #define SETUP_HPP_
 
 #include "GameManager.hpp"
-#include "Texture.hpp"
 #include "ServerManager.hpp"
+#include "Texture.hpp"
 
 namespace RType {
     struct EnemyHooks;
