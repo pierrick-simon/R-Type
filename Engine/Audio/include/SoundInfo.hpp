@@ -9,11 +9,26 @@
 #define SOUNDINFO_HPP_
 
 #include <cfloat>
-#include <cstdint>
 #include <miniaudio.h>
 
 namespace RType {
+    /**
+     * @struct SoundInfo
+     * @brief Settings and playback state of a Sound.
+     *
+     * Plain data describing how a Sound must behave. It is inherited by
+     * Sound and applied to the underlying miniaudio sound every frame.
+     *
+     * @see Sound
+     */
     struct SoundInfo {
+        /**
+         * @enum State
+         * @brief Playback state of a sound.
+         *
+         * Set it to PLAY or START to request an action; the sound system
+         * then switches it to PLAYING.
+         */
         enum State : uint8_t {
             PLAY, //!< Request to play the sound
             PLAYING, //!< The sound is currently playing
@@ -23,6 +38,12 @@ namespace RType {
             Count
         };
 
+        /**
+         * @enum Attenuation
+         * @brief Distance attenuation model, mirrors ma_attenuation_model.
+         *
+         * Only used when spatialization is enabled (see stereo).
+         */
         enum Attenuation {
             NONE = ma_attenuation_model_none, //!< No distance attenuation and
                                               //!< no spatialization.
