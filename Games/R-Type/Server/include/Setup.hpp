@@ -15,9 +15,8 @@ namespace RType {
 }
 
 namespace RType::Server {
-
-    Entity createWindow(GameManager &gm);
-    Entity createKeyboardManager(GameManager &gm);
+    Entity createServer(GameManager &gm);
+    Entity createMasterClock(GameManager &gm);
     void createSystems(GameManager &gm, const EnemyHooks &enemyHooks);
 } // namespace RType::Server
 

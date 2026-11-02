@@ -8,7 +8,9 @@
 #ifndef GAMEMANAGER_HPP_
 #define GAMEMANAGER_HPP_
 
+#include <chrono>
 #include <memory>
+#include <thread>
 #include <type_traits>
 #include <utility>
 
@@ -294,6 +296,8 @@ namespace RType {
         {
             _assetsMap = map;
         }
+
+        void run(int fps, const std::function<bool()> &keepRunning);
 
     private:
         ComponentManager _cm;

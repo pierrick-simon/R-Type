@@ -26,7 +26,6 @@
     #include <map>
     #include <optional>
     #include <string>
-    #include "GameManager.hpp"
 
 namespace RType {
 
@@ -38,19 +37,6 @@ namespace RType {
         LOGIN = 1,
         LOGOUT = 2,
         HEALTH = 3,
-        KEY_PRESSED = 10,
-        KEY_RELEASED = 11,
-        MOUSE_BUTTON_PRESSED = 12,
-        MOUSE_BUTTON_RELEASED = 13,
-        CREATE = 20,
-        MOVE = 21,
-        SET = 22,
-        TEXT = 23,
-        PLAY = 24,
-        PAUSE = 25,
-        STOP = 26,
-        DESTROY = 27,
-        MOVE_VELOCITY = 28
     };
 
     struct Header {
@@ -73,12 +59,6 @@ namespace RType {
     uint16_t get16(const uint8_t *p);
     void put32(uint8_t *p, uint32_t v);
     void put16(uint8_t *p, uint16_t v);
-
-    struct Context {
-        std::unordered_map<uint16_t, Entity> clients;
-        std::optional<std::reference_wrapper<GameManager>> gm;
-        std::unordered_map<size_t, Entity> map;
-    };
 
 } // namespace RType
 

@@ -9,6 +9,7 @@
 #define COMPONENTS_HPP_
 
 #include "Config.hpp"
+#include "PlayerPhysics.hpp"
 
 namespace RType::Server {
 
@@ -26,6 +27,8 @@ namespace RType::Server {
     struct Bullet {};
 
     struct Background {};
+
+    struct PlayOnce {};
 
     struct PlayerExplosion {
         float remaining = 0.f;

@@ -19,6 +19,11 @@ namespace RType {
     struct Size2D {
         int height = 0;
         int width = 0;
+
+        bool operator==(const Size2D &other) const
+        {
+            return this->width == other.width && this->height == other.height;
+        };
     };
 }; // namespace RType
 #endif /* !SIZE2D_HPP_ */

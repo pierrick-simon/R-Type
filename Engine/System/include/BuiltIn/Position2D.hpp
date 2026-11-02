@@ -15,61 +15,14 @@ namespace RType {
      * The coordinate system follows raylib's: (0, 0) is the top-left corner,
      * x grows to the right and y grows downward.
      */
-    class Position2D {
-    public:
-        /**
-         * @brief Default constructor
-         */
-        Position2D(float x = 0, float y = 0) :
-            _x(x), _y(y) {};
+    struct Position2D {
+        float x = 0.f;
+        float y = 0.f;
 
-        /** @return The x coordinate (read only, does not flag an update). */
-        [[nodiscard]] float x() const
+        bool operator==(const Position2D &other) const
         {
-            return _x;
-        }
-
-        /** @return The y coordinate (read only, does not flag an update). */
-        [[nodiscard]] float y() const
-        {
-            return _y;
-        }
-
-        /** @return A reference to x. Flags the position as updated. */
-        [[nodiscard]] float &x()
-        {
-            _update = true;
-            return _x;
-        }
-
-        /** @return A reference to y. Flags the position as updated. */
-        [[nodiscard]] float &y()
-        {
-            _update = true;
-            return _y;
-        }
-
-        /** @return true if the position changed since the last
-         * setUpdate(false). */
-        [[nodiscard]] bool getUpdate() const
-        {
-            return _update;
-        }
-
-        /**
-         * @brief Manually set the update flag.
-         *
-         * @param update New value of the flag (false once the change was sent).
-         */
-        void setUpdate(bool update = true)
-        {
-            _update = update;
-        }
-
-    private:
-        float _x;
-        float _y;
-        bool _update = true;
+            return this->x == other.x && this->y == other.y;
+        };
     };
 }; // namespace RType
 

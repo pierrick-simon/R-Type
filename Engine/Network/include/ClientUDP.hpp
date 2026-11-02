@@ -22,11 +22,11 @@ namespace RType {
 
         void received();
 
-        void send(Opcode op, const std::vector<uint8_t> &msg);
+        void send(uint8_t op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
         [[nodiscard]] uint16_t getMyId() const;
 
-        void addManage(Opcode op, ManageFunc func, bool override = false);
+        void addManage(uint8_t op, ManageFunc func, bool override = false);
 
         class ClientException : public EngineException {
         public:
@@ -40,7 +40,7 @@ namespace RType {
             const Header &head, const std::vector<uint8_t> &payload);
 
         void scheduleLogin();
-        void sendNow(Opcode op, const std::vector<uint8_t> &msg);
+        void sendNow(uint8_t op, const std::vector<uint8_t> &msg);
 
         asio::io_context _context;
         asio::ip::udp::socket _socket;

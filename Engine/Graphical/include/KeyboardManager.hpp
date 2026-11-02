@@ -216,15 +216,6 @@ namespace RType {
         std::unordered_set<int> _held;
     };
 
-    /**
-     * @brief Keyboard component.
-     *
-     * Is link to the KeyboardManager to get the update input.
-     */
-    struct Keyboard {
-        KeyboardManager &manager;
-    };
-
 } // namespace RType
 
 #endif /* !KEYBOARDMANAGER_HPP_ */
