@@ -15,10 +15,10 @@
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
 #include "UpdatePosition2D.hpp"
+#include "UpdateSound.hpp"
 #include "UpdateSprite2D.hpp"
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
-#include "UpdateSound.hpp"
 
 namespace RType {
     static void removeCommon(
@@ -33,8 +33,8 @@ namespace RType {
     }
 
     UpdateClientEntity::UpdateClientEntity(EntityType type, int asset,
-        GameManager &gm, Entity entity, std::size_t rate) :
-        _type(type), asset(asset), rate(rate)
+        GameManager &gm, Entity entity, std::optional<Sound> sound) :
+        _type(type), _sound(sound), asset(asset)
     {
         static uint32_t id = 0;
         _id = id;
@@ -110,10 +110,21 @@ namespace RType {
             return;
         SetClientEntity::systemSetAllEntity<UpdateSprite2D,
             UpdateSpriteSheet2D,
-            UpdateText2D, UpdateSound>(gm, entity, server, *this, id);
+            UpdateText2D,
+            UpdateSound>(gm, entity, server, *this, id);
         if (gm.hasComponent<Text2D>(entity)) {
             auto text = gm.getComponent<Text2D>(entity);
             TextProtocol::sendText({id}, server, _id, text.str);
+        }
+        if (_sound && _type != SOUND && !_sound->set) {
+            gm.addComponent<UpdateSound>(entity);
+            ProtocolEntity pe = {};
+            pe.assetId = _sound->asset;
+            pe.id = _id;
+            pe.type = SOUND;
+            CreateProtocol::sendCreate(create, server, pe);
+            _sound->set = true;
+            return;
         }
         _links.push_back(id);
         _inits.erase(iter);

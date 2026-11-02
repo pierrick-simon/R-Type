@@ -33,8 +33,13 @@ namespace RType {
         gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
         gm.addComponent<Clock>(e);
         gm.addComponent<Lifetime>(e, Lifetime {duration});
-        gm.addComponent<UpdateClientEntity>(
-            e, EntityType::SPRITESHEET, info.asset, gm, e);
+        gm.addComponent<SoundInfo>(e, SoundInfo::PLAY);
+        gm.addComponent<UpdateClientEntity>(e,
+            EntityType::SPRITESHEET,
+            info.asset,
+            gm,
+            e,
+            Asset::EXPLOSION_SOUND);
     }
 
     EnemyHooks makeEnemyVisualHooks()

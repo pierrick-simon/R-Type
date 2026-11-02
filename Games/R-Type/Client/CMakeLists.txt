@@ -18,7 +18,7 @@ set(SRCS
 
 add_executable(r-type_client ${MAIN} ${SRCS})
 target_include_directories(r-type_client PRIVATE include)
-target_link_libraries(r-type_client PRIVATE r-type::shared engine-system engine-network engine-graphical)
+target_link_libraries(r-type_client PRIVATE r-type::shared engine-system engine-network engine-graphical engine-audio)
 
 # criterion
 if (TARGET criterion)
@@ -26,7 +26,7 @@ if (TARGET criterion)
 
     add_executable(client_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS})
     target_include_directories(client_tests_run_bin PRIVATE include)
-    target_link_libraries(client_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical)
+    target_link_libraries(client_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical engine-audio)
 
     # --coverage and `find` are GCC/Clang + Unix only
     if (NOT MSVC)

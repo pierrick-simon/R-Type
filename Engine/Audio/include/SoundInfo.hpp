@@ -9,6 +9,7 @@
 #define SOUNDINFO_HPP_
 
 #include <cfloat>
+#include <cstdint>
 #include <miniaudio.h>
 
 namespace RType {
@@ -38,8 +39,8 @@ namespace RType {
                                                  //!< AL_EXPONENT_DISTANCE_CLAMPED.
         };
 
-        bool loop = false;
         State state = State::STOP;
+        bool loop = false;
         bool stereo = false;
         Attenuation attenuation = INVERSE;
         float minDistance = 1.0f;

@@ -9,8 +9,7 @@
 #include "SyncField.hpp"
 
 namespace RType {
-    void UpdateSound::systemUpdateSound(
-        UpdateSound &update, const SoundInfo &s)
+    void UpdateSound::systemUpdateSound(UpdateSound &update, const SoundInfo &s)
     {
         auto track = [&](auto SoundInfo::*member, Property prop) {
             if (syncField(update.*member, s.*member))

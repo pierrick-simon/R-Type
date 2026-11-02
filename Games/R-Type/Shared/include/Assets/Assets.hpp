@@ -36,6 +36,8 @@ namespace RType::Asset {
     inline constexpr AssetId PLAYER_SHEET_3 = 110;
     inline constexpr AssetId PLAYER_SHEET_4 = 111;
     inline constexpr AssetId PLAYER_SHEET_5 = 112;
+    inline constexpr AssetId EXPLOSION_SOUND = 1000;
+    inline constexpr AssetId GUNSHOT_SOUND = 1001;
 
     [[nodiscard]] AssetList makeAssetList();
 

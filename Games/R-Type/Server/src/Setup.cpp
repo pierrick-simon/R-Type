@@ -21,6 +21,7 @@
 #include "Texture2D.hpp"
 #include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
+#include "UpdateSound.hpp"
 #include "UpdateSprite2D.hpp"
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
@@ -41,6 +42,7 @@ namespace RType::Server {
             UpdateSpriteSheet2D::systemUpdateSpriteSheet2D);
         gm.createSystem<UpdatePosition2D, Position2D>(
             UpdatePosition2D::systemUpdatePosition2D);
+        gm.createSystem<UpdateSound, SoundInfo>(UpdateSound::systemUpdateSound);
         gm.createSystem<ServerManager>(
             UpdateClientEntity::systemUpdateEntityPos);
         gm.createSystem<ServerManager>(
@@ -52,7 +54,8 @@ namespace RType::Server {
         gm.createSystem<ServerManager>(
             SetClientEntity::systemUpdatesAllEntity<UpdateText2D,
                 UpdateSprite2D,
-                UpdateSpriteSheet2D>);
+                UpdateSpriteSheet2D,
+                UpdateSound>);
         gm.createSystem<ServerManager>([&gm](ServerManager &s) {
             for (auto [_, u] : gm.view<UpdateClientEntity>().getVector())
                 for (auto [id, _] : s.getContext().clients)

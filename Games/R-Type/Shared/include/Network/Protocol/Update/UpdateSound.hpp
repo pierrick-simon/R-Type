@@ -16,7 +16,7 @@
 namespace RType {
     class UpdateSound : public SoundInfo {
     public:
-        public:
+    public:
         /**
          * @brief Current value of a property, ready to be sent in a SET packet.
          *
@@ -50,8 +50,7 @@ namespace RType {
         /**
          * @brief System to update the components UpdateSound
          */
-        static void systemUpdateSound(
-            UpdateSound &update, const SoundInfo &s);
+        static void systemUpdateSound(UpdateSound &update, const SoundInfo &s);
 
     private:
         std::vector<Property> _update;

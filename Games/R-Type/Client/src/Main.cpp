@@ -21,6 +21,7 @@ int main()
         auto c = RType::Client::createClient(gm);
         auto control = RType::Client::createControl(gm);
         auto mc = RType::Client::createMasterClock(gm);
+        auto s = RType::Client::createSound(gm);
 
         RType::Client::createSystems(gm);
         while (!WindowShouldClose())

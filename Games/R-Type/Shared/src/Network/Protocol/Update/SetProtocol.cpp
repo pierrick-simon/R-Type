@@ -148,7 +148,9 @@ namespace RType {
                 with<Sound>(gm, e, [i](auto &c) { c.loop = i != 0; });
                 break;
             case Property::SOUND_STATE:
-                with<Sound>(gm, e, [i](auto &c) {c.state = static_cast<SoundInfo::State>(i);});
+                with<Sound>(gm, e, [i](auto &c) {
+                    c.state = static_cast<SoundInfo::State>(i);
+                });
                 break;
             default:
                 break;
