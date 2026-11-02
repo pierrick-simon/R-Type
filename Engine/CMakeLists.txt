@@ -134,6 +134,7 @@ target_link_libraries(${GRAPHICAL_LIB_NAME} PUBLIC engine-system raylib-cpp::ray
 if (MSVC)
     target_compile_options(${GRAPHICAL_LIB_NAME} PRIVATE /wd4251)
 endif ()
+target_compile_options(${GRAPHICAL_LIB_NAME} PUBLIC -g)
 
 # Create Network engine lib
 
@@ -173,3 +174,4 @@ target_include_directories(${AUDIO_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${AUDIO}/include
 )
 target_link_libraries(${AUDIO_LIB_NAME} PUBLIC engine-system miniaudio::miniaudio)
+target_compile_options(${AUDIO_LIB_NAME} PUBLIC -g)

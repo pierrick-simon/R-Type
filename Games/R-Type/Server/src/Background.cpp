@@ -9,7 +9,6 @@
 #include "Assets.hpp"
 #include "Config.hpp"
 #include "Sprite2D.hpp"
-#include "Texture.hpp"
 #include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
 #include "UpdateSprite2D.hpp"

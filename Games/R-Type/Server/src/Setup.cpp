@@ -20,7 +20,6 @@
 #include "SetClientEntity.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
-#include "Texture2D.hpp"
 #include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
 #include "UpdateSound.hpp"
@@ -84,10 +83,7 @@ namespace RType::Server {
         registerEnemyVisualSystems(gm);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);

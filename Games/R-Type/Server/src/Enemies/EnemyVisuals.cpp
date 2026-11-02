@@ -13,7 +13,6 @@
 #include "Destroy.hpp"
 #include "Position2D.hpp"
 #include "SpriteSheet2D.hpp"
-#include "Texture.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType {
