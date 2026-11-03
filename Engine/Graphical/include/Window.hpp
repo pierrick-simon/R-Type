@@ -61,7 +61,6 @@ namespace RType {
 
     private:
         std::unique_ptr<raylib::Window> _window;
-        std::unique_ptr<raylib::AudioDevice> _audioDevice;
     };
 
 } // namespace RType

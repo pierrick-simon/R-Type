@@ -9,9 +9,10 @@
 
 namespace RType {
 
-    GameManager::GameManager() :
-        _cm(), _em(), _sm()
+    GameManager::GameManager(bool debug) :
+        _cm(), _em(), _sm(), _debug(debug)
     {
+        log("debug mode enabled");
     }
 
     void GameManager::update()
@@ -22,6 +23,7 @@ namespace RType {
         try {
             _sm.process(_cm);
         } catch (...) {
+            log("update: a system threw an exception");
             _updating = false;
             try {
                 flush();
@@ -30,16 +32,21 @@ namespace RType {
             throw;
         }
         _updating = false;
+        log("update: applying ", _cq.size(), " queued command(s)");
         flush();
     }
 
     Entity GameManager::createEntity()
     {
-        return _em.createEntity();
+        Entity entity = _em.createEntity();
+
+        log("createEntity -> entity ", entity.index());
+        return entity;
     }
 
     void GameManager::destroyEntity(Entity entity)
     {
+        log("destroyEntity ", entity.index());
         _cq.emplace_back([this, entity]() {
             if (!hasEntity(entity))
                 return;
@@ -56,6 +63,7 @@ namespace RType {
 
     void GameManager::removeComponents(Entity entity)
     {
+        log("removeComponents on entity ", entity.index());
         _cq.emplace_back([this, entity]() {
             if (!hasEntity(entity))
                 throw NoSuchEntity();
@@ -66,6 +74,7 @@ namespace RType {
 
     void GameManager::destroySystem(SystemId id)
     {
+        log("destroySystem ", id);
         _cq.emplace_back([this, id]() {
             if (!hasSystem(id))
                 return;
@@ -86,7 +95,12 @@ namespace RType {
         for (auto &command : _cq) {
             try {
                 command();
+            } catch (const std::exception &e) {
+                log("a queued command failed: ", e.what());
+                if (!error)
+                    error = std::current_exception();
             } catch (...) {
+                log("a queued command failed");
                 if (!error)
                     error = std::current_exception();
             }
@@ -108,6 +122,7 @@ namespace RType {
         using clock = std::chrono::steady_clock;
         const auto step = std::chrono::nanoseconds(1'000'000'000 / fps);
         auto next = clock::now();
+        log("run at ", fps, " fps");
         while (keepRunning()) {
             update();
             next += step;
@@ -115,6 +130,7 @@ namespace RType {
                 next = clock::now();
             std::this_thread::sleep_until(next);
         }
+        log("run stopped");
     }
 
 } // namespace RType

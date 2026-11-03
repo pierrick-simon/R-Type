@@ -13,7 +13,6 @@
 #include "Destroy.hpp"
 #include "Position2D.hpp"
 #include "SpriteSheet2D.hpp"
-#include "Texture.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType {
@@ -120,8 +119,13 @@ namespace RType {
         gm.addComponent<SpriteSheet2D>(e, makeSheet(info));
         gm.addComponent<Server::PlayOnce>(e);
         gm.addComponent<Lifetime>(e, Lifetime {duration});
-        gm.addComponent<UpdateClientEntity>(
-            e, EntityType::SPRITESHEET, info.asset, gm, e);
+        gm.addComponent<SoundInfo>(e, SoundInfo::PLAY);
+        gm.addComponent<UpdateClientEntity>(e,
+            EntityType::SPRITESHEET,
+            info.asset,
+            gm,
+            e,
+            Asset::EXPLOSION_SOUND);
     }
 
     EnemyHooks makeEnemyVisualHooks()

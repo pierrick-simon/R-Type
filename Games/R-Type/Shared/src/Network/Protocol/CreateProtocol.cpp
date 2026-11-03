@@ -22,7 +22,7 @@ namespace RType {
         if (!ctx.gm || payload.size() < ProtocolEntity::SIZE)
             return;
         auto e = parseEntity(payload);
-        if (!e || ctx.map.contains(e->id))
+        if (!e)
             return;
         switch (e->type) {
             case EntityType::SPRITE:
@@ -85,14 +85,21 @@ namespace RType {
     {
         auto &gm = ctx.gm->get();
         auto asset = gm.getAssetsMap().find(e.assetId);
+        auto entity = ctx.map.find(e.id);
 
         if (asset == gm.getAssetsMap().end())
             return;
-        auto s = ctx.gm->get().createEntity();
-        gm.addComponent<RType::Sound>(s, asset->second, false);
-        gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
-        gm.addComponent<RType::Velocity2D>(s);
-        ctx.map.emplace(e.id, s);
+        for (auto [_, l] : gm.view<Listener>().getVector()) {
+            if (entity == ctx.map.end()) {
+                auto s = ctx.gm->get().createEntity();
+                gm.addComponent<RType::Sound>(s, l, asset->second);
+                gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
+                gm.addComponent<RType::Velocity2D>(s);
+                ctx.map.emplace(e.id, s);
+            } else {
+                gm.addComponent<RType::Sound>(entity->second, l, asset->second);
+            }
+        }
     }
 
     void CreateProtocol::manageCreateText2D(ProtocolEntity &e, Context &ctx)

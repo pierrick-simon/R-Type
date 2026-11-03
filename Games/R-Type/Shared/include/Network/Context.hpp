@@ -22,9 +22,6 @@ namespace RType {
         MOVE = 21,
         SET = 22,
         TEXT = 23,
-        PLAY = 24,
-        PAUSE = 25,
-        STOP = 26,
         DESTROY = 27,
         MOVE_VELOCITY = 28
     };
