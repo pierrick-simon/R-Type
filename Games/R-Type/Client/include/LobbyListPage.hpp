@@ -25,7 +25,15 @@ namespace RType::Client {
     inline constexpr float LOBBY_LIST_ROW_GAP = 12.f;
     inline constexpr float LOBBY_LIST_TEXT_SIZE = 34.f;
     inline constexpr float LOBBY_LIST_PLAYERS_X = 360.f;
+    inline constexpr float LOBBY_LIST_NAME_MAX_WIDTH = 290.f;
     inline constexpr std::size_t LOBBY_LIST_MAX_ROWS = 8;
+
+    inline constexpr float LOBBY_LIST_VISIBLE_TOP = 180.f;
+    inline constexpr float LOBBY_LIST_VISIBLE_BOTTOM = 830.f;
+    inline constexpr int LOBBY_LIST_SCROLL_STEP = 5;
+    inline constexpr float CREATE_POPUP_WIDTH = 900.f;
+    inline constexpr float CREATE_POPUP_HEIGHT = 440.f;
+    inline constexpr float CREATE_POPUP_PADDING = 40.f;
 
     struct LobbyListItem {};
 
@@ -33,9 +41,15 @@ namespace RType::Client {
 
     struct JoinLobbyButton {};
 
+    struct CreatePopupItem {};
+
+    struct CreatePopupConfirm {};
+
     struct LobbyListClient {
         bool shown = false;
         bool createRequested = false;
+        std::string createName;
+        bool popupOpen = false;
         uint16_t selectedPort = 0;
         uint16_t joinPort = 0;
         std::chrono::steady_clock::time_point lastRequest {};

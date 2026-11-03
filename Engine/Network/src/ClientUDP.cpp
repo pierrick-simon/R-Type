@@ -108,13 +108,14 @@ namespace RType {
         if (payload.size() < 2)
             return;
         _myId = (payload[0] << 8) | payload[1];
-        //std::cout << "My id = " << _myId << std::endl;
+        // std::cout << "My id = " << _myId << std::endl;
     }
 
     void UDPClient::manageHealth(
         const Header &header, const std::vector<uint8_t> &payload)
     {
-        //std::cout << "[Debug] Health check from server to client" << std::endl;
+        // std::cout << "[Debug] Health check from server to client" <<
+        // std::endl;
         sendNow(Opcode::HEALTH, {});
     }
 

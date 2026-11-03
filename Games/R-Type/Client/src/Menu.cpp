@@ -70,7 +70,11 @@ namespace RType::Client {
 
         gm.addComponent<Button>(e,
             Button {{x, y, width, height},
-                label, std::move(onClick), false, false, false});
+                label,
+                std::move(onClick),
+                false,
+                false,
+                false});
         gm.addComponent<Position2D>(e, x, y);
         gm.addComponent<SpriteSheet2D>(
             e, Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, scale, false);
@@ -144,22 +148,27 @@ namespace RType::Client {
         const float centerX = 1920.f / 2.f;
         const float fieldY = (1080.f - BUTTON_HEIGHT) / 2.f;
         const float step = BUTTON_HEIGHT + BUTTON_GAP;
-        const Entity title = addText(gm,
-            centerX,
-            fieldY - 40.f,
-            "Server IP Address",
-            SERVER_LABEL_SIZE);
+        const Entity title = addText(
+            gm, centerX, fieldY - 40.f, "Server IP Address", SERVER_LABEL_SIZE);
         const Entity ipButton = addServerButton(gm,
             (1920.f - IP_BUTTON_WIDTH) / 2.f,
-            fieldY, _clInfos._ip, [](GameManager &) { activeField = Field::Ip; });
+            fieldY,
+            _clInfos._ip,
+            [](GameManager &) { activeField = Field::Ip; });
 
         gm.addComponent<ServerItem>(title);
         gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
         gm.addComponent<Clock>(ipButton);
-        addServerButton(gm, (1920.f - BUTTON_WIDTH) / 2.f, fieldY + step * 1.5,
-            "Connect to Server",  connectToGame);
-        addServerButton(gm, 1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
-            1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP, "Go back to menu", leaveServerPage);
+        addServerButton(gm,
+            (1920.f - BUTTON_WIDTH) / 2.f,
+            fieldY + step * 1.5,
+            "Connect to Server",
+            connectToGame);
+        addServerButton(gm,
+            1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
+            1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP,
+            "Go back to menu",
+            leaveServerPage);
     }
 
     namespace {
@@ -184,10 +193,16 @@ namespace RType::Client {
             gm, firstX, firstY + step, "Leave Game", [](GameManager &) {
                 quitRequested = true;
             });
-        const Entity usernameButton = addMenuButton(gm, 20, 1080 - (BUTTON_HEIGHT * 2),
-            _clInfos._username, [](GameManager &) { activeField = Field::Username; });
-        const Entity usernameText = addText(gm, 20 + (BUTTON_WIDTH / 2), 1080 - (BUTTON_HEIGHT * 2.3),
-            "Username", 25.f);
+        const Entity usernameButton = addMenuButton(gm,
+            20,
+            1080 - (BUTTON_HEIGHT * 2),
+            _clInfos._username,
+            [](GameManager &) { activeField = Field::Username; });
+        const Entity usernameText = addText(gm,
+            20 + (BUTTON_WIDTH / 2),
+            1080 - (BUTTON_HEIGHT * 2.3),
+            "Username",
+            25.f);
         gm.addComponent<MenuItem>(usernameText);
         gm.addComponent<TextField>(usernameButton, TextField {Field::Username});
         gm.addComponent<Clock>(usernameButton);

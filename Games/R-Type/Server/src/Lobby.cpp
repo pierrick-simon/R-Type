@@ -26,6 +26,7 @@ namespace RType::Server {
         thread_local bool gameStarted = false;
         thread_local std::chrono::steady_clock::time_point lastBroadcast {};
         thread_local std::vector<uint8_t> lastPayload;
+        thread_local std::string lobbyName;
 
         template<typename Component>
         void destroyAllOf(GameManager &gm)
@@ -48,6 +49,7 @@ namespace RType::Server {
                 clients.end(),
                 [](const auto &a, const auto &b) { return a.first < b.first; });
             state.started = gameStarted;
+            state.lobbyName = lobbyName;
             state.hostId = clients.empty() ? 0 : clients.front().first;
             for (const auto &[id, entity] : clients) {
                 LobbyPlayerInfo info;
@@ -67,7 +69,7 @@ namespace RType::Server {
 
         void startGame(GameManager &gm)
         {
-            //std::cout << "[Lobby] Game started by the host" << std::endl;
+            // std::cout << "[Lobby] Game started by the host" << std::endl;
             gameStarted = true;
             createBackground(gm);
             createEnemyDirector(gm);
@@ -75,7 +77,8 @@ namespace RType::Server {
 
         void resetLevel(GameManager &gm)
         {
-            //std::cout << "[Lobby] Every player left, back to the lobby" << std::endl;
+            // std::cout << "[Lobby] Every player left, back to the lobby" <<
+            // std::endl;
             gameStarted = false;
             resetEnemies(gm);
             destroyAllOf<EnemyDirector>(gm);
@@ -138,6 +141,11 @@ namespace RType::Server {
         }
 
     } // namespace
+
+    void setLobbyName(const std::string &name)
+    {
+        lobbyName = name;
+    }
 
     bool isGameStarted()
     {

@@ -5,14 +5,13 @@
 ** Lobby
 */
 
-#include "Lobby.hpp"
-
 #include <string>
 #include <vector>
 
 #include "Assets.hpp"
 #include "Client.hpp"
 #include "ClientManager.hpp"
+#include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
@@ -184,6 +183,9 @@ namespace RType::Client {
                         used ? &state.players[id.row] : nullptr;
 
                     switch (id.id) {
+                        case LobbyTextId::LobbyName:
+                            text.str = state.lobbyName;
+                            break;
                         case LobbyTextId::Subtitle:
                             text.str = "Server " + _clInfos._ip + "   " +
                                 std::to_string(total) +
@@ -240,6 +242,13 @@ namespace RType::Client {
 
         activeField = Field::None;
         gm.addComponent<LobbyItem>(title);
+        addLobbyText(gm,
+            center,
+            LOBBY_NAME_Y,
+            LOBBY_NAME_SIZE_TITLE,
+            TextAnchor {},
+            LobbyText {LobbyTextId::LobbyName},
+            COLOR_HOST);
         addLobbyText(gm,
             center,
             LOBBY_SUBTITLE_Y,

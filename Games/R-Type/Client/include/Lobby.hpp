@@ -27,7 +27,10 @@ namespace RType::Client {
 
     inline constexpr float LOBBY_TITLE_Y = 100.f;
     inline constexpr float LOBBY_TITLE_SIZE = 64.f;
-    inline constexpr float LOBBY_SUBTITLE_Y = 200.f;
+    /** @brief Name of the lobby, under the "LOBBY" title. */
+    inline constexpr float LOBBY_NAME_Y = 162.f;
+    inline constexpr float LOBBY_NAME_SIZE_TITLE = 34.f;
+    inline constexpr float LOBBY_SUBTITLE_Y = 207.f;
     inline constexpr float LOBBY_FIRST_ROW_Y = 300.f;
     inline constexpr float LOBBY_STATUS_Y = 750.f;
     inline constexpr float LOBBY_ROW_PADDING = 30.f;
@@ -48,7 +51,14 @@ namespace RType::Client {
         std::size_t row;
     };
 
-    enum class LobbyTextId { Subtitle, Status, RowName, RowHost, RowStatus };
+    enum class LobbyTextId {
+        LobbyName,
+        Subtitle,
+        Status,
+        RowName,
+        RowHost,
+        RowStatus
+    };
 
     struct LobbyText {
         LobbyTextId id;

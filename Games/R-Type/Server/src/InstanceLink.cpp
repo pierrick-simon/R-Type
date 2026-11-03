@@ -24,7 +24,8 @@ namespace RType::Server {
     }
 
     InstanceLink::InstanceLink(uint16_t instancePort) :
-        io(std::make_unique<asio::io_context>()), connection(connectToMaster(*io))
+        io(std::make_unique<asio::io_context>()),
+        connection(connectToMaster(*io))
     {
         std::vector<uint8_t> hello(2);
 

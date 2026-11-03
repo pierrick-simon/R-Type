@@ -7,14 +7,15 @@
 
 #include "MasterProtocol.hpp"
 #include <algorithm>
+#include "LobbyProtocol.hpp"
 #include "ServerManager.hpp"
 
 namespace RType {
 
     void MasterProtocol::manageCreateLobby(
-        const Header &header, const std::vector<uint8_t> &, Context &ctx)
+        const Header &header, const std::vector<uint8_t> &payload, Context &ctx)
     {
-        if (!ctx.gm)
+        if (!ctx.gm || payload.empty() || payload.size() != 1u + payload[0])
             return;
         auto it = ctx.clients.find(header.senderId);
         if (it == ctx.clients.end())
@@ -22,7 +23,11 @@ namespace RType {
         auto &gm = ctx.gm->get();
         if (!gm.hasComponent<LobbyRequest>(it->second))
             return;
-        gm.getComponent<LobbyRequest>(it->second).createRequested = true;
+        auto &request = gm.getComponent<LobbyRequest>(it->second);
+
+        request.createRequested = true;
+        request.name = LobbyProtocol::sanitizeName(
+            std::string(payload.begin() + 1, payload.end()));
     }
 
     void MasterProtocol::manageLobbyPort(
@@ -64,9 +69,15 @@ namespace RType {
         c.send(OpcodeRType::JOIN_LOBBY, out);
     }
 
-    void MasterProtocol::sendCreateLobby(ClientManager &c)
+    void MasterProtocol::sendCreateLobby(
+        ClientManager &c, const std::string &name)
     {
-        c.send(OpcodeRType::CREATE_LOBBY, {});
+        const std::string clean = LobbyProtocol::sanitizeName(name);
+        std::vector<uint8_t> out(1 + clean.size());
+
+        out[0] = static_cast<uint8_t>(clean.size());
+        std::copy(clean.begin(), clean.end(), out.begin() + 1);
+        c.send(OpcodeRType::CREATE_LOBBY, out);
     }
 
     void MasterProtocol::sendLobbyPort(
@@ -86,15 +97,26 @@ namespace RType {
         if (!ctx.gm || payload.empty())
             return;
         const std::size_t count = payload[0];
+        std::size_t at = 1;
 
-        if (payload.size() != 1 + count * 4)
+        for (std::size_t i = 0; i < count; i++) {
+            if (payload.size() < at + 5)
+                return;
+            const uint8_t *p = &payload[at];
+            const std::size_t length = p[4];
+
+            if (payload.size() < at + 5 + length)
+                return;
+            list.lobbies.push_back(LobbyEntry {get16(p),
+                p[2],
+                p[3] != 0,
+                std::string(payload.begin() + long(at + 5),
+                    payload.begin() + long(at + 5 + length))});
+            at += 5 + length;
+        }
+        if (at != payload.size())
             return;
         list.received = true;
-        for (std::size_t i = 0; i < count; i++) {
-            const uint8_t *p = &payload[1 + i * 4];
-
-            list.lobbies.push_back(LobbyEntry {get16(p), p[2], p[3] != 0});
-        }
         ctx.gm->get().view<LobbyListState>().each(
             [&list](Entity, LobbyListState &state) { state = list; });
     }
@@ -102,16 +124,22 @@ namespace RType {
     std::vector<uint8_t> MasterProtocol::serializeLobbyList(
         const std::vector<LobbyEntry> &lobbies)
     {
-        const std::size_t count = std::min<std::size_t>(lobbies.size(), 255);
-        std::vector<uint8_t> out(1 + count * 4);
+        const std::size_t count =
+            std::min<std::size_t>(lobbies.size(), MAX_LISTED_LOBBIES);
+        std::vector<uint8_t> out(1);
 
         out[0] = static_cast<uint8_t>(count);
         for (std::size_t i = 0; i < count; i++) {
-            uint8_t *p = &out[1 + i * 4];
+            const std::string name =
+                LobbyProtocol::sanitizeName(lobbies[i].name);
+            const std::size_t at = out.size();
 
-            put16(p, lobbies[i].port);
-            p[2] = lobbies[i].players;
-            p[3] = lobbies[i].started ? 1 : 0;
+            out.resize(at + 5 + name.size());
+            put16(&out[at], lobbies[i].port);
+            out[at + 2] = lobbies[i].players;
+            out[at + 3] = lobbies[i].started ? 1 : 0;
+            out[at + 4] = static_cast<uint8_t>(name.size());
+            std::copy(name.begin(), name.end(), out.begin() + long(at + 5));
         }
         return out;
     }

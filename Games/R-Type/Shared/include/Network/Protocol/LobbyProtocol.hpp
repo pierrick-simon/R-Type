@@ -38,6 +38,7 @@ namespace RType {
         bool started = false;
         uint16_t hostId = 0;
         std::vector<LobbyPlayerInfo> players;
+        std::string lobbyName;
 
         [[nodiscard]] bool allReady() const
         {

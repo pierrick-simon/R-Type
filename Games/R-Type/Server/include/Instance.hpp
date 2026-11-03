@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <thread>
 #include <unordered_map>
 
@@ -28,10 +29,12 @@ namespace RType::Server {
 
         std::unordered_map<uint16_t, std::thread> threads;
         std::unordered_map<uint32_t, uint16_t> portByClient;
+        std::unordered_map<uint16_t, std::string> names;
         uint16_t nextPort = FIRST_INSTANCE_PORT;
     };
 
-    std::optional<uint16_t> startInstance(InstanceManager &instances);
+    std::optional<uint16_t> startInstance(
+        InstanceManager &instances, const std::string &name);
 
     void reapInstance(InstanceManager &instances, uint16_t port);
 

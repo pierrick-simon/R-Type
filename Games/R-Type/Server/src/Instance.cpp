@@ -9,14 +9,15 @@
 #include <exception>
 #include <iostream>
 
-#include "Instance.hpp"
 #include "Assets.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
+#include "Instance.hpp"
+#include "InstanceLink.hpp"
+#include "Lobby.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
-#include "InstanceLink.hpp"
 
 namespace RType::Server {
 
@@ -24,7 +25,7 @@ namespace RType::Server {
 
         std::atomic<bool> stopInstances = false;
 
-        void runInstance(uint16_t port, ServerManager manager)
+        void runInstance(uint16_t port, ServerManager manager, std::string name)
         {
             try {
                 GameManager gm;
@@ -37,18 +38,22 @@ namespace RType::Server {
 
                 gm.addComponent<InstanceLink>(l, port);
                 gm.createSystem<>(systemInstanceLink);
-                //std::cout << "[Instance " << port << "] Lobby started" << std::endl;
+                setLobbyName(name);
+                // std::cout << "[Instance " << port << "] Lobby started" <<
+                // std::endl;
                 createMasterClock(gm);
                 createSystems(gm, makeEnemyVisualHooks());
                 auto &server = gm.getComponent<ServerManager>(s);
                 auto &link = gm.getComponent<InstanceLink>(l);
                 gm.run(60, [&] {
-                    return server.isRunning() && !stopInstances
-                        && !link.stopRequested;
+                    return server.isRunning() && !stopInstances &&
+                        !link.stopRequested;
                 });
-                //std::cout << "[Instance " << port << "] Stopped" << std::endl;
+                // std::cout << "[Instance " << port << "] Stopped" <<
+                // std::endl;
             } catch (const std::exception &e) {
-                //std::cerr << "[Instance " << port << "] " << e.what() << std::endl;
+                // std::cerr << "[Instance " << port << "] " << e.what() <<
+                // std::endl;
             }
         }
 
@@ -73,11 +78,13 @@ namespace RType::Server {
                 it->second.join();
             instances.threads.erase(it);
         }
+        instances.names.erase(port);
         std::erase_if(instances.portByClient,
             [port](const auto &entry) { return entry.second == port; });
     }
 
-    std::optional<uint16_t> startInstance(InstanceManager &instances)
+    std::optional<uint16_t> startInstance(
+        InstanceManager &instances, const std::string &name)
     {
         const int range = LAST_INSTANCE_PORT - FIRST_INSTANCE_PORT + 1;
 
@@ -92,7 +99,8 @@ namespace RType::Server {
 
                 reapInstance(instances, port);
                 instances.threads.emplace(port,
-                    std::thread(runInstance, port, std::move(manager)));
+                    std::thread(runInstance, port, std::move(manager), name));
+                instances.names[port] = name;
                 return port;
             } catch (const std::exception &) {
             }

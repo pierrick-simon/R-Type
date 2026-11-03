@@ -9,6 +9,7 @@
 #define MASTERPROTOCOL_HPP_
 
 #include <cstdint>
+#include <string>
 #include <vector>
 #include "ClientManager.hpp"
 #include "Context.hpp"
@@ -20,6 +21,7 @@ namespace RType {
 
     struct LobbyRequest {
         bool createRequested = false;
+        std::string name;
         uint16_t joinPort = 0;
     };
 
@@ -30,10 +32,13 @@ namespace RType {
 
     inline constexpr uint8_t MAX_LOBBY_PLAYERS = 5;
 
+    inline constexpr std::size_t MAX_LISTED_LOBBIES = 40;
+
     struct LobbyEntry {
         uint16_t port = 0;
         uint8_t players = 0;
         bool started = false;
+        std::string name;
 
         bool operator==(const LobbyEntry &other) const = default;
     };
@@ -54,7 +59,7 @@ namespace RType {
         static void manageLobbyList(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
 
-        static void sendCreateLobby(ClientManager &c);
+        static void sendCreateLobby(ClientManager &c, const std::string &name);
         static void sendJoinLobby(ClientManager &c, uint16_t port);
         static void sendLobbyPort(
             ServerManager &s, uint32_t clientId, uint16_t port);

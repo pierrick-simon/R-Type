@@ -26,6 +26,7 @@ namespace RType::Client {
     constexpr int LABEL_SIZE = 48;
     constexpr std::size_t USERNAME_MAX_LENGTH = 16;
     constexpr std::size_t IP_MAX_LENGTH = 15;
+    constexpr std::size_t LOBBY_NAME_MAX_LENGTH = 16;
     constexpr float IP_BUTTON_WIDTH = 400.f;
 
     constexpr float BUTTON_SPRITE_WIDTH = 400.f;
@@ -55,7 +56,7 @@ namespace RType::Client {
         std::chrono::milliseconds elapsed {0};
     };
 
-    enum class Field { None, Username, Ip };
+    enum class Field { None, Username, Ip, LobbyName };
 
     struct TextField {
         Field id;
@@ -78,6 +79,8 @@ namespace RType::Client {
     struct ClientInfos {
         std::string _username = "Player";
         std::string _ip = "127.0.0.1";
+        std::string _lobbyName;
+        std::string _lobbyNameDefault = "Lobby 1";
     };
 
     inline ClientInfos _clInfos;

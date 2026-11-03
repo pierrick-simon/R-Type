@@ -9,6 +9,7 @@
 #define SERVER_LOBBY_HPP_
 
 #include <chrono>
+#include <string>
 
 #include "GameManager.hpp"
 
@@ -17,6 +18,8 @@ namespace RType::Server {
     inline constexpr std::chrono::milliseconds LOBBY_BROADCAST_RATE {250};
 
     [[nodiscard]] bool isGameStarted();
+
+    void setLobbyName(const std::string &name);
 
     void systemLobby(GameManager &gm);
 

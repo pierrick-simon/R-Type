@@ -22,8 +22,7 @@ namespace RType::Server {
 
     struct LinkedInstance {
         explicit LinkedInstance(TcpConnection link) :
-            connection(std::move(link)),
-            since(std::chrono::steady_clock::now())
+            connection(std::move(link)), since(std::chrono::steady_clock::now())
         {
         }
 

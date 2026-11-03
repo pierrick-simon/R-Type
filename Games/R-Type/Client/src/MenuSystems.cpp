@@ -11,6 +11,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Lobby.hpp"
+#include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
@@ -18,7 +19,6 @@
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
-#include "LobbyListPage.hpp"
 
 namespace RType::Client {
 
@@ -26,23 +26,42 @@ namespace RType::Client {
 
         std::string &fieldValue(const Field field)
         {
-            return field == Field::Ip ? _clInfos._ip : _clInfos._username;
+            if (field == Field::Ip)
+                return _clInfos._ip;
+            if (field == Field::LobbyName)
+                return _clInfos._lobbyName;
+            return _clInfos._username;
         }
 
-        const char *fieldFallback(const Field field)
+        std::string fieldFallback(const Field field)
         {
-            return field == Field::Ip ? "127.0.0.1" : "Player";
+            if (field == Field::Ip)
+                return "127.0.0.1";
+            if (field == Field::LobbyName)
+                return _clInfos._lobbyNameDefault;
+            return "Player";
         }
 
         std::size_t fieldMaxLength(const Field field)
         {
-            return field == Field::Ip ? IP_MAX_LENGTH : USERNAME_MAX_LENGTH;
+            if (field == Field::Ip)
+                return IP_MAX_LENGTH;
+            if (field == Field::LobbyName)
+                return LOBBY_NAME_MAX_LENGTH;
+            return USERNAME_MAX_LENGTH;
         }
 
         bool fieldAccepts(const Field field, const int key)
         {
             if (field == Field::Ip)
                 return (key >= '0' && key <= '9') || key == '.';
+            if (field == Field::LobbyName) {
+                const std::string extra = " !,./;?_";
+
+                return (key >= 'a' && key <= 'z') ||
+                    (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') ||
+                    extra.find(static_cast<char>(key)) != std::string::npos;
+            }
             return key >= 32 && key <= 125;
         }
 

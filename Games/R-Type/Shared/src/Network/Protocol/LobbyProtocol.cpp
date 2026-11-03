@@ -106,6 +106,13 @@ namespace RType {
             out[at + 3] = static_cast<uint8_t>(name.size());
             std::copy(name.begin(), name.end(), out.begin() + long(at + 4));
         }
+        const std::string lobbyName = sanitizeName(s.lobbyName);
+        const std::size_t end = out.size();
+
+        out.resize(end + 1 + lobbyName.size());
+        out[end] = static_cast<uint8_t>(lobbyName.size());
+        std::copy(
+            lobbyName.begin(), lobbyName.end(), out.begin() + long(end + 1));
         return out;
     }
 
@@ -136,8 +143,13 @@ namespace RType {
             at += 4 + len;
             s.players.push_back(std::move(p));
         }
-        if (at != payload.size())
+        if (payload.size() < at + 1)
             return std::nullopt;
+        const std::size_t nameLength = payload[at];
+
+        if (payload.size() != at + 1 + nameLength)
+            return std::nullopt;
+        s.lobbyName.assign(payload.begin() + long(at + 1), payload.end());
         return s;
     }
 

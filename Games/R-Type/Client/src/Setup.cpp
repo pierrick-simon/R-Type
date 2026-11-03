@@ -27,6 +27,7 @@ namespace RType::Client {
     {
         auto w = gm.createEntity();
         gm.addComponent<Window>(w, 1920, 1080, "R-type");
+        ::SetExitKey(KEY_NULL);
         gm.createSystem<Window>(Window::systemClearWindow);
         return w;
     }
