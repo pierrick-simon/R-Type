@@ -98,7 +98,7 @@ namespace RType {
      */
     class NoSuchModule : public EngineException {
     public:
-        NoSuchModule(std::string module) :
+        NoSuchModule(const std::string &module) :
             EngineException("No such module: " + module)
         {
         }

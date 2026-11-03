@@ -7,8 +7,8 @@
 
 #include <algorithm>
 
-#include "Game.hpp"
 #include "Exceptions.hpp"
+#include "Game.hpp"
 
 int main()
 {
@@ -27,11 +27,11 @@ int main()
 
         std::ranges::for_each(RType::GameConfig.modules, addModule);
         std::ranges::for_each(RType::defaultModules, addModule);
-        for (auto &module: modules) {
+        for (auto &module : modules) {
             auto iter = RType::moduleAllowed.find(module);
             if (iter == RType::moduleAllowed.end())
                 throw RType::NoSuchModule(module);
-            iter->second(gm);
+            iter->second(gm, RType::GameConfig);
         }
         for (auto &init : RType::GameConfig.inits)
             init(gm);

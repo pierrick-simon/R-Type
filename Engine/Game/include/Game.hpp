@@ -14,10 +14,10 @@
 #include <unordered_map>
 
 #include "Clock.hpp"
+#include "GameManager.hpp"
 #include "KeyboardManager.hpp"
 #include "MouseManager.hpp"
 #include "Window.hpp"
-#include "GameManager.hpp"
 
 namespace RType {
 
@@ -33,38 +33,39 @@ namespace RType {
 
     extern GameInfo GameConfig;
 
-    static const std::unordered_map<std::string, std::function<void(GameManager &)>> moduleAllowed = {
-        {"Window",
-        [] (GameManager &gm) {
-            gm.addComponent<Window>(gm.createEntity(),
-                GameConfig.windowWidth,
-                GameConfig.windowHeight,
-                GameConfig.windowName);
-            gm.createSystem<Window>(Window::systemClearWindow);
-        }},
-        {"Keyboard",
-        [] (GameManager &gm) {
-            gm.addComponent<KeyboardManager>(gm.createEntity());
-            gm.createSystem<KeyboardManager>(
-                KeyboardManager::systemKeyboardManager);
-        }},
-        {"Mouse",
-        [] (GameManager &gm) {
-            gm.addComponent<MouseManager>(gm.createEntity());
-            gm.createSystem<MouseManager>(
-                MouseManager::systemMouseManager);
-        }},
-        {"Clock",
-        [] (GameManager &gm) {
-            gm.addComponent<MasterClock>(gm.createEntity());
-            gm.createSystem<MasterClock>(MasterClock::systemMasterClock);
-        }}
+    static const std::unordered_map<std::string,
+        std::function<void(GameManager &, const GameInfo &)>>
+        moduleAllowed = {
+            {"Window",
+                [](GameManager &gm, const GameInfo &info) {
+                    gm.addComponent<Window>(gm.createEntity(),
+                        info.windowWidth,
+                        info.windowHeight,
+                        info.windowName);
+                    gm.createSystem<Window>(Window::systemClearWindow);
+                }},
+            {"Keyboard",
+                [](GameManager &gm, const GameInfo &) {
+                    gm.addComponent<KeyboardManager>(gm.createEntity());
+                    gm.createSystem<KeyboardManager>(
+                        KeyboardManager::systemKeyboardManager);
+                }},
+            {"Mouse",
+                [](GameManager &gm, const GameInfo &) {
+                    gm.addComponent<MouseManager>(gm.createEntity());
+                    gm.createSystem<MouseManager>(
+                        MouseManager::systemMouseManager);
+                }},
+            {"Clock",
+                [](GameManager &gm, const GameInfo &) {
+                    gm.addComponent<MasterClock>(gm.createEntity());
+                    gm.createSystem<MasterClock>(
+                        MasterClock::systemMasterClock);
+                }}
 
     };
 
-    static const std::list<std::string> defaultModules = {
-        "Clock"
-    };
+    static const std::list<std::string> defaultModules = {"Clock"};
 
 } // namespace RType
 
