@@ -33,36 +33,45 @@ namespace RType {
 
     extern GameInfo GameConfig;
 
-    static const std::unordered_map<std::string,
-        std::function<void(GameManager &, const GameInfo &)>>
-        moduleAllowed = {
-            {"Window",
+    /**
+     * @brief An engine feature the game can ask for in GameInfo::modules.
+     */
+    struct Module {
+        std::list<std::string> dependencies;
+        std::function<void(GameManager &, const GameInfo &)> create;
+    };
+
+    static const std::unordered_map<std::string, Module> moduleAllowed = {
+        {"Window",
+            {{},
                 [](GameManager &gm, const GameInfo &info) {
                     gm.addComponent<Window>(gm.createEntity(),
                         info.windowWidth,
                         info.windowHeight,
                         info.windowName);
                     gm.createSystem<Window>(Window::systemClearWindow);
-                }},
-            {"Keyboard",
+                }}},
+        {"Keyboard",
+            {{"Window"},
                 [](GameManager &gm, const GameInfo &) {
                     gm.addComponent<KeyboardManager>(gm.createEntity());
                     gm.createSystem<KeyboardManager>(
                         KeyboardManager::systemKeyboardManager);
-                }},
-            {"Mouse",
+                }}},
+        {"Mouse",
+            {{"Window"},
                 [](GameManager &gm, const GameInfo &) {
                     gm.addComponent<MouseManager>(gm.createEntity());
                     gm.createSystem<MouseManager>(
                         MouseManager::systemMouseManager);
-                }},
-            {"Clock",
+                }}},
+        {"Clock",
+            {{},
                 [](GameManager &gm, const GameInfo &) {
                     gm.addComponent<MasterClock>(gm.createEntity());
                     gm.createSystem<MasterClock>(
                         MasterClock::systemMasterClock);
-                }}
-
+                }}},
     };
 
     static const std::list<std::string> defaultModules = {"Clock"};

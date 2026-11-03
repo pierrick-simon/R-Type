@@ -31,8 +31,12 @@ int main()
             auto iter = RType::moduleAllowed.find(module);
             if (iter == RType::moduleAllowed.end())
                 throw RType::NoSuchModule(module);
-            iter->second(gm, RType::GameConfig);
+            for (auto &dependency : iter->second.dependencies)
+                if (std::ranges::find(modules, dependency) == modules.end())
+                    throw RType::MissingModule(module, dependency);
         }
+        for (auto &module : modules)
+            RType::moduleAllowed.at(module).create(gm, RType::GameConfig);
         for (auto &init : RType::GameConfig.inits)
             init(gm);
         gm.run(RType::GameConfig.windowFPS, RType::GameConfig.runningCondition);
