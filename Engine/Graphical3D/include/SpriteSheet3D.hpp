@@ -16,6 +16,9 @@
 #include "Sprite3D.hpp"
 
 namespace RType {
+    /**
+     * @brief Animated 3D sprite component driven by model animations.
+     */
     struct SpriteSheet3D {
         int index = 0;
         int currentFrame = 0;
@@ -26,11 +29,30 @@ namespace RType {
         float scale = 1;
         raylib::Color color = raylib::Color::White();
 
+        /**
+         * @brief System advancing the animation of a single sprite sheet.
+         * @param sprite Sprite sheet to animate.
+         * @param model Model the animation is applied to.
+         * @param anim Animations available for the model.
+         * @param clock Clock used to measure elapsed time.
+         */
         static void systemAnimateSpriteSheet3D(SpriteSheet3D &sprite,
             Model3D &model, ModelAnimation3D &anim, const Clock &clock);
+
+        /**
+         * @brief System animating all the entities having a SpriteSheet3D.
+         * @param gm Game manager giving access to the entities and
+         * components.
+         * @param clock Master clock used to measure elapsed time.
+         */
         static void systemMasterAnimateSpriteSheet3D(
             GameManager &gm, const MasterClock &clock);
 
+        /**
+         * @brief System drawing all the entities having a SpriteSheet3D.
+         * @param gm Game manager giving access to the entities and
+         * components.
+         */
         static void systemDrawSpriteSheet3D(GameManager &gm);
     };
 
