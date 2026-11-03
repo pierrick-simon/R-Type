@@ -74,11 +74,11 @@ namespace RType::Client {
         gm.createSystem<>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
         gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
+        gm.createSystem<>(systemDrawLobbyList);
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
-        gm.createSystem<>(systemDrawLobbyList);
     }
 } // namespace RType::Client

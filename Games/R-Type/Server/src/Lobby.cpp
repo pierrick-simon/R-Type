@@ -67,7 +67,7 @@ namespace RType::Server {
 
         void startGame(GameManager &gm)
         {
-            std::cout << "[Lobby] Game started by the host" << std::endl;
+            //std::cout << "[Lobby] Game started by the host" << std::endl;
             gameStarted = true;
             createBackground(gm);
             createEnemyDirector(gm);
@@ -75,8 +75,7 @@ namespace RType::Server {
 
         void resetLevel(GameManager &gm)
         {
-            std::cout << "[Lobby] Every player left, back to the lobby"
-                      << std::endl;
+            //std::cout << "[Lobby] Every player left, back to the lobby" << std::endl;
             gameStarted = false;
             resetEnemies(gm);
             destroyAllOf<EnemyDirector>(gm);

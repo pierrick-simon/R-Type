@@ -41,6 +41,8 @@ namespace RType::Client {
         std::chrono::steady_clock::time_point lastRequest {};
     };
 
+    inline int scroll = 0;
+
     void connectToMaster(GameManager &gm, const std::string &host, int port);
 
     void createLobbyListPage(GameManager &gm);

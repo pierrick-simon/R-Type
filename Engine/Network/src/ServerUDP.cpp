@@ -68,8 +68,7 @@ namespace RType {
 
         for (auto it = _clients.begin(); it != _clients.end();) {
             if (now - it->second.lastSeen > std::chrono::seconds(TIMEOUT)) {
-                std::cout << "Timeout from client " << it->second.id << " ..."
-                          << std::endl;
+                //std::cout << "Timeout from client " << it->second.id << " ..." << std::endl;
                 lost.push_back(it->second.id);
                 it = _clients.erase(it);
             } else
@@ -80,7 +79,7 @@ namespace RType {
                 onClientRemoved(Header {Opcode::LOGOUT, 0, 0, id});
         }
         broadcastNow(Opcode::HEALTH, {});
-        std::cout << "[Debug] Health check from server to client" << std::endl;
+        //std::cout << "[Debug] Health check from server to client" << std::endl;
     }
 
     void UDPServer::startReceive()

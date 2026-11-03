@@ -37,8 +37,7 @@ namespace RType::Server {
 
                 gm.addComponent<InstanceLink>(l, port);
                 gm.createSystem<>(systemInstanceLink);
-                std::cout << "[Instance " << port << "] Lobby started"
-                          << std::endl;
+                //std::cout << "[Instance " << port << "] Lobby started" << std::endl;
                 createMasterClock(gm);
                 createSystems(gm, makeEnemyVisualHooks());
                 auto &server = gm.getComponent<ServerManager>(s);
@@ -47,10 +46,9 @@ namespace RType::Server {
                     return server.isRunning() && !stopInstances
                         && !link.stopRequested;
                 });
-                std::cout << "[Instance " << port << "] Stopped" << std::endl;
+                //std::cout << "[Instance " << port << "] Stopped" << std::endl;
             } catch (const std::exception &e) {
-                std::cerr << "[Instance " << port << "] " << e.what()
-                          << std::endl;
+                //std::cerr << "[Instance " << port << "] " << e.what() << std::endl;
             }
         }
 

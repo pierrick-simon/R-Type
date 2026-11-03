@@ -15,6 +15,7 @@
 #include "MasterProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
+#include "KeyboardManager.hpp"
 
 namespace RType::Client {
 
@@ -63,7 +64,7 @@ namespace RType::Client {
                 (static_cast<float>(WINDOW_WIDTH) - LOBBY_LIST_ROW_WIDTH) / 2.f,
                 LOBBY_LIST_FIRST_ROW_Y
                     + static_cast<float>(row)
-                        * (LOBBY_LIST_ROW_HEIGHT + LOBBY_LIST_ROW_GAP),
+                        * (LOBBY_LIST_ROW_HEIGHT + LOBBY_LIST_ROW_GAP) + scroll,
                 LOBBY_LIST_ROW_WIDTH,
                 LOBBY_LIST_ROW_HEIGHT};
         }
@@ -96,8 +97,12 @@ namespace RType::Client {
             for (std::size_t i = 0;
                 i < list.lobbies.size() && i < LOBBY_LIST_MAX_ROWS;
                 i++)
-                if (inside(rowRect(i), mouse))
-                    l.selectedPort = list.lobbies[i].port;
+                if (inside(rowRect(i), mouse)) {
+                    if (l.selectedPort == list.lobbies[i].port)
+                        l.selectedPort = 0;
+                    else
+                        l.selectedPort = list.lobbies[i].port;
+                }
         }
 
         const LobbyEntry *selectedLobby(
@@ -250,7 +255,43 @@ namespace RType::Client {
         auto width = [&](const std::string &str) {
             return ::MeasureTextEx(*font, str.c_str(), size, 1.f).x;
         };
+        if (state->lobbies.size() <= LOBBY_LIST_MAX_ROWS) {
+            scroll = 0;
+        } else {
+            gm.view<KeyboardManager>().each([&state](Entity, KeyboardManager &m) {
+                for (const auto key : m.keyDown)
+                    if (key == Key::Value::Down)
+                        scroll -= 5;
+                    else if (key == Key::Value::Up)
+                        scroll += 5;
+                if (scroll > 0)
+                    scroll = 0;
+                if (scroll < (state->lobbies.size() - LOBBY_LIST_MAX_ROWS) * -(LOBBY_LIST_ROW_HEIGHT + LOBBY_LIST_ROW_GAP))
+                    scroll = (state->lobbies.size() - LOBBY_LIST_MAX_ROWS) * -(LOBBY_LIST_ROW_HEIGHT + LOBBY_LIST_ROW_GAP);
+            });
+        }
+        if (!state->lobbies.empty()) 
+            for (std::size_t i = 0; i < state->lobbies.size(); i++) {
+                const LobbyEntry &lobby = state->lobbies[i];
+                const Rectangle rect = rowRect(i);
+                const bool selected = lobby.port == client->selectedPort;
+                const float textY = rect.y + (LOBBY_LIST_ROW_HEIGHT - size) / 2.f;
+                const std::string name = "Lobby " + std::to_string(i + 1);
+                const std::string players = std::to_string(lobby.players) + " / "
+                    + std::to_string(MAX_LOBBY_PLAYERS) + " players";
+                const std::string status = lobby.started ? "In game" : "Waiting";
 
+                ::DrawRectangleRec(rect,
+                    selected ? Color {60, 110, 200, 240} : Color {35, 42, 75, 230});
+                ::DrawRectangleLinesEx(rect, selected ? 5.f : 3.f,
+                    selected ? Color {255, 210, 80, 255} : Color {200, 200, 220, 255});
+                text(name, rect.x + 30.f, textY, WHITE);
+                text(players, rect.x + LOBBY_LIST_PLAYERS_X, textY, WHITE);
+                text(status, rect.x + LOBBY_LIST_ROW_WIDTH - 30.f - width(status), textY,
+                    lobby.started ? Color {255, 170, 60, 255} : Color {90, 230, 120, 255});
+            }
+        ::DrawRectangleRec(Rectangle{0, 0, 1920, 180}, Color {60, 60, 100, 255});
+        ::DrawRectangleRec(Rectangle{0, 830, 1920, 200}, Color {60, 60, 100, 255});
         if (state->lobbies.empty()) {
             const std::string empty = state->received
                 ? "No lobby yet, create one"
@@ -259,25 +300,6 @@ namespace RType::Client {
             text(empty, (static_cast<float>(WINDOW_WIDTH) - width(empty)) / 2.f,
                 LOBBY_LIST_FIRST_ROW_Y + 20.f, Color {200, 205, 225, 255});
             return;
-        }
-        for (std::size_t i = 0; i < state->lobbies.size() && i < LOBBY_LIST_MAX_ROWS; i++) {
-            const LobbyEntry &lobby = state->lobbies[i];
-            const Rectangle rect = rowRect(i);
-            const bool selected = lobby.port == client->selectedPort;
-            const float textY = rect.y + (LOBBY_LIST_ROW_HEIGHT - size) / 2.f;
-            const std::string name = "Lobby " + std::to_string(i + 1);
-            const std::string players = std::to_string(lobby.players) + " / "
-                + std::to_string(MAX_LOBBY_PLAYERS) + " players";
-            const std::string status = lobby.started ? "In game" : "Waiting";
-
-            ::DrawRectangleRec(rect,
-                selected ? Color {60, 110, 200, 240} : Color {35, 42, 75, 230});
-            ::DrawRectangleLinesEx(rect, selected ? 5.f : 3.f,
-                selected ? Color {255, 210, 80, 255} : Color {200, 200, 220, 255});
-            text(name, rect.x + 30.f, textY, WHITE);
-            text(players, rect.x + LOBBY_LIST_PLAYERS_X, textY, WHITE);
-            text(status, rect.x + LOBBY_LIST_ROW_WIDTH - 30.f - width(status), textY,
-                lobby.started ? Color {255, 170, 60, 255} : Color {90, 230, 120, 255});
         }
     }
 
