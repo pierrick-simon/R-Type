@@ -28,7 +28,6 @@ set(GAME_SRCS
         src/Player.cpp
         src/Setup.cpp
         src/Terrain.cpp
-        src/Texture.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})

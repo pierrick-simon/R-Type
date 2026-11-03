@@ -17,18 +17,22 @@
 #include "ServerManager.hpp"
 
 namespace RType {
-
-    using UpdateClass = std::variant<Sprite2D, SpriteSheet2D, Text2D>;
-
     class UpdateClientEntity {
     public:
+        struct Sound {
+            Sound(int asset) :
+                asset(asset) {};
+            int asset;
+            bool set = false;
+        };
+
         UpdateClientEntity(EntityType type, int asset, GameManager &gm,
-            Entity entity, std::size_t rate = 30);
+            Entity entity, std::optional<Sound> sound = std::nullopt);
 
         std::vector<uint32_t> create;
 
         int asset;
-        std::size_t rate;
+        std::size_t rate = 30;
 
         static void systemUpdateEntityPos(
             GameManager &gm, ServerManager &server);
@@ -81,6 +85,7 @@ namespace RType {
         EntityType _type;
         std::chrono::milliseconds _sleep = std::chrono::milliseconds(0);
         bool _update = true;
+        std::optional<Sound> _sound;
 
         static void checkConnectedClient(
             ServerManager &server, UpdateClientEntity &update);

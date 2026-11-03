@@ -42,6 +42,9 @@ namespace RType::Asset {
     inline constexpr AssetId ALIEN_BEAM = 116;
     inline constexpr AssetId ALIEN_CHARGE = 117;
 
+    inline constexpr AssetId EXPLOSION_SOUND = 1000;
+    inline constexpr AssetId GUNSHOT_SOUND = 1001;
+
     [[nodiscard]] AssetList makeAssetList();
 
 } // namespace RType::Asset

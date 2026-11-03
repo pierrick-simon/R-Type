@@ -11,7 +11,6 @@
 #include "DestroyProtocol.hpp"
 #include "MoveProtocol.hpp"
 #include "SetProtocol.hpp"
-#include "SoundProtocol.hpp"
 #include "TextProtocol.hpp"
 
 namespace RType {
@@ -29,9 +28,6 @@ namespace RType {
         addContextManage(OpcodeRType::DESTROY, DestroyProtocol::manageDestroy);
         addContextManage(OpcodeRType::MOVE, MoveProtocol::manageMove);
         addContextManage(OpcodeRType::SET, SetProtocol::manageSet);
-        addContextManage(OpcodeRType::PAUSE, SoundProtocol::managePause);
-        addContextManage(OpcodeRType::PLAY, SoundProtocol::managePlay);
-        addContextManage(OpcodeRType::STOP, SoundProtocol::manageStop);
         addContextManage(OpcodeRType::TEXT, TextProtocol::manageText);
     }
 

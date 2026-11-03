@@ -11,8 +11,10 @@
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "Listener.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -71,5 +73,13 @@ namespace RType::Client {
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
+        gm.createSystem<Sound>(Sound::systemSound);
+    }
+
+    Entity createSound(GameManager &gm)
+    {
+        Entity s = gm.createEntity();
+        gm.addComponent<Listener>(s);
+        return s;
     }
 } // namespace RType::Client
