@@ -9,24 +9,8 @@
 #include "Assets.hpp"
 #include "GameManager.hpp"
 #include "Setup.hpp"
-#include "Texture.hpp"
+#include "Texture2D.hpp"
 #include "Window.hpp"
-
-namespace {
-
-    struct TextureCleanup {
-        RType::GameManager &gm;
-
-        ~TextureCleanup()
-        {
-            try {
-                RType::Client::unloadTextures(gm);
-            } catch (...) {
-            }
-        }
-    };
-
-} // namespace
 
 int main()
 {
@@ -34,7 +18,6 @@ int main()
         RType::GameManager gm;
         RType::AssetList assets = RType::Asset::makeAssetList();
         gm.setAssetsMap(assets);
-        const TextureCleanup cleanup {gm};
         auto w = RType::Client::createWindow(gm);
         auto c = RType::Client::createClient(gm);
         auto control = RType::Client::createControl(gm);
@@ -44,6 +27,7 @@ int main()
         RType::Client::createSystems(gm);
         while (!WindowShouldClose())
             gm.update();
+        RType::Texture2D::unloadTextures2D(gm);
     } catch (std::exception &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
