@@ -54,6 +54,7 @@ namespace RType {
         addContextManage(LOBBY_INFO, LobbyProtocol::manageInfo);
         addContextManage(LOBBY_START, LobbyProtocol::manageStart);
         addContextManage(CREATE_LOBBY, MasterProtocol::manageCreateLobby);
+        addContextManage(JOIN_LOBBY, MasterProtocol::manageJoinLobby);
     }
 
     void ServerManager::systemServerReceived(

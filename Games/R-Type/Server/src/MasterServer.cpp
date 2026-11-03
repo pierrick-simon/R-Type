@@ -7,6 +7,7 @@
 
 #include "MasterServer.hpp"
 
+#include <algorithm>
 #include <iostream>
 
 #include "Instance.hpp"
@@ -47,6 +48,28 @@ namespace RType::Server {
             }
         }
 
+        void answerJoin(ServerManager &server, const MasterLink &link,
+            const uint32_t clientId, const uint16_t port)
+        {
+            uint16_t answer = 0;
+
+            for (const auto &instance : link.instances) {
+                if (instance.port != port || instance.stopSent)
+                    continue;
+                if (instance.players < MAX_LOBBY_PLAYERS)
+                    answer = port;
+                break;
+            }
+            if (answer == 0)
+                std::cout << "[Master] Client " << clientId
+                          << " refused in lobby " << port << std::endl;
+            try {
+                MasterProtocol::sendLobbyPort(server, clientId, answer);
+            } catch (const std::exception &e) {
+                std::cerr << "[Master] " << e.what() << std::endl;
+            }
+        }
+
         void flushInputs(GameManager &gm)
         {
             gm.view<KeyboardManager>().each([](Entity, KeyboardManager &k) {
@@ -70,9 +93,11 @@ namespace RType::Server {
         gm.addComponent<ServerManager>(master, LOGIN_SERVER_PORT);
         gm.addComponent<InstanceManager>(master);
         gm.addComponent<MasterLink>(master);
+        gm.addComponent<LobbyListBroadcast>(master);
         gm.createSystem<ServerManager>(ServerManager::systemServerReceived);
         gm.createSystem<>(systemMasterRequests);
         gm.createSystem<>(systemMasterLink);
+        gm.createSystem<>(systemMasterLobbyList);
         std::cout << "[Master] Listening on port " << LOGIN_SERVER_PORT
                   << " (UDP, clients) and " << MASTER_LINK_PORT
                   << " (TCP, instances)" << std::endl;
@@ -81,17 +106,59 @@ namespace RType::Server {
 
     void systemMasterRequests(GameManager &gm)
     {
-        gm.view<ServerManager, InstanceManager>().each(
-            [&gm](Entity, ServerManager &server, InstanceManager &instances) {
+        gm.view<ServerManager, InstanceManager, MasterLink>().each(
+            [&gm](Entity, ServerManager &server, InstanceManager &instances,
+                MasterLink &link) {
                 gm.view<DefaulClient, LobbyRequest>().each(
                     [&](Entity, DefaulClient &client, LobbyRequest &request) {
-                        if (!request.createRequested)
-                            return;
-                        request.createRequested = false;
-                        answerRequest(server, instances, client.getId());
+                        if (request.createRequested) {
+                            request.createRequested = false;
+                            answerRequest(server, instances, client.getId());
+                        }
+                        if (request.joinPort != 0) {
+                            answerJoin(
+                                server, link, client.getId(), request.joinPort);
+                            request.joinPort = 0;
+                        }
                     });
             });
         flushInputs(gm);
+    }
+
+    void systemMasterLobbyList(GameManager &gm)
+    {
+        gm.view<ServerManager, MasterLink, LobbyListBroadcast>().each(
+            [](Entity, ServerManager &server, MasterLink &link,
+                LobbyListBroadcast &broadcast) {
+                const auto now = std::chrono::steady_clock::now();
+                std::vector<LobbyEntry> lobbies;
+
+                for (const auto &instance : link.instances) {
+                    // Not introduced yet, or being closed: not listed.
+                    if (instance.port == 0 || instance.stopSent)
+                        continue;
+                    lobbies.push_back(LobbyEntry {instance.port,
+                        static_cast<uint8_t>(instance.players),
+                        instance.started});
+                }
+                std::sort(lobbies.begin(), lobbies.end(),
+                    [](const LobbyEntry &a, const LobbyEntry &b) {
+                        return a.port < b.port;
+                    });
+                std::vector<uint8_t> payload =
+                    MasterProtocol::serializeLobbyList(lobbies);
+
+                if (payload == broadcast.lastPayload
+                    && now - broadcast.lastSent < LOBBY_LIST_BROADCAST_RATE)
+                    return;
+                broadcast.lastPayload = std::move(payload);
+                broadcast.lastSent = now;
+                try {
+                    server.broadcast(OpcodeRType::LOBBY_LIST, broadcast.lastPayload);
+                } catch (const std::exception &e) {
+                    std::cerr << "[Master] " << e.what() << std::endl;
+                }
+            });
     }
 
 } // namespace RType::Server

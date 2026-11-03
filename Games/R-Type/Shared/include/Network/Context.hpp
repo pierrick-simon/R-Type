@@ -33,7 +33,9 @@ namespace RType {
         LOBBY_START = 31,
         LOBBY_STATE = 32,
         CREATE_LOBBY = 40,
-        LOBBY_PORT = 41
+        LOBBY_PORT = 41,
+        LOBBY_LIST = 42,
+        JOIN_LOBBY = 43
     };
 
     struct Context {

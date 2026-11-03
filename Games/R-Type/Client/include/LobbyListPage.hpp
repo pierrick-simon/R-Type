@@ -15,38 +15,38 @@
 
 namespace RType::Client {
 
-    /** @brief Rate at which CREATE_LOBBY is re-sent until LOBBY_PORT arrives.
-     */
     inline constexpr std::chrono::milliseconds LOBBY_LIST_RESEND_RATE {500};
 
-    /** @brief Tag of the lobby list page entities. */
+    inline constexpr float LOBBY_LIST_TITLE_Y = 100.f;
+    inline constexpr float LOBBY_LIST_TITLE_SIZE = 64.f;
+    inline constexpr float LOBBY_LIST_FIRST_ROW_Y = 190.f;
+    inline constexpr float LOBBY_LIST_ROW_WIDTH = 1300.f;
+    inline constexpr float LOBBY_LIST_ROW_HEIGHT = 70.f;
+    inline constexpr float LOBBY_LIST_ROW_GAP = 12.f;
+    inline constexpr float LOBBY_LIST_TEXT_SIZE = 34.f;
+    inline constexpr float LOBBY_LIST_PLAYERS_X = 360.f;
+    inline constexpr std::size_t LOBBY_LIST_MAX_ROWS = 8;
+
     struct LobbyListItem {};
 
-    /**
-     * @brief Client-only state of the connection to the master server,
-     * stored on its ClientManager entity (next to LobbyPortInfo).
-     */
+    struct CreateLobbyButton {};
+
+    struct JoinLobbyButton {};
+
     struct LobbyListClient {
         bool shown = false;
         bool createRequested = false;
+        uint16_t selectedPort = 0;
+        uint16_t joinPort = 0;
         std::chrono::steady_clock::time_point lastRequest {};
     };
 
-    /**
-     * @brief Connects to the master server (port 4242): once connected, the
-     * lobby list page is shown.
-     */
     void connectToMaster(GameManager &gm, const std::string &host, int port);
 
     void createLobbyListPage(GameManager &gm);
     void destroyLobbyListPage(GameManager &gm);
-
-    /**
-     * @brief Shows the page once connected to the master, sends CREATE_LOBBY
-     * after a click on "Create Lobby", then switches the connection to the
-     * lobby instance port received in LOBBY_PORT.
-     */
     void systemLobbyListPage(GameManager &gm);
+    void systemDrawLobbyList(GameManager &gm);
 
 } // namespace RType::Client
 

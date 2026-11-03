@@ -28,7 +28,6 @@ namespace RType::Client {
     constexpr std::size_t IP_MAX_LENGTH = 15;
     constexpr float IP_BUTTON_WIDTH = 400.f;
 
-    /** @brief Button.png: 3 tiles of 400x90 (normal, hovered, disabled). */
     constexpr float BUTTON_SPRITE_WIDTH = 400.f;
     constexpr std::size_t BUTTON_TILE_NORMAL = 0;
     constexpr std::size_t BUTTON_TILE_HOVERED = 1;
@@ -43,10 +42,6 @@ namespace RType::Client {
 
     struct MenuBackground {};
 
-    /**
-     * @brief Alignment of a Text2D around its Position2D, in fraction of its
-     * size: {0, 0} = top-left, {0.5, 0.5} = centered, {1, 0.5} = right.
-     */
     struct TextAnchor {
         float x = 0.5f;
         float y = 0.5f;
@@ -88,6 +83,7 @@ namespace RType::Client {
     inline ClientInfos _clInfos;
 
     void createMenu(GameManager &gm);
+    void createServerPage(GameManager &gm);
     Entity addButton(GameManager &gm, float x, float y,
         const std::string &label, std::function<void(GameManager &)> onClick,
         float width = BUTTON_WIDTH);

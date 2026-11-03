@@ -18,6 +18,7 @@
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
+#include "LobbyListPage.hpp"
 
 namespace RType::Client {
 
@@ -207,6 +208,9 @@ namespace RType::Client {
 
         gm.view<LobbyClient>().each([&hidden](Entity, LobbyClient &l) {
             hidden = hidden || l.inGame || l.shown;
+        });
+        gm.view<LobbyListClient>().each([&hidden](Entity, LobbyListClient &l) {
+            hidden = hidden || l.shown;
         });
         if (!gm.view<ConnectingText>().getVector().empty())
             hidden = true;

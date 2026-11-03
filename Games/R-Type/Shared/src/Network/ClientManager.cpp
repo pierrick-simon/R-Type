@@ -38,6 +38,8 @@ namespace RType {
         addContextManage(OpcodeRType::LOBBY_STATE, LobbyProtocol::manageState);
         addContextManage(
             OpcodeRType::LOBBY_PORT, MasterProtocol::manageLobbyPort);
+        addContextManage(
+            OpcodeRType::LOBBY_LIST, MasterProtocol::manageLobbyList);
     }
 
     void ClientManager::systemClientReceived(
