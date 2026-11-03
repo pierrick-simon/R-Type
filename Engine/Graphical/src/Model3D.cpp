@@ -17,4 +17,10 @@ namespace RType {
             throw(EngineException(e.what()));
         }
     }
+
+    void Model3D::unloadModels3D(GameManager &gm)
+    {
+        for (auto [e, _] : gm.view<Model3D>().getVector())
+            gm.destroyEntity(e);
+    }
 }; // namespace RType

@@ -17,4 +17,10 @@ namespace RType {
             throw(EngineException(e.what()));
         }
     }
+
+    void Texture2D::unloadTextures2D(GameManager &gm)
+    {
+        for (auto [e, _] : gm.view<Texture2D>().getVector())
+            gm.destroyEntity(e);
+    }
 }; // namespace RType

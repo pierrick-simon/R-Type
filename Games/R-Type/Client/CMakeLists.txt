@@ -14,7 +14,6 @@ set(MAIN
 
 set(SRCS
     src/Setup.cpp
-    src/Texture.cpp
 )
 
 add_executable(r-type_client ${MAIN} ${SRCS})
