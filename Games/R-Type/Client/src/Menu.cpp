@@ -20,6 +20,8 @@
 
 namespace RType::Client {
 
+    constexpr float WINDOW_MODE_TITLE_SPACE = 20.f;
+
     bool isValidIp(const std::string &ip)
     {
         std::error_code ec;
@@ -175,11 +177,21 @@ namespace RType::Client {
             createServerPage(gm);
         }
     
-        void changeFullScreen(GameManager &gm)
+        struct FullscreenButton {};
+
+        std::string windowModeLabel()
         {
-            ToggleFullscreen();
+            return ::IsWindowFullscreen() ? "Fullscreen" : "Windowed";
         }
 
+        void changeFullScreen(GameManager &gm)
+        {
+            ::ToggleFullscreen();
+            gm.view<FullscreenButton, Button>().each(
+                [](Entity, FullscreenButton &, Button &button) {
+                    button.label = windowModeLabel();
+                });
+        }
 
     void createMenu(GameManager &gm)
     {
@@ -188,11 +200,19 @@ namespace RType::Client {
         const float firstX = (1920.f - BUTTON_WIDTH) / 2.f;
 
         addMenuButton(gm, firstX, firstY, "Start Game", openServerPage);
-        addMenuButton(gm, firstX, firstY + step, "Full Screen", changeFullScreen);
-        addMenuButton(
-            gm, firstX, firstY + step * 2, "Leave Game", [](GameManager &) {
-                quitRequested = true;
-            });
+        const float modeY = firstY + step + WINDOW_MODE_TITLE_SPACE;
+        const Entity modeButton = addMenuButton(
+            gm, firstX, modeY, windowModeLabel(), changeFullScreen);
+        const Entity modeText = addText(gm,
+            firstX + BUTTON_WIDTH / 2.f,
+            modeY - BUTTON_GAP / 2.f,
+            "Window Mode",
+            25.f);
+        gm.addComponent<FullscreenButton>(modeButton);
+        gm.addComponent<MenuItem>(modeText);
+        addMenuButton(gm, firstX, modeY + step, "Leave Game", [](GameManager &) {
+            quitRequested = true;
+        });
         const Entity usernameButton = addMenuButton(gm,
             20,
             1080 - (BUTTON_HEIGHT * 2),
