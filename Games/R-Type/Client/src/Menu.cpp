@@ -87,111 +87,107 @@ namespace RType::Client {
         return e;
     }
 
-        Entity addMenuButton(GameManager &gm, float x, float y,
-            const std::string &label,
-            std::function<void(GameManager &)> onClick,
-            float width = BUTTON_WIDTH)
-        {
-            const Entity e =
-                addButton(gm, x, y, label, std::move(onClick), width);
+    Entity addMenuButton(GameManager &gm, float x, float y,
+        const std::string &label, std::function<void(GameManager &)> onClick,
+        float width = BUTTON_WIDTH)
+    {
+        const Entity e = addButton(gm, x, y, label, std::move(onClick), width);
 
-            gm.addComponent<MenuItem>(e);
-            return e;
+        gm.addComponent<MenuItem>(e);
+        return e;
+    }
+
+    template<typename Tag>
+    void destroyAllTagged(GameManager &gm)
+    {
+        std::vector<Entity> items;
+
+        gm.view<Tag>().each([&items](Entity e, Tag &) { items.push_back(e); });
+        for (const Entity e : items)
+            gm.destroyEntity(e);
+    }
+
+    Entity addServerButton(GameManager &gm, float x, float y,
+        const std::string &label, std::function<void(GameManager &)> onClick)
+    {
+        const Entity e = addButton(gm, x, y, label, std::move(onClick));
+
+        gm.addComponent<ServerItem>(e);
+        return e;
+    }
+
+    void connectToGame(GameManager &gm)
+    {
+        if (!gm.view<ClientManager>().getVector().empty())
+            return;
+        if (!isValidIp(_clInfos._ip)) {
+            ipInvalid = true;
+            return;
         }
+        activeField = Field::None;
+        destroyAllTagged<ServerItem>(gm);
+        connectToMaster(gm, _clInfos._ip, LOGIN_SERVER_PORT);
+        showConnecting(gm);
+    }
 
-        template<typename Tag>
-        void destroyAllTagged(GameManager &gm)
-        {
-            std::vector<Entity> items;
+    void leaveServerPage(GameManager &gm)
+    {
+        activeField = Field::None;
+        ipInvalid = false;
+        destroyAllTagged<ServerItem>(gm);
+        createMenu(gm);
+    }
 
-            gm.view<Tag>().each(
-                [&items](Entity e, Tag &) { items.push_back(e); });
-            for (const Entity e : items)
-                gm.destroyEntity(e);
-        }
+    void createServerPage(GameManager &gm)
+    {
+        const float centerX = 1920.f / 2.f;
+        const float fieldY = (1080.f - BUTTON_HEIGHT) / 2.f;
+        const float step = BUTTON_HEIGHT + BUTTON_GAP;
+        const Entity title = addText(
+            gm, centerX, fieldY - 40.f, "Server IP Address", SERVER_LABEL_SIZE);
+        const Entity ipButton = addServerButton(gm,
+            (1920.f - IP_BUTTON_WIDTH) / 2.f,
+            fieldY,
+            _clInfos._ip,
+            [](GameManager &) { activeField = Field::Ip; });
 
-        Entity addServerButton(GameManager &gm, float x, float y,
-            const std::string &label,
-            std::function<void(GameManager &)> onClick)
-        {
-            const Entity e = addButton(gm, x, y, label, std::move(onClick));
+        gm.addComponent<ServerItem>(title);
+        gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
+        gm.addComponent<Clock>(ipButton);
+        addServerButton(gm,
+            (1920.f - BUTTON_WIDTH) / 2.f,
+            fieldY + step * 1.5,
+            "Connect to Server",
+            connectToGame);
+        addServerButton(gm,
+            1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
+            1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP,
+            "Go back to menu",
+            leaveServerPage);
+    }
 
-            gm.addComponent<ServerItem>(e);
-            return e;
-        }
+    void openServerPage(GameManager &gm)
+    {
+        activeField = Field::None;
+        destroyAllTagged<MenuItem>(gm);
+        createServerPage(gm);
+    }
 
-        void connectToGame(GameManager &gm)
-        {
-            if (!gm.view<ClientManager>().getVector().empty())
-                return;
-            if (!isValidIp(_clInfos._ip)) {
-                ipInvalid = true;
-                return;
-            }
-            activeField = Field::None;
-            destroyAllTagged<ServerItem>(gm);
-            connectToMaster(gm, _clInfos._ip, LOGIN_SERVER_PORT);
-            showConnecting(gm);
-        }
+    struct FullscreenButton {};
 
-        void leaveServerPage(GameManager &gm)
-        {
-            activeField = Field::None;
-            ipInvalid = false;
-            destroyAllTagged<ServerItem>(gm);
-            createMenu(gm);
-        }
+    std::string windowModeLabel()
+    {
+        return ::IsWindowFullscreen() ? "Fullscreen" : "Windowed";
+    }
 
-        void createServerPage(GameManager &gm)
-        {
-            const float centerX = 1920.f / 2.f;
-            const float fieldY = (1080.f - BUTTON_HEIGHT) / 2.f;
-            const float step = BUTTON_HEIGHT + BUTTON_GAP;
-            const Entity title = addText(
-                gm, centerX, fieldY - 40.f, "Server IP Address", SERVER_LABEL_SIZE);
-            const Entity ipButton = addServerButton(gm,
-                (1920.f - IP_BUTTON_WIDTH) / 2.f,
-                fieldY,
-                _clInfos._ip,
-                [](GameManager &) { activeField = Field::Ip; });
-
-            gm.addComponent<ServerItem>(title);
-            gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
-            gm.addComponent<Clock>(ipButton);
-            addServerButton(gm,
-                (1920.f - BUTTON_WIDTH) / 2.f,
-                fieldY + step * 1.5,
-                "Connect to Server",
-                connectToGame);
-            addServerButton(gm,
-                1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
-                1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP,
-                "Go back to menu",
-                leaveServerPage);
-        }
-
-        void openServerPage(GameManager &gm)
-        {
-            activeField = Field::None;
-            destroyAllTagged<MenuItem>(gm);
-            createServerPage(gm);
-        }
-    
-        struct FullscreenButton {};
-
-        std::string windowModeLabel()
-        {
-            return ::IsWindowFullscreen() ? "Fullscreen" : "Windowed";
-        }
-
-        void changeFullScreen(GameManager &gm)
-        {
-            ::ToggleFullscreen();
-            gm.view<FullscreenButton, Button>().each(
-                [](Entity, FullscreenButton &, Button &button) {
-                    button.label = windowModeLabel();
-                });
-        }
+    void changeFullScreen(GameManager &gm)
+    {
+        ::ToggleFullscreen();
+        gm.view<FullscreenButton, Button>().each(
+            [](Entity, FullscreenButton &, Button &button) {
+                button.label = windowModeLabel();
+            });
+    }
 
     void createMenu(GameManager &gm)
     {
@@ -210,9 +206,10 @@ namespace RType::Client {
             25.f);
         gm.addComponent<FullscreenButton>(modeButton);
         gm.addComponent<MenuItem>(modeText);
-        addMenuButton(gm, firstX, modeY + step, "Leave Game", [](GameManager &) {
-            quitRequested = true;
-        });
+        addMenuButton(
+            gm, firstX, modeY + step, "Leave Game", [](GameManager &) {
+                quitRequested = true;
+            });
         const Entity usernameButton = addMenuButton(gm,
             20,
             1080 - (BUTTON_HEIGHT * 2),
