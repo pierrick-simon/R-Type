@@ -211,4 +211,4 @@ add_library(${GAME_LIB_NAME} STATIC ${SRCS_GAME} ${SRCS_SHARED})
 target_include_directories(${GAME_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${GAME}/include
 )
-target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical)
+target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical2D)
