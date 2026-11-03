@@ -5,10 +5,10 @@
 ** Main
 */
 
-#include "Clock.hpp"
+#include <algorithm>
+
 #include "Game.hpp"
-#include "KeyboardManager.hpp"
-#include "Window.hpp"
+#include "Exceptions.hpp"
 
 int main()
 {
@@ -19,15 +19,23 @@ int main()
         RType::GameManager gm;
 #endif
 
-        gm.addComponent<RType::Window>(gm.createEntity(),
-            RType::Game.windowWidth,
-            RType::Game.windowHeight,
-            RType::Game.windowName);
-        gm.addComponent<RType::KeyboardManager>(gm.createEntity());
-        gm.addComponent<RType::MasterClock>(gm.createEntity());
-        for (auto &init : RType::Game.inits)
+        std::list<std::string> modules;
+        auto addModule = [&modules](const std::string &module) {
+            if (std::ranges::find(modules, module) == modules.end())
+                modules.push_back(module);
+        };
+
+        std::ranges::for_each(RType::GameConfig.modules, addModule);
+        std::ranges::for_each(RType::defaultModules, addModule);
+        for (auto &module: modules) {
+            auto iter = RType::moduleAllowed.find(module);
+            if (iter == RType::moduleAllowed.end())
+                throw RType::NoSuchModule(module);
+            iter->second(gm);
+        }
+        for (auto &init : RType::GameConfig.inits)
             init(gm);
-        gm.run(RType::Game.windowFPS, RType::Game.runningCondition);
+        gm.run(RType::GameConfig.windowFPS, RType::GameConfig.runningCondition);
     } catch (const RType::EngineException &e) {
         std::cout << e.what() << std::endl;
         return 84;
