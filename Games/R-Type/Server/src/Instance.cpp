@@ -27,7 +27,8 @@ namespace RType::Server {
 
         std::atomic<bool> stopInstances = false;
 
-        void runInstance(uint16_t port, ServerManager manager, std::string name)
+        void runInstance(
+            uint16_t port, ServerManager manager, const std::string &name)
         {
             try {
                 GameManager gm;

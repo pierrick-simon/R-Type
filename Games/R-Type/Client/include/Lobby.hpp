@@ -61,7 +61,7 @@ namespace RType::Client {
     };
 
     struct LobbyText {
-        LobbyTextId id;
+        LobbyTextId id = LobbyTextId::LobbyName;
         std::size_t row = 0;
     };
 

@@ -156,7 +156,7 @@ namespace RType::Client {
         gm.addComponent<Clock>(ipButton);
         addServerButton(gm,
             (1920.f - BUTTON_WIDTH) / 2.f,
-            fieldY + step * (float)1.5,
+            fieldY + step * (float) 1.5,
             "Connect to Server",
             connectToGame);
         addServerButton(gm,
