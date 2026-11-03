@@ -93,6 +93,30 @@ namespace RType {
         }
     };
 
+    /**
+     * @brief Raised when a user try a non existing module.
+     */
+    class NoSuchModule : public EngineException {
+    public:
+        NoSuchModule(const std::string &module) :
+            EngineException("No such module: " + module)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a module is used without a module it depends on.
+     */
+    class MissingModule : public EngineException {
+    public:
+        MissingModule(
+            const std::string &module, const std::string &dependency) :
+            EngineException(
+                "Module " + module + " requires module " + dependency)
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

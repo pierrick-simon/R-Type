@@ -175,3 +175,18 @@ target_include_directories(${AUDIO_LIB_NAME} PUBLIC
 )
 target_link_libraries(${AUDIO_LIB_NAME} PUBLIC engine-system miniaudio::miniaudio)
 target_compile_options(${AUDIO_LIB_NAME} PUBLIC -g)
+
+# Create Game engine lib
+
+set(GAME_LIB_NAME engine-game)
+set(GAME Game)
+
+set(SRCS_GAME
+    ${GAME}/src/Main.cpp
+)
+
+add_library(${GAME_LIB_NAME} STATIC ${SRCS_GAME} ${SRCS_SHARED})
+target_include_directories(${GAME_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${GAME}/include
+)
+target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical)
