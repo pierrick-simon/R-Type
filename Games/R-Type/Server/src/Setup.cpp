@@ -20,9 +20,9 @@
 #include "SetClientEntity.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
-#include "Texture2D.hpp"
 #include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
+#include "UpdateSound.hpp"
 #include "UpdateSprite2D.hpp"
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
@@ -43,6 +43,7 @@ namespace RType::Server {
             UpdateSpriteSheet2D::systemUpdateSpriteSheet2D);
         gm.createSystem<UpdatePosition2D, Position2D>(
             UpdatePosition2D::systemUpdatePosition2D);
+        gm.createSystem<UpdateSound, SoundInfo>(UpdateSound::systemUpdateSound);
         gm.createSystem<ServerManager>(
             UpdateClientEntity::systemUpdateEntityPos);
         gm.createSystem<ServerManager>(
@@ -54,7 +55,8 @@ namespace RType::Server {
         gm.createSystem<ServerManager>(
             SetClientEntity::systemUpdatesAllEntity<UpdateText2D,
                 UpdateSprite2D,
-                UpdateSpriteSheet2D>);
+                UpdateSpriteSheet2D,
+                UpdateSound>);
         gm.createSystem<ServerManager>([&gm](ServerManager &s) {
             for (auto [_, u] : gm.view<UpdateClientEntity>().getVector())
                 for (auto [id, _] : s.getContext().clients)
@@ -81,10 +83,7 @@ namespace RType::Server {
         registerEnemyVisualSystems(gm);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Background, Position2D>(backgroundLoop);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);

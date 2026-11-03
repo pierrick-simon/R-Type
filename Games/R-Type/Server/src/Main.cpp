@@ -19,24 +19,7 @@
 #include "ServerManager.hpp"
 #include "Setup.hpp"
 #include "Terrain.hpp"
-#include "Texture.hpp"
 #include "Window.hpp"
-
-namespace {
-
-    struct TextureCleanup {
-        RType::GameManager &gm;
-
-        ~TextureCleanup()
-        {
-            try {
-                RType::Server::unloadTextures(gm);
-            } catch (...) {
-            }
-        }
-    };
-
-} // namespace
 
 int main()
 {
@@ -45,7 +28,6 @@ int main()
         RType::AssetList assets = RType::Asset::makeAssetList();
 
         gm.setAssetsMap(assets);
-        const TextureCleanup cleanup {gm};
 
         RType::Server::createBackground(gm);
         RType::Server::createTerrain(gm);

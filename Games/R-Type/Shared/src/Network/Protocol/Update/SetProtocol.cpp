@@ -32,6 +32,7 @@ namespace RType {
             case Property::FLIP:
             case Property::VISIBLE:
             case Property::LOOP:
+            case Property::SOUND_STATE:
                 return Kind::U8;
             case Property::LAYER:
                 return Kind::I8;
@@ -136,15 +137,20 @@ namespace RType {
                 break;
             case Property::VOLUME:
                 with<Sound>(gm, e, [f](auto &c) {
-                    c.SetVolume(std::clamp(f, 0.f, 1.f));
+                    c.setVolume(std::clamp(f, 0.f, 1.f));
                 });
                 break;
             case Property::PITCH:
                 if (f > 0)
-                    with<Sound>(gm, e, [f](auto &c) { c.SetPitch(f); });
+                    with<Sound>(gm, e, [f](auto &c) { c.setPitch(f); });
                 break;
             case Property::LOOP:
                 with<Sound>(gm, e, [i](auto &c) { c.loop = i != 0; });
+                break;
+            case Property::SOUND_STATE:
+                with<Sound>(gm, e, [i](auto &c) {
+                    c.state = static_cast<SoundInfo::State>(i);
+                });
                 break;
             default:
                 break;
