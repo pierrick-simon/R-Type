@@ -19,7 +19,6 @@ namespace RType {
         try {
             _window = std::make_unique<raylib::Window>();
             _window->Init(width, height, name, LOG_WARNING);
-            _audioDevice = std::make_unique<raylib::AudioDevice>();
         } catch (raylib::RaylibException &e) {
             throw(EngineException(e.what()));
         }
@@ -37,5 +36,26 @@ namespace RType {
         w._window->BeginDrawing();
         w._window->ClearBackground(w.clearScreenColor);
         w._window->EndDrawing();
+    }
+
+    void Window::beginDrawing()
+    {
+        this->_window->BeginDrawing();
+        this->_window->ClearBackground(this->clearScreenColor);
+    }
+
+    void Window::endDrawing()
+    {
+        this->_window->EndDrawing();
+    }
+
+    void Window::setTargetFps()
+    {
+        static int fps = this->_window->GetFPS();
+
+        if (fps != this->fps) {
+            fps = this->fps;
+            this->_window->SetTargetFPS(this->fps);
+        }
     }
 } // namespace RType

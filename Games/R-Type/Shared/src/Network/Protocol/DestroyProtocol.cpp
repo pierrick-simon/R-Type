@@ -6,8 +6,24 @@
 */
 
 #include "DestroyProtocol.hpp"
+#include "Sprite2D.hpp"
+#include "SpriteSheet2D.hpp"
+#include "Text2D.hpp"
 
 namespace RType {
+
+    /**
+     * The quad drawn this frame is only rendered at the next frame's
+     * EndDrawing, after the destroy has unloaded its texture: the stale
+     * texture id would then be drawn with another entity's texture. Making
+     * it transparent hides that last quad.
+     */
+    template<typename T>
+    static void hide(GameManager &gm, Entity e)
+    {
+        if (gm.hasComponent<T>(e))
+            gm.getComponent<T>(e).color.a = 0;
+    }
 
     void DestroyProtocol::manageDestroy(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
@@ -24,8 +40,12 @@ namespace RType {
         const Entity entity = it->second;
 
         ctx.map.erase(it);
-        if (gm.hasEntity(entity))
-            gm.destroyEntity(entity);
+        if (!gm.hasEntity(entity))
+            return;
+        hide<Sprite2D>(gm, entity);
+        hide<SpriteSheet2D>(gm, entity);
+        hide<Text2D>(gm, entity);
+        gm.destroyEntity(entity);
     }
 
     void DestroyProtocol::sendDestroy(

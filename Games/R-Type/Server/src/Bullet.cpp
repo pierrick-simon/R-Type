@@ -9,7 +9,6 @@
 
 #include "Assets.hpp"
 #include "Bullet.hpp"
-#include "Clock.hpp"
 #include "Config.hpp"
 #include "Destroy.hpp"
 #include "Enemies/EnemyComponents.hpp"
@@ -31,22 +30,23 @@ namespace RType::Server {
         gm.addComponent<Hitbox>(bullet, Hitbox {BULLET_WIDTH, BULLET_HEIGHT});
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
-        gm.addComponent<Clock>(bullet);
         gm.addComponent<SpriteSheet2D>(
             bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
-        gm.addComponent<UpdateClientEntity>(
-            bullet, EntityType::SPRITESHEET, Asset::PLAYER_BULLET, gm, bullet);
+        gm.addComponent<PlayOnce>(bullet);
+        gm.addComponent<SoundInfo>(bullet, SoundInfo::PLAY);
+        gm.addComponent<UpdateClientEntity>(bullet,
+            EntityType::SPRITESHEET,
+            Asset::PLAYER_BULLET,
+            gm,
+            bullet,
+            Asset::GUNSHOT_SOUND);
     }
 
     void bulletSystem(GameManager &gm)
     {
-        for (auto &[bullet, tag, sheet, pos] :
-            gm.view<Bullet, SpriteSheet2D, Position2D>().getVector()) {
+        for (auto &[bullet, tag, pos] :
+            gm.view<Bullet, Position2D>().getVector()) {
             (void) tag;
-            if (sheet.currentTile >= BULLET_FRAMES - 1) {
-                sheet.currentTile = BULLET_FRAMES - 1;
-                sheet.animation = false;
-            }
             if (pos.x > WINDOW_WIDTH)
                 destroyNetworked(gm, bullet);
         }

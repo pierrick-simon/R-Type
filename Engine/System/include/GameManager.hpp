@@ -9,10 +9,17 @@
 #define GAMEMANAGER_HPP_
 
 #include <chrono>
+#include <iostream>
 #include <memory>
 #include <thread>
 #include <type_traits>
+#include <typeinfo>
 #include <utility>
+
+#if defined(__GNUG__)
+    #include <cstdlib>
+    #include <cxxabi.h>
+#endif
 
 #include "ComponentManager.hpp"
 #include "Entity.hpp"
@@ -51,7 +58,11 @@ namespace RType {
      */
     class GameManager {
     public:
-        explicit GameManager();
+        /**
+         * @param debug If true, every function logs what it does on
+         * std::clog.
+         */
+        explicit GameManager(bool debug = false);
 
         GameManager(const GameManager &) = delete;
 
@@ -122,6 +133,11 @@ namespace RType {
             auto component =
                 std::make_shared<Component>(std::forward<Args>(args)...);
 
+            if (_debug)
+                log("addComponent<",
+                    typeName<Component>(),
+                    "> on entity ",
+                    entity.index());
             _cq.emplace_back([this, entity, component]() {
                 if (!hasEntity(entity))
                     throw NoSuchEntity();
@@ -142,6 +158,11 @@ namespace RType {
         template<typename Component>
         void removeComponent(Entity entity)
         {
+            if (_debug)
+                log("removeComponent<",
+                    typeName<Component>(),
+                    "> on entity ",
+                    entity.index());
             _cq.emplace_back([this, entity]() {
                 if (!hasEntity(entity))
                     throw NoSuchEntity();
@@ -230,7 +251,14 @@ namespace RType {
         SystemId createSystem(
             std::type_identity_t<std::function<void(Components &...)>> func)
         {
-            return _sm.createSystem<Components...>(func);
+            SystemId id = _sm.createSystem<Components...>(func);
+
+            if (_debug)
+                log("createSystem with ( ",
+                    (typeName<Components>() + " ")...,
+                    ") -> system ",
+                    id);
+            return id;
         }
 
         /**
@@ -256,7 +284,14 @@ namespace RType {
                 [this, func](Components &...c) {
                     func(*this, c...);
                 };
-            return _sm.createSystem<Components...>(wrapped);
+            SystemId id = _sm.createSystem<Components...>(wrapped);
+
+            if (_debug)
+                log("createSystem with ( ",
+                    (typeName<Components>() + " ")...,
+                    ") -> system ",
+                    id);
+            return id;
         }
 
         /**
@@ -307,6 +342,40 @@ namespace RType {
         std::unordered_map<int, std::string> _assetsMap;
 
         bool _updating = false;
+        bool _debug = false;
+
+        /**
+         * @brief Writes one line on std::clog, only in debug mode.
+         */
+        template<typename... Args>
+        void log(const Args &...args) const
+        {
+            if (!_debug)
+                return;
+            std::clog << "[GameManager] ";
+            (std::clog << ... << args);
+            std::clog << std::endl;
+        }
+
+        /**
+         * @brief Returns the readable name of a type.
+         */
+        template<typename T>
+        static std::string typeName()
+        {
+            const char *name = typeid(T).name();
+#if defined(__GNUG__)
+            int status = 0;
+            char *readable =
+                abi::__cxa_demangle(name, nullptr, nullptr, &status);
+            std::string result = (status == 0) ? readable : name;
+
+            std::free(readable);
+            return result;
+#else
+            return name;
+#endif
+        }
 
         /**
          * @brief Executes every queued command, in order, then empties

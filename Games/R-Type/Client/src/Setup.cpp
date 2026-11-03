@@ -14,8 +14,10 @@
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "Menu.hpp"
+#include "Listener.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -28,7 +30,13 @@ namespace RType::Client {
         auto w = gm.createEntity();
         gm.addComponent<Window>(w, 1920, 1080, "R-type");
         ::SetExitKey(KEY_NULL);
-        gm.createSystem<Window>(Window::systemClearWindow);
+        // The frame begins here (first system) and ends in createSystems
+        // (last system), so every draw happens between BeginDrawing and
+        // EndDrawing.
+        gm.createSystem<Window>([](Window &win) {
+            win.setTargetFps();
+            win.beginDrawing();
+        });
         return w;
     }
 
@@ -68,18 +76,32 @@ namespace RType::Client {
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
-        gm.createSystem<Friction2D, Velocity2D, Clock>(
-            Friction2D::systemFriction2D);
         gm.createSystem<>(systemButtons);
         gm.createSystem<>(systemTextFields);
         gm.createSystem<>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
         gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
         gm.createSystem<>(systemDrawLobbyList);
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
+                Friction2D::systemFriction2D(f, v, c);
+        });
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
+        // Texts last, so they are drawn on top of the sprites.
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
+        gm.createSystem<Sound>(Sound::systemSound);
+        // End of the frame begun in createWindow: must stay the last system.
+        gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
+
+    Entity createSound(GameManager &gm)
+    {
+        Entity s = gm.createEntity();
+        gm.addComponent<Listener>(s);
+        return s;
+    }
+
 } // namespace RType::Client

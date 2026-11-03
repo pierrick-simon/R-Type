@@ -13,7 +13,6 @@
 #include "Setup.hpp"
 #include "Sound.hpp"
 #include "Texture2D.hpp"
-#include "Window.hpp"
 
 namespace {
 
@@ -56,11 +55,13 @@ int main()
         RType::Client::createClientSystems(gm);
         auto control = RType::Client::createControl(gm);
         auto mc = RType::Client::createMasterClock(gm);
+        auto s = RType::Client::createSound(gm);
 
         RType::Client::createSystems(gm);
         RType::Client::createMenu(gm);
         while (!WindowShouldClose() && !RType::Client::quitRequested)
             gm.update();
+        RType::Texture2D::unloadTextures2D(gm);
     } catch (std::exception &e) {
         std::cerr << "Exception: " << e.what() << std::endl;
     }

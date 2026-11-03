@@ -10,25 +10,12 @@
 
 #include "GameManager.hpp"
 #include "ServerManager.hpp"
-#include "Texture.hpp"
 
 namespace RType {
     struct EnemyHooks;
 }
 
 namespace RType::Server {
-
-    struct TextureCleanup {
-        RType::GameManager &gm;
-
-        ~TextureCleanup()
-        {
-            try {
-                RType::Server::unloadTextures(gm);
-            } catch (...) {
-            }
-        }
-    };
 
     Entity createServer(GameManager &gm, short port);
     Entity createServer(GameManager &gm, ServerManager &&server);

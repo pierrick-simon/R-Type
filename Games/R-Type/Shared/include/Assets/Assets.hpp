@@ -36,6 +36,15 @@ namespace RType::Asset {
     inline constexpr AssetId PLAYER_SHEET_3 = 110;
     inline constexpr AssetId PLAYER_SHEET_4 = 111;
     inline constexpr AssetId PLAYER_SHEET_5 = 112;
+    inline constexpr AssetId ENEMY_WALKER = 113;
+    inline constexpr AssetId LEVEL1_MASK = 114;
+    inline constexpr AssetId ENEMY_ALIEN = 115;
+    inline constexpr AssetId ALIEN_BEAM = 116;
+    inline constexpr AssetId ALIEN_CHARGE = 117;
+
+    inline constexpr AssetId EXPLOSION_SOUND = 1000;
+    inline constexpr AssetId GUNSHOT_SOUND = 1001;
+
     inline constexpr AssetId FONT = 200;
 
     inline constexpr AssetId MENU_BACKGROUND = 300;

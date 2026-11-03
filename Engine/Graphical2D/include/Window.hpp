@@ -16,8 +16,6 @@ namespace RType {
     /**
      * @brief Game window, wrapper around raylib::Window.
      *
-     * Also owns the audio device, so a Window must exist before any
-     * Texture2D, Font or Sound is loaded.
      *
      * The raylib window and audio device live on the heap and are owned
      * through unique_ptr: moving a Window transfers them and leaves the
@@ -57,9 +55,12 @@ namespace RType {
          */
         static void systemClearWindow(const Window &w);
 
+        void beginDrawing();
+        void endDrawing();
+        void setTargetFps();
+
     private:
         std::unique_ptr<raylib::Window> _window;
-        std::unique_ptr<raylib::AudioDevice> _audioDevice;
     };
 
 } // namespace RType

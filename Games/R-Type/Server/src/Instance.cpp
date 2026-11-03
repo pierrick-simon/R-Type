@@ -16,8 +16,10 @@
 #include "Instance.hpp"
 #include "InstanceLink.hpp"
 #include "Lobby.hpp"
+#include "Player.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
+#include "Terrain.hpp"
 
 namespace RType::Server {
 
@@ -32,7 +34,6 @@ namespace RType::Server {
                 AssetList assets = Asset::makeAssetList();
 
                 gm.setAssetsMap(assets);
-                const TextureCleanup cleanup {gm};
                 const Entity s = createServer(gm, std::move(manager));
                 const Entity l = gm.createEntity();
 
@@ -43,6 +44,11 @@ namespace RType::Server {
                 // std::endl;
                 createMasterClock(gm);
                 createSystems(gm, makeEnemyVisualHooks());
+                // Level data of this instance (collision masks), loaded once.
+                // The background and the enemies are created when the host
+                // starts the game (Lobby.cpp, startGame).
+                createTerrain(gm);
+                createPlayerMasks(gm);
                 auto &server = gm.getComponent<ServerManager>(s);
                 auto &link = gm.getComponent<InstanceLink>(l);
                 gm.run(60, [&] {

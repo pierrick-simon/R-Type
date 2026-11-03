@@ -37,7 +37,14 @@ FetchContent_Declare(raylib
     GIT_SHALLOW    TRUE
 )
 
-FetchContent_MakeAvailable(asio plf-colony raylib-cpp)
+FetchContent_Declare(miniaudio
+    GIT_REPOSITORY https://github.com/mackron/miniaudio.git
+    GIT_TAG        0.11.22
+    GIT_SHALLOW    TRUE
+    SOURCE_SUBDIR  _no_cmake
+)
+
+FetchContent_MakeAvailable(asio plf-colony raylib-cpp miniaudio)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
@@ -65,6 +72,15 @@ add_library(raylib-cpp::raylib-cpp ALIAS raylib-cpp)
 target_include_directories(raylib-cpp SYSTEM INTERFACE ${raylib-cpp_SOURCE_DIR}/include)
 target_link_libraries(raylib-cpp INTERFACE raylib)
 
+# --- miniaudio (single header) ---
+add_library(miniaudio INTERFACE)
+add_library(miniaudio::miniaudio ALIAS miniaudio)
+target_include_directories(miniaudio SYSTEM INTERFACE ${miniaudio_SOURCE_DIR})
+target_link_libraries(miniaudio INTERFACE Threads::Threads ${CMAKE_DL_LIBS})
+if (UNIX)
+    target_link_libraries(miniaudio INTERFACE m)
+endif ()
+
 # Create System engine lib
 
 set(SYSTEM_LIB_NAME engine-system)
@@ -88,36 +104,59 @@ set(INCLUDE_SYSTEM
     ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/BuiltIn
 )
 
-add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM} ${SRCS_SHARED})
+add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM})
 target_include_directories(${SYSTEM_LIB_NAME} PUBLIC ${INCLUDE_SYSTEM})
 target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC plf-colony)
 
-# Create Graphical engine lib
+# Create Graphical2D engine lib
 
-set(GRAPHICAL_LIB_NAME engine-graphical)
-set(GRAPHICAL Graphical)
+set(GRAPHICAL2D_LIB_NAME engine-graphical2D)
+set(GRAPHICAL2D Graphical2D)
 
-set(SRCS_GRAPHICAL
-    ${GRAPHICAL}/src/Window.cpp
-    ${GRAPHICAL}/src/Text2D.cpp
-    ${GRAPHICAL}/src/Sprite2D.cpp
-    ${GRAPHICAL}/src/SpriteSheet2D.cpp
-    ${GRAPHICAL}/src/Sound.cpp
-    ${GRAPHICAL}/src/Font.cpp
-    ${GRAPHICAL}/src/Texture2D.cpp
-    ${GRAPHICAL}/src/KeyboardManager.cpp
-    ${GRAPHICAL}/src/MouseManager.cpp
-    ${GRAPHICAL}/src/Keybind.cpp
+set(SRCS_GRAPHICAL2D
+    ${GRAPHICAL2D}/src/Window.cpp
+    ${GRAPHICAL2D}/src/Text2D.cpp
+    ${GRAPHICAL2D}/src/Sprite2D.cpp
+    ${GRAPHICAL2D}/src/SpriteSheet2D.cpp
+    ${GRAPHICAL2D}/src/Font.cpp
+    ${GRAPHICAL2D}/src/Texture2D.cpp
+    ${GRAPHICAL2D}/src/KeyboardManager.cpp
+    ${GRAPHICAL2D}/src/MouseManager.cpp
+    ${GRAPHICAL2D}/src/Keybind.cpp
 )
 
-add_library(${GRAPHICAL_LIB_NAME} SHARED ${SRCS_GRAPHICAL} ${SRCS_SHARED})
-target_include_directories(${GRAPHICAL_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL}/include
+add_library(${GRAPHICAL2D_LIB_NAME} SHARED ${SRCS_GRAPHICAL2D})
+target_include_directories(${GRAPHICAL2D_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL2D}/include
 )
-target_link_libraries(${GRAPHICAL_LIB_NAME} PUBLIC engine-system raylib-cpp::raylib-cpp)
+target_link_libraries(${GRAPHICAL2D_LIB_NAME} PUBLIC engine-system raylib-cpp::raylib-cpp)
 
 if (MSVC)
-    target_compile_options(${GRAPHICAL_LIB_NAME} PRIVATE /wd4251)
+    target_compile_options(${GRAPHICAL2D_LIB_NAME} PRIVATE /wd4251)
+endif ()
+
+# Create Graphical3D engine lib
+
+set(GRAPHICAL3D_LIB_NAME engine-graphical3D)
+set(GRAPHICAL3D Graphical3D)
+
+set(SRCS_GRAPHICAL3D
+    ${GRAPHICAL3D}/src/Camera3D.cpp
+    ${GRAPHICAL3D}/src/Model3D.cpp
+    ${GRAPHICAL3D}/src/Sprite3D.cpp
+    ${GRAPHICAL3D}/src/ModelAnimation3D.cpp
+    ${GRAPHICAL3D}/src/SpriteSheet3D.cpp
+    ${GRAPHICAL3D}/src/Draw3D.cpp
+)
+
+add_library(${GRAPHICAL3D_LIB_NAME} SHARED ${SRCS_GRAPHICAL3D})
+target_include_directories(${GRAPHICAL3D_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL3D}/include
+)
+target_link_libraries(${GRAPHICAL3D_LIB_NAME} PUBLIC engine-system engine-graphical2D raylib-cpp::raylib-cpp)
+
+if (MSVC)
+    target_compile_options(${GRAPHICAL3D_LIB_NAME} PRIVATE /wd4251)
 endif ()
 
 # Create Network engine lib
@@ -131,9 +170,45 @@ set(SRCS_NETWORK
     ${NETWORK}/src/Utils.cpp
 )
 
-add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK} ${SRCS_SHARED})
+add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK})
 target_include_directories(${NETWORK_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include/BuiltIn
 )
 target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system asio::asio)
+
+# Create Audio engine lib
+
+set(AUDIO_LIB_NAME engine-audio)
+set(AUDIO Audio)
+
+set(SRCS_AUDIO
+    ${AUDIO}/src/MiniaudioImpl.cpp
+    ${AUDIO}/src/Listener.cpp
+    ${AUDIO}/src/Sound.cpp
+)
+
+set_source_files_properties(${AUDIO}/src/MiniaudioImpl.cpp PROPERTIES
+    COMPILE_OPTIONS "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fvisibility=hidden;-w>"
+)
+
+add_library(${AUDIO_LIB_NAME} SHARED ${SRCS_AUDIO})
+target_include_directories(${AUDIO_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${AUDIO}/include
+)
+target_link_libraries(${AUDIO_LIB_NAME} PUBLIC engine-system miniaudio::miniaudio)
+
+# Create Game engine lib
+
+set(GAME_LIB_NAME engine-game)
+set(GAME Game)
+
+set(SRCS_GAME
+    ${GAME}/src/Main.cpp
+)
+
+add_library(${GAME_LIB_NAME} STATIC ${SRCS_GAME} ${SRCS_SHARED})
+target_include_directories(${GAME_LIB_NAME} PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/${GAME}/include
+)
+target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical2D)

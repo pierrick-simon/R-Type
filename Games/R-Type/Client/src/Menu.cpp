@@ -85,7 +85,6 @@ namespace RType::Client {
         return e;
     }
 
-    namespace {
         Entity addMenuButton(GameManager &gm, float x, float y,
             const std::string &label,
             std::function<void(GameManager &)> onClick,
@@ -141,37 +140,33 @@ namespace RType::Client {
             createMenu(gm);
         }
 
-    } // namespace
+        void createServerPage(GameManager &gm)
+        {
+            const float centerX = 1920.f / 2.f;
+            const float fieldY = (1080.f - BUTTON_HEIGHT) / 2.f;
+            const float step = BUTTON_HEIGHT + BUTTON_GAP;
+            const Entity title = addText(
+                gm, centerX, fieldY - 40.f, "Server IP Address", SERVER_LABEL_SIZE);
+            const Entity ipButton = addServerButton(gm,
+                (1920.f - IP_BUTTON_WIDTH) / 2.f,
+                fieldY,
+                _clInfos._ip,
+                [](GameManager &) { activeField = Field::Ip; });
 
-    void createServerPage(GameManager &gm)
-    {
-        const float centerX = 1920.f / 2.f;
-        const float fieldY = (1080.f - BUTTON_HEIGHT) / 2.f;
-        const float step = BUTTON_HEIGHT + BUTTON_GAP;
-        const Entity title = addText(
-            gm, centerX, fieldY - 40.f, "Server IP Address", SERVER_LABEL_SIZE);
-        const Entity ipButton = addServerButton(gm,
-            (1920.f - IP_BUTTON_WIDTH) / 2.f,
-            fieldY,
-            _clInfos._ip,
-            [](GameManager &) { activeField = Field::Ip; });
-
-        gm.addComponent<ServerItem>(title);
-        gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
-        gm.addComponent<Clock>(ipButton);
-        addServerButton(gm,
-            (1920.f - BUTTON_WIDTH) / 2.f,
-            fieldY + step * 1.5,
-            "Connect to Server",
-            connectToGame);
-        addServerButton(gm,
-            1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
-            1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP,
-            "Go back to menu",
-            leaveServerPage);
-    }
-
-    namespace {
+            gm.addComponent<ServerItem>(title);
+            gm.addComponent<TextField>(ipButton, TextField {Field::Ip});
+            gm.addComponent<Clock>(ipButton);
+            addServerButton(gm,
+                (1920.f - BUTTON_WIDTH) / 2.f,
+                fieldY + step * 1.5,
+                "Connect to Server",
+                connectToGame);
+            addServerButton(gm,
+                1920.f - BUTTON_WIDTH - BUTTON_GAP * 2,
+                1080.f - (BUTTON_HEIGHT) * 2 - BUTTON_GAP,
+                "Go back to menu",
+                leaveServerPage);
+        }
 
         void openServerPage(GameManager &gm)
         {
@@ -179,8 +174,12 @@ namespace RType::Client {
             destroyAllTagged<MenuItem>(gm);
             createServerPage(gm);
         }
+    
+        void changeFullScreen(GameManager &gm)
+        {
+            ToggleFullscreen();
+        }
 
-    } // namespace
 
     void createMenu(GameManager &gm)
     {
@@ -189,8 +188,9 @@ namespace RType::Client {
         const float firstX = (1920.f - BUTTON_WIDTH) / 2.f;
 
         addMenuButton(gm, firstX, firstY, "Start Game", openServerPage);
+        addMenuButton(gm, firstX, firstY + step, "Full Screen", changeFullScreen);
         addMenuButton(
-            gm, firstX, firstY + step, "Leave Game", [](GameManager &) {
+            gm, firstX, firstY + step * 2, "Leave Game", [](GameManager &) {
                 quitRequested = true;
             });
         const Entity usernameButton = addMenuButton(gm,

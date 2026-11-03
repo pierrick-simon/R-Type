@@ -22,6 +22,7 @@ set(SRCS_GFX
 )
 
 set(GAME_SRCS
+        src/Animation.cpp
         src/Background.cpp
         src/Bullet.cpp
         src/Instance.cpp
@@ -32,20 +33,20 @@ set(GAME_SRCS
         src/Player.cpp
         src/Setup.cpp
         src/TcpConnection.cpp
-        src/Texture.cpp
+        src/Terrain.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
 find_package(Threads REQUIRED)
-target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical engine-network Threads::Threads)
+target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical2D engine-network Threads::Threads)
 
 if (TARGET criterion)
     set(SRCS_TESTS tests/tests_init.cpp)
 
     add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
     target_include_directories(server_tests_run_bin PRIVATE include)
-    target_link_libraries(server_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical Threads::Threads)
+    target_link_libraries(server_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical2D)
 
     # --coverage and `find` are GCC/Clang + Unix only
     if (NOT MSVC)
