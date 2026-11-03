@@ -30,9 +30,6 @@ namespace RType::Client {
         auto w = gm.createEntity();
         gm.addComponent<Window>(w, 1920, 1080, "R-type");
         ::SetExitKey(KEY_NULL);
-        // The frame begins here (first system) and ends in createSystems
-        // (last system), so every draw happens between BeginDrawing and
-        // EndDrawing.
         gm.createSystem<Window>([](Window &win) {
             win.setTargetFps();
             win.beginDrawing();
@@ -90,10 +87,8 @@ namespace RType::Client {
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
-        // Texts last, so they are drawn on top of the sprites.
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sound>(Sound::systemSound);
-        // End of the frame begun in createWindow: must stay the last system.
         gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
 
