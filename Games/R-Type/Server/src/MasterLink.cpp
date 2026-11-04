@@ -43,9 +43,10 @@ namespace RType::Server {
                     instance.started = p[1] != 0;
                     if (instance.players > 0)
                         instance.everHadPlayers = true;
-                    // std::cout << "[Master] Lobby " << instance.port << ": "
-                    // << instance.players << " player(s)" << (instance.started
-                    // ? ", in game" : "") << std::endl;
+                    std::cout << "[Master] Lobby " << instance.port << ": "
+                              << instance.players << " player(s)"
+                              << (instance.started ? ", in game" : "")
+                              << std::endl;
                 }
             }
         }
@@ -79,8 +80,8 @@ namespace RType::Server {
                     instance.connection.poll();
                     readMessages(instance);
                     if (shouldClose(instance)) {
-                        // std::cout << "[Master] Lobby " << instance.port << "
-                        // is empty, closing it" << std::endl;
+                        std::cout << "[Master] Lobby " << instance.port
+                                  << " is empty, closing it" << std::endl;
                         instance.connection.send(LINK_STOP);
                         instance.connection.poll();
                         instance.stopSent = true;
@@ -91,8 +92,8 @@ namespace RType::Server {
                         return false;
                     if (instance.port != 0) {
                         reapInstance(threads, instance.port);
-                        // std::cout << "[Master] Lobby " << instance.port << "
-                        // closed" << std::endl;
+                        std::cout << "[Master] Lobby " << instance.port
+                                  << " closed" << std::endl;
                     }
                     return true;
                 });

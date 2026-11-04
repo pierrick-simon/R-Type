@@ -38,8 +38,8 @@ namespace RType::Server {
                     return;
                 }
                 instances.portByClient[clientId] = *port;
-                // std::cout << "[Master] Client " << clientId << " created a
-                // lobby on port " << *port << std::endl;
+                std::cout << "[Master] Client " << clientId
+                          << " created a lobby on port " << *port << std::endl;
             }
             try {
                 MasterProtocol::sendLobbyPort(server, clientId, *port);
@@ -60,9 +60,9 @@ namespace RType::Server {
                     answer = port;
                 break;
             }
-            // if (answer == 0)
-            // std::cout << "[Master] Client " << clientId << " refused in lobby
-            // " << port << std::endl;
+            if (answer == 0)
+                std::cout << "[Master] Client " << clientId
+                          << " refused in lobby " << port << std::endl;
             try {
                 MasterProtocol::sendLobbyPort(server, clientId, answer);
             } catch (const std::exception &e) {

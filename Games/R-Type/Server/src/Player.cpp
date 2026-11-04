@@ -237,7 +237,6 @@ namespace RType::Server {
         });
         for (auto [entity, defaultClient] :
             gm.view<DefaulClient>().getVector()) {
-            // A client that logged out this frame is still in the view.
             if (defaultClient.getInit() ||
                 !connected.contains(defaultClient.getId()))
                 continue;
