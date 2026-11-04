@@ -294,26 +294,24 @@ namespace RType::Server {
             });
     }
 
-    std::size_t freePlayerSlot(GameManager &gm)
+    std::size_t freePlayerSlot(const std::unordered_set<std::size_t> &taken)
     {
         std::size_t slot = 0;
-        bool taken = true;
 
-        while (taken) {
-            taken = false;
-            for (auto [_, player] : gm.view<Player>().getVector())
-                taken = taken || player.slot == slot;
-            slot += taken ? 1 : 0;
-        }
+        while (taken.contains(slot))
+            ++slot;
         return slot;
     }
 
     void systemCreateSpaceShip(GameManager &gm)
     {
         std::unordered_set<uint32_t> connected;
+        std::unordered_set<std::size_t> taken;
 
         if (!isGameStarted())
             return;
+        for (auto [_, player] : gm.view<Player>().getVector())
+            taken.insert(player.slot);
         gm.view<ServerManager>().each([&connected](Entity, ServerManager &s) {
             for (const auto &[id, _] : s.getClients())
                 connected.insert(id);
@@ -324,8 +322,8 @@ namespace RType::Server {
                 !connected.contains(defaultClient.getId()))
                 continue;
             defaultClient.init();
-            const Player state {.slot = freePlayerSlot(gm)};
-
+            const Player state {.slot = freePlayerSlot(taken)};
+            taken.insert(state.slot);
             gm.addComponent<Player>(entity, state);
             spawnLifeIcons(gm, entity, state);
             gm.addComponent<EnemyTarget>(entity);

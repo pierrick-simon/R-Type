@@ -130,9 +130,6 @@ namespace RType {
             pe.assetId = _sound->asset;
             pe.id = _id;
             pe.type = SOUND;
-            // Sent to this client: `create` is already empty here, so the
-            // client never got the sound, never acknowledged it again and
-            // was never linked (no more move/destroy for this entity).
             CreateProtocol::sendCreate({id}, server, pe);
             _sound->set = true;
             return;
@@ -190,8 +187,10 @@ namespace RType {
     {
         try {
             auto &update = gm.getComponent<UpdateClientEntity>(e);
-            DestroyProtocol::sendDestroy(
-                update.getLinks(), server, update.getId());
+            std::vector<uint32_t> ids = update.getLinks();
+
+            ids.insert(ids.end(), update._inits.begin(), update._inits.end());
+            DestroyProtocol::sendDestroy(ids, server, update.getId());
             gm.destroyEntity(e);
         } catch (NoSuchEntity &e) {
         }
