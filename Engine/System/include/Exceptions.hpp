@@ -117,6 +117,21 @@ namespace RType {
         }
     };
 
+    /**
+     * @brief Raised when a Lua script fails to load or one of its
+     * functions raises an error.
+     */
+    class ScriptError : public EngineException {
+    public:
+        /**
+         * @param msg The error reported by Lua.
+         */
+        ScriptError(const std::string &msg) :
+            EngineException("Script error: " + msg)
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

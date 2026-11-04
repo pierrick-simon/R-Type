@@ -44,7 +44,25 @@ FetchContent_Declare(miniaudio
     SOURCE_SUBDIR  _no_cmake
 )
 
-FetchContent_MakeAvailable(asio plf-colony raylib-cpp miniaudio)
+FetchContent_Declare(sol2
+    GIT_REPOSITORY https://github.com/ThePhD/sol2.git
+    GIT_TAG        v3.5.0
+    GIT_SHALLOW    TRUE
+    SOURCE_SUBDIR  _no_cmake
+)
+
+FetchContent_Declare(lua
+    GIT_REPOSITORY https://github.com/walterschell/Lua.git
+    GIT_TAG        v5.4.7
+    GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(asio plf-colony raylib-cpp miniaudio sol2)
+
+set(LUA_ENABLE_SHARED OFF CACHE BOOL "" FORCE)
+set(LUA_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+set(LUA_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(lua)
 
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
@@ -80,6 +98,12 @@ target_link_libraries(miniaudio INTERFACE Threads::Threads ${CMAKE_DL_LIBS})
 if (UNIX)
     target_link_libraries(miniaudio INTERFACE m)
 endif ()
+
+# --- sol2 (header-only Lua binding) ---
+add_library(sol2 INTERFACE)
+add_library(sol2::sol2 ALIAS sol2)
+target_include_directories(sol2 SYSTEM INTERFACE ${sol2_SOURCE_DIR}/include)
+target_link_libraries(sol2 INTERFACE lua_static)
 
 # Create System engine lib
 
@@ -205,10 +229,11 @@ set(GAME Game)
 
 set(SRCS_GAME
     ${GAME}/src/Main.cpp
+    ${GAME}/src/Game.cpp
 )
 
 add_library(${GAME_LIB_NAME} STATIC ${SRCS_GAME} ${SRCS_SHARED})
 target_include_directories(${GAME_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${GAME}/include
 )
-target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical2D)
+target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical2D sol2::sol2)
