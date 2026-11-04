@@ -179,10 +179,13 @@ namespace RType::Client {
         std::vector<Entity> orphans;
 
         gm.view<Button, SpriteSheet2D>().each(
-            [](Entity, Button &button, SpriteSheet2D &sheet) {
+            [&gm](Entity e, Button &button, SpriteSheet2D &sheet) {
+                const bool editing = gm.hasComponent<TextField>(e) &&
+                    gm.getComponent<TextField>(e).id == activeField;
+
                 if (button.disabled)
                     sheet.currentTile = BUTTON_TILE_DISABLED;
-                else if (button.hovered)
+                else if (button.hovered || editing)
                     sheet.currentTile = BUTTON_TILE_HOVERED;
                 else
                     sheet.currentTile = BUTTON_TILE_NORMAL;
