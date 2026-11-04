@@ -12,9 +12,9 @@
 
 #include "Common/Background.hpp"
 #include "Components.hpp"
+#include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "KeyboardManager.hpp"
-#include "Lobby.hpp"
 #include "LobbyProtocol.hpp"
 #include "MouseManager.hpp"
 #include "ServerManager.hpp"

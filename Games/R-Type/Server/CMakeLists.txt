@@ -26,16 +26,16 @@ set(GAME_SRCS
         src/Common/Background.cpp
         src/Common/Bullet.cpp
         src/Common/Terrain.cpp
+        src/Connexion/Instance.cpp
+        src/Connexion/InstanceLink.cpp
+        src/Connexion/Lobby.cpp
+        src/Connexion/MasterLink.cpp
+        src/Connexion/MasterServer.cpp
+        src/Connexion/TcpConnection.cpp
         src/GameState.cpp
-        src/Instance.cpp
-        src/InstanceLink.cpp
-        src/Lobby.cpp
-        src/MasterLink.cpp
-        src/MasterServer.cpp
         src/Player/Hud.cpp
         src/Player/Player.cpp
         src/Setup.cpp
-        src/TcpConnection.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})

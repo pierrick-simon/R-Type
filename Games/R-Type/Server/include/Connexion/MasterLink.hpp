@@ -13,8 +13,8 @@
 #include <memory>
 #include <vector>
 
+#include "Connexion/TcpConnection.hpp"
 #include "GameManager.hpp"
-#include "TcpConnection.hpp"
 
 namespace RType::Server {
 

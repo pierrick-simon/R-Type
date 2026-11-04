@@ -6,7 +6,7 @@
 */
 #include <array>
 
-#include "TcpConnection.hpp"
+#include "Connexion/TcpConnection.hpp"
 
 namespace RType::Server {
 

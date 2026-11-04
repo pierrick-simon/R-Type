@@ -7,8 +7,8 @@
 
 #include <iostream>
 
+#include "Connexion/MasterServer.hpp"
 #include "GameManager.hpp"
-#include "MasterServer.hpp"
 #include "ServerManager.hpp"
 
 int main()

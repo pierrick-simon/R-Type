@@ -11,8 +11,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "Connexion/TcpConnection.hpp"
 #include "GameManager.hpp"
-#include "TcpConnection.hpp"
 
 namespace RType::Server {
 

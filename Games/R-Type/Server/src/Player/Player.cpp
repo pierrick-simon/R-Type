@@ -16,10 +16,10 @@
 #include "Common/Bullet.hpp"
 #include "Common/Terrain.hpp"
 #include "Config.hpp"
+#include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
-#include "Lobby.hpp"
 #include "Player/Hud.hpp"
 #include "UpdateClientEntity.hpp"
 

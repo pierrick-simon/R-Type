@@ -5,15 +5,15 @@
 ** MasterServer
 */
 
-#include "MasterServer.hpp"
+#include "Connexion/MasterServer.hpp"
 
 #include <algorithm>
 #include <iostream>
 
-#include "Instance.hpp"
-#include "InstanceLink.hpp"
+#include "Connexion/Instance.hpp"
+#include "Connexion/InstanceLink.hpp"
+#include "Connexion/MasterLink.hpp"
 #include "KeyboardManager.hpp"
-#include "MasterLink.hpp"
 #include "MasterProtocol.hpp"
 #include "MouseManager.hpp"
 #include "ServerManager.hpp"
