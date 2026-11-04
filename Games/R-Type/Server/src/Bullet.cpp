@@ -33,8 +33,13 @@ namespace RType::Server {
         gm.addComponent<SpriteSheet2D>(
             bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
         gm.addComponent<PlayOnce>(bullet);
-        gm.addComponent<UpdateClientEntity>(
-            bullet, EntityType::SPRITESHEET, Asset::PLAYER_BULLET, gm, bullet);
+        gm.addComponent<SoundInfo>(bullet, SoundInfo::PLAY);
+        gm.addComponent<UpdateClientEntity>(bullet,
+            EntityType::SPRITESHEET,
+            Asset::PLAYER_BULLET,
+            gm,
+            bullet,
+            Asset::GUNSHOT_SOUND);
     }
 
     void spawnChargedShot(GameManager &gm, const Position2D &shooter, int level)

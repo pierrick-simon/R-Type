@@ -11,8 +11,10 @@
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "Listener.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -62,14 +64,19 @@ namespace RType::Client {
 
     void createSystems(GameManager &gm)
     {
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
+        gm.createSystem<Sound>(Sound::systemSound);
+    }
+
+    Entity createSound(GameManager &gm)
+    {
+        Entity s = gm.createEntity();
+        gm.addComponent<Listener>(s);
+        return s;
     }
 } // namespace RType::Client

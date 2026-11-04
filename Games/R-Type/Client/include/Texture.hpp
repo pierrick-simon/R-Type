@@ -12,10 +12,10 @@
 #include "GameManager.hpp"
 #include "Texture2D.hpp"
 
-namespace RType::Server {
+namespace RType::Client {
 
     Texture2D loadPixelTexture(GameManager &gm, AssetId id);
     void unloadTextures(GameManager &gm);
-} // namespace RType::Server
+} // namespace RType::Client
 
 #endif

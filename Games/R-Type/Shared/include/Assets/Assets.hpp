@@ -47,6 +47,9 @@ namespace RType::Asset {
     inline constexpr AssetId BOSS_BULLET = 121;
     inline constexpr AssetId BOSS_EXPLOSION = 122;
 
+    inline constexpr AssetId EXPLOSION_SOUND = 1000;
+    inline constexpr AssetId GUNSHOT_SOUND = 1001;
+
     [[nodiscard]] AssetList makeAssetList();
 
 } // namespace RType::Asset

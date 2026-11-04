@@ -10,7 +10,7 @@
 
 #include "Exceptions.hpp"
 
-namespace RType::Server {
+namespace RType::Client {
 
     Texture2D loadPixelTexture(GameManager &gm, AssetId id)
     {
@@ -35,4 +35,4 @@ namespace RType::Server {
             gm.destroyEntity(e);
     }
 
-} // namespace RType::Server
+} // namespace RType::Client

@@ -15,6 +15,7 @@
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
 #include "UpdatePosition2D.hpp"
+#include "UpdateSound.hpp"
 #include "UpdateSprite2D.hpp"
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
@@ -32,8 +33,8 @@ namespace RType {
     }
 
     UpdateClientEntity::UpdateClientEntity(EntityType type, int asset,
-        GameManager &gm, Entity entity, std::size_t rate) :
-        _type(type), asset(asset), rate(rate)
+        GameManager &gm, Entity entity, std::optional<Sound> sound) :
+        _type(type), _sound(sound), asset(asset)
     {
         static uint32_t id = 0;
         _id = id;
@@ -50,6 +51,8 @@ namespace RType {
             case EntityType::TEXT_ENTITY:
                 gm.addComponent<UpdateText2D>(entity);
                 break;
+            case EntityType::SOUND:
+                gm.addComponent<UpdateSound>(entity);
         }
     };
 
@@ -83,10 +86,17 @@ namespace RType {
             if (!update._update || update.create.empty())
                 continue;
             checkConnectedClient(server, update);
+            // Each client gets one CREATE: a client still waiting for its
+            // CREATE or queued twice would otherwise receive duplicates.
+            removeCommon(update.create, update._inits);
+            std::ranges::sort(update.create);
+            const auto duplicates = std::ranges::unique(update.create);
+            update.create.erase(duplicates.begin(), duplicates.end());
             if (gm.hasComponent<Position2D>(entity)) {
                 auto tmp = gm.getComponent<Position2D>(entity);
-                pe.posX = uint32_t(tmp.x);
-                pe.posY = uint32_t(tmp.y);
+                // Through int32_t: a negative float cast to uint32_t is UB.
+                pe.posX = uint32_t(int32_t(tmp.x));
+                pe.posY = uint32_t(int32_t(tmp.y));
             }
             pe.assetId = update.asset;
             pe.id = update.getId();
@@ -107,10 +117,21 @@ namespace RType {
             return;
         SetClientEntity::systemSetAllEntity<UpdateSprite2D,
             UpdateSpriteSheet2D,
-            UpdateText2D>(gm, entity, server, *this, id);
+            UpdateText2D,
+            UpdateSound>(gm, entity, server, *this, id);
         if (gm.hasComponent<Text2D>(entity)) {
             auto text = gm.getComponent<Text2D>(entity);
             TextProtocol::sendText({id}, server, _id, text.str);
+        }
+        if (_sound && _type != SOUND && !_sound->set) {
+            gm.addComponent<UpdateSound>(entity);
+            ProtocolEntity pe = {};
+            pe.assetId = _sound->asset;
+            pe.id = _id;
+            pe.type = SOUND;
+            CreateProtocol::sendCreate(create, server, pe);
+            _sound->set = true;
+            return;
         }
         _links.push_back(id);
         _inits.erase(iter);
