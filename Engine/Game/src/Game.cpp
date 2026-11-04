@@ -11,27 +11,14 @@
 #include "Exceptions.hpp"
 #include "Game.hpp"
 
-namespace {
-
-    /**
-     * @brief Turns a failed Lua call into an engine error, so that it
-     * stops the game instead of being silently ignored.
-     * @throw ScriptError If the call raised a Lua error.
-     */
-    void checkScriptResult(const sol::protected_function_result &result)
-    {
-        if (!result.valid()) {
-            sol::error error = result;
-            throw RType::ScriptError(error.what());
-        }
-    }
-
-} // namespace
-
 namespace RType {
 
     int Game::run()
     {
+        sol::state lua;
+
+        lua.open_libraries(sol::lib::base);
+        registerSystem<>(lua);
         try {
 #if defined(__DEBUG__)
             GameManager gm(true);
@@ -42,7 +29,6 @@ namespace RType {
 
             checkModules(modules);
             createModules(gm, modules);
-            sol::state lua;
             for (auto &path: getScriptPaths("TestLua"))
                 loadScriptPath(lua, path, gm);
             gm.run(GameConfig.windowFPS, GameConfig.runningCondition);
@@ -101,16 +87,19 @@ namespace RType {
 
     void Game::loadScriptPath(sol::state &lua, const std::string &path, GameManager &gm)
     {
-	    lua.open_libraries(sol::lib::base);
+        sol::environment env(lua, sol::create, lua.globals());
 
-        checkScriptResult(lua.script_file(path, &sol::script_pass_on_error));
-        lua.new_usertype<GameManager>("GameManager",
-                "createSystem", [&lua](GameManager &gm, sol::function f) {
-            return gm.createSystem<>([&lua] (GameManager &gm) {
-                checkScriptResult(lua["system"](gm));
-            });
-        });
-        checkScriptResult(lua["init"](gm));
+        checkScriptResult(
+            lua.script_file(path, env, &sol::script_pass_on_error));
+        checkScriptResult(env["init"](gm));
+    }
+
+    void Game::checkScriptResult(const sol::protected_function_result &result)
+    {
+        if (!result.valid()) {
+            sol::error error = result;
+            throw ScriptError(error.what());
+        }
     }
 
 }

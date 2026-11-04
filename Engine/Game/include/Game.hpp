@@ -123,11 +123,37 @@ namespace RType {
             const std::string &directory);
 
         /**
-         * @brief Runs a Lua script and adds the functions it defines to
-         * GameConfig.inits, so that they are called like the game's own.
+         * @brief Runs a Lua script in its own environment, then calls its
+         * init function with the GameManager.
          * @param path The path of the .lua file to load.
          */
         static void loadScriptPath(sol::state &lua, const std::string &path, GameManager &gm);
+
+        /**
+         * @brief Turns a failed Lua call into an engine error, so that it
+         * stops the game instead of being silently ignored.
+         * @throw ScriptError If the call raised a Lua error.
+         */
+        static void checkScriptResult(
+            const sol::protected_function_result &result);
+
+        /**
+         * @brief Exposes GameManager to Lua, so that scripts can call
+         * gm:createSystem(func). The given Lua function is called each
+         * update() with the GameManager.
+         */
+        template <typename... Components>
+        static void registerSystem(sol::state &lua)
+        {
+            lua.new_usertype<GameManager>("GameManager",
+                "createSystem", [](GameManager &gm, sol::protected_function f) {
+                    return gm.createSystem<Components...>(
+                        [f](GameManager &gm, Components &...c) {
+                            checkScriptResult(f(gm, c...));
+                        });
+                });
+        }
+
     };
 
 } // namespace RType
