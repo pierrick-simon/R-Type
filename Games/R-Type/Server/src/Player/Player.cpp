@@ -9,6 +9,7 @@
 #include "Player/Destroy.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include "Assets.hpp"
 #include "Common/Background.hpp"
@@ -18,6 +19,7 @@
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
+#include "Lobby.hpp"
 #include "Player/Hud.hpp"
 #include "UpdateClientEntity.hpp"
 
@@ -308,9 +310,18 @@ namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm)
     {
+        std::unordered_set<uint32_t> connected;
+
+        if (!isGameStarted())
+            return;
+        gm.view<ServerManager>().each([&connected](Entity, ServerManager &s) {
+            for (const auto &[id, _] : s.getClients())
+                connected.insert(id);
+        });
         for (auto [entity, defaultClient] :
             gm.view<DefaulClient>().getVector()) {
-            if (defaultClient.getInit())
+            if (defaultClient.getInit() ||
+                !connected.contains(defaultClient.getId()))
                 continue;
             defaultClient.init();
             const Player state {.slot = freePlayerSlot(gm)};

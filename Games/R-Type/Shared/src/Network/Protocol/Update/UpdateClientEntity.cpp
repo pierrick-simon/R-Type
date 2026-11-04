@@ -5,15 +5,17 @@
 ** UpdateClientEntity
 */
 
-#include "UpdateClientEntity.hpp"
 #include <algorithm>
+#include <atomic>
 #include <unordered_set>
+
 #include "CreateProtocol.hpp"
 #include "DestroyProtocol.hpp"
 #include "MoveProtocol.hpp"
 #include "SetClientEntity.hpp"
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
+#include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
 #include "UpdateSound.hpp"
 #include "UpdateSprite2D.hpp"
@@ -36,9 +38,8 @@ namespace RType {
         GameManager &gm, Entity entity, std::optional<Sound> sound) :
         _type(type), _sound(sound), asset(asset)
     {
-        static uint32_t id = 0;
-        _id = id;
-        id++;
+        static std::atomic<uint32_t> id = 0;
+        _id = id++;
         if (type != EntityType::SOUND)
             gm.addComponent<UpdatePosition2D>(entity);
         switch (type) {
@@ -129,7 +130,10 @@ namespace RType {
             pe.assetId = _sound->asset;
             pe.id = _id;
             pe.type = SOUND;
-            CreateProtocol::sendCreate(create, server, pe);
+            // Sent to this client: `create` is already empty here, so the
+            // client never got the sound, never acknowledged it again and
+            // was never linked (no more move/destroy for this entity).
+            CreateProtocol::sendCreate({id}, server, pe);
             _sound->set = true;
             return;
         }

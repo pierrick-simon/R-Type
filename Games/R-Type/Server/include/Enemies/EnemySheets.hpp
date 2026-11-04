@@ -77,8 +77,7 @@ namespace RType {
     inline constexpr int BOSS_IDLE_FRAMES = 4;
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
-        Asset::ENEMY_EXPLOSION, 6, 33, 32, 60, 0, 0};
-
+        Asset::ENEMY_EXPLOSION, 6, 32, 31, 67, 0, 0};
     inline constexpr SheetInfo ENEMY_BULLET_SHEET = {
         Asset::ENEMY_BULLET, 4, 19, 8, 50, 6, 6};
 } // namespace RType

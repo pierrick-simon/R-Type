@@ -9,6 +9,7 @@
 #define TEXTURE2D_HPP_
 
     #include <raylib-cpp.hpp>
+    #include "GameManager.hpp"
 
 namespace RType {
 
@@ -30,6 +31,8 @@ namespace RType {
          *          a texture, otherwise loading will fail or crash.
          */
         Texture2D(const std::string &path);
+
+        static void unloadTextures2D(GameManager &gm);
     };
 
 } // namespace RType

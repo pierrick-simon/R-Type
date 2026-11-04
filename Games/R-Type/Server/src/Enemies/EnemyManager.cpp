@@ -136,7 +136,6 @@ namespace RType {
         const float head = float(sheet.cellH) * SPRITE_SCALE / 2.f;
         Hitbox hitbox = centeredHitbox(sheet);
 
-        // The beam's head is on the side it travels to.
         hitbox.offsetX = facingLeft ? 0.f : width - hitbox.width;
         gm.addComponent<Position2D>(beam,
             Position2D {facingLeft ? x - head : x - width + head, y - head});

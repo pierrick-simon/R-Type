@@ -1,0 +1,110 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** Menu
+*/
+
+#ifndef MENU_HPP_
+#define MENU_HPP_
+
+#include <chrono>
+#include <functional>
+#include <raylib-cpp.hpp>
+#include <string>
+
+#include "Font.hpp"
+#include "GameManager.hpp"
+#include "Text2D.hpp"
+
+namespace RType::Client {
+
+    constexpr float BUTTON_WIDTH = 400.f;
+    constexpr float BUTTON_HEIGHT = 90.f;
+    constexpr float BUTTON_GAP = 40.f;
+    constexpr int TITLE_SIZE = 120;
+    constexpr int LABEL_SIZE = 48;
+    constexpr std::size_t USERNAME_MAX_LENGTH = 16;
+    constexpr std::size_t IP_MAX_LENGTH = 15;
+    constexpr std::size_t LOBBY_NAME_MAX_LENGTH = 16;
+    constexpr float IP_BUTTON_WIDTH = 400.f;
+
+    constexpr float BUTTON_SPRITE_WIDTH = 400.f;
+    constexpr std::size_t BUTTON_TILE_NORMAL = 0;
+    constexpr std::size_t BUTTON_TILE_HOVERED = 1;
+    constexpr std::size_t BUTTON_TILE_DISABLED = 2;
+    constexpr float BUTTON_TEXT_PADDING = 30.f;
+
+    struct MenuItem {};
+
+    struct ServerItem {};
+
+    constexpr float SERVER_LABEL_SIZE = 32.f;
+
+    struct MenuBackground {};
+
+    struct TextAnchor {
+        float x = 0.5f;
+        float y = 0.5f;
+    };
+
+    struct ButtonLabel {
+        Entity owner;
+    };
+
+    struct ConnectingText {
+        std::chrono::milliseconds elapsed {0};
+    };
+
+    enum class Field { None, Username, Ip, LobbyName };
+
+    struct TextField {
+        Field id;
+        std::chrono::milliseconds elapsed {0};
+    };
+
+    struct Button {
+        Rectangle rect;
+        std::string label;
+        std::function<void(GameManager &)> onClick;
+        bool hovered = false;
+        bool error = false;
+        bool disabled = false;
+    };
+
+    inline bool quitRequested = false;
+    inline Field activeField = Field::None;
+    inline bool ipInvalid = false;
+
+    struct ClientInfos {
+        std::string _username = "Player";
+        std::string _ip = "127.0.0.1";
+        std::string _lobbyName;
+        std::string _lobbyNameDefault = "Lobby 1";
+    };
+
+    inline ClientInfos _clInfos;
+
+    void createMenu(GameManager &gm);
+    void createServerPage(GameManager &gm);
+    Entity addButton(GameManager &gm, float x, float y,
+        const std::string &label, std::function<void(GameManager &)> onClick,
+        float width = BUTTON_WIDTH);
+    Entity addText(GameManager &gm, float x, float y, const std::string &str,
+        float size, TextAnchor anchor = {},
+        raylib::Color color = raylib::Color::White());
+    void showConnecting(GameManager &gm);
+    void connectToServer(GameManager &gm, const std::string &host, int port);
+    bool isValidIp(const std::string &ip);
+
+    void systemButtons(GameManager &gm);
+    void systemButtonVisuals(GameManager &gm);
+    void systemTextAnchor(Text2D &text, Font &font, const TextAnchor &anchor);
+    void systemMenuBackground(GameManager &gm);
+    void systemConnecting(GameManager &gm);
+    void systemServerLost(GameManager &gm);
+    void systemTextFields(GameManager &gm);
+
+} // namespace RType::Client
+
+#endif /* !MENU_HPP_ */

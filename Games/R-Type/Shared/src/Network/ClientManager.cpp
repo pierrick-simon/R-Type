@@ -9,6 +9,8 @@
 #include "CreateProtocol.hpp"
 #include "CreatedProtocol.hpp"
 #include "DestroyProtocol.hpp"
+#include "LobbyProtocol.hpp"
+#include "MasterProtocol.hpp"
 #include "MoveProtocol.hpp"
 #include "SetProtocol.hpp"
 #include "TextProtocol.hpp"
@@ -29,6 +31,11 @@ namespace RType {
         addContextManage(OpcodeRType::MOVE, MoveProtocol::manageMove);
         addContextManage(OpcodeRType::SET, SetProtocol::manageSet);
         addContextManage(OpcodeRType::TEXT, TextProtocol::manageText);
+        addContextManage(OpcodeRType::LOBBY_STATE, LobbyProtocol::manageState);
+        addContextManage(
+            OpcodeRType::LOBBY_PORT, MasterProtocol::manageLobbyPort);
+        addContextManage(
+            OpcodeRType::LOBBY_LIST, MasterProtocol::manageLobbyList);
     }
 
     void ClientManager::systemClientReceived(
