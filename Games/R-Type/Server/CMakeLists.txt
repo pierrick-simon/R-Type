@@ -22,13 +22,14 @@ set(SRCS_GFX
 )
 
 set(GAME_SRCS
-        src/Animation.cpp
-        src/Background.cpp
-        src/Bullet.cpp
-        src/Hud.cpp
-        src/Player.cpp
+        src/Common/Animation.cpp
+        src/Common/Background.cpp
+        src/Common/Bullet.cpp
+        src/Common/Terrain.cpp
+        src/GameState.cpp
+        src/Player/Hud.cpp
+        src/Player/Player.cpp
         src/Setup.cpp
-        src/Terrain.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})

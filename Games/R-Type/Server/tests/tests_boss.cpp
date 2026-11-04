@@ -7,7 +7,7 @@
 
 #include <criterion/criterion.h>
 
-#include "Background.hpp"
+#include "Common/Background.hpp"
 #include "Enemies/EnemySystems.hpp"
 
 using namespace RType;

@@ -5,11 +5,11 @@
 ** Hud
 */
 
-#include "Hud.hpp"
+#include "Player/Hud.hpp"
 
 #include "Assets.hpp"
 #include "Config.hpp"
-#include "Destroy.hpp"
+#include "Player/Destroy.hpp"
 #include "SpriteSheet2D.hpp"
 #include "UpdateClientEntity.hpp"
 

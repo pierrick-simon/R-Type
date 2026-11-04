@@ -6,12 +6,12 @@
 */
 
 #include "Enemies/EnemyManager.hpp"
-#include "Destroy.hpp"
+#include "Player/Destroy.hpp"
 
 #include <algorithm>
 
+#include "Common/Terrain.hpp"
 #include "Position2D.hpp"
-#include "Terrain.hpp"
 #include "Velocity2D.hpp"
 
 namespace RType {

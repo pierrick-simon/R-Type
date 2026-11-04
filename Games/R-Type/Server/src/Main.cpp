@@ -10,15 +10,15 @@
 #include <thread>
 
 #include "Assets.hpp"
-#include "Background.hpp"
+#include "Common/Background.hpp"
+#include "Common/Terrain.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
-#include "Player.hpp"
+#include "Player/Player.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
-#include "Terrain.hpp"
 #include "Window.hpp"
 
 int main()

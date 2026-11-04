@@ -6,17 +6,18 @@
 */
 
 #include "Setup.hpp"
-#include "Animation.hpp"
-#include "Background.hpp"
-#include "Bullet.hpp"
 #include "Clock.hpp"
+#include "Common/Animation.hpp"
+#include "Common/Background.hpp"
+#include "Common/Bullet.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
-#include "Hud.hpp"
+#include "GameState.hpp"
 #include "KeyboardManager.hpp"
-#include "Player.hpp"
+#include "Player/Hud.hpp"
+#include "Player/Player.hpp"
 #include "ServerManager.hpp"
 #include "SetClientEntity.hpp"
 #include "Sprite2D.hpp"
@@ -91,6 +92,7 @@ namespace RType::Server {
         gm.createSystem<>(playerTerrainCollision);
         gm.createSystem<MasterClock>(playerInvincibility);
         gm.createSystem<MasterClock>(playerDeath);
+        gm.createSystem<>(systemGameState);
         gm.createSystem<>(bulletSystem);
         gm.createSystem<>(chargeEffectSystem);
         gm.createSystem<>(livesHudSystem);

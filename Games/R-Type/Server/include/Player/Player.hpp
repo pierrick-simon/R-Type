@@ -20,6 +20,7 @@
 namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm);
+    void respawnPlayer(GameManager &gm, Entity player);
     void playerHandle(GameManager &gm, Entity entity, Player &player,
         Velocity2D &velocity, const Position2D &pos, KeyboardManager &keyboard,
         const Health &health, const MasterClock &clock);

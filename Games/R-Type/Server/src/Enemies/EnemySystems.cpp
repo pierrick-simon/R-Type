@@ -6,10 +6,10 @@
 */
 
 #include "Enemies/EnemySystems.hpp"
-#include "Background.hpp"
+#include "Common/Background.hpp"
+#include "Common/Terrain.hpp"
 #include "Config.hpp"
-#include "Destroy.hpp"
-#include "Terrain.hpp"
+#include "Player/Destroy.hpp"
 
 #include <algorithm>
 #include <cmath>

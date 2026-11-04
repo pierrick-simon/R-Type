@@ -8,10 +8,10 @@
 #include <iostream>
 
 #include "Assets.hpp"
-#include "Bullet.hpp"
+#include "Common/Bullet.hpp"
 #include "Config.hpp"
-#include "Destroy.hpp"
 #include "Enemies/EnemyComponents.hpp"
+#include "Player/Destroy.hpp"
 #include "SpriteSheet2D.hpp"
 #include "UpdateClientEntity.hpp"
 #include "Velocity2D.hpp"
@@ -47,7 +47,7 @@ namespace RType::Server {
         const ChargedShotLevel &info = CHARGED_SHOT_LEVELS[level - 1];
         const float width = info.width * SCALE;
         const float height = info.height * SCALE;
-        
+
         const Hitbox hitbox {.width = width * 0.75f,
             .height = height * 0.8f,
             .offsetX = CHARGED_SHOT_CELL_WIDTH - width * 0.75f,
@@ -122,7 +122,6 @@ namespace RType::Server {
 
     void chargedShotAnimation(const ChargedShot &shot, SpriteSheet2D &sheet)
     {
-        // Loops over the frames of the shot's row only.
         sheet.currentTile = shot.level * CHARGED_SHOT_FRAMES +
             sheet.currentTile % CHARGED_SHOT_FRAMES;
     }

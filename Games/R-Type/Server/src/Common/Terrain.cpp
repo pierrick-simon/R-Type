@@ -5,7 +5,7 @@
 ** Terrain
 */
 
-#include "Terrain.hpp"
+#include "Common/Terrain.hpp"
 #include <algorithm>
 #include <cmath>
 #include <functional>

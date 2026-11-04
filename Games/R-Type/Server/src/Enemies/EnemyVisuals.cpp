@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #include "Components.hpp"
-#include "Destroy.hpp"
+#include "Player/Destroy.hpp"
 #include "Position2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "UpdateClientEntity.hpp"

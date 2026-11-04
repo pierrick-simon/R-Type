@@ -5,20 +5,20 @@
 ** Player
 */
 
-#include "Player.hpp"
-#include "Destroy.hpp"
+#include "Player/Player.hpp"
+#include "Player/Destroy.hpp"
 
 #include <algorithm>
 
 #include "Assets.hpp"
-#include "Background.hpp"
-#include "Bullet.hpp"
+#include "Common/Background.hpp"
+#include "Common/Bullet.hpp"
+#include "Common/Terrain.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
-#include "Hud.hpp"
 #include "KeyboardManager.hpp"
-#include "Terrain.hpp"
+#include "Player/Hud.hpp"
 #include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
@@ -105,28 +105,6 @@ namespace RType::Server {
         sheet.color.a = 255;
         sheet.currentTile = FRAME_NEUTRAL;
         makeInvincible(gm, player);
-    }
-
-    bool isGameOver(GameManager &gm)
-    {
-        bool anyPlayer = false;
-
-        for (auto [_, player] : gm.view<Player>().getVector()) {
-            anyPlayer = true;
-            if (player.lives > 0 || player.deathTimer > 0.f)
-                return false;
-        }
-        return anyPlayer;
-    }
-
-    void restartGame(GameManager &gm)
-    {
-        for (auto [entity, player] : gm.view<Player>().getVector()) {
-            player.lives = PLAYER_LIVES;
-            respawnPlayer(gm, entity);
-        }
-        resetEnemies(gm);
-        resetBackground(gm);
     }
 
     void pressFire(GameManager &gm, Player &player, const Position2D &pos)
@@ -306,8 +284,6 @@ namespace RType::Server {
                 if (state.deathTimer <= 0.f && state.lives > 0)
                     respawnPlayer(gm, player);
             });
-        if (isGameOver(gm) || levelCleared(gm))
-            restartGame(gm);
         gm.view<PlayerExplosion>().each(
             [&gm, &clock](Entity explosion, PlayerExplosion &state) {
                 state.remaining -= elapsedSeconds(clock);

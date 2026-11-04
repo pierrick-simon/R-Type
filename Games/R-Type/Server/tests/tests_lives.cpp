@@ -12,7 +12,8 @@
 #include "Components.hpp"
 #include "Enemies/EnemyComponents.hpp"
 #include "GameManager.hpp"
-#include "Player.hpp"
+#include "GameState.hpp"
+#include "Player/Player.hpp"
 #include "SpriteSheet2D.hpp"
 
 using namespace RType;
@@ -41,6 +42,7 @@ namespace {
             std::chrono::duration<float>(PLAYER_DEATH_DURATION + 0.05f));
         MasterClock::systemMasterClock(clock);
         playerDeath(gm, clock);
+        systemGameState(gm);
     }
 
 } // namespace

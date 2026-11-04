@@ -5,7 +5,7 @@
 ** Background
 */
 
-#include "Background.hpp"
+#include "Common/Background.hpp"
 
 #include <algorithm>
 
@@ -35,7 +35,6 @@ namespace RType::Server {
 
         if (overshoot < 0.f)
             return;
-        // Stops on the boss room, the level's last screen.
         for (auto [_, background, pos, velocity] :
             gm.view<Background, Position2D, Velocity2D>().getVector()) {
             pos.x += overshoot;

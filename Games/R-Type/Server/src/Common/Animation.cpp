@@ -5,7 +5,7 @@
 ** Animation
 */
 
-#include "Animation.hpp"
+#include "Common/Animation.hpp"
 #include "SpriteSheet2D.hpp"
 
 namespace RType::Server {
