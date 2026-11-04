@@ -138,6 +138,76 @@ namespace RType {
             const sol::protected_function_result &result);
 
         /**
+         * @brief Lets scripts add the engine's own systems by name, with
+         * gm:addSystem("DrawSprite2D"). The name is the C++ function's
+         * without its "system" prefix.
+         * @throw UnknownSystem If the name is not an engine system.
+         */
+        static void registerSystems(sol::state &lua);
+
+        /**
+         * @brief Creates one engine system, as registered by
+         * registerSystems.
+         */
+        using SystemFactory = std::function<SystemId(GameManager &)>;
+
+        /**
+         * @brief Wraps an engine system into a factory that creates it, with
+         * the components read from the system's own parameters. Defined in
+         * EngineSystems.cpp, the only place that uses it.
+         */
+        template <typename... Components>
+        static SystemFactory makeSystem(void (*system)(Components...));
+
+        /**
+         * @brief Same, for a system that also takes the GameManager first.
+         */
+        template <typename... Components>
+        static SystemFactory makeSystem(
+            void (*system)(GameManager &, Components...));
+
+        /**
+         * @brief Every engine system scripts can add, by name. Defined in
+         * EngineSystems.cpp.
+         */
+        static const std::unordered_map<std::string, SystemFactory>
+            systemFactories;
+
+        /**
+         * @brief Lets scripts create entities and give them the engine's
+         * components by name, with gm:createEntity() and
+         * gm:addComponent(entity, "Position2D", {x = 10, y = 20}). Fields
+         * left out keep the component's default value.
+         * @throw UnknownComponent If the name is not an engine component.
+         */
+        static void registerComponents(sol::state &lua);
+
+        /**
+         * @brief Adds one engine component to an entity, built from the
+         * table given by the script (or its defaults if there is none).
+         */
+        using ComponentFactory = std::function<void(
+            GameManager &, Entity, const sol::optional<sol::table> &)>;
+
+        /**
+         * @brief Every component scripts can add, by name. Defined in
+         * EngineComponents.cpp.
+         */
+        static const std::unordered_map<std::string, ComponentFactory>
+            componentFactories;
+
+        static void registerGameManager(sol::state &lua)
+        {
+            lua.new_usertype<GameManager>("GameManager", sol::no_constructor);
+            registerSystem<>(lua);
+            lua["GameManager"]["createEntity"] = &GameManager::createEntity;
+            lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;
+            lua["GameManager"]["hasEntity"] = &GameManager::hasEntity;
+            registerSystems(lua);
+            registerComponents(lua);
+        }
+
+        /**
          * @brief Exposes GameManager to Lua, so that scripts can call
          * gm:createSystem(func). The given Lua function is called each
          * update() with the GameManager.
@@ -145,13 +215,13 @@ namespace RType {
         template <typename... Components>
         static void registerSystem(sol::state &lua)
         {
-            lua.new_usertype<GameManager>("GameManager",
-                "createSystem", [](GameManager &gm, sol::protected_function f) {
+            
+                lua["GameManager"]["createSystem"] = [](GameManager &gm, sol::protected_function f) {
                     return gm.createSystem<Components...>(
                         [f](GameManager &gm, Components &...c) {
                             checkScriptResult(f(gm, c...));
                         });
-                });
+                };
         }
 
     };

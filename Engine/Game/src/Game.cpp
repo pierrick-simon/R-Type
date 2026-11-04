@@ -18,7 +18,7 @@ namespace RType {
         sol::state lua;
 
         lua.open_libraries(sol::lib::base);
-        registerSystem<>(lua);
+        registerGameManager(lua);
         try {
 #if defined(__DEBUG__)
             GameManager gm(true);

@@ -132,6 +132,30 @@ namespace RType {
         }
     };
 
+    /**
+     * @brief Raised when a script asks for an engine system that does not
+     * exist.
+     */
+    class UnknownSystem : public EngineException {
+    public:
+        UnknownSystem(const std::string &system) :
+            EngineException("Unknown system: " + system)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script asks for an engine component that does
+     * not exist.
+     */
+    class UnknownComponent : public EngineException {
+    public:
+        UnknownComponent(const std::string &component) :
+            EngineException("Unknown component: " + component)
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

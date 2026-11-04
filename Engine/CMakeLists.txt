@@ -230,10 +230,12 @@ set(GAME Game)
 set(SRCS_GAME
     ${GAME}/src/Main.cpp
     ${GAME}/src/Game.cpp
+    ${GAME}/src/EngineSystems.cpp
+    ${GAME}/src/EngineComponents.cpp
 )
 
 add_library(${GAME_LIB_NAME} STATIC ${SRCS_GAME} ${SRCS_SHARED})
 target_include_directories(${GAME_LIB_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/${GAME}/include
 )
-target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical2D sol2::sol2)
+target_link_libraries(${GAME_LIB_NAME} PUBLIC engine-system engine-graphical2D engine-graphical3D engine-audio sol2::sol2)
