@@ -1,0 +1,121 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** EngineBindings
+*/
+
+#include "Camera3D.hpp"
+#include "Clock.hpp"
+#include "Draw3D.hpp"
+#include "Font.hpp"
+#include "Friction2D.hpp"
+#include "Game.hpp"
+#include "GravityField2D.hpp"
+#include "Keybind.hpp"
+#include "Listener.hpp"
+#include "Model3D.hpp"
+#include "ModelAnimation3D.hpp"
+#include "Origin2D.hpp"
+#include "Position2D.hpp"
+#include "Position3D.hpp"
+#include "Size2D.hpp"
+#include "Sound.hpp"
+#include "Sprite2D.hpp"
+#include "Sprite3D.hpp"
+#include "SpriteSheet2D.hpp"
+#include "SpriteSheet3D.hpp"
+#include "Text2D.hpp"
+#include "Texture2D.hpp"
+#include "Velocity2D.hpp"
+
+namespace RType {
+
+    const std::unordered_map<std::string, Game::SystemFactory>
+        Game::systemFactories = {
+        // engine-system
+        {"Clock", makeSystem(Clock::systemClock)},
+        {"MasterClock", makeSystem(MasterClock::systemMasterClock)},
+        {"Velocity2D", makeSystem(Velocity2D::systemVelocity2D)},
+        {"MasterVelocity2D", makeSystem(Velocity2D::systemMasterVelocity2D)},
+        {"Friction2D", makeSystem(Friction2D::systemFriction2D)},
+        {"MasterFriction2D", makeSystem(Friction2D::systemMasterFriction2D)},
+        {"GravityField2D", makeSystem(GravityField2D::systemGravityField2D)},
+        {"MasterGravityField2D", makeSystem(GravityField2D::systemMasterGravityField2D)},
+        // engine-graphical2D
+        {"ClearWindow", makeSystem(Window::systemClearWindow)},
+        {"KeyboardManager", makeSystem(KeyboardManager::systemKeyboardManager)},
+        {"KeyboardManagerClear", makeSystem(KeyboardManager::systemKeyboardManagerClear)},
+        {"MouseManager", makeSystem(MouseManager::systemMouseManager)},
+        {"UpdateKeybind", makeSystem(Keybind::systemUpdateKeybind)},
+        {"DrawText2D", makeSystem(Text2D::systemDrawText2D)},
+        {"DrawSprite2D", makeSystem(Sprite2D::systemDrawSprite2D)},
+        {"DrawSpriteSheet2D", makeSystem(SpriteSheet2D::systemDrawSpriteSheet2D)},
+        {"AnimateSpriteSheet2D", makeSystem(SpriteSheet2D::systemAnimateSpriteSheet2D)},
+        {"MasterAnimateSpriteSheet2D", makeSystem(SpriteSheet2D::systemMasterAnimateSpriteSheet2D)},
+        // engine-graphical3D
+        {"Draw3D", makeSystem(Draw3D::systemDraw3D)},
+        {"DrawSprite3D", makeSystem(Sprite3D::systemDrawSprite3D)},
+        {"UpdateCamera", makeSystem(Camera3D::systemUpdateCamera)},
+        {"AnimateSpriteSheet3D", makeSystem(SpriteSheet3D::systemAnimateSpriteSheet3D)},
+        {"MasterAnimateSpriteSheet3D", makeSystem(SpriteSheet3D::systemMasterAnimateSpriteSheet3D)},
+        {"DrawSpriteSheet3D", makeSystem(SpriteSheet3D::systemDrawSpriteSheet3D)},
+        // engine-audio
+        {"Sound", makeSystem(Sound::systemSound)},
+        {"Sound2D", makeSystem(Sound::systemSound2D)},
+        {"Listener2D", makeSystem(Listener::systemListener2D)},
+    };
+
+    void Game::bindEngineComponents(sol::state &lua)
+    {
+        // engine-system
+        bindComponent<Position2D>(lua, "Position2D",
+            "x", &Position2D::x, "y", &Position2D::y);
+        bindComponent<Position3D>(lua, "Position3D",
+            "x", &Position3D::x, "y", &Position3D::y, "z", &Position3D::z);
+        bindComponent<Origin2D>(lua, "Origin2D",
+            "x", &Origin2D::x, "y", &Origin2D::y);
+        bindComponent<Size2D>(lua, "Size2D",
+            "height", &Size2D::height, "width", &Size2D::width);
+        bindComponent<Velocity2D>(lua, "Velocity2D",
+            "x", &Velocity2D::x, "y", &Velocity2D::y);
+        bindComponent<Friction2D>(lua, "Friction2D", "f", &Friction2D::f);
+        bindComponent<GravityField2D>(lua, "GravityField2D",
+            "x", &GravityField2D::x, "y", &GravityField2D::y,
+            "g", &GravityField2D::g);
+        bindComponent<Clock>(lua, "Clock", "speed", &Clock::speed);
+
+        // engine-graphical2D
+        bindComponent<Texture2D>(lua, "Texture2D");
+        bindComponent<Font>(lua, "Font");
+        bindComponent<Sprite2D>(lua, "Sprite2D",
+            "scale", &Sprite2D::scale, "rotation", &Sprite2D::rotation,
+            "flip", &Sprite2D::flip);
+        bindComponent<SpriteSheet2D>(lua, "SpriteSheet2D",
+            "rows", nested(&SpriteSheet2D::recNb, &Size2D::height),
+            "columns", nested(&SpriteSheet2D::recNb, &Size2D::width),
+            "currentTile", &SpriteSheet2D::currentTile,
+            "frameDuration", milliseconds(&SpriteSheet2D::frameDuration),
+            "animation", &SpriteSheet2D::animation,
+            "scale", &SpriteSheet2D::scale,
+            "rotation", &SpriteSheet2D::rotation,
+            "flip", &SpriteSheet2D::flip);
+        bindComponent<Text2D>(lua, "Text2D",
+            "str", &Text2D::str, "fontSize", &Text2D::fontSize,
+            "rotation", &Text2D::rotation, "spacing", &Text2D::spacing);
+
+        // engine-graphical3D
+        bindComponent<Model3D>(lua, "Model3D");
+        bindComponent<ModelAnimation3D>(lua, "ModelAnimation3D");
+        bindComponent<Sprite3D>(lua, "Sprite3D", "scale", &Sprite3D::scale);
+        bindComponent<SpriteSheet3D>(lua, "SpriteSheet3D",
+            "index", &SpriteSheet3D::index,
+            "frameDuration", milliseconds(&SpriteSheet3D::frameDuration),
+            "animation", &SpriteSheet3D::animation,
+            "scale", &SpriteSheet3D::scale);
+
+        // engine-audio
+        bindComponent<Listener>(lua, "Listener");
+    }
+
+}

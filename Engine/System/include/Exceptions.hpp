@@ -24,7 +24,7 @@ namespace RType {
          * "Engine Error: ".
          */
         EngineException(const std::string &str) :
-            _str("Engine Error: " + str) {};
+            _message(str), _str("Engine Error: " + str) {};
 
         /** @brief Returns the description of the error. */
         [[nodiscard]] const char *what() const noexcept override
@@ -32,7 +32,17 @@ namespace RType {
             return _str.c_str();
         };
 
+        /**
+         * @brief Returns the description of the error, without the
+         * "Engine Error: " prefix.
+         */
+        [[nodiscard]] const std::string &message() const noexcept
+        {
+            return _message;
+        };
+
     private:
+        std::string _message;
         std::string _str;
     };
 
@@ -152,6 +162,20 @@ namespace RType {
     public:
         UnknownComponent(const std::string &component) :
             EngineException("Unknown component: " + component)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script gives a component a field that does not
+     * exist, a value of the wrong type, or leaves out a required field.
+     */
+    class InvalidComponentArgs : public EngineException {
+    public:
+        InvalidComponentArgs(
+            const std::string &component, const std::string &reason) :
+            EngineException(
+                "Invalid arguments for " + component + ": " + reason)
         {
         }
     };

@@ -8,13 +8,16 @@
 #ifndef GAME_HPP_
 #define GAME_HPP_
 
+#include <chrono>
 #include <functional>
 #include <list>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <sol/sol.hpp>
 
 #include "Clock.hpp"
+#include "Exceptions.hpp"
 #include "GameManager.hpp"
 #include "KeyboardManager.hpp"
 #include "MouseManager.hpp"
@@ -138,6 +141,15 @@ namespace RType {
             const sol::protected_function_result &result);
 
         /**
+         * @brief Turns a C++ exception thrown while Lua was calling the
+         * engine into a Lua error. An EngineException is passed without its
+         * "Engine Error: " prefix, which checkScriptResult adds back once.
+         */
+        static int handleException(lua_State *L,
+            sol::optional<const std::exception &> exception,
+            sol::string_view description);
+
+        /**
          * @brief Lets scripts add the engine's own systems by name, with
          * gm:addSystem("DrawSprite2D"). The name is the C++ function's
          * without its "system" prefix.
@@ -153,8 +165,7 @@ namespace RType {
 
         /**
          * @brief Wraps an engine system into a factory that creates it, with
-         * the components read from the system's own parameters. Defined in
-         * EngineSystems.cpp, the only place that uses it.
+         * the components read from the system's own parameters.
          */
         template <typename... Components>
         static SystemFactory makeSystem(void (*system)(Components...));
@@ -168,44 +179,95 @@ namespace RType {
 
         /**
          * @brief Every engine system scripts can add, by name. Defined in
-         * EngineSystems.cpp.
+         * EngineBindings.cpp, the only file to edit to make a new system
+         * usable from Lua.
          */
         static const std::unordered_map<std::string, SystemFactory>
             systemFactories;
 
         /**
-         * @brief Lets scripts create entities and give them the engine's
-         * components by name, with gm:createEntity() and
-         * gm:addComponent(entity, "Position2D", {x = 10, y = 20}). Fields
-         * left out keep the component's default value.
+         * @brief Lets scripts give the engine's components to entities by
+         * name, with gm:addComponent(entity, "Position2D", {x = 10}).
+         * Fields left out keep the component's default value.
          * @throw UnknownComponent If the name is not an engine component.
          */
         static void registerComponents(sol::state &lua);
 
         /**
-         * @brief Adds one engine component to an entity, built from the
-         * table given by the script (or its defaults if there is none).
+         * @brief Every engine component scripts can use, one bindComponent
+         * each. Defined in EngineBindings.cpp, the only file to edit to
+         * make a new component usable from Lua.
          */
-        using ComponentFactory = std::function<void(
-            GameManager &, Entity, const sol::optional<sol::table> &)>;
+        static void bindEngineComponents(sol::state &lua);
 
         /**
-         * @brief Every component scripts can add, by name. Defined in
-         * EngineComponents.cpp.
+         * @brief Makes a component usable from Lua under the given name:
+         * scripts can then add it with gm:addComponent and read or write
+         * the given fields, which are passed as sol::usertype expects them
+         * ("x", &Position2D::x, ...).
+         *
+         * A component without a default constructor is built from the
+         * "path" field of the script's table instead.
          */
-        static const std::unordered_map<std::string, ComponentFactory>
+        template <typename Component, typename... Fields>
+        static void bindComponent(
+            sol::state &lua, const std::string &name, Fields &&...fields);
+
+        /**
+         * @brief Adds one component to an entity, built from the table
+         * given by the script (or its defaults if there is none).
+         */
+        using ComponentArgs = sol::optional<sol::table>;
+        using ComponentFactory =
+            std::function<void(GameManager &, Entity, const ComponentArgs &)>;
+
+        /**
+         * @brief Every component scripts can add, by name, filled by
+         * bindComponent.
+         */
+        static std::unordered_map<std::string, ComponentFactory>
             componentFactories;
 
-        static void registerGameManager(sol::state &lua)
-        {
-            lua.new_usertype<GameManager>("GameManager", sol::no_constructor);
-            registerSystem<>(lua);
-            lua["GameManager"]["createEntity"] = &GameManager::createEntity;
-            lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;
-            lua["GameManager"]["hasEntity"] = &GameManager::hasEntity;
-            registerSystems(lua);
-            registerComponents(lua);
-        }
+        /**
+         * @brief Lua code that copies every field of the script's table
+         * onto the component, through its usertype. Written in Lua so that
+         * a wrong field stops inside Lua and comes back as a normal error,
+         * instead of jumping over C++ code.
+         */
+        static const char *const setFieldsScript;
+
+        /**
+         * @brief Builds a component from the script's table: its defaults
+         * overwritten by the table's fields, or, for a component that has
+         * no default constructor, from the table's "path".
+         * @throw InvalidComponentArgs If a field does not exist or has the
+         * wrong type, or if the path is missing.
+         */
+        template <typename Component>
+        static Component makeComponent(
+            const std::string &name, const ComponentArgs &args);
+
+        /**
+         * @brief Exposes a std::chrono::milliseconds member to Lua as a
+         * plain number of milliseconds, for bindComponent.
+         */
+        template <typename Component>
+        static auto milliseconds(std::chrono::milliseconds Component::*member);
+
+        /**
+         * @brief Exposes a member of a member to Lua as if it was a direct
+         * field, such as SpriteSheet2D::recNb.height as "rows", for
+         * bindComponent.
+         */
+        template <typename Component, typename Inner, typename T>
+        static auto nested(Inner Component::*outer, T Inner::*inner);
+
+        /**
+         * @brief Exposes GameManager and Entity to Lua, with everything
+         * scripts can do on them: entities, systems and components. Called
+         * once, before any script is loaded.
+         */
+        static void registerGameManager(sol::state &lua);
 
         /**
          * @brief Exposes GameManager to Lua, so that scripts can call
@@ -225,6 +287,90 @@ namespace RType {
         }
 
     };
+
+    template <typename... Components>
+    Game::SystemFactory Game::makeSystem(void (*system)(Components...))
+    {
+        return [system](GameManager &gm) {
+            return gm.createSystem<std::remove_cvref_t<Components>...>(system);
+        };
+    }
+
+    template <typename... Components>
+    Game::SystemFactory Game::makeSystem(
+        void (*system)(GameManager &, Components...))
+    {
+        return [system](GameManager &gm) {
+            return gm.createSystem<std::remove_cvref_t<Components>...>(system);
+        };
+    }
+
+    template <typename Component>
+    auto Game::milliseconds(std::chrono::milliseconds Component::*member)
+    {
+        return sol::property(
+            [member](Component &c) {
+                return (c.*member).count();
+            },
+            [member](Component &c, std::int64_t ms) {
+                c.*member = std::chrono::milliseconds(ms);
+            });
+    }
+
+    template <typename Component, typename Inner, typename T>
+    auto Game::nested(Inner Component::*outer, T Inner::*inner)
+    {
+        return sol::property(
+            [outer, inner](Component &c) {
+                return c.*outer.*inner;
+            },
+            [outer, inner](Component &c, T value) {
+                c.*outer.*inner = value;
+            });
+    }
+
+    template <typename Component>
+    Component Game::makeComponent(
+        const std::string &name, const ComponentArgs &args)
+    {
+        if constexpr (std::is_default_constructible_v<Component>) {
+            Component component {};
+
+            if (args) {
+                sol::state_view lua(args->lua_state());
+                sol::protected_function setFields =
+                    lua.registry()["setFields"];
+                sol::protected_function_result result =
+                    setFields(&component, *args);
+
+                if (!result.valid()) {
+                    sol::error error = result;
+                    throw InvalidComponentArgs(name, error.what());
+                }
+            }
+            return component;
+        } else {
+            sol::optional<std::string> path;
+
+            if (args)
+                path = args->get<sol::optional<std::string>>("path");
+            if (!path)
+                throw InvalidComponentArgs(name, "missing 'path'");
+            return Component(*path);
+        }
+    }
+
+    template <typename Component, typename... Fields>
+    void Game::bindComponent(
+        sol::state &lua, const std::string &name, Fields &&...fields)
+    {
+        lua.new_usertype<Component>(name, std::forward<Fields>(fields)...);
+        componentFactories[name] = [name](GameManager &gm, Entity entity,
+                                       const ComponentArgs &args) {
+            gm.addComponent<Component>(
+                entity, makeComponent<Component>(name, args));
+        };
+    }
 
 } // namespace RType
 

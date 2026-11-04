@@ -18,6 +18,7 @@ namespace RType {
         sol::state lua;
 
         lua.open_libraries(sol::lib::base);
+        lua.set_exception_handler(&handleException);
         registerGameManager(lua);
         try {
 #if defined(__DEBUG__)
@@ -92,6 +93,35 @@ namespace RType {
         checkScriptResult(
             lua.script_file(path, env, &sol::script_pass_on_error));
         checkScriptResult(env["init"](gm));
+    }
+
+    void Game::registerGameManager(sol::state &lua)
+    {
+        lua.new_usertype<GameManager>("GameManager", sol::no_constructor);
+        lua.new_usertype<Entity>("Entity", sol::no_constructor,
+            sol::meta_function::to_string, [](const Entity &entity) {
+                return "#" + std::to_string(entity.index()) + " ("
+                    + std::to_string(entity.generation()) + ")";
+            });
+        registerSystem<>(lua);
+        lua["GameManager"]["createEntity"] = &GameManager::createEntity;
+        lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;
+        lua["GameManager"]["hasEntity"] = &GameManager::hasEntity;
+        registerSystems(lua);
+        registerComponents(lua);
+    }
+
+    int Game::handleException(lua_State *L,
+        sol::optional<const std::exception &> exception,
+        sol::string_view description)
+    {
+        const auto *engineError = exception
+            ? dynamic_cast<const EngineException *>(&exception.value())
+            : nullptr;
+
+        if (engineError)
+            return sol::stack::push(L, engineError->message());
+        return sol::stack::push(L, description);
     }
 
     void Game::checkScriptResult(const sol::protected_function_result &result)

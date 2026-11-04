@@ -232,6 +232,7 @@ set(SRCS_GAME
     ${GAME}/src/Game.cpp
     ${GAME}/src/EngineSystems.cpp
     ${GAME}/src/EngineComponents.cpp
+    ${GAME}/src/EngineBindings.cpp
 )
 
 add_library(${GAME_LIB_NAME} STATIC ${SRCS_GAME} ${SRCS_SHARED})
