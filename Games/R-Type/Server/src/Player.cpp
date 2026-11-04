@@ -9,6 +9,7 @@
 #include "Destroy.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include "Assets.hpp"
 #include "Background.hpp"
@@ -17,6 +18,7 @@
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
+#include "Lobby.hpp"
 #include "Terrain.hpp"
 #include "UpdateClientEntity.hpp"
 
@@ -221,9 +223,22 @@ namespace RType::Server {
 
     void systemCreateSpaceShip(GameManager &gm)
     {
+        constexpr std::size_t PLAYER_SHEETS =
+            Asset::PLAYER_SHEET_5 - Asset::PLAYER_SHEET_1 + 1;
+        std::size_t index = gm.view<Player>().getVector().size();
+
+        std::unordered_set<uint32_t> connected;
+
+        if (!isGameStarted())
+            return;
+        gm.view<ServerManager>().each([&connected](Entity, ServerManager &s) {
+            for (const auto &[id, _] : s.getClients())
+                connected.insert(id);
+        });
         for (auto [entity, defaultClient] :
             gm.view<DefaulClient>().getVector()) {
-            if (defaultClient.getInit())
+            if (defaultClient.getInit() ||
+                !connected.contains(defaultClient.getId()))
                 continue;
             defaultClient.init();
 
@@ -242,9 +257,12 @@ namespace RType::Server {
                 PLAYER_FRAME_MS,
                 SCALE,
                 false);
+            const AssetId spaceShipSpriteSheet = Asset::PLAYER_SHEET_1 +
+                static_cast<AssetId>(index % PLAYER_SHEETS);
+            index++;
             gm.addComponent<UpdateClientEntity>(entity,
                 EntityType::SPRITESHEET,
-                Asset::PLAYER_SHEET_1,
+                spaceShipSpriteSheet,
                 gm,
                 entity);
         }

@@ -11,10 +11,12 @@
 #include "Bullet.hpp"
 #include "Clock.hpp"
 #include "Config.hpp"
+#include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
+#include "Lobby.hpp"
 #include "Player.hpp"
 #include "ServerManager.hpp"
 #include "SetClientEntity.hpp"
@@ -31,10 +33,15 @@
 
 namespace RType::Server {
 
-    Entity createServer(GameManager &gm)
+    Entity createServer(GameManager &gm, short port)
+    {
+        return createServer(gm, ServerManager(port));
+    }
+
+    Entity createServer(GameManager &gm, ServerManager &&manager)
     {
         auto server = gm.createEntity();
-        gm.addComponent<ServerManager>(server, 12345);
+        gm.addComponent<ServerManager>(server, std::move(manager));
         gm.createSystem<ServerManager>(ServerManager::systemServerReceived);
         gm.createSystem<UpdateText2D, Text2D>(UpdateText2D::systemUpdateText2D);
         gm.createSystem<UpdateSprite2D, Sprite2D>(
@@ -76,6 +83,7 @@ namespace RType::Server {
 
     void createSystems(GameManager &gm, const EnemyHooks &enemyHooks)
     {
+        gm.createSystem<>(systemLobby);
         gm.createSystem<MasterClock>(
             SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
         gm.createSystem<PlayOnce, SpriteSheet2D>(playOnceAnimation);

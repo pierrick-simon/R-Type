@@ -30,8 +30,8 @@
 namespace RType {
 
     #define HEALTH_CHECK_TIME 2
-    #define TIMEOUT 6
-    #define LOGIN_CHECK 3
+    #define TIMEOUT 10
+    #define LOGIN_CHECK 2
 
     enum Opcode : uint8_t {
         LOGIN = 1,

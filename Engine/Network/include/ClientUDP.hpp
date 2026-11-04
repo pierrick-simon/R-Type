@@ -25,6 +25,7 @@ namespace RType {
         void send(uint8_t op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
         [[nodiscard]] uint16_t getMyId() const;
+        [[nodiscard]] bool isTimedOut() const;
 
         void addManage(uint8_t op, ManageFunc func, bool override = false);
 
@@ -57,6 +58,11 @@ namespace RType {
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
+        void manageLogout(
+            const Header &header, const std::vector<uint8_t> &payload);
+        std::chrono::steady_clock::time_point _lastReceived =
+            std::chrono::steady_clock::now();
+        bool _closedByServer = false;
 
         std::map<uint8_t, ManageFunc> _protocolClient = {
             {Opcode::LOGIN,
@@ -66,6 +72,10 @@ namespace RType {
             {Opcode::HEALTH,
                 [this](const Header &h, const std::vector<uint8_t> &p) {
                     manageHealth(h, p);
+                }},
+            {Opcode::LOGOUT,
+                [this](const Header &h, const std::vector<uint8_t> &p) {
+                    manageLogout(h, p);
                 }},
         };
     };
