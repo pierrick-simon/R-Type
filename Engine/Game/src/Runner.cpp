@@ -8,6 +8,7 @@
 #include <iostream>
 #include <sol/sol.hpp>
 
+#include "ConfigBuilder.hpp"
 #include "Exceptions.hpp"
 #include "Game.hpp"
 #include "GameManagerBinding.hpp"
@@ -25,6 +26,7 @@ namespace RType::Game {
         lua.set_exception_handler(&Scripts::handleException);
         GameManagerBinding::registerFunctions(lua);
         try {
+            ConfigBuilder::build(GameConfig, "config.conf");
 #if defined(__DEBUG__)
             GameManager gm(true);
 #else

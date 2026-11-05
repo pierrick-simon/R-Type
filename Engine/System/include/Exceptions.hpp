@@ -144,6 +144,22 @@ namespace RType {
     };
 
     /**
+     * @brief Raised when the configuration file holds a line the engine
+     * does not understand.
+     */
+    class ConfigError : public EngineException {
+    public:
+        /**
+         * @param where The file and the line, such as "config.conf:3".
+         * @param reason What is wrong.
+         */
+        ConfigError(const std::string &where, const std::string &reason) :
+            EngineException("Config error: " + where + ": " + reason)
+        {
+        }
+    };
+
+    /**
      * @brief Raised when a Lua script fails to load or one of its
      * functions raises an error.
      */
