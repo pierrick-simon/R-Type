@@ -88,6 +88,11 @@ namespace RType {
         return _sm.hasSystem(id);
     }
 
+    bool GameManager::isUpdating() const
+    {
+        return _updating;
+    }
+
     void GameManager::flush()
     {
         std::exception_ptr error = nullptr;

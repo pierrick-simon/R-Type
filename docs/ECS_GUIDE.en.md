@@ -764,6 +764,7 @@ public:
     SystemId createSystem(std::function<void(GameManager &, Components &...)> func);
     void destroySystem(SystemId id);
     bool hasSystem(SystemId id) const;
+    bool isUpdating() const;                 // true during update()
 };
 
 }
