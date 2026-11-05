@@ -5,6 +5,7 @@
 ** InputBinding
 */
 
+#include "GameManagerBinding.hpp"
 #include "InputBinding.hpp"
 #include "KeyboardManager.hpp"
 #include "MouseManager.hpp"
@@ -80,7 +81,7 @@ namespace RType::Game {
             "isReleased", contains(&KeyboardManager::keyReleased));
         lua["GameManager"]["keyboard"] =
             [](GameManager &gm) -> KeyboardManager & {
-                return findManager<KeyboardManager>(
+                return GameManagerBinding::findModuleComponent<KeyboardManager>(
                     gm, "gm:keyboard", "Keyboard");
             };
 
@@ -106,7 +107,7 @@ namespace RType::Game {
             }),
             "wheel", sol::readonly_property(&MouseManager::getWheel));
         lua["GameManager"]["mouse"] = [](GameManager &gm) -> MouseManager & {
-            return findManager<MouseManager>(gm, "gm:mouse", "Mouse");
+            return GameManagerBinding::findModuleComponent<MouseManager>(gm, "gm:mouse", "Mouse");
         };
     }
 

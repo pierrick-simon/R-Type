@@ -81,7 +81,10 @@ namespace RType::Game {
         bindComponent<GravityField2D>(lua, "GravityField2D",
             "x", &GravityField2D::x, "y", &GravityField2D::y,
             "g", &GravityField2D::g);
-        bindComponent<Clock>(lua, "Clock", "speed", &Clock::speed);
+        bindComponent<Clock>(lua, "Clock", "speed", &Clock::speed,
+            "elapsed", [](const Clock &clock) {
+                return clock.getElapsed().count();
+            });
 
         // engine-graphical2D
         bindComponent<Texture2D>(lua, "Texture2D");

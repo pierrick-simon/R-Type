@@ -12,9 +12,6 @@
 #include <vector>
 #include <sol/sol.hpp>
 
-#include "Exceptions.hpp"
-#include "GameManager.hpp"
-
 namespace RType::Game {
 
     /**
@@ -52,34 +49,7 @@ namespace RType::Game {
          */
         template <typename Manager, typename Value>
         static auto contains(std::vector<Value> Manager::*list);
-
-        /**
-         * @brief Finds the manager a module created, for gm:keyboard and
-         * gm:mouse.
-         * @param function The Lua function the script called, for the
-         * error message.
-         * @param module The module that creates the manager.
-         * @throw ModuleNotLoaded If no entity has the manager.
-         */
-        template <typename Manager>
-        static Manager &findManager(GameManager &gm, const char *function,
-            const char *module);
     };
-
-    template <typename Manager>
-    Manager &InputBinding::findManager(
-        GameManager &gm, const char *function, const char *module)
-    {
-        Manager *manager = nullptr;
-
-        gm.view<Manager>().each([&manager](Entity, Manager &m) {
-            if (!manager)
-                manager = &m;
-        });
-        if (!manager)
-            throw ModuleNotLoaded(function, module);
-        return *manager;
-    }
 
     template <typename Manager, typename Value>
     auto InputBinding::contains(std::vector<Value> Manager::*list)

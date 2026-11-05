@@ -12,6 +12,7 @@
 #include "GameManagerBinding.hpp"
 #include "InputBinding.hpp"
 #include "SystemBinding.hpp"
+#include "TimeBinding.hpp"
 #include "ViewBinding.hpp"
 
 namespace RType::Game {
@@ -31,6 +32,7 @@ namespace RType::Game {
         SystemBinding::registerFunctions(lua);
         ViewBinding::registerFunctions(lua);
         InputBinding::registerFunctions(lua);
+        TimeBinding::registerFunctions(lua);
     }
 
 } // namespace RType::Game
