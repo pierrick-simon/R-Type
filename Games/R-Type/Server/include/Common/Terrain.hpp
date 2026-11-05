@@ -55,6 +55,11 @@ namespace RType::Server {
 
     bool touchesTerrain(
         GameManager &gm, const Position2D &pos, const CollisionMask &shape);
+
+    /** @brief Whether a screen rectangle overlaps a solid pixel of the level.
+     */
+    bool rectTouchesTerrain(
+        GameManager &gm, float x, float y, float width, float height);
 } // namespace RType::Server
 
 #endif

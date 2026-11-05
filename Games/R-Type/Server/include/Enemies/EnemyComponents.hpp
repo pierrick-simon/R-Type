@@ -131,6 +131,16 @@ namespace RType {
     struct Lifetime {
         float remaining = 0.f;
     };
+
+    /** @brief Destroys the enemy projectiles that touch it. */
+    struct ShotBlocker {};
+
+    /** @brief Hurts the enemies it touches, at most once per cooldown. */
+    struct ContactDamage {
+        int damage = 1;
+        float cooldown = 0.f;
+        float timer = 0.f;
+    };
 } // namespace RType
 
 #endif

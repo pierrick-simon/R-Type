@@ -9,6 +9,7 @@
 
 #include "Assets.hpp"
 #include "Common/Bullet.hpp"
+#include "Common/Terrain.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyComponents.hpp"
 #include "Player/Destroy.hpp"
@@ -103,6 +104,32 @@ namespace RType::Server {
             (void) tag;
             if (pos.x > WINDOW_WIDTH)
                 destroyNetworked(gm, bullet);
+        }
+    }
+
+    void shotTerrainSystem(GameManager &gm)
+    {
+        for (auto [shot, projectile, pos, box] :
+            gm.view<Projectile, Position2D, Hitbox>().getVector()) {
+            // The reflect laser bounces instead, see reflectSystem.
+            if (gm.hasComponent<ReflectShot>(shot))
+                continue;
+            const bool hit = rectTouchesTerrain(gm,
+                pos.x + box.offsetX,
+                pos.y + box.offsetY,
+                box.width,
+                box.height);
+
+            // The boss sits in the wall and the walkers shoot from the
+            // floor: an enemy shot only stops once it got out of the walls.
+            if (!projectile.fromPlayer &&
+                !gm.hasComponent<ClearOfTerrain>(shot)) {
+                if (!hit)
+                    gm.addComponent<ClearOfTerrain>(shot);
+                continue;
+            }
+            if (hit)
+                destroyNetworked(gm, shot);
         }
     }
 

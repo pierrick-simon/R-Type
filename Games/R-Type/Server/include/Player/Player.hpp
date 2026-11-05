@@ -19,6 +19,7 @@
 
 namespace RType::Server {
 
+    float elapsedSeconds(const MasterClock &clock);
     void systemCreateSpaceShip(GameManager &gm);
     void respawnPlayer(GameManager &gm, Entity player);
     void playerHandle(GameManager &gm, Entity entity, Player &player,

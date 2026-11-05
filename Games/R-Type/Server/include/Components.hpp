@@ -9,6 +9,7 @@
 #define COMPONENTS_HPP_
 
 #include <cstddef>
+#include <cstdint>
 #include "Config.hpp"
 #include "Entity.hpp"
 #include "PlayerPhysics.hpp"
@@ -52,6 +53,33 @@ namespace RType::Server {
     struct PlayerExplosion {
         float remaining = 0.f;
     };
+
+    enum class LaserType : std::uint8_t {
+        Reflect,
+        Helix,
+        Ring,
+        Count,
+    };
+
+    struct PowerUp {
+        LaserType laser = LaserType::Reflect;
+    };
+
+    struct Force {
+        Entity owner;
+        int level = 1;
+        LaserType laser = LaserType::Reflect;
+    };
+
+    struct ReflectShot {
+        float tipTimer = 0.f;
+        int bounces = 0;
+    };
+
+    /** @brief Enemy shot that left the walls it was fired from. */
+    struct ClearOfTerrain {};
+
+    struct RingShot {};
 
 } // namespace RType::Server
 

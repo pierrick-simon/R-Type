@@ -22,6 +22,8 @@
 #include "KeyboardManager.hpp"
 #include "Player/Hud.hpp"
 #include "UpdateClientEntity.hpp"
+#include "Weapons/Force.hpp"
+#include "Weapons/Laser.hpp"
 
 namespace RType::Server {
 
@@ -109,11 +111,18 @@ namespace RType::Server {
         makeInvincible(gm, player);
     }
 
-    void pressFire(GameManager &gm, Player &player, const Position2D &pos)
+    void pressFire(
+        GameManager &gm, Entity entity, Player &player, const Position2D &pos)
     {
         if (player.cooldown <= 0.f) {
-            spawnBullet(gm, pos);
-            player.cooldown = SHOOT_COOLDOWN;
+            // With a Force, it fires the laser instead of the ship.
+            if (const auto force = findForce(gm, entity)) {
+                fireLaser(gm, *force);
+                player.cooldown = LASER_COOLDOWN;
+            } else {
+                spawnBullet(gm, pos);
+                player.cooldown = SHOOT_COOLDOWN;
+            }
         }
         player.charging = true;
         player.charge = 0.f;
@@ -154,7 +163,7 @@ namespace RType::Server {
         for (const auto &key : keyboard.keyPressed) {
             setHeld(player, key, true);
             if (alive && key == Key::Value::Space)
-                pressFire(gm, player, pos);
+                pressFire(gm, entity, player, pos);
         }
         for (const auto &key : keyboard.keyReleased) {
             setHeld(player, key, false);

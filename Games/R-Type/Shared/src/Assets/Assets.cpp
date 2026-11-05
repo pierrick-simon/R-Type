@@ -44,6 +44,14 @@ namespace RType::Asset {
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet4.gif"},
             {PLAYER_SHEET_5,
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet5.gif"},
+
+            {POWER_UP, "R-Type/sprites/Weapons/PowerUp.png"},
+            {FORCE, "R-Type/sprites/Weapons/Force.png"},
+            {REFLECT_LASER, "R-Type/sprites/Weapons/ReflectLaser.png"},
+            {HELIX_LASER, "R-Type/sprites/Weapons/HelixLaser.png"},
+            {RING_LASER, "R-Type/sprites/Weapons/RingLaser.png"},
+            {LASER_MUZZLE, "R-Type/sprites/Weapons/LaserMuzzle.png"},
+
             {GUNSHOT_SOUND, "R-Type/sprites/gunshot.mp3"},
             {EXPLOSION_SOUND, "R-Type/sprites/explosion.mp3"},
 

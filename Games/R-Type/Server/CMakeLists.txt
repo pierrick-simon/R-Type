@@ -36,6 +36,9 @@ set(GAME_SRCS
         src/Player/Hud.cpp
         src/Player/Player.cpp
         src/Setup.cpp
+        src/Weapons/Force.cpp
+        src/Weapons/Laser.cpp
+        src/Weapons/PowerUp.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
@@ -48,6 +51,7 @@ if (TARGET criterion)
             tests/tests_init.cpp
             tests/tests_boss.cpp
             tests/tests_lives.cpp
+            tests/tests_weapons.cpp
     )
 
     add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})

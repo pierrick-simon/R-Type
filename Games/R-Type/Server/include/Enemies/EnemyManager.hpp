@@ -26,6 +26,7 @@ namespace RType {
         std::function<void(GameManager &, Entity beam, bool facingLeft)>
             onBeamSpawn;
         std::function<void(GameManager &, float x, float y)> onBossExplosion;
+        std::function<void(GameManager &, float x, float y)> onEnemyLoot;
     };
 
     struct SpawnEvent {

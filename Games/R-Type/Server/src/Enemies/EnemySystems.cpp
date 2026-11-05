@@ -165,11 +165,57 @@ namespace RType {
                 boss.timer = 0.f;
                 return;
             }
+            const float centerX = pos.x + box.offsetX + box.width / 2.f;
+            const float centerY = pos.y + box.offsetY + box.height / 2.f;
+
             if (hooks.onEnemyDeath)
-                hooks.onEnemyDeath(gm,
-                    pos.x + box.offsetX + box.width / 2.f,
-                    pos.y + box.offsetY + box.height / 2.f);
+                hooks.onEnemyDeath(gm, centerX, centerY);
+            if (hooks.onEnemyLoot)
+                hooks.onEnemyLoot(gm, centerX, centerY);
             destroyNetworked(gm, enemy);
+        }
+
+        bool blockedByShield(GameManager &gm, const Rect &shot)
+        {
+            bool blocked = false;
+
+            gm.view<ShotBlocker, Position2D, Hitbox>().each(
+                [&](Entity, ShotBlocker &, Position2D &pos, Hitbox &box) {
+                    blocked = blocked || overlap(shot, rectOf(pos, box));
+                });
+            return blocked;
+        }
+
+        void contactDamage(
+            GameManager &gm, EnemyDirector &director, const EnemyHooks &hooks)
+        {
+            gm.view<ContactDamage, Position2D, Hitbox>().each(
+                [&](Entity,
+                    ContactDamage &contact,
+                    Position2D &cp,
+                    Hitbox &cb) {
+                    if (contact.timer > 0.f)
+                        return;
+                    const Rect contactRect = rectOf(cp, cb);
+
+                    gm.view<Enemy, Health, Position2D, Hitbox>().each(
+                        [&](Entity enemy,
+                            Enemy &info,
+                            Health &health,
+                            Position2D &ep,
+                            Hitbox &eb) {
+                            if (contact.timer > 0.f || health.hp <= 0 ||
+                                bossShielded(gm, enemy) ||
+                                !overlap(contactRect, rectOf(ep, eb)))
+                                return;
+                            contact.timer = contact.cooldown;
+                            health.hp -= contact.damage;
+                            if (health.hp > 0)
+                                return;
+                            director.score += info.scoreValue;
+                            killEnemy(gm, hooks, enemy, ep, eb);
+                        });
+                });
         }
 
         void fireToward(GameManager &gm, Weapon &weapon, float x, float y,
@@ -710,6 +756,9 @@ namespace RType {
             if (life.remaining <= 0.f)
                 destroyNetworked(gm, e);
         });
+        gm.view<ContactDamage>().each([&](Entity, ContactDamage &contact) {
+            contact.timer = std::max(0.f, contact.timer - delta);
+        });
     }
 
     void systemEnemyCombat(
@@ -743,6 +792,8 @@ namespace RType {
                             director.score += info.scoreValue;
                             killEnemy(gm, hooks, enemy, ep, eb);
                         });
+                } else if (blockedByShield(gm, bulletRect)) {
+                    consumed = true;
                 } else {
                     gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
                         [&](Entity target,
@@ -788,6 +839,7 @@ namespace RType {
                     killEnemy(gm, hooks, enemy, ep, eb);
                 });
         });
+        contactDamage(gm, director, hooks);
     }
 
     void registerEnemySystems(GameManager &gm, EnemyHooks hooks)

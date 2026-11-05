@@ -23,6 +23,7 @@ namespace RType::Server {
         GameManager &gm, const Position2D &shooter, int level);
     void spawnChargeEffect(GameManager &gm, Entity player);
     void bulletSystem(GameManager &gm);
+    void shotTerrainSystem(GameManager &gm);
     void chargeEffectSystem(GameManager &gm);
     void chargedShotAnimation(const ChargedShot &shot, SpriteSheet2D &sheet);
 } // namespace RType::Server

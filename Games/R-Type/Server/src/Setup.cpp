@@ -31,6 +31,9 @@
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
 #include "Velocity2D.hpp"
+#include "Weapons/Force.hpp"
+#include "Weapons/Laser.hpp"
+#include "Weapons/PowerUp.hpp"
 #include "Window.hpp"
 
 namespace RType::Server {
@@ -89,7 +92,10 @@ namespace RType::Server {
         gm.createSystem<MasterClock>(
             SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
         gm.createSystem<PlayOnce, SpriteSheet2D>(playOnceAnimation);
-        registerEnemySystems(gm, enemyHooks);
+        EnemyHooks hooks = enemyHooks;
+
+        hooks.onEnemyLoot = dropPowerUp;
+        registerEnemySystems(gm, hooks);
         registerEnemyVisualSystems(gm);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);
@@ -101,7 +107,13 @@ namespace RType::Server {
         gm.createSystem<MasterClock>(playerInvincibility);
         gm.createSystem<MasterClock>(playerDeath);
         gm.createSystem<>(systemGameState);
+        gm.createSystem<>(powerUpPickupSystem);
+        gm.createSystem<>(forceSystem);
+        gm.createSystem<Force, SpriteSheet2D>(forceAnimation);
+        gm.createSystem<MasterClock>(reflectSystem);
+        gm.createSystem<RingShot, SpriteSheet2D, Hitbox>(ringHitbox);
         gm.createSystem<>(bulletSystem);
+        gm.createSystem<>(shotTerrainSystem);
         gm.createSystem<>(chargeEffectSystem);
         gm.createSystem<>(livesHudSystem);
         gm.createSystem<ChargedShot, SpriteSheet2D>(chargedShotAnimation);

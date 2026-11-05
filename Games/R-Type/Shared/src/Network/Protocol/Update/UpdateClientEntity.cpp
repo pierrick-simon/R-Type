@@ -87,15 +87,12 @@ namespace RType {
             if (!update._update || update.create.empty())
                 continue;
             checkConnectedClient(server, update);
-            // Each client gets one CREATE: a client still waiting for its
-            // CREATE or queued twice would otherwise receive duplicates.
             removeCommon(update.create, update._inits);
             std::ranges::sort(update.create);
             const auto duplicates = std::ranges::unique(update.create);
             update.create.erase(duplicates.begin(), duplicates.end());
             if (gm.hasComponent<Position2D>(entity)) {
                 auto tmp = gm.getComponent<Position2D>(entity);
-                // Through int32_t: a negative float cast to uint32_t is UB.
                 pe.posX = uint32_t(int32_t(tmp.x));
                 pe.posY = uint32_t(int32_t(tmp.y));
             }

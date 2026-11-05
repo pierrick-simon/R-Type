@@ -84,6 +84,7 @@ namespace RType::Server {
             destroyAllOf<EnemyDirector>(gm);
             destroyAllOf<Background>(gm);
             destroyAllOf<Bullet>(gm);
+            destroyAllOf<Force>(gm);
             destroyAllOf<PlayerExplosion>(gm);
         }
 
