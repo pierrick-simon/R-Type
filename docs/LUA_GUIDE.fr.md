@@ -192,6 +192,29 @@ L'ordre habituel, dans `start` :
 2. le mouvement (`MasterVelocity2D`…) ;
 3. le dessin (`DrawSprite2D`, `DrawText2D`…). La fenêtre est déjà effacée par le module `Window`, dont le système tourne en premier.
 
+### Arrêter un système
+
+`gm:createSystem` et `gm:addSystem` renvoient l'id du système créé. `gm:destroySystem(id)` l'arrête, et `gm:hasSystem(id)` dit s'il existe encore :
+
+```lua
+local intro
+local frame = 0
+
+function showIntro(gm)
+    frame = frame + 1
+    if frame == 180 then
+        gm:destroySystem(intro)       -- l'intro s'arrête après 180 frames
+    end
+end
+
+function start(gm)
+    intro = gm:createSystem(showIntro)
+end
+```
+
+- Un système peut s'arrêter lui-même, ou en arrêter un autre, depuis un système : il tourne encore jusqu'à la fin de la frame ([section 6](#6-ce-qui-se-passe-pendant-une-frame)).
+- Arrêter un système déjà arrêté ne fait rien.
+
 ---
 
 ## 5. Les vues : parcourir des entités n'importe où
@@ -225,7 +248,7 @@ end
 
 Pendant une frame, pendant que les systèmes tournent, les changements demandés par un script sont **appliqués à la fin de la frame**, tous ensemble :
 
-- `gm:destroyEntity`, `gm:addComponent` et `gm:removeComponent` sont appliqués à la fin de la frame ;
+- `gm:destroyEntity`, `gm:addComponent`, `gm:removeComponent` et `gm:destroySystem` sont appliqués à la fin de la frame ;
 - `gm:createEntity` est immédiat.
 
 C'est ce qui permet à un système de détruire des entités pendant que le moteur les parcourt. Ça a deux effets visibles, dans la même frame :
@@ -389,4 +412,6 @@ Ajoutez une ligne dans `Game::systemFactories` : le nom utilisé par les scripts
 | `gm:createSystem(func)` | appelle `func(gm)` à chaque frame |
 | `gm:createSystem({noms}, func)` | appelle `func(gm, e, composants...)` à chaque frame, pour chaque entité qui les a |
 | `gm:addSystem(nom)` | ajoute un des systèmes du moteur |
+| `gm:destroySystem(id)` | arrête un système, avec l'id que renvoie `createSystem` ou `addSystem` |
+| `gm:hasSystem(id)` | si le système existe |
 | `for e, composants... in gm:view({noms}) do` | parcourt les entités qui ont les composants |

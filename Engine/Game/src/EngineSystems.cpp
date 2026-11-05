@@ -22,6 +22,14 @@ namespace RType {
                     throw UnknownSystem(name);
                 return iter->second(gm);
             };
+        lua["GameManager"]["destroySystem"] =
+            [] (GameManager &gm, const SystemId id) {
+                gm.destroySystem(id);
+            };
+        lua["GameManager"]["hasSystem"] =
+            [] (GameManager &gm, const SystemId id) {
+                return gm.hasSystem(id);
+            };
     }
 
     void Game::registerSystem(sol::state &lua)

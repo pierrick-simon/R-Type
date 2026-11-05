@@ -192,6 +192,29 @@ The usual order, inside `start`:
 2. the movement (`MasterVelocity2D`…);
 3. the drawing (`DrawSprite2D`, `DrawText2D`…). The window is already cleared by the `Window` module, whose system runs first.
 
+### Stopping a system
+
+`gm:createSystem` and `gm:addSystem` return the id of the created system. `gm:destroySystem(id)` stops it, and `gm:hasSystem(id)` tells whether it still exists:
+
+```lua
+local intro
+local frame = 0
+
+function showIntro(gm)
+    frame = frame + 1
+    if frame == 180 then
+        gm:destroySystem(intro)       -- the intro stops after 180 frames
+    end
+end
+
+function start(gm)
+    intro = gm:createSystem(showIntro)
+end
+```
+
+- A system can stop itself, or another one, from a system: it still runs until the end of the frame ([section 6](#6-what-happens-during-a-frame)).
+- Stopping a system that is already stopped does nothing.
+
 ---
 
 ## 5. Views: looping over entities anywhere
@@ -225,7 +248,7 @@ end
 
 During a frame, while the systems run, the changes a script asks for are **applied at the end of the frame**, all together:
 
-- `gm:destroyEntity`, `gm:addComponent` and `gm:removeComponent` are applied at the end of the frame;
+- `gm:destroyEntity`, `gm:addComponent`, `gm:removeComponent` and `gm:destroySystem` are applied at the end of the frame;
 - `gm:createEntity` is immediate.
 
 This is what lets a system destroy entities while the engine is going through them. It has two visible effects, inside the same frame:
@@ -389,4 +412,6 @@ Add one line to `Game::systemFactories`: the name scripts use, which is the C++ 
 | `gm:createSystem(func)` | calls `func(gm)` every frame |
 | `gm:createSystem({names}, func)` | calls `func(gm, e, components...)` every frame, for every entity that has them |
 | `gm:addSystem(name)` | adds one of the engine's systems |
+| `gm:destroySystem(id)` | stops a system, with the id returned by `createSystem` or `addSystem` |
+| `gm:hasSystem(id)` | whether the system exists |
 | `for e, components... in gm:view({names}) do` | loops over the entities that have the components |
