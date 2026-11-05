@@ -41,7 +41,7 @@ end
 - **Every script must define `start`.** A script without it stops the game (see [section 9](#9-errors-and-how-to-fix-them)).
 - **`start` creates things; systems run them.** What must happen every frame goes into a system, registered from `start` ([section 4](#4-systems)).
 - **Each script has its own globals.** A global variable or function defined in `a.lua` is not visible from `b.lua`, so two scripts can both name their function `process` without conflict. Use `local` for everything else anyway.
-- **The Lua base library is available**: `print`, `pairs`, `ipairs`, `pcall`, `error`, `type`, `tostring`, `tonumber`…
+- **The Lua base library and `math` are available**: `print`, `pairs`, `ipairs`, `pcall`, `error`, `type`, `tostring`, `tonumber`…, and `math.random`, `math.sqrt`, `math.abs`, `math.floor`, `math.min`, `math.max`, `math.pi`…
 - **Paths** (images, fonts, models) are relative to the folder the game is started from, the one that holds `TestLua/`.
 
 ---
@@ -99,7 +99,7 @@ gm:countComponents('Position2D')            -- number of entities that have one
 | `Size2D` | `width` (0), `height` (0) | size in pixels |
 | `Friction2D` | `f` (0) | slows a `Velocity2D` down |
 | `GravityField2D` | `x` (0), `y` (1), `g` (9.80665) | pulls a `Velocity2D` in a direction |
-| `Clock` | `speed` (1) | an entity's own clock |
+| `Clock` | `speed` (1), method `elapsed()` | an entity's own clock |
 | `Texture2D` | `path` (**required**) | an image, loaded from `path` |
 | `Sprite2D` | `scale` (1), `rotation` (0), `flip` (false) | draws the entity's `Texture2D` |
 | `SpriteSheet2D` | `rows` (1), `columns` (1), `currentTile` (0), `frameDuration` (100, in ms), `animation` (true), `scale` (1), `rotation` (0), `flip` (false) | draws and animates one tile of the `Texture2D` at a time |
@@ -247,6 +247,32 @@ end
 - The buttons are in the `MouseButton` table: `Left`, `Right`, `Middle`, `Side`, `Extra`, `Forward`, `Back`.
 - The keyboard and the mouse belong to their module: a script cannot create other ones.
 
+### Time
+
+`gm:elapsed()` gives the time spent during **the previous frame**, in milliseconds, measured by the game's clock. Multiplying a speed by this time makes things move at the same speed, whatever the FPS:
+
+```lua
+function move(gm, e, pos)
+    pos.x = pos.x + 200 * gm:elapsed() / 1000      -- 200 pixels per second
+end
+```
+
+For a timer or a repeated action, add this time up:
+
+```lua
+local timer = 0
+
+function spawn(gm)
+    timer = timer + gm:elapsed()
+    if timer >= 2000 then                           -- every 2 seconds
+        timer = timer - 2000
+        gm:addComponent(gm:createEntity(), 'Position2D', {x = math.random(0, 800)})
+    end
+end
+```
+
+An entity that has its own `Clock` reads its time with `gm:getComponent(e, 'Clock'):elapsed()`. It is multiplied by its `speed` and only moves forward with the `Clock` system. The game's clock belongs to the engine: a script cannot create another one.
+
 ---
 
 ## 5. Views: looping over entities anywhere
@@ -379,7 +405,8 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `No such component.` | `getComponent` or `removeComponent` on a component the entity does not have | check with `hasComponent` first |
 | `sol: no matching function call takes this number of arguments and the specified types` | wrong arguments to an engine function, for instance `gm:createSystem('Position2D', f)` instead of `gm:createSystem({'Position2D'}, f)` | check the arguments against the [cheat sheet](#11-api-cheat-sheet) |
 | `sol: cannot set (new_index) into this object: no defined new_index operation on usertype` | a system writes a field the component does not have, for instance `pos.z = 1` on a `Position2D` | use a field of the [table](#the-components) |
-| `attempt to index a nil value (global 'math')` | `math`, `string`, `table`, `os` and `io` are not available | write the computation with the base library |
+| `attempt to index a nil value (global 'string')` | `string`, `table`, `os` and `io` are not available | write the computation with the base library and `math` |
+| `Invalid arguments for Clock: field 'elapsed' expects a function, got a number` | `elapsed` given to `addComponent` | only give `speed`: `elapsed` is read with `clock:elapsed()` |
 
 ### `Engine Error: No such entity.` or `No such component.`, without `Script error`
 
@@ -451,4 +478,5 @@ Add one line to `SystemBinding::engineSystems`: the name scripts use, which is t
 | `gm:hasSystem(id)` | whether the system exists |
 | `gm:keyboard()` | the keyboard: `isPressed`, `isDown`, `isReleased` with a `Key` value |
 | `gm:mouse()` | the mouse: `isPressed`, `isDown`, `isReleased` with a `MouseButton` value, and `x`, `y`, `wheel` |
+| `gm:elapsed()` | the milliseconds of the previous frame, by the game's clock |
 | `for e, components... in gm:view({names}) do` | loops over the entities that have the components |

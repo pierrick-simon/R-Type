@@ -21,7 +21,7 @@ namespace RType::Game {
     {
         sol::state lua;
 
-        lua.open_libraries(sol::lib::base);
+        lua.open_libraries(sol::lib::base, sol::lib::math);
         lua.set_exception_handler(&Scripts::handleException);
         GameManagerBinding::registerFunctions(lua);
         try {
