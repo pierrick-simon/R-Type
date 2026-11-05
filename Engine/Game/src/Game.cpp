@@ -92,7 +92,7 @@ namespace RType {
 
         checkScriptResult(
             lua.script_file(path, env, &sol::script_pass_on_error));
-        checkScriptResult(env["init"](gm));
+        checkScriptResult(env["start"](gm));
     }
 
     void Game::registerGameManager(sol::state &lua)

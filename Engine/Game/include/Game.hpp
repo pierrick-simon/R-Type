@@ -127,7 +127,7 @@ namespace RType {
 
         /**
          * @brief Runs a Lua script in its own environment, then calls its
-         * init function with the GameManager.
+         * start function with the GameManager.
          * @param path The path of the .lua file to load.
          */
         static void loadScriptPath(sol::state &lua, const std::string &path, GameManager &gm);
