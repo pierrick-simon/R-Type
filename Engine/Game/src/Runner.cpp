@@ -36,7 +36,7 @@ namespace RType::Game {
 
             Modules::check(modules);
             Modules::create(gm, modules);
-            for (auto &path : Scripts::findPaths("TestLua"))
+            for (auto &path : Scripts::findPaths(GameConfig.srcDir))
                 Scripts::load(lua, path, gm);
             gm.run(GameConfig.windowFPS, GameConfig.runningCondition);
         } catch (const EngineException &e) {

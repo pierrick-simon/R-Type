@@ -37,6 +37,10 @@ namespace RType::Game {
             [](GameInfo &info, const std::string &value) {
                 info.modules = toList(value);
             }},
+        {"srcDirectory",
+            [](GameInfo &info, const std::string &value) {
+                info.srcDir = value;
+            }},
     };
 
     void ConfigBuilder::build(GameInfo &info, const std::string &path)

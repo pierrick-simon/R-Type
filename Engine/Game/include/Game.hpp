@@ -25,6 +25,7 @@ namespace RType {
         std::size_t windowWidth = 800;
         std::size_t windowHeight = 600;
         std::string windowName = "My Game";
+        std::string srcDir = ".";
         std::list<std::string> modules;
     };
 
