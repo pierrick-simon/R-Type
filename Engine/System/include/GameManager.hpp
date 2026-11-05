@@ -322,6 +322,21 @@ namespace RType {
             return View<Components...>(_cm);
         }
 
+        /**
+         * @brief Counts the entities that have a component of the given
+         * type. Never throws.
+         * @tparam Component The component type to count.
+         * @return The number of such entities, 0 if no Component has ever
+         * been added.
+         */
+        template<typename Component>
+        [[nodiscard]] std::size_t countComponents()
+        {
+            if (!_cm.isComponent<Component>())
+                return 0;
+            return _cm.getComponentArray<Component>().nbComponent();
+        }
+
         std::unordered_map<int, std::string> &getAssetsMap()
         {
             return _assetsMap;

@@ -188,7 +188,11 @@ namespace RType {
         /**
          * @brief Lets scripts give the engine's components to entities by
          * name, with gm:addComponent(entity, "Position2D", {x = 10}).
-         * Fields left out keep the component's default value.
+         * Fields left out keep the component's default value. Scripts can
+         * also call gm:removeComponent(entity, name),
+         * gm:hasComponent(entity, name), gm:getComponent(entity, name),
+         * whose fields write to the real component, and
+         * gm:countComponents(name).
          * @throw UnknownComponent If the name is not an engine component.
          */
         static void registerComponents(sol::state &lua);
@@ -214,19 +218,71 @@ namespace RType {
             sol::state &lua, const std::string &name, Fields &&...fields);
 
         /**
-         * @brief Adds one component to an entity, built from the table
-         * given by the script (or its defaults if there is none).
+         * @brief The table given by the script to build a component, if
+         * any.
          */
         using ComponentArgs = sol::optional<sol::table>;
-        using ComponentFactory =
-            std::function<void(GameManager &, Entity, const ComponentArgs &)>;
 
         /**
-         * @brief Every component scripts can add, by name, filled by
+         * @brief Everything Lua can do with one component, without knowing
+         * its C++ type: each function calls the GameManager's templates
+         * with the type fixed by bindComponent.
+         */
+        struct ComponentEntry {
+            /**
+             * @brief Adds the component to an entity, built from the
+             * script's table (or its defaults if there is none).
+             */
+            std::function<void(GameManager &, Entity, const ComponentArgs &)>
+                add;
+
+            /**
+             * @brief Removes the component from an entity.
+             */
+            std::function<void(GameManager &, Entity)> remove;
+
+            /**
+             * @brief Checks whether an entity has the component. Never
+             * throws.
+             */
+            std::function<bool(GameManager &, Entity)> has;
+
+            /**
+             * @brief Returns the entity's component as a Lua value that
+             * refers to the real component, not to a copy: writing its
+             * fields from Lua changes it in C++ too.
+             */
+            std::function<sol::object(lua_State *, GameManager &, Entity)>
+                get;
+
+            /**
+             * @brief Counts the entities that have the component. 0 if it
+             * has never been added, without throwing.
+             */
+            std::function<std::size_t(GameManager &)> count;
+
+            /**
+             * @brief Calls the function on every entity that has the
+             * component. Does nothing if it has never been added.
+             * @warning Outside update(), destroying entities during the
+             * iteration invalidates it, as with View::each.
+             */
+            std::function<void(GameManager &, const std::function<void(Entity)> &)>
+                forEachEntity;
+        };
+
+        /**
+         * @brief Every component scripts can use, by name, filled by
          * bindComponent.
          */
-        static std::unordered_map<std::string, ComponentFactory>
-            componentFactories;
+        static std::unordered_map<std::string, ComponentEntry>
+            componentEntries;
+
+        /**
+         * @brief Finds the entry of a component by the name scripts use.
+         * @throw UnknownComponent If no component has this name.
+         */
+        static const ComponentEntry &getEntry(const std::string &name);
 
         /**
          * @brief Lua code that copies every field of the script's table
@@ -347,6 +403,9 @@ namespace RType {
                     sol::error error = result;
                     throw InvalidComponentArgs(name, error.what());
                 }
+                sol::optional<std::string> reason = result;
+                if (reason)
+                    throw InvalidComponentArgs(name, *reason);
             }
             return component;
         } else {
@@ -365,10 +424,38 @@ namespace RType {
         sol::state &lua, const std::string &name, Fields &&...fields)
     {
         lua.new_usertype<Component>(name, std::forward<Fields>(fields)...);
-        componentFactories[name] = [name](GameManager &gm, Entity entity,
-                                       const ComponentArgs &args) {
-            gm.addComponent<Component>(
-                entity, makeComponent<Component>(name, args));
+        componentEntries[name] = ComponentEntry {
+            .add =
+                [name](GameManager &gm, Entity entity,
+                    const ComponentArgs &args) {
+                    gm.addComponent<Component>(
+                        entity, makeComponent<Component>(name, args));
+                },
+            .remove =
+                [](GameManager &gm, Entity entity) {
+                    gm.removeComponent<Component>(entity);
+                },
+            .has =
+                [](GameManager &gm, Entity entity) {
+                    return gm.hasComponent<Component>(entity);
+                },
+            .get =
+                [](lua_State *L, GameManager &gm, Entity entity) {
+                    return sol::make_object(
+                        L, &gm.getComponent<Component>(entity));
+                },
+            .count =
+                [](GameManager &gm) {
+                    return gm.countComponents<Component>();
+                },
+            .forEachEntity =
+                [](GameManager &gm,
+                    const std::function<void(Entity)> &func) {
+                    gm.view<Component>().each(
+                        [&func](Entity entity, Component &) {
+                            func(entity);
+                        });
+                },
         };
     }
 
