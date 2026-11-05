@@ -26,7 +26,7 @@ namespace RType::Game {
          * @brief Exposes GameManager and Entity to Lua, with everything
          * scripts can do on them: entities and gm:stop(), which ends the
          * game after the current frame, here, then components, systems,
-         * views, inputs and time through their own bindings. Called once, before
+         * views, inputs, time and the window through their own bindings. Called once, before
          * any script is loaded.
          */
         static void registerFunctions(sol::state &lua);
@@ -34,7 +34,7 @@ namespace RType::Game {
         /**
          * @brief Finds the component a module created, such as the
          * KeyboardManager of the Keyboard module, for gm:keyboard,
-         * gm:mouse and gm:elapsed.
+         * gm:mouse, gm:elapsed and gm:windowShouldClose.
          * @param function The Lua function the script called, for the
          * error message.
          * @param module The module that creates the component.

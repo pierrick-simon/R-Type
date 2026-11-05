@@ -239,6 +239,7 @@ set(SRCS_GAME
     ${GAME}/src/ViewBinding.cpp
     ${GAME}/src/InputBinding.cpp
     ${GAME}/src/TimeBinding.cpp
+    ${GAME}/src/WindowBinding.cpp
     ${GAME}/src/EngineBindings.cpp
 )
 
