@@ -163,7 +163,8 @@ Every document exists in French and English.
 | Document | Content | |
 |---|---|---|
 | **Game making guide** | Create a game on top of the engine: folder, CMake, window, sprites, input, sound, do's and don'ts | [EN](docs/GAME_GUIDE.en.md) · [FR](docs/GAME_GUIDE.fr.md) |
-| **engine-game guide** | Write a game without a `main`: `GameInfo`, inits, CMake, debug mode, do's and don'ts, errors and fixes | [EN](docs/ENGINE_GAME.en.md) · [FR](docs/ENGINE_GAME.fr.md) |
+| **engine-game guide** | Write a game without a `main`: `GameConfig`, modules, folder, CMake, debug mode, do's and don'ts, errors and fixes | [EN](docs/ENGINE_GAME.en.md) · [FR](docs/ENGINE_GAME.fr.md) |
+| **Lua scripting guide** | Write a game's content in Lua: entities, components, systems, views, the frame, errors; exposing a component or a system to Lua | [EN](docs/LUA_GUIDE.en.md) · [FR](docs/LUA_GUIDE.fr.md) |
 | **ECS guide** | Entities, components, systems, views, the frame, errors, pitfalls, recipes, API cheat sheet | [EN](docs/ECS_GUIDE.en.md) · [FR](docs/ECS_GUIDE.fr.md) |
 | **ECS design notes** | Why the ECS is built the way it is | [EN](docs/ECS_DESIGN.en.md) · [FR](docs/ECS_DESIGN.fr.md) |
 | **Accessibility** | What the engine offers for accessibility (rebinding, layouts, input, text, tint), why it helps and who for | [EN](docs/ACCESSIBILITY.en.md) · [FR](docs/ACCESSIBILITY.fr.md) |
