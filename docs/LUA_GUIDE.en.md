@@ -215,6 +215,38 @@ end
 - A system can stop itself, or another one, from a system: it still runs until the end of the frame ([section 6](#6-what-happens-during-a-frame)).
 - Stopping a system that is already stopped does nothing.
 
+### Reading the keyboard and the mouse
+
+`gm:keyboard()` gives the keyboard of the `Keyboard` module, and `gm:mouse()` the mouse of the `Mouse` module (see [the modules](ENGINE_GAME.en.md#3-the-modules)). The engine updates them at the start of every frame: a system reads them at each call.
+
+```lua
+function steer(gm, e, pos)
+    local kb = gm:keyboard()
+
+    if kb:isDown(Key.Left) then pos.x = pos.x - 5 end
+    if kb:isDown(Key.Right) then pos.x = pos.x + 5 end
+end
+
+function shoot(gm)
+    local mouse = gm:mouse()
+
+    if mouse:isPressed(MouseButton.Left) then
+        print('shooting at', mouse.x, mouse.y)
+    end
+end
+```
+
+| Call | True if |
+|---|---|
+| `kb:isPressed(key)` / `mouse:isPressed(button)` | the key or button was pressed **during this frame** |
+| `kb:isDown(key)` / `mouse:isDown(button)` | the key or button is **held** |
+| `kb:isReleased(key)` / `mouse:isReleased(button)` | the key or button was released **during this frame** |
+
+- `mouse.x` and `mouse.y` give the cursor's position in the window, and `mouse.wheel` the wheel's movement. They are read-only.
+- The keys are in the `Key` table: the letters (`Key.A` to `Key.Z`), the digits (`Key.Num0` to `Key.Num9`), the arrows (`Key.Left`, `Key.Right`, `Key.Up`, `Key.Down`), `Key.Space`, `Key.Enter`, `Key.Escape`, `Key.Tab`, `Key.Backspace`, `Key.LShift`, `Key.LControl`, `Key.LAlt`, the numpad (`Key.Numpad0` to `Key.Numpad9`) and the function keys (`Key.F1` to `Key.F15`).
+- The buttons are in the `MouseButton` table: `Left`, `Right`, `Middle`, `Side`, `Extra`, `Forward`, `Back`.
+- The keyboard and the mouse belong to their module: a script cannot create other ones.
+
 ---
 
 ## 5. Views: looping over entities anywhere
@@ -334,6 +366,9 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `TestLua/a.lua:1: ')' expected near 'end'` | a Lua syntax error, at this file and line | fix the syntax |
 | `Unknown component: Postion2D` | the name is not one of [the components](#the-components) | correct the name (case sensitive) |
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()` or `gm:mouse()` without the matching module | add `"Keyboard"` or `"Mouse"` to the `modules` of `Setup.cpp` |
+| `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
+| `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y` or `mouse.wheel` | only read them |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |
 | `Invalid arguments for Position2D: no field 'z'` | the table gives a field the component does not have | remove or rename the field |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | a field of the wrong type | give a value of the right type |
@@ -414,4 +449,6 @@ Add one line to `SystemBinding::engineSystems`: the name scripts use, which is t
 | `gm:addSystem(name)` | adds one of the engine's systems |
 | `gm:destroySystem(id)` | stops a system, with the id returned by `createSystem` or `addSystem` |
 | `gm:hasSystem(id)` | whether the system exists |
+| `gm:keyboard()` | the keyboard: `isPressed`, `isDown`, `isReleased` with a `Key` value |
+| `gm:mouse()` | the mouse: `isPressed`, `isDown`, `isReleased` with a `MouseButton` value, and `x`, `y`, `wheel` |
 | `for e, components... in gm:view({names}) do` | loops over the entities that have the components |

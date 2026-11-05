@@ -215,6 +215,38 @@ end
 - Un système peut s'arrêter lui-même, ou en arrêter un autre, depuis un système : il tourne encore jusqu'à la fin de la frame ([section 6](#6-ce-qui-se-passe-pendant-une-frame)).
 - Arrêter un système déjà arrêté ne fait rien.
 
+### Lire le clavier et la souris
+
+`gm:keyboard()` donne le clavier du module `Keyboard`, et `gm:mouse()` la souris du module `Mouse` (voir [les modules](ENGINE_GAME.fr.md#3-les-modules)). Le moteur les met à jour au début de chaque frame : un système les lit à chaque passage.
+
+```lua
+function steer(gm, e, pos)
+    local kb = gm:keyboard()
+
+    if kb:isDown(Key.Left) then pos.x = pos.x - 5 end
+    if kb:isDown(Key.Right) then pos.x = pos.x + 5 end
+end
+
+function shoot(gm)
+    local mouse = gm:mouse()
+
+    if mouse:isPressed(MouseButton.Left) then
+        print('tir vers', mouse.x, mouse.y)
+    end
+end
+```
+
+| Appel | Vrai si |
+|---|---|
+| `kb:isPressed(touche)` / `mouse:isPressed(bouton)` | la touche ou le bouton a été appuyé **pendant cette frame** |
+| `kb:isDown(touche)` / `mouse:isDown(bouton)` | la touche ou le bouton est **tenu** |
+| `kb:isReleased(touche)` / `mouse:isReleased(bouton)` | la touche ou le bouton a été relâché **pendant cette frame** |
+
+- `mouse.x` et `mouse.y` donnent la position du curseur dans la fenêtre, et `mouse.wheel` le mouvement de la molette. Ils sont en lecture seule.
+- Les touches sont dans la table `Key` : les lettres (`Key.A` à `Key.Z`), les chiffres (`Key.Num0` à `Key.Num9`), les flèches (`Key.Left`, `Key.Right`, `Key.Up`, `Key.Down`), `Key.Space`, `Key.Enter`, `Key.Escape`, `Key.Tab`, `Key.Backspace`, `Key.LShift`, `Key.LControl`, `Key.LAlt`, le pavé numérique (`Key.Numpad0` à `Key.Numpad9`) et les touches de fonction (`Key.F1` à `Key.F15`).
+- Les boutons sont dans la table `MouseButton` : `Left`, `Right`, `Middle`, `Side`, `Extra`, `Forward`, `Back`.
+- Le clavier et la souris appartiennent à leur module : un script ne peut pas en créer d'autres.
+
 ---
 
 ## 5. Les vues : parcourir des entités n'importe où
@@ -334,6 +366,9 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `TestLua/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
 | `Unknown component: Postion2D` | le nom n'est pas un des [composants](#les-composants) | corriger le nom (la casse compte) |
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()` ou `gm:mouse()` sans le module correspondant | ajouter `"Keyboard"` ou `"Mouse"` aux `modules` du `Setup.cpp` |
+| `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
+| `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y` ou `mouse.wheel` | ne faire que les lire |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | un champ du mauvais type | donner une valeur du bon type |
@@ -414,4 +449,6 @@ Ajoutez une ligne dans `SystemBinding::engineSystems` : le nom utilisé par les 
 | `gm:addSystem(nom)` | ajoute un des systèmes du moteur |
 | `gm:destroySystem(id)` | arrête un système, avec l'id que renvoie `createSystem` ou `addSystem` |
 | `gm:hasSystem(id)` | si le système existe |
+| `gm:keyboard()` | le clavier : `isPressed`, `isDown`, `isReleased` avec une valeur de `Key` |
+| `gm:mouse()` | la souris : `isPressed`, `isDown`, `isReleased` avec une valeur de `MouseButton`, et `x`, `y`, `wheel` |
 | `for e, composants... in gm:view({noms}) do` | parcourt les entités qui ont les composants |

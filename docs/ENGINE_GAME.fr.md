@@ -97,8 +97,8 @@ Un module est une fonctionnalité du moteur que le jeu active par son nom. Chacu
 | Module | Ce qu'il crée | A besoin de |
 |---|---|---|
 | `Window` | une entité avec une `Window` (taille et titre pris dans `GameConfig`), et le système qui l'efface et la rafraîchit à chaque frame | |
-| `Keyboard` | une entité avec un `KeyboardManager`, et le système qui lit les touches | `Window` |
-| `Mouse` | une entité avec un `MouseManager`, et le système qui lit la souris | `Window` |
+| `Keyboard` | une entité avec un `KeyboardManager`, et le système qui lit les touches ; les scripts le lisent avec `gm:keyboard()` | `Window` |
+| `Mouse` | une entité avec un `MouseManager`, et le système qui lit la souris ; les scripts la lisent avec `gm:mouse()` | `Window` |
 | `Clock` | une entité avec la `MasterClock`, et le système qui la fait avancer | toujours chargé |
 
 - **`Clock` est toujours chargé**, même si `modules` ne le cite pas : les systèmes de mouvement et d'animation du moteur en dépendent.
