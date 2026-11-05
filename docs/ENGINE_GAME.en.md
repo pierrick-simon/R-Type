@@ -33,7 +33,7 @@ The engine does the rest: it creates the `GameManager`, loads the modules, runs 
 
 ## 1. What the engine's `main` does
 
-The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) and calls `RType::Game::run()`. In order, it:
+The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) and calls `RType::Game::Runner::run()`. In order, it:
 
 1. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
 2. loads the modules asked for in `GameConfig.modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
@@ -250,7 +250,7 @@ The macro must apply to `engine-game`, which holds the `main`: a `target_compile
 ### `undefined reference to 'RType::GameConfig'`
 
 ```
-Game.cpp:(.text+0xa58): undefined reference to `RType::GameConfig'
+Runner.cpp:(.text+0xa58): undefined reference to `RType::GameConfig'
 ```
 
 **Cause:** the game does not define `RType::GameConfig`.

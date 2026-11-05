@@ -229,9 +229,13 @@ set(GAME Game)
 
 set(SRCS_GAME
     ${GAME}/src/Main.cpp
-    ${GAME}/src/Game.cpp
-    ${GAME}/src/EngineSystems.cpp
-    ${GAME}/src/EngineComponents.cpp
+    ${GAME}/src/Runner.cpp
+    ${GAME}/src/Modules.cpp
+    ${GAME}/src/Scripts.cpp
+    ${GAME}/src/GameManagerBinding.cpp
+    ${GAME}/src/ComponentBinding.cpp
+    ${GAME}/src/SystemBinding.cpp
+    ${GAME}/src/ViewBinding.cpp
     ${GAME}/src/EngineBindings.cpp
 )
 

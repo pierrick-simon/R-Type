@@ -2,20 +2,20 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** EngineComponents
+** ComponentBinding
 */
 
 #include <algorithm>
 
+#include "ComponentBinding.hpp"
 #include "Exceptions.hpp"
-#include "Game.hpp"
 
-namespace RType {
+namespace RType::Game {
 
-    std::unordered_map<std::string, Game::ComponentEntry>
-        Game::componentEntries;
+    std::unordered_map<std::string, ComponentBinding::Entry>
+        ComponentBinding::entries;
 
-    const char *const Game::setFieldsScript = R"(
+    const char *const ComponentBinding::setFieldsScript = R"(
         local component, fields = ...
         for key, value in pairs(fields) do
             local found, current = pcall(function() return component[key] end)
@@ -34,7 +34,7 @@ namespace RType {
         return nil
     )";
 
-    void Game::registerComponents(sol::state &lua)
+    void ComponentBinding::registerFunctions(sol::state &lua)
     {
         lua.registry()["setFields"] =
             lua.load(setFieldsScript, "=setFields")
@@ -42,7 +42,7 @@ namespace RType {
         lua["GameManager"]["addComponent"] = [](GameManager &gm,
                                                 Entity entity,
                                                 const std::string &name,
-                                                const ComponentArgs &args) {
+                                                const Args &args) {
             getEntry(name).add(gm, entity, args);
         };
         lua["GameManager"]["removeComponent"] =
@@ -67,19 +67,20 @@ namespace RType {
         bindEngineComponents(lua);
     }
 
-    const Game::ComponentEntry &Game::getEntry(const std::string &name)
+    const ComponentBinding::Entry &ComponentBinding::getEntry(
+        const std::string &name)
     {
-        auto iter = componentEntries.find(name);
+        auto iter = entries.find(name);
 
-        if (iter == componentEntries.end())
+        if (iter == entries.end())
             throw UnknownComponent(name);
         return iter->second;
     }
 
-    std::vector<const Game::ComponentEntry *> Game::resolveComponents(
+    std::vector<const ComponentBinding::Entry *> ComponentBinding::resolve(
         const sol::table &names)
     {
-        std::vector<const ComponentEntry *> entries;
+        std::vector<const Entry *> resolved;
 
         for (std::size_t i = 1; i <= names.size(); i++) {
             sol::object element = names[i];
@@ -88,12 +89,39 @@ namespace RType {
                 throw InvalidComponentList(
                     "element " + std::to_string(i) + " is not a name");
             std::string name = element.as<std::string>();
-            const ComponentEntry *entry = &getEntry(name);
-            if (std::ranges::find(entries, entry) != entries.end())
+            const Entry *entry = &getEntry(name);
+            if (std::ranges::find(resolved, entry) != resolved.end())
                 throw InvalidComponentList(name + " is in it twice");
-            entries.push_back(entry);
+            resolved.push_back(entry);
         }
-        return entries;
+        return resolved;
     }
 
-}
+    void ComponentBinding::forEachMatch(GameManager &gm,
+        const std::vector<const Entry *> &components,
+        const std::function<void(Entity)> &func)
+    {
+        const Entry *smallest = nullptr;
+        std::size_t smallestCount = 0;
+
+        for (const Entry *entry : components) {
+            std::size_t count = entry->count(gm);
+
+            if (count == 0)
+                return;
+            if (!smallest || count < smallestCount) {
+                smallest = entry;
+                smallestCount = count;
+            }
+        }
+        if (!smallest)
+            return;
+        smallest->forEachEntity(gm, [&](Entity entity) {
+            for (const Entry *entry : components)
+                if (!entry->has(gm, entity))
+                    return;
+            func(entity);
+        });
+    }
+
+} // namespace RType::Game

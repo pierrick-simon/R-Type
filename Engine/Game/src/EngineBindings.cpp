@@ -7,12 +7,13 @@
 
 #include "Camera3D.hpp"
 #include "Clock.hpp"
+#include "ComponentBinding.hpp"
 #include "Draw3D.hpp"
 #include "Font.hpp"
 #include "Friction2D.hpp"
-#include "Game.hpp"
 #include "GravityField2D.hpp"
 #include "Keybind.hpp"
+#include "KeyboardManager.hpp"
 #include "Listener.hpp"
 #include "Model3D.hpp"
 #include "ModelAnimation3D.hpp"
@@ -25,14 +26,15 @@
 #include "Sprite3D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "SpriteSheet3D.hpp"
+#include "SystemBinding.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
 #include "Velocity2D.hpp"
 
-namespace RType {
+namespace RType::Game {
 
-    const std::unordered_map<std::string, Game::SystemFactory>
-        Game::systemFactories = {
+    const std::unordered_map<std::string, SystemBinding::Factory>
+        SystemBinding::engineSystems = {
         // engine-system
         {"Clock", makeSystem(Clock::systemClock)},
         {"Velocity2D", makeSystem(Velocity2D::systemVelocity2D)},
@@ -62,7 +64,7 @@ namespace RType {
         {"Listener2D", makeSystem(Listener::systemListener2D)},
     };
 
-    void Game::bindEngineComponents(sol::state &lua)
+    void ComponentBinding::bindEngineComponents(sol::state &lua)
     {
         // engine-system
         bindComponent<Position2D>(lua, "Position2D",
@@ -114,4 +116,4 @@ namespace RType {
         bindComponent<Listener>(lua, "Listener");
     }
 
-}
+} // namespace RType::Game

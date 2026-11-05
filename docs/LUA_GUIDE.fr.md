@@ -363,7 +363,7 @@ Tout ce qui rend le moteur utilisable depuis Lua est listé dans un seul fichier
 
 ### Un composant
 
-Ajoutez une ligne `bindComponent` dans `Game::bindEngineComponents` : le type C++, le nom utilisé par les scripts, puis chaque champ sous la forme `"nom", &Type::membre`.
+Ajoutez une ligne `bindComponent` dans `ComponentBinding::bindEngineComponents` : le type C++, le nom utilisé par les scripts, puis chaque champ sous la forme `"nom", &Type::membre`.
 
 ```cpp
 bindComponent<Position2D>(lua, "Position2D",
@@ -387,7 +387,7 @@ Cette seule ligne donne au composant tout ce qui est dans la [section 3](#3-les-
 
 ### Un système
 
-Ajoutez une ligne dans `Game::systemFactories` : le nom utilisé par les scripts, qui est celui de la fonction C++ sans son préfixe `system`, puis `makeSystem` avec la fonction.
+Ajoutez une ligne dans `SystemBinding::engineSystems` : le nom utilisé par les scripts, qui est celui de la fonction C++ sans son préfixe `system`, puis `makeSystem` avec la fonction.
 
 ```cpp
 {"DrawSprite2D", makeSystem(Sprite2D::systemDrawSprite2D)},

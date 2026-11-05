@@ -363,7 +363,7 @@ Everything that makes the engine usable from Lua is listed in one file, [`Engine
 
 ### A component
 
-Add one `bindComponent` line to `Game::bindEngineComponents`: the C++ type, the name scripts use, then each field as `"name", &Type::member`.
+Add one `bindComponent` line to `ComponentBinding::bindEngineComponents`: the C++ type, the name scripts use, then each field as `"name", &Type::member`.
 
 ```cpp
 bindComponent<Position2D>(lua, "Position2D",
@@ -387,7 +387,7 @@ This single line gives the component everything of [section 3](#3-components) an
 
 ### A system
 
-Add one line to `Game::systemFactories`: the name scripts use, which is the C++ function's without its `system` prefix, then `makeSystem` with the function.
+Add one line to `SystemBinding::engineSystems`: the name scripts use, which is the C++ function's without its `system` prefix, then `makeSystem` with the function.
 
 ```cpp
 {"DrawSprite2D", makeSystem(Sprite2D::systemDrawSprite2D)},

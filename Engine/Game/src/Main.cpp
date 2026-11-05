@@ -5,9 +5,9 @@
 ** Main
 */
 
-#include "Game.hpp"
+#include "Runner.hpp"
 
 int main()
 {
-    return RType::Game::run();
+    return RType::Game::Runner::run();
 }
