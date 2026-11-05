@@ -8,6 +8,7 @@
 #include "Setup.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
+#include "FinishingSound.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
@@ -93,6 +94,7 @@ namespace RType::Client {
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<>(systemDrawPasswordFields);
         gm.createSystem<Sound>(Sound::systemSound);
+        gm.createSystem<>(systemFinishingSound);
         gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
 

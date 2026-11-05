@@ -41,6 +41,8 @@ namespace RType::Asset {
             {GUNSHOT_SOUND, "R-Type/sprites/gunshot.mp3"},
             {EXPLOSION_SOUND, "R-Type/sprites/explosion.mp3"},
 
+            {FIRST_LEVEL_MUSIC, "R-Type/sprites/Sound/Music/level1.mp3"},
+
             {FONT, "R-Type/sprites/Fonts/r-type.otf"},
 
             {MENU_BACKGROUND, "R-Type/sprites/Menu/Background.png"},

@@ -102,9 +102,6 @@ namespace RType::Server {
         gm.createSystem<>(systemMasterRequests);
         gm.createSystem<>(systemMasterLink);
         gm.createSystem<>(systemMasterLobbyList);
-        /*std::cout << "[Master] Listening on port " << LOGIN_SERVER_PORT
-                  << " (UDP, clients) and " << MASTER_LINK_PORT
-                  << " (TCP, instances)" << std::endl;*/
         return master;
     }
 

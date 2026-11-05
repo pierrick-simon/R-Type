@@ -18,6 +18,7 @@
 #include "LobbyProtocol.hpp"
 #include "MouseManager.hpp"
 #include "ServerManager.hpp"
+#include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
 

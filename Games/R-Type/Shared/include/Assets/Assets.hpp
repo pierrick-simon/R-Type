@@ -45,6 +45,8 @@ namespace RType::Asset {
     inline constexpr AssetId EXPLOSION_SOUND = 1000;
     inline constexpr AssetId GUNSHOT_SOUND = 1001;
 
+    inline constexpr AssetId FIRST_LEVEL_MUSIC = 2001;
+
     inline constexpr AssetId FONT = 200;
 
     inline constexpr AssetId MENU_BACKGROUND = 300;

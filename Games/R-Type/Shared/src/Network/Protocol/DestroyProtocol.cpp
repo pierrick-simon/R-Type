@@ -45,7 +45,27 @@ namespace RType {
         hide<Sprite2D>(gm, entity);
         hide<SpriteSheet2D>(gm, entity);
         hide<Text2D>(gm, entity);
+        hide<Text2D>(gm, entity);
+        if (gm.hasComponent<Sound>(entity)) {
+            const Sound &sound = gm.getComponent<Sound>(entity);
+
+            if (!sound.loop && sound.state != SoundInfo::State::STOP &&
+                sound.state != SoundInfo::State::PAUSED) {
+                gm.addComponent<FinishingSound>(entity);
+                return;
+            }
+        }
         gm.destroyEntity(entity);
+    }
+
+    void systemFinishingSound(GameManager &gm)
+    {
+        gm.view<FinishingSound, Sound>().each(
+            [&gm](Entity e, FinishingSound &, Sound &sound) {
+                if (sound.state == SoundInfo::State::STOP ||
+                    sound.state == SoundInfo::State::PAUSED || sound.loop)
+                    gm.destroyEntity(e);
+            });
     }
 
     void DestroyProtocol::sendDestroy(
