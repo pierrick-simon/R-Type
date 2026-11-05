@@ -11,6 +11,7 @@
 #include "GameManager.hpp"
 #include "GameManagerBinding.hpp"
 #include "InputBinding.hpp"
+#include "Runner.hpp"
 #include "SystemBinding.hpp"
 #include "TimeBinding.hpp"
 #include "ViewBinding.hpp"
@@ -28,6 +29,9 @@ namespace RType::Game {
         lua["GameManager"]["createEntity"] = &GameManager::createEntity;
         lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;
         lua["GameManager"]["hasEntity"] = &GameManager::hasEntity;
+        lua["GameManager"]["stop"] = [](GameManager &) {
+            Runner::running = false;
+        };
         ComponentBinding::registerFunctions(lua);
         SystemBinding::registerFunctions(lua);
         ViewBinding::registerFunctions(lua);

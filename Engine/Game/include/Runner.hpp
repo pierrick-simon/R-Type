@@ -20,11 +20,16 @@ namespace RType::Game {
 
         /**
          * @brief Loads the modules, calls the start of every script, then
-         * runs the main loop until GameConfig.runningCondition returns
-         * false.
+         * runs the main loop until running is false.
          * @return 0 on success, 84 if the engine raised an error.
          */
         static int run();
+
+        /**
+         * @brief Read before each frame: the main loop goes on as long as
+         * it is true. Set to false by gm:stop().
+         */
+        static bool running;
     };
 
 } // namespace RType::Game

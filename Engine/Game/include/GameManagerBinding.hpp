@@ -24,7 +24,8 @@ namespace RType::Game {
 
         /**
          * @brief Exposes GameManager and Entity to Lua, with everything
-         * scripts can do on them: entities here, then components, systems,
+         * scripts can do on them: entities and gm:stop(), which ends the
+         * game after the current frame, here, then components, systems,
          * views, inputs and time through their own bindings. Called once, before
          * any script is loaded.
          */
