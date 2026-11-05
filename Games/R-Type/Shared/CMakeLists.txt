@@ -21,6 +21,8 @@ set(SRCS_NETWORK
     src/Network/Protocol/MoveProtocol.cpp
     src/Network/Protocol/TextProtocol.cpp
     src/Network/Protocol/DestroyProtocol.cpp
+    src/Network/Protocol/LobbyProtocol.cpp
+    src/Network/Protocol/MasterProtocol.cpp
     src/Network/Protocol/Update/SetProtocol.cpp
     src/Network/Protocol/Update/UpdateClientEntity.cpp
     src/Network/Protocol/Update/UpdatePosition2D.cpp

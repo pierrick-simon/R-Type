@@ -25,14 +25,21 @@ set(GAME_SRCS
         src/Animation.cpp
         src/Background.cpp
         src/Bullet.cpp
+        src/Instance.cpp
+        src/InstanceLink.cpp
+        src/Lobby.cpp
+        src/MasterLink.cpp
+        src/MasterServer.cpp
         src/Player.cpp
         src/Setup.cpp
+        src/TcpConnection.cpp
         src/Terrain.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
-target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical2D engine-network)
+find_package(Threads REQUIRED)
+target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical2D engine-network Threads::Threads)
 
 if (TARGET criterion)
     set(SRCS_TESTS tests/tests_init.cpp)

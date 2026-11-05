@@ -7,8 +7,11 @@
 
 #include "ServerManager.hpp"
 #include "CreatedProtocol.hpp"
+#include "DestroyProtocol.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "LobbyProtocol.hpp"
+#include "MasterProtocol.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
 #include "UpdateClientEntity.hpp"
@@ -35,6 +38,9 @@ namespace RType {
                 deleteClient(h);
             },
             true);
+        _udp->onClientRemoved = [this](const Header &h) {
+            deleteClient(h);
+        };
         _udp->addManage(
             CREATE, [this](const Header &h, const std::vector<uint8_t> &p) {
                 CreatedProtocol::manageCreated(h, p, *this);
@@ -45,6 +51,10 @@ namespace RType {
             MOUSE_BUTTON_PRESSED, MouseProtocol::manageButtonPressed);
         addContextManage(
             MOUSE_BUTTON_RELEASED, MouseProtocol::manageButtonReleased);
+        addContextManage(LOBBY_INFO, LobbyProtocol::manageInfo);
+        addContextManage(LOBBY_START, LobbyProtocol::manageStart);
+        addContextManage(CREATE_LOBBY, MasterProtocol::manageCreateLobby);
+        addContextManage(JOIN_LOBBY, MasterProtocol::manageJoinLobby);
     }
 
     void ServerManager::systemServerReceived(
@@ -100,6 +110,8 @@ namespace RType {
         _ctx.gm->get().addComponent<DefaulClient>(entity, id);
         _ctx.gm->get().addComponent<KeyboardManager>(entity);
         _ctx.gm->get().addComponent<MouseManager>(entity);
+        _ctx.gm->get().addComponent<LobbyMember>(entity);
+        _ctx.gm->get().addComponent<LobbyRequest>(entity);
         for (auto [_, update] :
             _ctx.gm->get().view<UpdateClientEntity>().getVector())
             update.create.push_back(id);
@@ -112,8 +124,9 @@ namespace RType {
         _udp->removeClient(h);
         if (_ctx.clients.count(h.senderId) == 0)
             return;
-        for (auto [_, update] :
-            _ctx.gm->get().view<UpdateClientEntity>().getVector()) {
+        auto &gm = _ctx.gm->get();
+
+        for (auto [_, update] : gm.view<UpdateClientEntity>().getVector()) {
             auto &l = update.getLinks();
             l.erase(std::remove_if(l.begin(),
                         l.end(),
@@ -130,7 +143,17 @@ namespace RType {
                         [&](uint32_t v) { return h.senderId == v; }),
                 c.end());
         }
-        _ctx.gm->get().destroyEntity(_ctx.clients.at(h.senderId));
+        const Entity player = _ctx.clients.at(h.senderId);
+
+        if (gm.hasComponent<UpdateClientEntity>(player)) {
+            auto &update = gm.getComponent<UpdateClientEntity>(player);
+            std::vector<uint32_t> ids = update.getLinks();
+
+            ids.insert(
+                ids.end(), update.getInits().begin(), update.getInits().end());
+            DestroyProtocol::sendDestroy(ids, *this, update.getId());
+        }
+        gm.destroyEntity(player);
         _ctx.clients.erase(h.senderId);
     }
 }; // namespace RType

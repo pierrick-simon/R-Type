@@ -63,18 +63,21 @@ namespace RType {
 
     void UDPServer::checkClients()
     {
-        auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
+        std::vector<uint16_t> lost;
 
         for (auto it = _clients.begin(); it != _clients.end();) {
             if (now - it->second.lastSeen > std::chrono::seconds(TIMEOUT)) {
-                std::cout << "Timeout from client nb " << it->second.id
-                          << " ..." << std::endl;
+                lost.push_back(it->second.id);
                 it = _clients.erase(it);
             } else
                 ++it;
         }
+        for (const uint16_t id : lost) {
+            if (onClientRemoved)
+                onClientRemoved(Header {Opcode::LOGOUT, 0, 0, id});
+        }
         broadcastNow(Opcode::HEALTH, {});
-        std::cout << "Health check from serv" << std::endl;
     }
 
     void UDPServer::startReceive()
@@ -88,10 +91,17 @@ namespace RType {
                             std::vector<uint8_t>(
                                 _recvBuffer.begin() + Header::SIZE,
                                 _recvBuffer.begin() + long(bytesRecvd)));
+                        recievedFromClient(header.value().senderId);
                     }
                 }
                 startReceive();
             });
+    }
+
+    void UDPServer::recievedFromClient(uint32_t id)
+    {
+        if (_clients.count(id))
+            _clients.at(id).lagometer.packetRecieved();
     }
 
     void UDPServer::sendToClient(
@@ -103,12 +113,15 @@ namespace RType {
                                 client.seq++,
                                 _serverId},
                 payload);
+        if (op == Opcode::HEALTH)
+            client.lagometer.start();
         _socket.async_send_to(asio::buffer(client.sendBuffer),
             client.endpoint,
             [this](std::error_code, std::size_t) {});
         client.msgSentHistory.push_back("[" +
             std::to_string(static_cast<int>(op)) + "] " +
             std::string(payload.begin(), payload.end()));
+        client.lagometer.packetSent();
     }
 
     void UDPServer::sendToClient(
@@ -163,12 +176,22 @@ namespace RType {
 
     void UDPServer::removeClient(const Header &header)
     {
-        std::cout << "Client " << header.senderId << " logged out" << std::endl;
+        std::cout << "[Debug] Client ID " << header.senderId << " logged out."
+                  << std::endl;
         _clients.erase(header.senderId);
     }
 
-    void UDPServer::manageHealth(const Header &, const std::vector<uint8_t> &)
+    void UDPServer::manageHealth(const Header &h, const std::vector<uint8_t> &)
     {
+        uint32_t id = h.senderId;
+        if (_clients.count(id)) {
+            auto &l = _clients.at(id).lagometer;
+            l.stop();
+            LagometerPayload info = {l.getRecieved(), l.getSent() + 1};
+            this->sendToClient(
+                id, Opcode::STAT, Lagometer::serializeLagometer(info));
+            l.reset();
+        }
     }
 
     void UDPServer::manageLogin(
