@@ -13,10 +13,17 @@
 
 namespace RType {
 
+    void Game::checkNotUpdating(const GameManager &gm, const char *function)
+    {
+        if (gm.isUpdating())
+            throw SystemCreatedInSystem(function);
+    }
+
     void Game::registerSystems(sol::state &lua)
     {
         lua["GameManager"]["addSystem"] =
             [](GameManager &gm, const std::string &name) {
+                checkNotUpdating(gm, "gm:addSystem");
                 auto iter = systemFactories.find(name);
                 if (iter == systemFactories.end())
                     throw UnknownSystem(name);
@@ -36,12 +43,14 @@ namespace RType {
     {
         lua["GameManager"]["createSystem"] = sol::overload(
             [](GameManager &gm, const sol::protected_function &func) {
+                checkNotUpdating(gm, "gm:createSystem");
                 return gm.createSystem<>([func](GameManager &gm) {
                     checkScriptResult(func(gm));
                 });
             },
             [](GameManager &gm, const sol::table &names,
                 const sol::protected_function &func) {
+                checkNotUpdating(gm, "gm:createSystem");
                 std::vector<const ComponentEntry *> entries =
                     resolveComponents(names);
 

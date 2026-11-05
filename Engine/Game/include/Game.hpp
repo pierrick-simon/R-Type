@@ -155,10 +155,21 @@ namespace RType {
          * gm:addSystem("DrawSprite2D"). The name is the C++ function's
          * without its "system" prefix.
          * @throw UnknownSystem If the name is not an engine system.
-         * @warning As gm:createSystem, gm:addSystem must not be called from
-         * a system's function (a process function), only from start.
+         * @throw SystemCreatedInSystem If gm:addSystem is called from a
+         * system, instead of from start.
          */
         static void registerSystems(sol::state &lua);
+
+        /**
+         * @brief Refuses to create a system while the systems are running:
+         * it would run in the current frame, and one created at each frame
+         * would make the systems pile up.
+         * @param function The Lua function the script called, for the
+         * error message.
+         * @throw SystemCreatedInSystem If called during update().
+         */
+        static void checkNotUpdating(
+            const GameManager &gm, const char *function);
 
         /**
          * @brief Creates one engine system, as registered by
@@ -365,10 +376,8 @@ namespace RType {
          * @throw UnknownComponent If a name is not a component.
          * @throw InvalidComponentList If the list holds something else than
          * a name, or the same name twice.
-         * @warning gm:createSystem must not be called from a system's
-         * function (a process function), only from start: the new system
-         * would run in the current frame, and one created for each entity
-         * at each frame would make the systems pile up.
+         * @throw SystemCreatedInSystem If gm:createSystem is called from a
+         * system, instead of from start.
          */
         static void registerSystem(sol::state &lua);
 

@@ -241,7 +241,6 @@ The macro must apply to `engine-game`, which holds the `main`: a `target_compile
 - **Don't write a `main`** in the game: it would silently replace the engine's.
 - **Don't define `RType::GameConfig` in a header**, nor in two `.cpp` files.
 - **Don't list `Clock` in `modules`**: it is always loaded.
-- **Don't add from a script the systems a module already registers** (`ClearWindow`, `KeyboardManager`, `MouseManager`, `MasterClock`): they would run twice per frame.
 - **Don't read `RType::GameConfig` from another global variable's constructor**: the initialization order of globals across files is not defined.
 
 ---

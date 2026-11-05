@@ -182,7 +182,7 @@ end
 
 The `Master…` systems use the game's clock, which the engine always runs: they are the simplest choice. The others use a `Clock` given to each entity, to slow down or speed up some entities only (with its `speed`), and need the `Clock` system too.
 
-The engine also has systems that the [modules](ENGINE_GAME.en.md#3-the-modules) already register, and that a script must not add again: `ClearWindow`, `KeyboardManager`, `MouseManager`, `MasterClock`. The remaining ones (`Draw3D`, `UpdateCamera`, `UpdateKeybind`, `Sound`, `Sound2D`) act on components that are created from C++.
+The systems of the window, the keyboard, the mouse and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. The other engine systems (`Draw3D`, `UpdateCamera`, `UpdateKeybind`, `Sound`, `Sound2D`) act on components that are created from C++.
 
 ### The order of the systems
 
@@ -271,7 +271,7 @@ In `start`, outside the frame, every change is immediate.
 
 A change that cannot be applied at the end of the frame stops the game then, for instance a component added to an entity destroyed in the same frame (see [section 9](#9-errors-and-how-to-fix-them)).
 
-**Systems are created only in `start`.** `gm:createSystem` and `gm:addSystem` must not be called from a system: the new system would run in the current frame, and a system created for each entity at each frame would make the systems pile up until the game slows down.
+**Systems are created only in `start`.** Calling `gm:createSystem` or `gm:addSystem` from a system stops the game with an error: the new system would run in the current frame, and a system created for each entity at each frame would make the systems pile up until the game slows down.
 
 ---
 
@@ -320,7 +320,6 @@ Each frame: `bounce` turns the ship around at the edges, `MasterVelocity2D` move
 
 - **Don't call `gm:createSystem` or `gm:addSystem` from a system** ([section 6](#6-what-happens-during-a-frame)).
 - **Don't expect a change made in a system to be visible in the same frame** ([section 6](#6-what-happens-during-a-frame)).
-- **Don't add the systems of the modules again** (`ClearWindow`, `KeyboardManager`, `MouseManager`, `MasterClock`).
 - **Don't give an entity the same component twice**: remove it first, or change its fields with `getComponent`.
 
 ---
@@ -335,6 +334,7 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `TestLua/a.lua:1: ')' expected near 'end'` | a Lua syntax error, at this file and line | fix the syntax |
 | `Unknown component: Postion2D` | the name is not one of [the components](#the-components) | correct the name (case sensitive) |
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
+| `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |
 | `Invalid arguments for Position2D: no field 'z'` | the table gives a field the component does not have | remove or rename the field |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | a field of the wrong type | give a value of the right type |
 | `Invalid arguments for Texture2D: missing 'path'` | a component built from a file without `path` | give `{path = '...'}` |

@@ -35,7 +35,6 @@ namespace RType {
         Game::systemFactories = {
         // engine-system
         {"Clock", makeSystem(Clock::systemClock)},
-        {"MasterClock", makeSystem(MasterClock::systemMasterClock)},
         {"Velocity2D", makeSystem(Velocity2D::systemVelocity2D)},
         {"MasterVelocity2D", makeSystem(Velocity2D::systemMasterVelocity2D)},
         {"Friction2D", makeSystem(Friction2D::systemFriction2D)},
@@ -43,10 +42,7 @@ namespace RType {
         {"GravityField2D", makeSystem(GravityField2D::systemGravityField2D)},
         {"MasterGravityField2D", makeSystem(GravityField2D::systemMasterGravityField2D)},
         // engine-graphical2D
-        {"ClearWindow", makeSystem(Window::systemClearWindow)},
-        {"KeyboardManager", makeSystem(KeyboardManager::systemKeyboardManager)},
         {"KeyboardManagerClear", makeSystem(KeyboardManager::systemKeyboardManagerClear)},
-        {"MouseManager", makeSystem(MouseManager::systemMouseManager)},
         {"UpdateKeybind", makeSystem(Keybind::systemUpdateKeybind)},
         {"DrawText2D", makeSystem(Text2D::systemDrawText2D)},
         {"DrawSprite2D", makeSystem(Sprite2D::systemDrawSprite2D)},

@@ -182,7 +182,7 @@ end
 
 Les systèmes `Master…` utilisent l'horloge du jeu, que le moteur fait toujours tourner : c'est le choix le plus simple. Les autres utilisent une `Clock` donnée à chaque entité, pour ralentir ou accélérer certaines entités seulement (avec son `speed`), et ont aussi besoin du système `Clock`.
 
-Le moteur a aussi des systèmes que les [modules](ENGINE_GAME.fr.md#3-les-modules) enregistrent déjà, et qu'un script ne doit pas ajouter une deuxième fois : `ClearWindow`, `KeyboardManager`, `MouseManager`, `MasterClock`. Les autres (`Draw3D`, `UpdateCamera`, `UpdateKeybind`, `Sound`, `Sound2D`) agissent sur des composants créés depuis le C++.
+Les systèmes de la fenêtre, du clavier, de la souris et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. Les autres systèmes du moteur (`Draw3D`, `UpdateCamera`, `UpdateKeybind`, `Sound`, `Sound2D`) agissent sur des composants créés depuis le C++.
 
 ### L'ordre des systèmes
 
@@ -271,7 +271,7 @@ Dans `start`, hors de la frame, chaque changement est immédiat.
 
 Un changement qui ne peut pas être appliqué à la fin de la frame arrête alors le jeu, par exemple un composant ajouté à une entité détruite dans la même frame (voir la [section 9](#9-les-erreurs-et-comment-les-régler)).
 
-**Les systèmes ne se créent que dans `start`.** `gm:createSystem` et `gm:addSystem` ne doivent pas être appelés depuis un système : le nouveau système tournerait dans la frame en cours, et un système créé pour chaque entité à chaque frame ferait s'accumuler les systèmes jusqu'à ralentir le jeu.
+**Les systèmes ne se créent que dans `start`.** Appeler `gm:createSystem` ou `gm:addSystem` depuis un système arrête le jeu avec une erreur : le nouveau système tournerait dans la frame en cours, et un système créé pour chaque entité à chaque frame ferait s'accumuler les systèmes jusqu'à ralentir le jeu.
 
 ---
 
@@ -320,7 +320,6 @@ end
 
 - **Ne pas appeler `gm:createSystem` ou `gm:addSystem` depuis un système** ([section 6](#6-ce-qui-se-passe-pendant-une-frame)).
 - **Ne pas compter sur un changement fait dans un système pour être visible dans la même frame** ([section 6](#6-ce-qui-se-passe-pendant-une-frame)).
-- **Ne pas ajouter une deuxième fois les systèmes des modules** (`ClearWindow`, `KeyboardManager`, `MouseManager`, `MasterClock`).
 - **Ne pas donner deux fois le même composant à une entité** : l'enlever d'abord, ou modifier ses champs avec `getComponent`.
 
 ---
@@ -335,6 +334,7 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `TestLua/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
 | `Unknown component: Postion2D` | le nom n'est pas un des [composants](#les-composants) | corriger le nom (la casse compte) |
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
+| `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | un champ du mauvais type | donner une valeur du bon type |
 | `Invalid arguments for Texture2D: missing 'path'` | un composant construit à partir d'un fichier, sans `path` | donner `{path = '...'}` |

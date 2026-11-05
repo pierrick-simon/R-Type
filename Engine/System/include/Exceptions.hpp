@@ -192,6 +192,22 @@ namespace RType {
         }
     };
 
+    /**
+     * @brief Raised when a script creates a system from a system, instead
+     * of from start.
+     */
+    class SystemCreatedInSystem : public EngineException {
+    public:
+        /**
+         * @param function The function the script called.
+         */
+        SystemCreatedInSystem(const std::string &function) :
+            EngineException(function
+                + " cannot be called from a system, only from start")
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */

@@ -310,6 +310,12 @@ namespace RType {
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
         /**
+         * @brief Checks whether the systems are currently running.
+         * @return true during update(), false otherwise.
+         */
+        [[nodiscard]] bool isUpdating() const;
+
+        /**
          * @brief Creates a view over the entities that have all the given
          * component types. Never throws: if one of the types has never
          * been added, the view is empty.
