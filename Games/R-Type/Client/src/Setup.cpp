@@ -6,6 +6,7 @@
 */
 
 #include "Setup.hpp"
+#include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Friction2D.hpp"
@@ -15,6 +16,7 @@
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "Menu.hpp"
+#include "Metric.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
 #include "Sound.hpp"
@@ -64,6 +66,27 @@ namespace RType::Client {
         gm.createSystem<MasterClock>(MasterClock::systemMasterClock);
         gm.createSystem<MasterClock>(Velocity2D::systemMasterVelocity2D);
         return mc;
+    }
+
+    Entity createMetric(GameManager &gm)
+    {
+        Entity m = gm.createEntity();
+        gm.addComponent<Metric>(m, gm.getAssetsMap()[Asset::FONT], true);
+        gm.createSystem<MasterClock>(Metric::systemUpdateMetric);
+        gm.createSystem<ClientManager>(Metric::systemUpdateMetricLagometer);
+        gm.createSystem<KeyboardManager>([&gm](const KeyboardManager &k) {
+            bool press = false;
+            for (auto key : k.keyPressed)
+                if (key == Key::Value::F5) {
+                    press = true;
+                    break;
+                }
+            if (!press)
+                return;
+            for (auto [_, m] : gm.view<Metric>().getVector())
+                m.activate();
+        });
+        return m;
     }
 
     void createSystems(GameManager &gm)
