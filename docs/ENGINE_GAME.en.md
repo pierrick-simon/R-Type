@@ -39,7 +39,7 @@ The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) an
 2. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
 3. loads the modules asked for in `GameConfig.modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
 4. loads every `.lua` file of the scripts folder (`GameConfig.srcDir`) and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
-5. runs `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)`: the loop goes on as long as `runningCondition()` returns `true`;
+5. runs the loop, at `GameConfig.windowFPS` frames per second, until a script calls `gm:stop()` (see [the Lua guide](LUA_GUIDE.en.md#stopping-the-game));
 6. if an `RType::EngineException` comes up, from the engine or from a script, prints its message and exits with code `84`.
 
 The `config.conf` file and the scripts folder are looked for **relative to the directory the game is started from**.
@@ -54,7 +54,6 @@ The [`Game.hpp`](../Engine/Game/include/Game.hpp) header declares the struct and
 namespace RType {
 
     struct GameInfo {
-        std::function<bool()> runningCondition;
         int windowFPS = 60;
         std::size_t windowWidth = 800;
         std::size_t windowHeight = 600;
@@ -70,7 +69,6 @@ namespace RType {
 
 | Field | Role | Default |
 |---|---|---|
-| `runningCondition` | Called before each frame: the loop goes on as long as it returns `true` | **none, must be provided** |
 | `windowFPS` | Frames per second of the loop | `60` |
 | `windowWidth`, `windowHeight` | Window size, in pixels, used by the `Window` module | `800` × `600` |
 | `windowName` | Window title, used by the `Window` module | `"My Game"` |
@@ -83,17 +81,16 @@ The game **defines** `RType::GameConfig` in **a single** one of its `.cpp` files
 #include "Game.hpp"
 
 RType::GameInfo RType::GameConfig = {
-    .runningCondition = [] { return !WindowShouldClose(); },
     .windowName = "Bounce",
     .modules = {"Window", "Keyboard"},
 };
 ```
 
-Fields must be written **in the struct's order**: `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`. You can skip some, not swap them.
+Fields must be written **in the struct's order**: `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`. You can skip some, not swap them.
 
 ### The `config.conf` file
 
-Every field but `runningCondition` can also be given in a `config.conf` file, placed in the directory the game is started from. Changing the window, the scripts or the modules then needs no recompiling:
+Every field can also be given in a `config.conf` file, placed in the directory the game is started from. Changing the window, the scripts or the modules then needs no recompiling:
 
 ```
 # window
@@ -191,14 +188,13 @@ The binary is placed in `Games/`. It must be **started from the game's folder**:
 
 ## 5. A complete game
 
-A ship crossing the window and bouncing off its edges. `Escape` or the close button quit the game.
+A ship crossing the window and bouncing off its edges. `Escape` quits the game.
 
 ```cpp
 // src/Setup.cpp
 #include "Game.hpp"
 
 RType::GameInfo RType::GameConfig = {
-    .runningCondition = [] { return !WindowShouldClose(); },
     .windowName = "Bounce",
     .modules = {"Window", "Keyboard"},
 };
@@ -213,6 +209,10 @@ local function bounce(gm, e, pos, vel)
     if pos.y < 0 or pos.y > HEIGHT - 32 then vel.y = -vel.y end
 end
 
+local function quit(gm)
+    if gm:keyboard():isPressed(Key.Escape) then gm:stop() end
+end
+
 function start(gm)
     local ship = gm:createEntity()
     gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
@@ -220,6 +220,7 @@ function start(gm)
     gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
     gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
+    gm:createSystem(quit)
     gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
     gm:addSystem('MasterVelocity2D')
     gm:addSystem('DrawSprite2D')
@@ -227,7 +228,7 @@ end
 ```
 
 - **`Setup.cpp`** only turns on the window and the keyboard. The `Window` module already clears the window each frame.
-- **`start`** runs once: it creates the ship, then registers three systems, which run each frame in this order. `bounce` is the game's own; `MasterVelocity2D` (movement) and `DrawSprite2D` (drawing) come from the engine.
+- **`start`** runs once: it creates the ship, then registers four systems, which run each frame in this order. `quit` and `bounce` are the game's own: `quit` stops the game with `gm:stop()` when `Escape` is pressed; `MasterVelocity2D` (movement) and `DrawSprite2D` (drawing) come from the engine.
 
 Everything the script can do is in [the Lua scripting guide](LUA_GUIDE.en.md).
 
@@ -258,7 +259,6 @@ The macro must apply to `engine-game`, which holds the `main`: a `target_compile
 ### Do
 
 - **Define `RType::GameConfig` in a single `.cpp`**, ideally a `Setup.cpp` that holds only that.
-- **Always provide `runningCondition`**.
 - **Link only `engine-game`** in the game's `CMakeLists.txt`.
 - **List `Window` in `modules`** as soon as the game draws something or reads the keyboard or the mouse.
 - **Start the game from the game's folder**, the one that holds `config.conf`.
@@ -292,21 +292,11 @@ Runner.cpp:(.text+0xa58): undefined reference to `RType::GameConfig'
 ### `designator order for field ... does not match declaration order`
 
 ```
-error: designator order for field 'RType::GameInfo::runningCondition' does not match declaration order in 'RType::GameInfo'
+error: designator order for field 'RType::GameInfo::windowName' does not match declaration order in 'RType::GameInfo'
 ```
 
 **Cause:** `GameInfo`'s fields are not written in the struct's order.
-**Fix:** put them back in the order `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`.
-
-### `terminate called after throwing an instance of 'std::bad_function_call'`
-
-```
-terminate called after throwing an instance of 'std::bad_function_call'
-  what():  bad_function_call
-```
-
-**Cause:** `runningCondition` is not provided: the loop calls an empty `std::function`.
-**Fix:** define `.runningCondition`, for instance `[] { return !WindowShouldClose(); }`.
+**Fix:** put them back in the order `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`.
 
 ### `Engine Error: Config error: ...` (exit code `84`)
 

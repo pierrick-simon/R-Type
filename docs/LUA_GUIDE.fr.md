@@ -215,6 +215,25 @@ end
 - Un système peut s'arrêter lui-même, ou en arrêter un autre, depuis un système : il tourne encore jusqu'à la fin de la frame ([section 6](#6-ce-qui-se-passe-pendant-une-frame)).
 - Arrêter un système déjà arrêté ne fait rien.
 
+### Arrêter le jeu
+
+`gm:stop()` arrête le jeu : la frame en cours va jusqu'au bout, puis la boucle s'arrête et le jeu quitte avec le code de sortie `0`. Le jeu tourne tant qu'aucun script ne l'appelle.
+
+```lua
+local function quit(gm)
+    if gm:keyboard():isPressed(Key.Escape) then
+        gm:stop()                     -- Échap quitte le jeu
+    end
+end
+
+function start(gm)
+    gm:createSystem(quit)
+end
+```
+
+- Les systèmes qui suivent dans la même frame tournent encore, et les changements de la frame sont appliqués.
+- Appeler `gm:stop()` plusieurs fois ne fait rien de plus.
+
 ### Lire le clavier et la souris
 
 `gm:keyboard()` donne le clavier du module `Keyboard`, et `gm:mouse()` la souris du module `Mouse` (voir [les modules](ENGINE_GAME.fr.md#3-les-modules)). Le moteur les met à jour au début de chaque frame : un système les lit à chaque passage.
@@ -340,7 +359,8 @@ end
 Pendant une frame, pendant que les systèmes tournent, les changements demandés par un script sont **appliqués à la fin de la frame**, tous ensemble :
 
 - `gm:destroyEntity`, `gm:addComponent`, `gm:removeComponent` et `gm:destroySystem` sont appliqués à la fin de la frame ;
-- `gm:createEntity` est immédiat.
+- `gm:createEntity` est immédiat ;
+- `gm:stop()` arrête le jeu après cette frame.
 
 C'est ce qui permet à un système de détruire des entités pendant que le moteur les parcourt. Ça a deux effets visibles, dans la même frame :
 
@@ -379,6 +399,10 @@ local function bounce(gm, e, pos, vel)
     if pos.y < 0 or pos.y > HEIGHT - 32 then vel.y = -vel.y end
 end
 
+local function quit(gm)
+    if gm:keyboard():isPressed(Key.Escape) then gm:stop() end
+end
+
 function start(gm)
     local ship = gm:createEntity()
     gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
@@ -386,13 +410,14 @@ function start(gm)
     gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
     gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
+    gm:createSystem(quit)
     gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
     gm:addSystem('MasterVelocity2D')
     gm:addSystem('DrawSprite2D')
 end
 ```
 
-À chaque frame : `bounce` fait demi-tour au vaisseau sur les bords, `MasterVelocity2D` le déplace, `DrawSprite2D` le dessine.
+À chaque frame : `quit` arrête le jeu si `Échap` est pressée, `bounce` fait demi-tour au vaisseau sur les bords, `MasterVelocity2D` le déplace, `DrawSprite2D` le dessine.
 
 ---
 
@@ -474,6 +499,7 @@ Les cas particuliers (champs imbriqués, méthodes, enums, composants construits
 | `gm:createEntity()` | crée une entité et la renvoie |
 | `gm:destroyEntity(e)` | détruit une entité et ses composants |
 | `gm:hasEntity(e)` | si l'entité existe |
+| `gm:stop()` | arrête le jeu après la frame en cours |
 | `gm:addComponent(e, nom [, champs])` | ajoute un composant, construit à partir de la table |
 | `gm:getComponent(e, nom)` | le vrai composant |
 | `gm:hasComponent(e, nom)` | si l'entité a le composant |
