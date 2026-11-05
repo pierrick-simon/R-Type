@@ -1,11 +1,11 @@
-# Écrire un jeu sans `main` : `engine-game`
+# Lancer un jeu : `game`
 
 > 🌐 **Langue :** Français · [English](ENGINE_GAME.en.md)
 
-`engine-game` est la bibliothèque qui fournit le `main` à la place du jeu. Le jeu donne deux choses :
+`game` est l'exécutable du moteur. Un jeu n'a pas de C++ et ne se compile pas : c'est un dossier qui contient deux choses :
 
-- **une variable C++, `RType::GameConfig`** : la fenêtre, le nombre d'images par seconde, les modules du moteur à charger et le moment où s'arrêter ;
-- **des scripts Lua** : ils créent les entités, leur donnent des composants et enregistrent les systèmes.
+- **un fichier `config.conf`** : la fenêtre, le nombre d'images par seconde, le dossier des scripts et les modules du moteur à charger ;
+- **des scripts Lua** : ils créent les entités, leur donnent des composants, enregistrent les systèmes et décident quand le jeu s'arrête.
 
 Le moteur s'occupe du reste : il crée le `GameManager`, charge les modules, lance chaque script, puis fait tourner la boucle.
 
@@ -14,14 +14,14 @@ Le moteur s'occupe du reste : il crée le `GameManager`, charge les modules, lan
 - **Pour l'ECS en détail** (entités, composants, systèmes, vues), consultez [le guide d'utilisation de l'ECS](ECS_GUIDE.fr.md).
 
 > [!TIP]
-> Tous les exemples de ce guide ont été compilés et lancés avec le moteur actuel. Les messages d'erreur de la [section 8](#8-les-erreurs-et-comment-les-régler) ont été reproduits avec `g++-14`.
+> Tous les exemples de ce guide ont été lancés avec le moteur actuel, et tous les messages d'erreur de la [section 8](#8-les-erreurs-et-comment-les-régler) ont été reproduits.
 
 ---
 
 ## Sommaire
 
-1. [Ce que fait le `main` du moteur](#1-ce-que-fait-le-main-du-moteur)
-2. [`GameInfo` : ce que le jeu fournit](#2-gameinfo--ce-que-le-jeu-fournit)
+1. [Ce que fait le moteur au lancement](#1-ce-que-fait-le-moteur-au-lancement)
+2. [Le fichier `config.conf`](#2-le-fichier-configconf)
 3. [Les modules](#3-les-modules)
 4. [Mettre en place le jeu](#4-mettre-en-place-le-jeu)
 5. [Un jeu complet](#5-un-jeu-complet)
@@ -31,66 +31,23 @@ Le moteur s'occupe du reste : il crée le `GameManager`, charge les modules, lan
 
 ---
 
-## 1. Ce que fait le `main` du moteur
+## 1. Ce que fait le moteur au lancement
 
 Le `main` se trouve dans [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) et appelle `RType::Game::Runner::run()`. Dans l'ordre, il :
 
-1. lit le fichier `config.conf`, qui doit exister, et met à jour `GameConfig` avec ses valeurs (voir [le fichier `config.conf`](#le-fichier-configconf)) ;
+1. lit le fichier `config.conf`, qui doit exister (voir la [section 2](#2-le-fichier-configconf)) ;
 2. crée le `GameManager` (en mode debug si le moteur est compilé avec `__DEBUG__`, voir la [section 6](#6-le-mode-debug)) ;
-3. charge les modules demandés dans `GameConfig.modules`, plus `Clock`, toujours chargé (voir la [section 3](#3-les-modules)) ;
-4. charge tous les fichiers `.lua` du dossier des scripts (`GameConfig.srcDir`) et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
-5. lance la boucle, à `GameConfig.windowFPS` images par seconde, jusqu'à ce qu'un script appelle `gm:stop()` (voir [le guide Lua](LUA_GUIDE.fr.md#arrêter-le-jeu)) ;
+3. charge les modules demandés dans `modules`, plus `Clock`, toujours chargé (voir la [section 3](#3-les-modules)) ;
+4. charge tous les fichiers `.lua` du dossier des scripts (`srcDirectory`) et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
+5. fait tourner la boucle, à `windowFPS` images par seconde, **jusqu'à ce qu'un script appelle `gm:stop()`** (voir [le guide Lua](LUA_GUIDE.fr.md#arrêter-le-jeu)) ;
 6. si une `RType::EngineException` remonte, du moteur ou d'un script, affiche son message et quitte avec le code `84`.
 
-Le fichier `config.conf` et le dossier des scripts sont cherchés **par rapport au dossier depuis lequel le jeu est lancé**.
+- **Seul un script arrête le jeu.** Fermer la fenêtre ne suffit pas : un jeu qui ne vérifie pas `gm:windowShouldClose()` pour appeler `gm:stop()` continue de tourner après un clic sur la croix.
+- **Tout est cherché par rapport au dossier depuis lequel le jeu est lancé** : `config.conf`, le dossier des scripts, et les chemins que donnent les scripts (images, polices, sons…).
 
 ---
 
-## 2. `GameInfo` : ce que le jeu fournit
-
-L'en-tête [`Game.hpp`](../Engine/Game/include/Game.hpp) déclare la structure et la variable :
-
-```cpp
-namespace RType {
-
-    struct GameInfo {
-        int windowFPS = 60;
-        std::size_t windowWidth = 800;
-        std::size_t windowHeight = 600;
-        std::string windowName = "My Game";
-        std::string srcDir = ".";
-        std::list<std::string> modules;
-    };
-
-    extern GameInfo GameConfig;
-
-}
-```
-
-| Champ | Rôle | Valeur par défaut |
-|---|---|---|
-| `windowFPS` | Images par seconde de la boucle | `60` |
-| `windowWidth`, `windowHeight` | Taille de la fenêtre, en pixels, utilisée par le module `Window` | `800` × `600` |
-| `windowName` | Titre de la fenêtre, utilisé par le module `Window` | `"My Game"` |
-| `srcDir` | Le dossier des scripts Lua, par rapport au dossier depuis lequel le jeu est lancé | `"."` (le dossier de lancement lui-même) |
-| `modules` | Les modules du moteur à charger, voir la [section 3](#3-les-modules) | vide (seulement `Clock`) |
-
-Le jeu **définit** `RType::GameConfig` dans **un seul** de ses fichiers `.cpp`, avec les initialiseurs désignés de C++20. Les champs omis gardent leur valeur par défaut :
-
-```cpp
-#include "Game.hpp"
-
-RType::GameInfo RType::GameConfig = {
-    .windowName = "Bounce",
-    .modules = {"Window", "Keyboard"},
-};
-```
-
-Les champs doivent être écrits **dans l'ordre de la structure** : `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`. On peut en omettre, pas les intervertir.
-
-### Le fichier `config.conf`
-
-Tous les champs peuvent aussi être donnés dans un fichier `config.conf`, placé dans le dossier depuis lequel le jeu est lancé. Changer la fenêtre, les scripts ou les modules ne demande alors pas de recompiler le jeu :
+## 2. Le fichier `config.conf`
 
 ```
 # fenêtre
@@ -103,13 +60,22 @@ srcDirectory = scripts
 modules = Window, Keyboard, Mouse, Audio
 ```
 
-- **Une ligne par réglage**, sous la forme `clé = valeur`. Les espaces autour de la clé, du `=` et de la valeur sont ignorés.
+| Clé | Rôle | Valeur par défaut |
+|---|---|---|
+| `windowFPS` | Images par seconde de la boucle | `60` |
+| `windowWidth`, `windowHeight` | Taille de la fenêtre, en pixels, utilisée par le module `Window` | `800` × `600` |
+| `windowName` | Titre de la fenêtre, utilisé par le module `Window` | `My Game` |
+| `srcDirectory` | Le dossier des scripts Lua, par rapport au dossier depuis lequel le jeu est lancé | `.` (le dossier de lancement lui-même) |
+| `modules` | Les modules du moteur à charger, séparés par des virgules (voir la [section 3](#3-les-modules)) | aucun (seulement `Clock`) |
+
 - **Le fichier est obligatoire**, même vide : sans lui, le jeu s'arrête au démarrage.
-- **Chaque clé est facultative.** Une clé absente garde la valeur du `.cpp`. Si une clé apparaît deux fois, la dernière l'emporte.
-- **Les valeurs du fichier remplacent celles du `.cpp`.** `modules` remplace toute la liste : il ne s'ajoute pas aux modules du `.cpp`.
+- **Chaque clé est facultative.** Une clé absente garde sa valeur par défaut. Si une clé apparaît deux fois, la dernière l'emporte.
+- **Une ligne par réglage**, sous la forme `clé = valeur`. Les espaces autour de la clé, du `=` et de la valeur sont ignorés. Les clés respectent la casse.
 - **Les lignes vides et celles qui commencent par `#` sont ignorées.**
-- **`windowFPS`, `windowWidth` et `windowHeight`** sont des nombres entiers plus grands que 0. **`srcDirectory`** donne `srcDir`. **`modules`** est une liste de noms séparés par des virgules.
+- **`windowFPS`, `windowWidth` et `windowHeight`** sont des nombres entiers plus grands que 0.
 - **Une ligne invalide arrête le jeu** avant que quoi que ce soit ne tourne, avec le fichier et la ligne (voir la [section 8](#8-les-erreurs-et-comment-les-régler)).
+
+Pour les développeurs du moteur : le fichier remplit la variable `RType::GameConfig`, de type `GameInfo`, déclarée dans [`Game.hpp`](../Engine/Game/include/Game.hpp) et lue par [`ConfigBuilder`](../Engine/Game/include/ConfigBuilder.hpp). Ajouter une clé est expliqué dans [le guide pour étendre le moteur](ENGINE_EXTENDING.fr.md#6-récapitulatif).
 
 ---
 
@@ -119,7 +85,7 @@ Un module est une fonctionnalité du moteur que le jeu active par son nom. Chacu
 
 | Module | Ce qu'il crée | A besoin de |
 |---|---|---|
-| `Window` | une entité avec une `Window` (taille et titre pris dans `GameConfig`), et le système qui l'efface et la rafraîchit à chaque frame ; les scripts savent si elle doit se fermer avec `gm:windowShouldClose()` | |
+| `Window` | une entité avec une `Window` (taille et titre pris dans `config.conf`), et le système qui l'efface et la rafraîchit à chaque frame ; les scripts savent si elle doit se fermer avec `gm:windowShouldClose()` | |
 | `Keyboard` | une entité avec un `KeyboardManager`, et le système qui lit les touches ; les scripts le lisent avec `gm:keyboard()` | `Window` |
 | `Mouse` | une entité avec un `MouseManager`, et le système qui lit la souris ; les scripts la lisent avec `gm:mouse()` | `Window` |
 | `Audio` | une entité avec le point qui entend les sons, et le système qui joue les `Sound` | |
@@ -138,51 +104,33 @@ Un module est une fonctionnalité du moteur que le jeu active par son nom. Chacu
 
 ```
 Games/
+├── game                     # l'exécutable du moteur
 └── MyGame/
-    ├── CMakeLists.txt
     ├── config.conf          # srcDirectory = scripts
-    ├── src/
-    │   └── Setup.cpp        # seulement la définition de RType::GameConfig
     ├── scripts/
     │   └── game.lua         # les scripts, chargés dans l'ordre alphabétique
     └── sprites/
         └── ship.png
 ```
 
-Pas de `Main.cpp` : `engine-game` le fournit.
+Pas de `CMakeLists.txt`, pas de `.cpp` : le jeu n'est pas compilé.
 
-### Le `CMakeLists.txt`
-
-```cmake
-cmake_minimum_required(VERSION 3.25...4.0)
-project(my_game CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_executable(my_game src/Setup.cpp)
-target_link_libraries(my_game PRIVATE engine-game)
-```
-
-**`engine-game` suffit** : il apporte l'ECS, le graphisme 2D et 3D, l'audio et l'interpréteur Lua, avec leurs dossiers d'en-têtes.
-
-Ajoutez ensuite le dossier dans [`Games/CMakeLists.txt`](../Games/CMakeLists.txt) :
-
-```cmake
-add_subdirectory(MyGame)
-```
-
-et le nom du binaire dans le [`.gitignore`](../.gitignore).
-
-### Compiler et lancer
+### Compiler le moteur
 
 ```sh
 cmake -S . -B build
-cmake --build build --target my_game -j
-cd Games/MyGame && ../my_game
+cmake --build build --target game -j
 ```
 
-Le binaire est placé dans `Games/`. Il doit être **lancé depuis le dossier du jeu** : `config.conf`, le dossier des scripts, et les chemins que les scripts donnent (images, polices…), sont lus par rapport à ce dossier.
+L'exécutable est placé dans `Games/`. Il ne se compile qu'une fois, pour tous les jeux : modifier un script ou `config.conf` ne demande pas de recompiler.
+
+### Lancer le jeu
+
+```sh
+cd Games/MyGame && ../game
+```
+
+Le jeu doit être **lancé depuis son dossier**, celui qui contient `config.conf`.
 
 ---
 
@@ -190,14 +138,11 @@ Le binaire est placé dans `Games/`. Il doit être **lancé depuis le dossier du
 
 Un vaisseau qui traverse la fenêtre et rebondit sur ses bords. `Échap` ou le bouton de fermeture quittent le jeu.
 
-```cpp
-// src/Setup.cpp
-#include "Game.hpp"
-
-RType::GameInfo RType::GameConfig = {
-    .windowName = "Bounce",
-    .modules = {"Window", "Keyboard"},
-};
+```
+# config.conf
+windowName = Bounce
+srcDirectory = scripts
+modules = Window
 ```
 
 ```lua
@@ -227,7 +172,7 @@ function start(gm)
 end
 ```
 
-- **`Setup.cpp`** active seulement la fenêtre et le clavier. Le module `Window` efface déjà la fenêtre à chaque frame.
+- **`config.conf`** n'active que la fenêtre : la taille par défaut, 800 × 600, convient. Le module `Window` efface déjà la fenêtre à chaque frame.
 - **`start`** tourne une fois : il crée le vaisseau, puis enregistre quatre systèmes, qui tournent à chaque frame dans cet ordre. `quit` et `bounce` sont propres au jeu : `quit` arrête le jeu avec `gm:stop()` quand la fenêtre doit se fermer ; `MasterVelocity2D` (mouvement) et `DrawSprite2D` (dessin) viennent du moteur.
 
 Tout ce qu'un script peut faire est dans [le guide du scripting Lua](LUA_GUIDE.fr.md).
@@ -236,11 +181,11 @@ Tout ce qu'un script peut faire est dans [le guide du scripting Lua](LUA_GUIDE.f
 
 ## 6. Le mode debug
 
-Quand le moteur est compilé avec la macro `__DEBUG__`, le `main` crée le `GameManager` en mode debug : chaque opération est écrite sur `std::clog`.
+Quand le moteur est compilé avec la macro `__DEBUG__`, il crée le `GameManager` en mode debug : chaque opération est écrite sur `std::clog`.
 
 ```sh
 cmake -S . -B build -DCMAKE_CXX_FLAGS="-D__DEBUG__"
-cmake --build build --target my_game -j
+cmake --build build --target game -j
 ```
 
 ```
@@ -250,55 +195,29 @@ cmake --build build --target my_game -j
 [GameManager] createSystem with ( RType::MasterClock ) -> system 0
 ```
 
-La macro doit s'appliquer à `engine-game`, qui contient le `main` : un `target_compile_definitions` sur la cible du jeu ne suffit pas.
-
 ---
 
 ## 7. À faire / à ne pas faire
 
 ### À faire
 
-- **Définir `RType::GameConfig` dans un seul `.cpp`**, idéalement un `Setup.cpp` qui ne contient que ça.
-- **Ne lier que `engine-game`** dans le `CMakeLists.txt` du jeu.
-- **Mettre `Window` dans `modules`** dès que le jeu dessine quelque chose ou lit le clavier ou la souris.
-- **Lancer le jeu depuis le dossier du jeu**, celui qui contient `config.conf`.
-- **Écrire les champs de `GameInfo` dans l'ordre de la structure**.
+- **Mettre `Window` dans `modules`** dès que le jeu dessine quelque chose, lit le clavier ou la souris, ou appelle `gm:windowShouldClose()`.
+- **Avoir un système qui appelle `gm:stop()`** quand `gm:windowShouldClose()` renvoie `true` : sans lui, la fenêtre ne se ferme pas.
+- **Lancer le jeu depuis son dossier**, celui qui contient `config.conf`.
+- **Écrire les chemins des scripts par rapport à ce dossier.**
 
 ### À ne pas faire
 
-- **Ne pas écrire de `main`** dans le jeu : il remplacerait celui du moteur sans prévenir.
-- **Ne pas définir `RType::GameConfig` dans un en-tête**, ni dans deux `.cpp`.
 - **Ne pas mettre `Clock` dans `modules`** : il est toujours chargé.
-- **Ne pas lire `RType::GameConfig` depuis le constructeur d'une autre variable globale** : l'ordre d'initialisation des globales entre fichiers n'est pas défini.
+- **Ne pas lancer le jeu depuis un autre dossier** : le moteur n'y trouve ni `config.conf`, ni les scripts.
 
 ---
 
 ## 8. Les erreurs et comment les régler
 
-### `undefined reference to 'RType::GameConfig'`
+Chaque erreur arrête le jeu avec le code de sortie `84`, avant que quoi que ce soit ne tourne.
 
-```
-Runner.cpp:(.text+0xa58): undefined reference to `RType::GameConfig'
-```
-
-**Cause :** le jeu ne définit pas `RType::GameConfig`.
-**Solution :** ajouter la définition dans un des `.cpp` du jeu (voir la [section 2](#2-gameinfo--ce-que-le-jeu-fournit)), et vérifier que ce fichier est bien listé dans `add_executable`.
-
-### `multiple definition of 'RType::GameConfig'`
-
-**Cause :** `RType::GameConfig` est défini dans deux `.cpp`, ou dans un en-tête inclus par plusieurs `.cpp`.
-**Solution :** garder une seule définition, dans un seul `.cpp`.
-
-### `designator order for field ... does not match declaration order`
-
-```
-error: designator order for field 'RType::GameInfo::windowName' does not match declaration order in 'RType::GameInfo'
-```
-
-**Cause :** les champs de `GameInfo` ne sont pas écrits dans l'ordre de la structure.
-**Solution :** les remettre dans l'ordre `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`.
-
-### `Engine Error: Config error: ...` (code de sortie `84`)
+### `Engine Error: Config error: ...`
 
 ```
 Engine Error: Config error: config.conf:2: unknown key 'fps'
@@ -308,9 +227,9 @@ Engine Error: Config error: config.conf: cannot be opened
 ```
 
 **Cause :** une ligne de `config.conf` a une clé qui n'existe pas, une valeur invalide, ou pas de `=`, et le message donne la ligne. Ou bien le fichier n'est pas dans le dossier depuis lequel le jeu est lancé.
-**Solution :** corriger la ligne, avec les clés et les valeurs du [fichier `config.conf`](#le-fichier-configconf), les clés respectant la casse. Ou bien créer `config.conf` dans le dossier du jeu, même vide.
+**Solution :** corriger la ligne, avec les clés et les valeurs de la [section 2](#2-le-fichier-configconf). Ou bien lancer le jeu depuis son dossier, ou y créer `config.conf`, même vide.
 
-### `Engine Error: No such module: ...` (code de sortie `84`)
+### `Engine Error: No such module: ...`
 
 ```
 Engine Error: No such module: Windw
@@ -319,7 +238,7 @@ Engine Error: No such module: Windw
 **Cause :** un nom de `modules` n'est pas un des modules de la [section 3](#3-les-modules), souvent à cause d'une faute de frappe.
 **Solution :** corriger le nom. Les noms de modules respectent la casse.
 
-### `Engine Error: Module ... requires module ...` (code de sortie `84`)
+### `Engine Error: Module ... requires module ...`
 
 ```
 Engine Error: Module Keyboard requires module Window
@@ -328,17 +247,22 @@ Engine Error: Module Keyboard requires module Window
 **Cause :** un module est cité sans le module dont il a besoin.
 **Solution :** ajouter le module manquant dans `modules`.
 
-### `Engine Error: Script error: ...` (code de sortie `84`)
+### `Engine Error: Script error: ...`
 
 **Cause :** un script contient une erreur, ou appelle le moteur avec de mauvais arguments. Le message donne le fichier et la ligne.
 **Solution :** voir [les erreurs du guide Lua](LUA_GUIDE.fr.md#9-les-erreurs-et-comment-les-régler).
 
 ### Rien ne se passe : aucun script ne tourne
 
-**Cause :** le jeu n'est pas lancé depuis le dossier du jeu, ou `srcDir` ne désigne pas le dossier des scripts. Le moteur ne trouve aucun script, et fait tourner une boucle vide sans erreur.
-**Solution :** se placer dans le dossier du jeu avant de le lancer (voir la [section 4](#compiler-et-lancer)), et vérifier `srcDirectory` dans `config.conf`.
+**Cause :** `srcDirectory` ne désigne pas le dossier des scripts. Le moteur ne trouve aucun script, et fait tourner une boucle vide sans erreur.
+**Solution :** vérifier `srcDirectory` dans `config.conf`, écrit par rapport au dossier depuis lequel le jeu est lancé.
 
 ### La fenêtre ne s'ouvre pas
 
 **Cause :** `Window` n'est pas dans `modules`.
-**Solution :** ajouter `"Window"` dans `modules`.
+**Solution :** ajouter `Window` dans `modules`.
+
+### La fenêtre ne se ferme pas
+
+**Cause :** aucun script n'appelle `gm:stop()` : la croix et `Échap` ne font rien d'autre que rendre `gm:windowShouldClose()` vrai.
+**Solution :** ajouter le système `quit` du [jeu complet](#5-un-jeu-complet).

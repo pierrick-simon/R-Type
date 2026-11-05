@@ -28,9 +28,9 @@ This guide explains how to add a component, a system or a module to the engine, 
 | `engine-graphical2D` | [`Engine/Graphical2D`](../Engine/Graphical2D) | the window, the keyboard, the mouse, 2D sprites and texts |
 | `engine-graphical3D` | [`Engine/Graphical3D`](../Engine/Graphical3D) | 3D models and the camera |
 | `engine-audio` | [`Engine/Audio`](../Engine/Audio) | sounds and the point that hears them |
-| `engine-game` | [`Engine/Game`](../Engine/Game) | the `main`, the modules and everything linked to Lua |
+| `game` | [`Engine/Game`](../Engine/Game) | the engine's executable: the `main`, the modules and everything linked to Lua |
 
-In `engine-game`, everything is in the `RType::Game` namespace, one class per role:
+In `game`, everything is in the `RType::Game` namespace, one class per role:
 
 | File | Role |
 |---|---|
@@ -38,12 +38,13 @@ In `engine-game`, everything is in the `RType::Game` namespace, one class per ro
 | `ConfigBuilder` | reading `config.conf`, which updates `GameConfig` |
 | `Modules` | the modules a game can ask for |
 | `Scripts` | loading the scripts and converting their errors |
-| `GameManagerBinding` | exposes the `GameManager` and the entities, then calls the other bindings |
+| `GameManagerBinding` | exposes the `GameManager`, the entities and `gm:stop`, then calls the other bindings |
 | `ComponentBinding` | the registry of the components usable from Lua |
 | `SystemBinding` | `gm:createSystem`, `gm:addSystem`, `gm:destroySystem`, `gm:hasSystem` |
 | `ViewBinding` | `gm:view` |
 | `InputBinding` | `gm:keyboard`, `gm:mouse`, the `Key` and `MouseButton` tables |
 | `TimeBinding` | `gm:elapsed` |
+| `WindowBinding` | `gm:windowShouldClose` |
 | **`EngineBindings.cpp`** | **the lists of the engine's components and systems usable from Lua: the file to edit to add one** |
 
 ---
@@ -157,7 +158,7 @@ Add a row to the table of [the engine's systems of the Lua guide](LUA_GUIDE.en.m
 
 ## 4. Adding a module
 
-A module is a feature the game turns on by its name, in `GameConfig.modules`. It creates, once and before the scripts, an entity with the component it owns, and the system that updates it. This component belongs to the engine: a script reads it, but can neither create another one nor add the system a second time.
+A module is a feature the game turns on by its name, in the `modules` key of its `config.conf`. It creates, once and before the scripts, an entity with the component it owns, and the system that updates it. This component belongs to the engine: a script reads it, but can neither create another one nor add the system a second time.
 
 ### Writing the module
 
@@ -174,11 +175,11 @@ Add an entry to `Modules::allowed`, in [`Modules.cpp`](../Engine/Game/src/Module
 
 - **The dependencies** are checked before anything runs: `{"Window"}` for a module that needs the window, like `Keyboard`.
 - **Its component has no `bindComponent`**, and **its systems are not in `engineSystems`**. A script that tries to create them gets `Unknown component` or `Unknown system`.
-- The lambda gets `GameConfig`, for a module that has settings, like the window's size for `Window`.
+- The lambda gets `GameConfig`, filled from `config.conf`, for a module that has settings, like the window's size for `Window`.
 
 ### Giving scripts access to its component
 
-A script reaches a module's component only through a `GameManager` function, such as `gm:keyboard()` or `gm:elapsed()`. They are grouped in a binding class, on the model of [`InputBinding`](../Engine/Game/include/InputBinding.hpp) and [`TimeBinding`](../Engine/Game/include/TimeBinding.hpp):
+A script reaches a module's component only through a `GameManager` function, such as `gm:keyboard()` or `gm:elapsed()`. They are grouped in a binding class, on the model of [`InputBinding`](../Engine/Game/include/InputBinding.hpp), [`TimeBinding`](../Engine/Game/include/TimeBinding.hpp) and [`WindowBinding`](../Engine/Game/include/WindowBinding.hpp):
 
 1. **A header** in `Engine/Game/include`, with a class of the `RType::Game` namespace whose only public function is the static `registerFunctions(sol::state &lua)`.
 2. **A `.cpp`** in `Engine/Game/src`, that implements it:
@@ -204,7 +205,7 @@ A script reaches a module's component only through a `GameManager` function, suc
 
 ### Documenting it
 
-- A row in the table of [the modules of the `engine-game` guide](ENGINE_GAME.en.md#3-the-modules), in French and in English: its name, what it creates, how scripts reach it, and its dependencies.
+- A row in the table of [the modules of the guide to running a game](ENGINE_GAME.en.md#3-the-modules), in French and in English: its name, what it creates, how scripts reach it, and its dependencies.
 - A subsection in [the Lua guide](LUA_GUIDE.en.md), with an example, and its functions in the [cheat sheet](LUA_GUIDE.en.md#11-api-cheat-sheet).
 
 ---
@@ -232,6 +233,6 @@ lua["GameManager"]["countComponents"] =
 |---|---|---|---|
 | a component | the struct, and its `.cpp` in `SRCS_...` | one `bindComponent` line in `EngineBindings.cpp` | the components table of the Lua guide |
 | a system | a static function `systemName` | one `makeSystem` line in `engineSystems`, unless it belongs to a module | the engine's systems table of the Lua guide |
-| a module | an entry in `Modules::allowed` | a binding class with `findModuleComponent`, called by `GameManagerBinding` | the modules table of the `engine-game` guide, and a subsection of the Lua guide |
+| a module | an entry in `Modules::allowed` | a binding class with `findModuleComponent`, called by `GameManagerBinding` | the modules table of the guide to running a game, and a subsection of the Lua guide |
 | a `gm:` function | | a lambda in the `registerFunctions` of a binding class | the Lua guide's cheat sheet |
-| a `config.conf` setting | a field of `GameInfo` | an entry in `ConfigBuilder::setters`, which reads the value and updates the field | the `config.conf` file of the `engine-game` guide |
+| a `config.conf` setting | a field of `GameInfo` | an entry in `ConfigBuilder::setters`, which reads the value and updates the field | the `config.conf` file of the guide to running a game |

@@ -2,10 +2,10 @@
 
 > 🌐 **Language:** [Français](LUA_GUIDE.fr.md) · English
 
-With `engine-game`, a game's content is written in Lua: the scripts create the entities, give them the engine's components, and register the systems that run each frame. The C++ side of the game only holds its settings (`RType::GameConfig`).
+With the engine, a game's content is written in Lua: the scripts create the entities, give them the engine's components, and register the systems that run each frame. The game has no C++: its settings are in its `config.conf` file.
 
 - **Audience:** anyone writing a game's scripts, and, in [section 10](#10-for-engine-developers-exposing-a-component-or-a-system), engine developers who make a new component or system usable from Lua.
-- **To set up the game** (`GameConfig`, modules, folder, CMake), see [the engine-game guide](ENGINE_GAME.en.md).
+- **To set up the game** (`config.conf`, modules, folder, starting it), see [the guide to running a game](ENGINE_GAME.en.md).
 
 > [!TIP]
 > Every example in this guide was run against the current engine, and every error message in [section 9](#9-errors-and-how-to-fix-them) was reproduced.
@@ -30,7 +30,7 @@ With `engine-game`, a game's content is written in Lua: the scripts create the e
 
 ## 1. A script
 
-The engine loads every `.lua` file of the game's scripts folder (`srcDirectory` in [`config.conf`](ENGINE_GAME.en.md#the-configconf-file)) and its subfolders, in alphabetical order of their path, then calls the `start` function of each one, **once**, with the `GameManager`:
+The engine loads every `.lua` file of the game's scripts folder (`srcDirectory` in [`config.conf`](ENGINE_GAME.en.md#2-the-configconf-file)) and its subfolders, in alphabetical order of their path, then calls the `start` function of each one, **once**, with the `GameManager`:
 
 ```lua
 function start(gm)
@@ -57,6 +57,36 @@ print(e)                        -- #1 (0): its index, then its generation
 ```
 
 An entity is only a handle. Entities compare with `==`. A destroyed entity's handle is never confused with a new entity that reuses its index.
+
+### Keeping data about an entity
+
+A script does not create components of its own: the game's data (the player, the score, each enemy's hit points…) is kept in the script's `local` variables. For data per entity, a table whose key is `tostring(e)`:
+
+```lua
+local hp = {}                         -- hit points, per entity
+
+local function hurt(gm, e, pos)
+    local key = tostring(e)
+
+    if hp[key] then
+        hp[key] = hp[key] - 1
+        if hp[key] == 0 then
+            gm:destroyEntity(e)
+            hp[key] = nil             -- the entity no longer exists
+        end
+    end
+end
+
+function start(gm)
+    local enemy = gm:createEntity()
+    gm:addComponent(enemy, 'Position2D')
+    hp[tostring(enemy)] = 3
+    gm:createSystem({'Position2D'}, hurt)
+end
+```
+
+- **The key is `tostring(e)`, not `e`.** The entity a system or a view gives is a different Lua object from the one the script kept, even if `==` says they are equal: `hp[e]` would give `nil` there. `tostring(e)` is the same text for both.
+- **Remove the key when the entity is destroyed**, so that the table does not keep entities that no longer exist.
 
 ---
 
@@ -182,7 +212,7 @@ end
 
 The `Master…` systems use the game's clock, which the engine always runs: they are the simplest choice. The others use a `Clock` given to each entity, to slow down or speed up some entities only (with its `speed`), and need the `Clock` system too.
 
-The systems of the window, the keyboard, the mouse, the sound and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. The other engine systems (`Draw3D`, `UpdateCamera`, `UpdateKeybind`) act on components that are created from C++.
+The systems of the window, the keyboard, the mouse, the sound and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. `Draw3D`, `UpdateCamera` and `UpdateKeybind` are not in this table either: they act on components that scripts do not create.
 
 ### The order of the systems
 
@@ -217,7 +247,7 @@ end
 
 ### Stopping the game
 
-`gm:stop()` stops the game: the current frame runs to its end, then the loop stops and the game exits with code `0`. The game runs as long as no script calls it.
+`gm:stop()` stops the game: the current frame runs to its end, then the loop stops and the game exits with code `0`. **It is the only way to stop the game**: as long as no script calls it, the game runs, even if the window is closed.
 
 ```lua
 local function quit(gm)
@@ -390,7 +420,7 @@ A change that cannot be applied at the end of the frame stops the game then, for
 
 ## 7. A complete game
 
-A ship crossing the window and bouncing off its edges. The setup (`Setup.cpp` with the `Window` and `Keyboard` modules) is in [the engine-game guide](ENGINE_GAME.en.md#5-a-complete-game).
+A ship crossing the window and bouncing off its edges. The setup (the `config.conf`, with the `Window` module) is in [the guide to running a game](ENGINE_GAME.en.md#5-a-complete-game).
 
 ```lua
 -- scripts/game.lua
@@ -428,6 +458,7 @@ Each frame: `quit` stops the game if the window should close, `bounce` turns the
 ### Do
 
 - **Define `start` in every script.**
+- **Have a system that calls `gm:stop()`** when `gm:windowShouldClose()` returns `true` ([stopping the game](#stopping-the-game)).
 - **Create the entities and the systems in `start`**, and put what runs every frame in systems.
 - **Give a system the list of components it works on**, rather than looping with a view inside a once-per-frame system: the engine then picks the entities for you.
 - **Prefer the `Master…` engine systems**, unless some entities need their own clock.
@@ -439,6 +470,7 @@ Each frame: `quit` stops the game if the window should close, `bounce` turns the
 - **Don't call `gm:createSystem` or `gm:addSystem` from a system** ([section 6](#6-what-happens-during-a-frame)).
 - **Don't expect a change made in a system to be visible in the same frame** ([section 6](#6-what-happens-during-a-frame)).
 - **Don't give an entity the same component twice**: remove it first, or change its fields with `getComponent`.
+- **Don't use an entity as a table key**: use `tostring(e)` ([keeping data about an entity](#keeping-data-about-an-entity)).
 
 ---
 
@@ -452,9 +484,9 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `scripts/a.lua:1: ')' expected near 'end'` | a Lua syntax error, at this file and line | fix the syntax |
 | `Unknown component: Postion2D` | the name is not one of [the components](#the-components) | correct the name (case sensitive) |
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
-| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()` or `gm:windowShouldClose()` without the matching module | add `"Keyboard"`, `"Mouse"` or `"Window"` to the `modules` |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()` or `gm:windowShouldClose()` without the matching module | add `Keyboard`, `Mouse` or `Window` to the `modules` of `config.conf` |
 | `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
-| `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `"Audio"` to the `modules` of `Setup.cpp` |
+| `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `Audio` to the `modules` of `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder the game is started from |
 | `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y` or `mouse.wheel` | only read them |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |

@@ -28,9 +28,9 @@ Ce guide explique comment ajouter au moteur un composant, un système ou un modu
 | `engine-graphical2D` | [`Engine/Graphical2D`](../Engine/Graphical2D) | la fenêtre, le clavier, la souris, les sprites et les textes 2D |
 | `engine-graphical3D` | [`Engine/Graphical3D`](../Engine/Graphical3D) | les modèles et la caméra 3D |
 | `engine-audio` | [`Engine/Audio`](../Engine/Audio) | les sons et le point qui les entend |
-| `engine-game` | [`Engine/Game`](../Engine/Game) | le `main`, les modules et tout le lien avec Lua |
+| `game` | [`Engine/Game`](../Engine/Game) | l'exécutable du moteur : le `main`, les modules et tout le lien avec Lua |
 
-Dans `engine-game`, tout est dans le namespace `RType::Game`, une classe par rôle :
+Dans `game`, tout est dans le namespace `RType::Game`, une classe par rôle :
 
 | Fichier | Rôle |
 |---|---|
@@ -38,12 +38,13 @@ Dans `engine-game`, tout est dans le namespace `RType::Game`, une classe par rô
 | `ConfigBuilder` | la lecture de `config.conf`, qui met à jour `GameConfig` |
 | `Modules` | les modules que le jeu peut demander |
 | `Scripts` | le chargement des scripts et la conversion de leurs erreurs |
-| `GameManagerBinding` | expose le `GameManager` et les entités, puis appelle les autres bindings |
+| `GameManagerBinding` | expose le `GameManager`, les entités et `gm:stop`, puis appelle les autres bindings |
 | `ComponentBinding` | le registre des composants utilisables depuis Lua |
 | `SystemBinding` | `gm:createSystem`, `gm:addSystem`, `gm:destroySystem`, `gm:hasSystem` |
 | `ViewBinding` | `gm:view` |
 | `InputBinding` | `gm:keyboard`, `gm:mouse`, les tables `Key` et `MouseButton` |
 | `TimeBinding` | `gm:elapsed` |
+| `WindowBinding` | `gm:windowShouldClose` |
 | **`EngineBindings.cpp`** | **les listes des composants et des systèmes du moteur utilisables depuis Lua : c'est le fichier à modifier pour en ajouter un** |
 
 ---
@@ -157,7 +158,7 @@ Ajoutez une ligne au tableau [des systèmes du moteur du guide Lua](LUA_GUIDE.fr
 
 ## 4. Ajouter un module
 
-Un module est une fonctionnalité que le jeu active par son nom, dans `GameConfig.modules`. Il crée, une seule fois et avant les scripts, une entité avec le composant qu'il possède, et le système qui le met à jour. Ce composant appartient au moteur : un script le lit, mais ne peut ni en créer un autre, ni ajouter le système une deuxième fois.
+Un module est une fonctionnalité que le jeu active par son nom, dans la clé `modules` de son `config.conf`. Il crée, une seule fois et avant les scripts, une entité avec le composant qu'il possède, et le système qui le met à jour. Ce composant appartient au moteur : un script le lit, mais ne peut ni en créer un autre, ni ajouter le système une deuxième fois.
 
 ### Écrire le module
 
@@ -174,11 +175,11 @@ Ajoutez une entrée à `Modules::allowed`, dans [`Modules.cpp`](../Engine/Game/s
 
 - **Les dépendances** sont vérifiées avant que quoi que ce soit ne tourne : `{"Window"}` pour un module qui a besoin de la fenêtre, comme `Keyboard`.
 - **Son composant n'a pas de `bindComponent`**, et **ses systèmes ne sont pas dans `engineSystems`**. Un script qui essaie d'en créer obtient `Unknown component` ou `Unknown system`.
-- Le lambda reçoit `GameConfig`, pour un module qui a des réglages, comme la taille de la fenêtre pour `Window`.
+- Le lambda reçoit `GameConfig`, rempli par `config.conf`, pour un module qui a des réglages, comme la taille de la fenêtre pour `Window`.
 
 ### Donner aux scripts l'accès à son composant
 
-Un script n'accède au composant d'un module que par une fonction du `GameManager`, comme `gm:keyboard()` ou `gm:elapsed()`. Elles sont regroupées dans une classe de binding, sur le modèle d'[`InputBinding`](../Engine/Game/include/InputBinding.hpp) et de [`TimeBinding`](../Engine/Game/include/TimeBinding.hpp) :
+Un script n'accède au composant d'un module que par une fonction du `GameManager`, comme `gm:keyboard()` ou `gm:elapsed()`. Elles sont regroupées dans une classe de binding, sur le modèle d'[`InputBinding`](../Engine/Game/include/InputBinding.hpp), de [`TimeBinding`](../Engine/Game/include/TimeBinding.hpp) et de [`WindowBinding`](../Engine/Game/include/WindowBinding.hpp) :
 
 1. **Un en-tête** dans `Engine/Game/include`, avec une classe du namespace `RType::Game` qui n'a qu'une fonction statique publique `registerFunctions(sol::state &lua)`.
 2. **Un `.cpp`** dans `Engine/Game/src`, qui l'implémente :
@@ -204,7 +205,7 @@ Un script n'accède au composant d'un module que par une fonction du `GameManage
 
 ### Le documenter
 
-- Une ligne au tableau [des modules du guide d'`engine-game`](ENGINE_GAME.fr.md#3-les-modules), en français et en anglais : son nom, ce qu'il crée, comment les scripts y accèdent, et ses dépendances.
+- Une ligne au tableau [des modules du guide pour lancer un jeu](ENGINE_GAME.fr.md#3-les-modules), en français et en anglais : son nom, ce qu'il crée, comment les scripts y accèdent, et ses dépendances.
 - Une sous-section dans [le guide Lua](LUA_GUIDE.fr.md), avec un exemple, et ses fonctions dans l'[aide-mémoire](LUA_GUIDE.fr.md#11-aide-mémoire-de-lapi).
 
 ---
@@ -232,6 +233,6 @@ lua["GameManager"]["countComponents"] =
 |---|---|---|---|
 | un composant | la struct, et son `.cpp` dans `SRCS_...` | une ligne `bindComponent` dans `EngineBindings.cpp` | le tableau des composants du guide Lua |
 | un système | une fonction statique `systemNom` | une ligne `makeSystem` dans `engineSystems`, sauf s'il appartient à un module | le tableau des systèmes du moteur du guide Lua |
-| un module | une entrée dans `Modules::allowed` | une classe de binding avec `findModuleComponent`, appelée par `GameManagerBinding` | le tableau des modules du guide d'`engine-game`, et une sous-section du guide Lua |
+| un module | une entrée dans `Modules::allowed` | une classe de binding avec `findModuleComponent`, appelée par `GameManagerBinding` | le tableau des modules du guide pour lancer un jeu, et une sous-section du guide Lua |
 | une fonction `gm:` | | une lambda dans le `registerFunctions` d'une classe de binding | l'aide-mémoire du guide Lua |
-| un réglage de `config.conf` | un champ de `GameInfo` | une entrée dans `ConfigBuilder::setters`, qui lit la valeur et met à jour le champ | le fichier `config.conf` du guide d'`engine-game` |
+| un réglage de `config.conf` | un champ de `GameInfo` | une entrée dans `ConfigBuilder::setters`, qui lit la valeur et met à jour le champ | le fichier `config.conf` du guide pour lancer un jeu |
