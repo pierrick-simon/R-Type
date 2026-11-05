@@ -14,6 +14,7 @@
 #include <string>
 #include <type_traits>
 #include <unordered_map>
+#include <vector>
 #include <sol/sol.hpp>
 
 #include "Clock.hpp"
@@ -283,6 +284,28 @@ namespace RType {
          * @throw UnknownComponent If no component has this name.
          */
         static const ComponentEntry &getEntry(const std::string &name);
+
+        /**
+         * @brief Turns the list of component names given by a script, such
+         * as {"Position2D", "Velocity2D"}, into their entries. Called once,
+         * when the system is created, so that a wrong name stops the
+         * script's start instead of the first frame.
+         *
+         * The entries are kept as pointers: those into componentEntries
+         * stay valid even if components are bound later. The components'
+         * arrays are not kept, since they may not exist yet: the entries
+         * look them up each time they are used.
+         * @param names The script's table, read in order from 1 to its
+         * length.
+         * @return One entry per name, in the same order, which is the order
+         * of the components given to the system's function. Empty if the
+         * table is empty.
+         * @throw UnknownComponent If a name is not a component.
+         * @throw InvalidComponentList If an element is not a string, or if
+         * a name appears twice.
+         */
+        static std::vector<const ComponentEntry *> resolveComponents(
+            const sol::table &names);
 
         /**
          * @brief Lua code that copies every field of the script's table

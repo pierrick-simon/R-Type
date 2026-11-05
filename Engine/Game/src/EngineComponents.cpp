@@ -5,6 +5,8 @@
 ** EngineComponents
 */
 
+#include <algorithm>
+
 #include "Exceptions.hpp"
 #include "Game.hpp"
 
@@ -72,6 +74,26 @@ namespace RType {
         if (iter == componentEntries.end())
             throw UnknownComponent(name);
         return iter->second;
+    }
+
+    std::vector<const Game::ComponentEntry *> Game::resolveComponents(
+        const sol::table &names)
+    {
+        std::vector<const ComponentEntry *> entries;
+
+        for (std::size_t i = 1; i <= names.size(); i++) {
+            sol::object element = names[i];
+
+            if (element.get_type() != sol::type::string)
+                throw InvalidComponentList(
+                    "element " + std::to_string(i) + " is not a name");
+            std::string name = element.as<std::string>();
+            const ComponentEntry *entry = &getEntry(name);
+            if (std::ranges::find(entries, entry) != entries.end())
+                throw InvalidComponentList(name + " is in it twice");
+            entries.push_back(entry);
+        }
+        return entries;
     }
 
 }

@@ -180,6 +180,18 @@ namespace RType {
         }
     };
 
+    /**
+     * @brief Raised when the list of components a script gives to a system
+     * holds something else than a name, or the same name twice.
+     */
+    class InvalidComponentList : public EngineException {
+    public:
+        InvalidComponentList(const std::string &reason) :
+            EngineException("Invalid component list: " + reason)
+        {
+        }
+    };
+
 } // namespace RType
 
 #endif /* !EXCEPTIONS_HPP_ */
