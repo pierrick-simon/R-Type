@@ -30,7 +30,7 @@ Avec `engine-game`, le contenu d'un jeu s'écrit en Lua : les scripts créent le
 
 ## 1. Un script
 
-Le moteur charge tous les fichiers `.lua` du dossier `TestLua/` et de ses sous-dossiers, dans l'ordre alphabétique de leur chemin, puis appelle la fonction `start` de chacun, **une seule fois**, avec le `GameManager` :
+Le moteur charge tous les fichiers `.lua` du dossier des scripts du jeu (`srcDirectory` dans [`config.conf`](ENGINE_GAME.fr.md#le-fichier-configconf)) et de ses sous-dossiers, dans l'ordre alphabétique de leur chemin, puis appelle la fonction `start` de chacun, **une seule fois**, avec le `GameManager` :
 
 ```lua
 function start(gm)
@@ -42,7 +42,7 @@ end
 - **`start` crée les choses ; les systèmes les font tourner.** Ce qui doit se passer à chaque frame va dans un système, enregistré depuis `start` ([section 4](#4-les-systèmes)).
 - **Chaque script a ses propres globales.** Une variable ou une fonction globale définie dans `a.lua` n'est pas visible depuis `b.lua` : deux scripts peuvent donc tous les deux appeler leur fonction `process` sans conflit. Utilisez quand même `local` pour tout le reste.
 - **La bibliothèque de base de Lua et `math` sont disponibles** : `print`, `pairs`, `ipairs`, `pcall`, `error`, `type`, `tostring`, `tonumber`…, et `math.random`, `math.sqrt`, `math.abs`, `math.floor`, `math.min`, `math.max`, `math.pi`…
-- **Les chemins** (images, polices, modèles) sont relatifs au dossier depuis lequel le jeu est lancé, celui qui contient `TestLua/`.
+- **Les chemins** (images, polices, modèles, sons) sont relatifs au dossier depuis lequel le jeu est lancé, pas au dossier des scripts.
 
 ---
 
@@ -112,7 +112,7 @@ gm:countComponents('Position2D')            -- nombre d'entités qui en ont un
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, en ms), `animation` (true), `scale` (1) | joue une animation du `Model3D` |
 | `Sound` | `path` (**obligatoire**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (très grande), méthodes `setVolume(v)` et `setPitch(p)` | un son, chargé depuis `path` (voir [les sons](#les-sons)) |
 
-Les cinq composants marqués **obligatoire** sont construits à partir d'un fichier, puis reçoivent les autres champs de la table : `gm:addComponent(e, 'Texture2D', {path = 'TestLua/sprites/ship.png'})`.
+Les cinq composants marqués **obligatoire** sont construits à partir d'un fichier, puis reçoivent les autres champs de la table : `gm:addComponent(e, 'Texture2D', {path = 'sprites/ship.png'})`.
 
 ---
 
@@ -288,7 +288,7 @@ end
 
 function start(gm)
     shot = gm:createEntity()
-    gm:addComponent(shot, 'Sound', {path = 'TestLua/sounds/shot.mp3'})
+    gm:addComponent(shot, 'Sound', {path = 'sounds/shot.mp3'})
     gm:createSystem(shoot)
 end
 ```
@@ -371,7 +371,7 @@ Un changement qui ne peut pas être appliqué à la fin de la frame arrête alor
 Un vaisseau qui traverse la fenêtre et rebondit sur ses bords. La mise en place (`Setup.cpp` avec les modules `Window` et `Keyboard`) est dans [le guide d'`engine-game`](ENGINE_GAME.fr.md#5-un-jeu-complet).
 
 ```lua
--- TestLua/game.lua
+-- scripts/game.lua
 local WIDTH, HEIGHT = 800, 600
 
 local function bounce(gm, e, pos, vel)
@@ -383,7 +383,7 @@ function start(gm)
     local ship = gm:createEntity()
     gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
     gm:addComponent(ship, 'Velocity2D', {x = 250, y = 180})
-    gm:addComponent(ship, 'Texture2D', {path = 'TestLua/sprites/ship.png'})
+    gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
     gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
     gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
@@ -405,7 +405,7 @@ end
 - **Donner à un système la liste des composants sur lesquels il travaille**, plutôt que boucler avec une vue dans un système appelé une fois par frame : le moteur choisit alors les entités pour vous.
 - **Préférer les systèmes `Master…` du moteur**, sauf si certaines entités ont besoin de leur propre horloge.
 - **Utiliser `local`** pour les variables et les fonctions utilitaires du script.
-- **Écrire les chemins par rapport au dossier qui contient `TestLua/`.**
+- **Écrire les chemins par rapport au dossier depuis lequel le jeu est lancé.**
 
 ### À ne pas faire
 
@@ -422,13 +422,13 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | Message | Cause | Solution |
 |---|---|---|
 | `attempt to call a nil value` | un script n'a pas de fonction `start` | définir `function start(gm) ... end` |
-| `TestLua/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
+| `scripts/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
 | `Unknown component: Postion2D` | le nom n'est pas un des [composants](#les-composants) | corriger le nom (la casse compte) |
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
 | `gm:keyboard needs the Keyboard module` | `gm:keyboard()` ou `gm:mouse()` sans le module correspondant | ajouter `"Keyboard"` ou `"Mouse"` aux `modules` du `Setup.cpp` |
 | `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
 | `Sound needs the Audio module` | un `Sound` sans le module `Audio` | ajouter `"Audio"` aux `modules` du `Setup.cpp` |
-| `Cannot load sound TestLua/sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier qui contient `TestLua/` |
+| `Cannot load sound sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier depuis lequel le jeu est lancé |
 | `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y` ou `mouse.wheel` | ne faire que les lire |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |

@@ -30,6 +30,7 @@ namespace RType::Game {
      * windowWidth = 1280
      * windowHeight = 720
      * windowName = My Game
+     * srcDirectory = scripts
      * modules = Window, Keyboard, Mouse
      */
     class ConfigBuilder {

@@ -38,11 +38,11 @@ The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) an
 1. reads the `config.conf` file, if it exists, and updates `GameConfig` with its values (see [the `config.conf` file](#the-configconf-file));
 2. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
 3. loads the modules asked for in `GameConfig.modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
-4. loads every `.lua` file of the `TestLua/` folder and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
+4. loads every `.lua` file of the scripts folder (`GameConfig.srcDir`) and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
 5. runs `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)`: the loop goes on as long as `runningCondition()` returns `true`;
 6. if an `RType::EngineException` comes up, from the engine or from a script, prints its message and exits with code `84`.
 
-The `config.conf` file and the `TestLua/` folder are looked for **in the directory the game is started from**.
+The `config.conf` file and the scripts folder are looked for **relative to the directory the game is started from**.
 
 ---
 
@@ -59,6 +59,7 @@ namespace RType {
         std::size_t windowWidth = 800;
         std::size_t windowHeight = 600;
         std::string windowName = "My Game";
+        std::string srcDir = ".";
         std::list<std::string> modules;
     };
 
@@ -73,6 +74,7 @@ namespace RType {
 | `windowFPS` | Frames per second of the loop | `60` |
 | `windowWidth`, `windowHeight` | Window size, in pixels, used by the `Window` module | `800` × `600` |
 | `windowName` | Window title, used by the `Window` module | `"My Game"` |
+| `srcDir` | The folder of the Lua scripts, relative to the directory the game is started from | `"."` (the start directory itself) |
 | `modules` | The engine modules to load, see [section 3](#3-the-modules) | empty (only `Clock`) |
 
 The game **defines** `RType::GameConfig` in **a single** one of its `.cpp` files, with C++20 designated initializers. Fields left out keep their default value:
@@ -87,11 +89,11 @@ RType::GameInfo RType::GameConfig = {
 };
 ```
 
-Fields must be written **in the struct's order**: `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `modules`. You can skip some, not swap them.
+Fields must be written **in the struct's order**: `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`. You can skip some, not swap them.
 
 ### The `config.conf` file
 
-Every field but `runningCondition` can also be given in a `config.conf` file, next to the `TestLua/` folder. Changing the window or the modules then needs no recompiling:
+Every field but `runningCondition` can also be given in a `config.conf` file, placed in the directory the game is started from. Changing the window, the scripts or the modules then needs no recompiling:
 
 ```
 # window
@@ -100,6 +102,7 @@ windowWidth = 1280
 windowHeight = 720
 windowName = Bounce
 
+srcDirectory = scripts
 modules = Window, Keyboard, Mouse, Audio
 ```
 
@@ -107,7 +110,7 @@ modules = Window, Keyboard, Mouse, Audio
 - **Everything is optional.** A key left out keeps the `.cpp`'s value, and without the file nothing changes. If a key appears twice, the last one wins.
 - **The file's values replace the `.cpp`'s.** `modules` replaces the whole list: it is not added to the `.cpp`'s modules.
 - **Empty lines and lines starting with `#` are ignored.**
-- **`windowFPS`, `windowWidth` and `windowHeight`** are whole numbers greater than 0. **`modules`** is a list of names separated by commas.
+- **`windowFPS`, `windowWidth` and `windowHeight`** are whole numbers greater than 0. **`srcDirectory`** gives `srcDir`. **`modules`** is a list of names separated by commas.
 - **An invalid line stops the game** before anything runs, with the file and the line (see [section 8](#8-errors-and-how-to-fix-them)).
 
 ---
@@ -139,12 +142,13 @@ A module is an engine feature the game turns on by name. Each one creates its en
 Games/
 └── MyGame/
     ├── CMakeLists.txt
+    ├── config.conf          # srcDirectory = scripts
     ├── src/
     │   └── Setup.cpp        # only the definition of RType::GameConfig
-    └── TestLua/
-        ├── game.lua         # the scripts, loaded in alphabetical order
-        └── sprites/
-            └── ship.png
+    ├── scripts/
+    │   └── game.lua         # the scripts, loaded in alphabetical order
+    └── sprites/
+        └── ship.png
 ```
 
 No `Main.cpp`: `engine-game` provides it.
@@ -180,7 +184,7 @@ cmake --build build --target my_game -j
 cd Games/MyGame && ../my_game
 ```
 
-The binary is placed in `Games/`. It must be **started from the folder that holds `TestLua/`**: the scripts, and the paths they give (images, fonts…), are read relative to that folder.
+The binary is placed in `Games/`. It must be **started from the game's folder**: `config.conf`, the scripts folder, and the paths the scripts give (images, fonts…), are read relative to that folder.
 
 ---
 
@@ -200,7 +204,7 @@ RType::GameInfo RType::GameConfig = {
 ```
 
 ```lua
--- TestLua/game.lua
+-- scripts/game.lua
 local WIDTH, HEIGHT = 800, 600
 
 local function bounce(gm, e, pos, vel)
@@ -212,7 +216,7 @@ function start(gm)
     local ship = gm:createEntity()
     gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
     gm:addComponent(ship, 'Velocity2D', {x = 250, y = 180})
-    gm:addComponent(ship, 'Texture2D', {path = 'TestLua/sprites/ship.png'})
+    gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
     gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
     gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
@@ -256,7 +260,7 @@ The macro must apply to `engine-game`, which holds the `main`: a `target_compile
 - **Always provide `runningCondition`**.
 - **Link only `engine-game`** in the game's `CMakeLists.txt`.
 - **List `Window` in `modules`** as soon as the game draws something or reads the keyboard or the mouse.
-- **Start the game from the folder that holds `TestLua/`**.
+- **Start the game from the game's folder**, the one that holds `config.conf`.
 - **Write `GameInfo`'s fields in the struct's order**.
 
 ### Don't
@@ -291,7 +295,7 @@ error: designator order for field 'RType::GameInfo::runningCondition' does not m
 ```
 
 **Cause:** `GameInfo`'s fields are not written in the struct's order.
-**Fix:** put them back in the order `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `modules`.
+**Fix:** put them back in the order `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`.
 
 ### `terminate called after throwing an instance of 'std::bad_function_call'`
 
@@ -339,8 +343,8 @@ Engine Error: Module Keyboard requires module Window
 
 ### Nothing happens: no script is run
 
-**Cause:** the game is not started from the folder that holds `TestLua/`. The engine finds no script, and runs an empty loop without error.
-**Fix:** `cd` into that folder before starting the game (see [section 4](#building-and-running)).
+**Cause:** the game is not started from the game's folder, or `srcDir` does not point to the scripts folder. The engine finds no script, and runs an empty loop without error.
+**Fix:** `cd` into the game's folder before starting it (see [section 4](#building-and-running)), and check `srcDirectory` in `config.conf`.
 
 ### The window does not open
 

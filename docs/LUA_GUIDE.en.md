@@ -30,7 +30,7 @@ With `engine-game`, a game's content is written in Lua: the scripts create the e
 
 ## 1. A script
 
-The engine loads every `.lua` file of the `TestLua/` folder and its subfolders, in alphabetical order of their path, then calls the `start` function of each one, **once**, with the `GameManager`:
+The engine loads every `.lua` file of the game's scripts folder (`srcDirectory` in [`config.conf`](ENGINE_GAME.en.md#the-configconf-file)) and its subfolders, in alphabetical order of their path, then calls the `start` function of each one, **once**, with the `GameManager`:
 
 ```lua
 function start(gm)
@@ -42,7 +42,7 @@ end
 - **`start` creates things; systems run them.** What must happen every frame goes into a system, registered from `start` ([section 4](#4-systems)).
 - **Each script has its own globals.** A global variable or function defined in `a.lua` is not visible from `b.lua`, so two scripts can both name their function `process` without conflict. Use `local` for everything else anyway.
 - **The Lua base library and `math` are available**: `print`, `pairs`, `ipairs`, `pcall`, `error`, `type`, `tostring`, `tonumber`…, and `math.random`, `math.sqrt`, `math.abs`, `math.floor`, `math.min`, `math.max`, `math.pi`…
-- **Paths** (images, fonts, models) are relative to the folder the game is started from, the one that holds `TestLua/`.
+- **Paths** (images, fonts, models, sounds) are relative to the folder the game is started from, not to the scripts folder.
 
 ---
 
@@ -112,7 +112,7 @@ gm:countComponents('Position2D')            -- number of entities that have one
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, in ms), `animation` (true), `scale` (1) | plays an animation of the `Model3D` |
 | `Sound` | `path` (**required**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (very large), methods `setVolume(v)` and `setPitch(p)` | a sound, loaded from `path` (see [sounds](#sounds)) |
 
-The five components marked **required** are built from a file, then given the table's other fields: `gm:addComponent(e, 'Texture2D', {path = 'TestLua/sprites/ship.png'})`.
+The five components marked **required** are built from a file, then given the table's other fields: `gm:addComponent(e, 'Texture2D', {path = 'sprites/ship.png'})`.
 
 ---
 
@@ -288,7 +288,7 @@ end
 
 function start(gm)
     shot = gm:createEntity()
-    gm:addComponent(shot, 'Sound', {path = 'TestLua/sounds/shot.mp3'})
+    gm:addComponent(shot, 'Sound', {path = 'sounds/shot.mp3'})
     gm:createSystem(shoot)
 end
 ```
@@ -371,7 +371,7 @@ A change that cannot be applied at the end of the frame stops the game then, for
 A ship crossing the window and bouncing off its edges. The setup (`Setup.cpp` with the `Window` and `Keyboard` modules) is in [the engine-game guide](ENGINE_GAME.en.md#5-a-complete-game).
 
 ```lua
--- TestLua/game.lua
+-- scripts/game.lua
 local WIDTH, HEIGHT = 800, 600
 
 local function bounce(gm, e, pos, vel)
@@ -383,7 +383,7 @@ function start(gm)
     local ship = gm:createEntity()
     gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
     gm:addComponent(ship, 'Velocity2D', {x = 250, y = 180})
-    gm:addComponent(ship, 'Texture2D', {path = 'TestLua/sprites/ship.png'})
+    gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
     gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
     gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
@@ -405,7 +405,7 @@ Each frame: `bounce` turns the ship around at the edges, `MasterVelocity2D` move
 - **Give a system the list of components it works on**, rather than looping with a view inside a once-per-frame system: the engine then picks the entities for you.
 - **Prefer the `Master…` engine systems**, unless some entities need their own clock.
 - **Use `local`** for the script's variables and helper functions.
-- **Write the paths relative to the folder that holds `TestLua/`.**
+- **Write the paths relative to the folder the game is started from.**
 
 ### Don't
 
@@ -422,13 +422,13 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | Message | Cause | Fix |
 |---|---|---|
 | `attempt to call a nil value` | a script has no `start` function | define `function start(gm) ... end` |
-| `TestLua/a.lua:1: ')' expected near 'end'` | a Lua syntax error, at this file and line | fix the syntax |
+| `scripts/a.lua:1: ')' expected near 'end'` | a Lua syntax error, at this file and line | fix the syntax |
 | `Unknown component: Postion2D` | the name is not one of [the components](#the-components) | correct the name (case sensitive) |
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
 | `gm:keyboard needs the Keyboard module` | `gm:keyboard()` or `gm:mouse()` without the matching module | add `"Keyboard"` or `"Mouse"` to the `modules` of `Setup.cpp` |
 | `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
 | `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `"Audio"` to the `modules` of `Setup.cpp` |
-| `Cannot load sound TestLua/sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder that holds `TestLua/` |
+| `Cannot load sound sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder the game is started from |
 | `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y` or `mouse.wheel` | only read them |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |
 | `Invalid arguments for Position2D: no field 'z'` | the table gives a field the component does not have | remove or rename the field |

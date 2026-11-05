@@ -38,11 +38,11 @@ Le `main` se trouve dans [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cp
 1. lit le fichier `config.conf`, s'il existe, et met à jour `GameConfig` avec ses valeurs (voir [le fichier `config.conf`](#le-fichier-configconf)) ;
 2. crée le `GameManager` (en mode debug si le moteur est compilé avec `__DEBUG__`, voir la [section 6](#6-le-mode-debug)) ;
 3. charge les modules demandés dans `GameConfig.modules`, plus `Clock`, toujours chargé (voir la [section 3](#3-les-modules)) ;
-4. charge tous les fichiers `.lua` du dossier `TestLua/` et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
+4. charge tous les fichiers `.lua` du dossier des scripts (`GameConfig.srcDir`) et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
 5. lance `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)` : la boucle continue tant que `runningCondition()` renvoie `true` ;
 6. si une `RType::EngineException` remonte, du moteur ou d'un script, affiche son message et quitte avec le code `84`.
 
-Le fichier `config.conf` et le dossier `TestLua/` sont cherchés **dans le dossier depuis lequel le jeu est lancé**.
+Le fichier `config.conf` et le dossier des scripts sont cherchés **par rapport au dossier depuis lequel le jeu est lancé**.
 
 ---
 
@@ -59,6 +59,7 @@ namespace RType {
         std::size_t windowWidth = 800;
         std::size_t windowHeight = 600;
         std::string windowName = "My Game";
+        std::string srcDir = ".";
         std::list<std::string> modules;
     };
 
@@ -73,6 +74,7 @@ namespace RType {
 | `windowFPS` | Images par seconde de la boucle | `60` |
 | `windowWidth`, `windowHeight` | Taille de la fenêtre, en pixels, utilisée par le module `Window` | `800` × `600` |
 | `windowName` | Titre de la fenêtre, utilisé par le module `Window` | `"My Game"` |
+| `srcDir` | Le dossier des scripts Lua, par rapport au dossier depuis lequel le jeu est lancé | `"."` (le dossier de lancement lui-même) |
 | `modules` | Les modules du moteur à charger, voir la [section 3](#3-les-modules) | vide (seulement `Clock`) |
 
 Le jeu **définit** `RType::GameConfig` dans **un seul** de ses fichiers `.cpp`, avec les initialiseurs désignés de C++20. Les champs omis gardent leur valeur par défaut :
@@ -87,11 +89,11 @@ RType::GameInfo RType::GameConfig = {
 };
 ```
 
-Les champs doivent être écrits **dans l'ordre de la structure** : `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `modules`. On peut en omettre, pas les intervertir.
+Les champs doivent être écrits **dans l'ordre de la structure** : `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`. On peut en omettre, pas les intervertir.
 
 ### Le fichier `config.conf`
 
-Tous les champs, sauf `runningCondition`, peuvent aussi être donnés dans un fichier `config.conf`, à côté du dossier `TestLua/`. Changer la fenêtre ou les modules ne demande alors pas de recompiler le jeu :
+Tous les champs, sauf `runningCondition`, peuvent aussi être donnés dans un fichier `config.conf`, placé dans le dossier depuis lequel le jeu est lancé. Changer la fenêtre, les scripts ou les modules ne demande alors pas de recompiler le jeu :
 
 ```
 # fenêtre
@@ -100,6 +102,7 @@ windowWidth = 1280
 windowHeight = 720
 windowName = Bounce
 
+srcDirectory = scripts
 modules = Window, Keyboard, Mouse, Audio
 ```
 
@@ -107,7 +110,7 @@ modules = Window, Keyboard, Mouse, Audio
 - **Tout est facultatif.** Une clé absente garde la valeur du `.cpp`, et sans fichier rien ne change. Si une clé apparaît deux fois, la dernière l'emporte.
 - **Les valeurs du fichier remplacent celles du `.cpp`.** `modules` remplace toute la liste : il ne s'ajoute pas aux modules du `.cpp`.
 - **Les lignes vides et celles qui commencent par `#` sont ignorées.**
-- **`windowFPS`, `windowWidth` et `windowHeight`** sont des nombres entiers plus grands que 0. **`modules`** est une liste de noms séparés par des virgules.
+- **`windowFPS`, `windowWidth` et `windowHeight`** sont des nombres entiers plus grands que 0. **`srcDirectory`** donne `srcDir`. **`modules`** est une liste de noms séparés par des virgules.
 - **Une ligne invalide arrête le jeu** avant que quoi que ce soit ne tourne, avec le fichier et la ligne (voir la [section 8](#8-les-erreurs-et-comment-les-régler)).
 
 ---
@@ -139,12 +142,13 @@ Un module est une fonctionnalité du moteur que le jeu active par son nom. Chacu
 Games/
 └── MyGame/
     ├── CMakeLists.txt
+    ├── config.conf          # srcDirectory = scripts
     ├── src/
     │   └── Setup.cpp        # seulement la définition de RType::GameConfig
-    └── TestLua/
-        ├── game.lua         # les scripts, chargés dans l'ordre alphabétique
-        └── sprites/
-            └── ship.png
+    ├── scripts/
+    │   └── game.lua         # les scripts, chargés dans l'ordre alphabétique
+    └── sprites/
+        └── ship.png
 ```
 
 Pas de `Main.cpp` : `engine-game` le fournit.
@@ -180,7 +184,7 @@ cmake --build build --target my_game -j
 cd Games/MyGame && ../my_game
 ```
 
-Le binaire est placé dans `Games/`. Il doit être **lancé depuis le dossier qui contient `TestLua/`** : les scripts, et les chemins qu'ils donnent (images, polices…), sont lus par rapport à ce dossier.
+Le binaire est placé dans `Games/`. Il doit être **lancé depuis le dossier du jeu** : `config.conf`, le dossier des scripts, et les chemins que les scripts donnent (images, polices…), sont lus par rapport à ce dossier.
 
 ---
 
@@ -200,7 +204,7 @@ RType::GameInfo RType::GameConfig = {
 ```
 
 ```lua
--- TestLua/game.lua
+-- scripts/game.lua
 local WIDTH, HEIGHT = 800, 600
 
 local function bounce(gm, e, pos, vel)
@@ -212,7 +216,7 @@ function start(gm)
     local ship = gm:createEntity()
     gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
     gm:addComponent(ship, 'Velocity2D', {x = 250, y = 180})
-    gm:addComponent(ship, 'Texture2D', {path = 'TestLua/sprites/ship.png'})
+    gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
     gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
     gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
@@ -256,7 +260,7 @@ La macro doit s'appliquer à `engine-game`, qui contient le `main` : un `target_
 - **Toujours fournir `runningCondition`**.
 - **Ne lier que `engine-game`** dans le `CMakeLists.txt` du jeu.
 - **Mettre `Window` dans `modules`** dès que le jeu dessine quelque chose ou lit le clavier ou la souris.
-- **Lancer le jeu depuis le dossier qui contient `TestLua/`**.
+- **Lancer le jeu depuis le dossier du jeu**, celui qui contient `config.conf`.
 - **Écrire les champs de `GameInfo` dans l'ordre de la structure**.
 
 ### À ne pas faire
@@ -291,7 +295,7 @@ error: designator order for field 'RType::GameInfo::runningCondition' does not m
 ```
 
 **Cause :** les champs de `GameInfo` ne sont pas écrits dans l'ordre de la structure.
-**Solution :** les remettre dans l'ordre `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `modules`.
+**Solution :** les remettre dans l'ordre `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `srcDir`, `modules`.
 
 ### `terminate called after throwing an instance of 'std::bad_function_call'`
 
@@ -339,8 +343,8 @@ Engine Error: Module Keyboard requires module Window
 
 ### Rien ne se passe : aucun script ne tourne
 
-**Cause :** le jeu n'est pas lancé depuis le dossier qui contient `TestLua/`. Le moteur ne trouve aucun script, et fait tourner une boucle vide sans erreur.
-**Solution :** se placer dans ce dossier avant de lancer le jeu (voir la [section 4](#compiler-et-lancer)).
+**Cause :** le jeu n'est pas lancé depuis le dossier du jeu, ou `srcDir` ne désigne pas le dossier des scripts. Le moteur ne trouve aucun script, et fait tourner une boucle vide sans erreur.
+**Solution :** se placer dans le dossier du jeu avant de le lancer (voir la [section 4](#compiler-et-lancer)), et vérifier `srcDirectory` dans `config.conf`.
 
 ### La fenêtre ne s'ouvre pas
 
