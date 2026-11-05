@@ -5,9 +5,9 @@
 ** WindowBinding
 */
 
+#include "WindowBinding.hpp"
 #include "GameManagerBinding.hpp"
 #include "Window.hpp"
-#include "WindowBinding.hpp"
 
 namespace RType::Game {
 

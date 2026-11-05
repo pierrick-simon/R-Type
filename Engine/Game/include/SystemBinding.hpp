@@ -9,11 +9,11 @@
 #define SYSTEMBINDING_HPP_
 
 #include <functional>
+#include <sol/sol.hpp>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
-#include <sol/sol.hpp>
 
 #include "ComponentBinding.hpp"
 #include "GameManager.hpp"
@@ -63,15 +63,14 @@ namespace RType::Game {
          * @brief Wraps an engine system into a factory that creates it, with
          * the components read from the system's own parameters.
          */
-        template <typename... Components>
+        template<typename... Components>
         static Factory makeSystem(void (*system)(Components...));
 
         /**
          * @brief Same, for a system that also takes the GameManager first.
          */
-        template <typename... Components>
-        static Factory makeSystem(
-            void (*system)(GameManager &, Components...));
+        template<typename... Components>
+        static Factory makeSystem(void (*system)(GameManager &, Components...));
 
         /**
          * @brief Every engine system scripts can add, by name. Defined in
@@ -100,7 +99,7 @@ namespace RType::Game {
             const sol::protected_function &func);
     };
 
-    template <typename... Components>
+    template<typename... Components>
     SystemBinding::Factory SystemBinding::makeSystem(
         void (*system)(Components...))
     {
@@ -109,7 +108,7 @@ namespace RType::Game {
         };
     }
 
-    template <typename... Components>
+    template<typename... Components>
     SystemBinding::Factory SystemBinding::makeSystem(
         void (*system)(GameManager &, Components...))
     {

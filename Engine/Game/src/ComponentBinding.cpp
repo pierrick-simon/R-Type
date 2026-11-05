@@ -38,13 +38,12 @@ namespace RType::Game {
 
     void ComponentBinding::registerFunctions(sol::state &lua)
     {
-        lua.registry()["setFields"] =
-            lua.load(setFieldsScript, "=setFields")
-                .get<sol::protected_function>();
+        lua.registry()["setFields"] = lua.load(setFieldsScript, "=setFields")
+                                          .get<sol::protected_function>();
         lua["GameManager"]["addComponent"] = [](GameManager &gm,
-                                                Entity entity,
-                                                const std::string &name,
-                                                const Args &args) {
+                                                 Entity entity,
+                                                 const std::string &name,
+                                                 const Args &args) {
             getEntry(name).add(gm, entity, args);
         };
         lua["GameManager"]["removeComponent"] =
@@ -56,15 +55,15 @@ namespace RType::Game {
                 return getEntry(name).has(gm, entity);
             };
         lua["GameManager"]["getComponent"] = [](GameManager &gm,
-                                                Entity entity,
-                                                const std::string &name,
-                                                sol::this_state L) {
+                                                 Entity entity,
+                                                 const std::string &name,
+                                                 sol::this_state L) {
             return getEntry(name).get(L, gm, entity);
         };
-        lua["GameManager"]["countComponents"] =
-            [](GameManager &gm, const std::string &name) {
-                return getEntry(name).count(gm);
-            };
+        lua["GameManager"]["countComponents"] = [](GameManager &gm,
+                                                    const std::string &name) {
+            return getEntry(name).count(gm);
+        };
 
         bindEngineComponents(lua);
     }

@@ -5,9 +5,9 @@
 ** TimeBinding
 */
 
+#include "TimeBinding.hpp"
 #include "Clock.hpp"
 #include "GameManagerBinding.hpp"
-#include "TimeBinding.hpp"
 
 namespace RType::Game {
 

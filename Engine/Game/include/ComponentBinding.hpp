@@ -12,12 +12,12 @@
 #include <cstdint>
 #include <functional>
 #include <optional>
+#include <sol/sol.hpp>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
-#include <sol/sol.hpp>
 
 #include "Exceptions.hpp"
 #include "GameManager.hpp"
@@ -67,8 +67,7 @@ namespace RType::Game {
              * refers to the real component, not to a copy: writing its
              * fields from Lua changes it in C++ too.
              */
-            std::function<sol::object(lua_State *, GameManager &, Entity)>
-                get;
+            std::function<sol::object(lua_State *, GameManager &, Entity)> get;
 
             /**
              * @brief Counts the entities that have the component. 0 if it
@@ -159,7 +158,7 @@ namespace RType::Game {
          * A component without a default constructor is built from the
          * "path" field of the script's table instead.
          */
-        template <typename Component, typename... Fields>
+        template<typename Component, typename... Fields>
         static void bindComponent(
             sol::state &lua, const std::string &name, Fields &&...fields);
 
@@ -179,7 +178,7 @@ namespace RType::Game {
          * @throw InvalidComponentArgs If a field does not exist or has the
          * wrong type, or if the path is missing.
          */
-        template <typename Component>
+        template<typename Component>
         static Component makeComponent(
             GameManager &gm, const std::string &name, const Args &args);
 
@@ -188,7 +187,7 @@ namespace RType::Game {
          * the path given by the script. Specialized in EngineBindings.cpp
          * for a component whose constructor needs more than the path.
          */
-        template <typename Component>
+        template<typename Component>
         static Component construct(GameManager &gm, const std::string &path);
 
         /**
@@ -197,7 +196,7 @@ namespace RType::Game {
          * @throw InvalidComponentArgs If a field does not exist or has the
          * wrong type.
          */
-        template <typename Component>
+        template<typename Component>
         static void setFields(Component &component, const std::string &name,
             const sol::table &fields,
             std::optional<std::string_view> skip = std::nullopt);
@@ -206,7 +205,7 @@ namespace RType::Game {
          * @brief Exposes a std::chrono::milliseconds member to Lua as a
          * plain number of milliseconds, for bindComponent.
          */
-        template <typename Component>
+        template<typename Component>
         static auto milliseconds(std::chrono::milliseconds Component::*member);
 
         /**
@@ -214,36 +213,30 @@ namespace RType::Game {
          * field, such as SpriteSheet2D::recNb.height as "rows", for
          * bindComponent.
          */
-        template <typename Component, typename Inner, typename T>
+        template<typename Component, typename Inner, typename T>
         static auto nested(Inner Component::*outer, T Inner::*inner);
     };
 
-    template <typename Component>
+    template<typename Component>
     auto ComponentBinding::milliseconds(
         std::chrono::milliseconds Component::*member)
     {
         return sol::property(
-            [member](Component &c) {
-                return (c.*member).count();
-            },
+            [member](Component &c) { return (c.*member).count(); },
             [member](Component &c, std::int64_t ms) {
                 c.*member = std::chrono::milliseconds(ms);
             });
     }
 
-    template <typename Component, typename Inner, typename T>
+    template<typename Component, typename Inner, typename T>
     auto ComponentBinding::nested(Inner Component::*outer, T Inner::*inner)
     {
         return sol::property(
-            [outer, inner](Component &c) {
-                return c.*outer.*inner;
-            },
-            [outer, inner](Component &c, T value) {
-                c.*outer.*inner = value;
-            });
+            [outer, inner](Component &c) { return c.*outer.*inner; },
+            [outer, inner](Component &c, T value) { c.*outer.*inner = value; });
     }
 
-    template <typename Component>
+    template<typename Component>
     void ComponentBinding::setFields(Component &component,
         const std::string &name, const sol::table &fields,
         std::optional<std::string_view> skip)
@@ -263,14 +256,14 @@ namespace RType::Game {
             throw InvalidComponentArgs(name, *reason);
     }
 
-    template <typename Component>
+    template<typename Component>
     Component ComponentBinding::construct(
         GameManager &, const std::string &path)
     {
         return Component(path);
     }
 
-    template <typename Component>
+    template<typename Component>
     Component ComponentBinding::makeComponent(
         GameManager &gm, const std::string &name, const Args &args)
     {
@@ -294,7 +287,7 @@ namespace RType::Game {
         }
     }
 
-    template <typename Component, typename... Fields>
+    template<typename Component, typename... Fields>
     void ComponentBinding::bindComponent(
         sol::state &lua, const std::string &name, Fields &&...fields)
     {
@@ -319,16 +312,11 @@ namespace RType::Game {
                         L, &gm.getComponent<Component>(entity));
                 },
             .count =
-                [](GameManager &gm) {
-                    return gm.countComponents<Component>();
-                },
+                [](GameManager &gm) { return gm.countComponents<Component>(); },
             .forEachEntity =
-                [](GameManager &gm,
-                    const std::function<void(Entity)> &func) {
+                [](GameManager &gm, const std::function<void(Entity)> &func) {
                     gm.view<Component>().each(
-                        [&func](Entity entity, Component &) {
-                            func(entity);
-                        });
+                        [&func](Entity entity, Component &) { func(entity); });
                 },
         };
     }

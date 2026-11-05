@@ -84,8 +84,7 @@ namespace RType::Game {
         }
     }
 
-    void Modules::create(
-        GameManager &gm, const std::list<std::string> &modules)
+    void Modules::create(GameManager &gm, const std::list<std::string> &modules)
     {
         for (auto &module : modules)
             allowed.at(module).create(gm, GameConfig);

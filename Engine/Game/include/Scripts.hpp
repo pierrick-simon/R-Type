@@ -10,8 +10,8 @@
 
 #include <exception>
 #include <list>
-#include <string>
 #include <sol/sol.hpp>
+#include <string>
 
 #include "GameManager.hpp"
 

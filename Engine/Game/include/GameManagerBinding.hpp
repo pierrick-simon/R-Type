@@ -8,8 +8,8 @@
 #ifndef GAMEMANAGERBINDING_HPP_
 #define GAMEMANAGERBINDING_HPP_
 
-#include <string>
 #include <sol/sol.hpp>
+#include <string>
 
 #include "Exceptions.hpp"
 #include "GameManager.hpp"
@@ -27,8 +27,8 @@ namespace RType::Game {
          * @brief Exposes GameManager and Entity to Lua, with everything
          * scripts can do on them: entities and gm:stop(), which ends the
          * game after the current frame, here, then components, systems,
-         * views, inputs, time and the window through their own bindings. Called once, before
-         * any script is loaded.
+         * views, inputs, time and the window through their own bindings. Called
+         * once, before any script is loaded.
          */
         static void registerFunctions(sol::state &lua);
 
@@ -41,16 +41,14 @@ namespace RType::Game {
          * @param module The module that creates the component.
          * @throw ModuleNotLoaded If no entity has the component.
          */
-        template <typename Component>
-        static Component &findModuleComponent(
-            GameManager &gm, const std::string &function,
-            const std::string &module);
+        template<typename Component>
+        static Component &findModuleComponent(GameManager &gm,
+            const std::string &function, const std::string &module);
     };
 
-    template <typename Component>
+    template<typename Component>
     Component &GameManagerBinding::findModuleComponent(
-        GameManager &gm, const std::string &function,
-        const std::string &module)
+        GameManager &gm, const std::string &function, const std::string &module)
     {
         Component *found = nullptr;
 

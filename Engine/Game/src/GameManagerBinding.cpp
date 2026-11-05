@@ -22,10 +22,12 @@ namespace RType::Game {
     void GameManagerBinding::registerFunctions(sol::state &lua)
     {
         lua.new_usertype<GameManager>("GameManager", sol::no_constructor);
-        lua.new_usertype<Entity>("Entity", sol::no_constructor,
-            sol::meta_function::to_string, [](const Entity &entity) {
-                return "#" + std::to_string(entity.index()) + " ("
-                    + std::to_string(entity.generation()) + ")";
+        lua.new_usertype<Entity>("Entity",
+            sol::no_constructor,
+            sol::meta_function::to_string,
+            [](const Entity &entity) {
+                return "#" + std::to_string(entity.index()) + " (" +
+                    std::to_string(entity.generation()) + ")";
             });
         lua["GameManager"]["createEntity"] = &GameManager::createEntity;
         lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;

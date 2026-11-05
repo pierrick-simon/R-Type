@@ -137,7 +137,8 @@ namespace RType {
          * @param function The function the script called.
          * @param module The module it needs.
          */
-        ModuleNotLoaded(const std::string &function, const std::string &module) :
+        ModuleNotLoaded(
+            const std::string &function, const std::string &module) :
             EngineException(function + " needs the " + module + " module")
         {
         }
@@ -235,8 +236,8 @@ namespace RType {
          * @param function The function the script called.
          */
         SystemCreatedInSystem(const std::string &function) :
-            EngineException(function
-                + " cannot be called from a system, only from start")
+            EngineException(
+                function + " cannot be called from a system, only from start")
         {
         }
     };

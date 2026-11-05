@@ -9,8 +9,8 @@
 #define VIEWBINDING_HPP_
 
 #include <cstddef>
-#include <vector>
 #include <sol/sol.hpp>
+#include <vector>
 
 #include "ComponentBinding.hpp"
 #include "GameManager.hpp"

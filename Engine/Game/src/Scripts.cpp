@@ -18,9 +18,9 @@ namespace RType::Game {
 
         if (!std::filesystem::is_directory(directory))
             return paths;
-        for (auto &entry : std::filesystem::recursive_directory_iterator(
-                 directory,
-                 std::filesystem::directory_options::skip_permission_denied))
+        for (auto &entry :
+            std::filesystem::recursive_directory_iterator(directory,
+                std::filesystem::directory_options::skip_permission_denied))
             if (entry.is_regular_file() && entry.path().extension() == ".lua")
                 paths.push_back(entry.path().string());
         paths.sort();

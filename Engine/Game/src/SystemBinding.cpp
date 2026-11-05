@@ -5,9 +5,9 @@
 ** SystemBinding
 */
 
+#include "SystemBinding.hpp"
 #include "Exceptions.hpp"
 #include "Scripts.hpp"
-#include "SystemBinding.hpp"
 
 namespace RType::Game {
 
@@ -20,7 +20,8 @@ namespace RType::Game {
                     Scripts::checkResult(func(gm));
                 });
             },
-            [](GameManager &gm, const sol::table &names,
+            [](GameManager &gm,
+                const sol::table &names,
                 const sol::protected_function &func) {
                 checkNotUpdating(gm, "gm:createSystem");
                 std::vector<const ComponentBinding::Entry *> entries =
@@ -33,14 +34,14 @@ namespace RType::Game {
                         runScriptSystem(gm, entries, func);
                 });
             });
-        lua["GameManager"]["addSystem"] =
-            [](GameManager &gm, const std::string &name) {
-                checkNotUpdating(gm, "gm:addSystem");
-                auto iter = engineSystems.find(name);
-                if (iter == engineSystems.end())
-                    throw UnknownSystem(name);
-                return iter->second(gm);
-            };
+        lua["GameManager"]["addSystem"] = [](GameManager &gm,
+                                              const std::string &name) {
+            checkNotUpdating(gm, "gm:addSystem");
+            auto iter = engineSystems.find(name);
+            if (iter == engineSystems.end())
+                throw UnknownSystem(name);
+            return iter->second(gm);
+        };
         lua["GameManager"]["destroySystem"] = &GameManager::destroySystem;
         lua["GameManager"]["hasSystem"] = &GameManager::hasSystem;
     }
@@ -62,8 +63,7 @@ namespace RType::Game {
         ComponentBinding::forEachMatch(gm, entries, [&](Entity entity) {
             for (std::size_t i = 0; i < entries.size(); i++)
                 components[i] = entries[i]->get(L, gm, entity);
-            Scripts::checkResult(
-                func(gm, entity, sol::as_args(components)));
+            Scripts::checkResult(func(gm, entity, sol::as_args(components)));
         });
     }
 

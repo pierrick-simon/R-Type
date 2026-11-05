@@ -9,8 +9,8 @@
 #define INPUTBINDING_HPP_
 
 #include <algorithm>
-#include <vector>
 #include <sol/sol.hpp>
+#include <vector>
 
 namespace RType::Game {
 
@@ -47,11 +47,11 @@ namespace RType::Game {
          * to Lua as a method telling whether a value is in it:
          * kb:isDown(Key.Space).
          */
-        template <typename Manager, typename Value>
+        template<typename Manager, typename Value>
         static auto contains(std::vector<Value> Manager::*list);
     };
 
-    template <typename Manager, typename Value>
+    template<typename Manager, typename Value>
     auto InputBinding::contains(std::vector<Value> Manager::*list)
     {
         return [list](const Manager &m, Value value) {

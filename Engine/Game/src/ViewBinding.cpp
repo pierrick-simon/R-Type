@@ -20,10 +20,9 @@ namespace RType::Game {
             auto state = std::make_shared<State>(
                 State {gm, ComponentBinding::resolve(names), {}});
 
-            ComponentBinding::forEachMatch(
-                gm, state->entries, [&state](Entity entity) {
-                    state->entities.push_back(entity);
-                });
+            ComponentBinding::forEachMatch(gm,
+                state->entries,
+                [&state](Entity entity) { state->entities.push_back(entity); });
             return [state](sol::this_state L) {
                 std::vector<sol::object> values;
 

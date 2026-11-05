@@ -17,30 +17,30 @@ namespace RType::Game {
 
     const std::unordered_map<std::string, ConfigBuilder::Setter>
         ConfigBuilder::setters = {
-        {"windowFPS",
-            [](GameInfo &info, const std::string &value) {
-                info.windowFPS = static_cast<int>(toPositive(value));
-            }},
-        {"windowWidth",
-            [](GameInfo &info, const std::string &value) {
-                info.windowWidth = toPositive(value);
-            }},
-        {"windowHeight",
-            [](GameInfo &info, const std::string &value) {
-                info.windowHeight = toPositive(value);
-            }},
-        {"windowName",
-            [](GameInfo &info, const std::string &value) {
-                info.windowName = value;
-            }},
-        {"modules",
-            [](GameInfo &info, const std::string &value) {
-                info.modules = toList(value);
-            }},
-        {"srcDirectory",
-            [](GameInfo &info, const std::string &value) {
-                info.srcDir = value;
-            }},
+            {"windowFPS",
+                [](GameInfo &info, const std::string &value) {
+                    info.windowFPS = static_cast<int>(toPositive(value));
+                }},
+            {"windowWidth",
+                [](GameInfo &info, const std::string &value) {
+                    info.windowWidth = toPositive(value);
+                }},
+            {"windowHeight",
+                [](GameInfo &info, const std::string &value) {
+                    info.windowHeight = toPositive(value);
+                }},
+            {"windowName",
+                [](GameInfo &info, const std::string &value) {
+                    info.windowName = value;
+                }},
+            {"modules",
+                [](GameInfo &info, const std::string &value) {
+                    info.modules = toList(value);
+                }},
+            {"srcDirectory",
+                [](GameInfo &info, const std::string &value) {
+                    info.srcDir = value;
+                }},
     };
 
     void ConfigBuilder::build(GameInfo &info, const std::string &path)

@@ -40,9 +40,7 @@ namespace RType::Game {
             Modules::create(gm, modules);
             for (auto &path : Scripts::findPaths(GameConfig.srcDir))
                 Scripts::load(lua, path, gm);
-            gm.run(GameConfig.windowFPS, [] {
-                return running;
-            });
+            gm.run(GameConfig.windowFPS, [] { return running; });
         } catch (const EngineException &e) {
             std::cout << e.what() << std::endl;
             return 84;
