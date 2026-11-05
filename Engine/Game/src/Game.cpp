@@ -104,6 +104,7 @@ namespace RType {
                     + std::to_string(entity.generation()) + ")";
             });
         registerSystem(lua);
+        registerView(lua);
         lua["GameManager"]["createEntity"] = &GameManager::createEntity;
         lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;
         lua["GameManager"]["hasEntity"] = &GameManager::hasEntity;

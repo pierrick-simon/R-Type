@@ -374,12 +374,38 @@ namespace RType {
 
         /**
          * @brief Calls a script's system on every entity that has all the
-         * given components, iterating over the one that has the fewest
-         * entities. Does nothing if one of them has never been added.
+         * given components, with the entity then the components.
          */
         static void runScriptSystem(GameManager &gm,
             const std::vector<const ComponentEntry *> &entries,
             const sol::protected_function &func);
+
+        /**
+         * @brief Calls the function on every entity that has all the given
+         * components, iterating over the one that has the fewest entities.
+         * Does nothing if one of them has never been added, or if there is
+         * no entry at all.
+         */
+        static void forEachMatch(GameManager &gm,
+            const std::vector<const ComponentEntry *> &entries,
+            const std::function<void(Entity)> &func);
+
+        /**
+         * @brief Lets scripts loop over the entities that have all the
+         * given components, from start or from a system:
+         * for entity, position, velocity in
+         *     gm:view({"Position2D", "Velocity2D"}) do ... end
+         *
+         * The components are given in the list's order, and are the real
+         * ones. The entities are listed when the loop starts; one that is
+         * destroyed or loses a component during the loop is skipped, so
+         * that the loop can destroy entities even outside update(). An
+         * empty list loops over nothing.
+         * @throw UnknownComponent If a name is not a component.
+         * @throw InvalidComponentList If the list holds something else than
+         * a name, or the same name twice.
+         */
+        static void registerView(sol::state &lua);
 
     };
 
