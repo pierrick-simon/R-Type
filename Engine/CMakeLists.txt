@@ -168,6 +168,7 @@ set(SRCS_NETWORK
     ${NETWORK}/src/ClientUDP.cpp
     ${NETWORK}/src/ServerUDP.cpp
     ${NETWORK}/src/Utils.cpp
+    ${NETWORK}/src/Lagometer.cpp
 )
 
 add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK})
