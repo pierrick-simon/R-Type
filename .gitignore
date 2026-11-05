@@ -10,6 +10,8 @@
 CMakeCache.txt
 cmake_install.cmake
 Makefile
+credentials.txt
+userDB.txt
 
 # Directories
 .vs/

@@ -16,6 +16,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "KeyboardManager.hpp"
+#include "Login.hpp"
 #include "MasterProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
@@ -180,20 +181,19 @@ namespace RType::Client {
             });
         }
 
-        void leaveServer(GameManager &gm)
+        void backToMenu(GameManager &gm)
         {
-            std::vector<Entity> toDestroy;
-
-            gm.view<ClientManager>().each(
-                [&toDestroy](
-                    Entity e, ClientManager &) { toDestroy.push_back(e); });
-            gm.view<LobbyListItem>().each(
-                [&toDestroy](
-                    Entity e, LobbyListItem &) { toDestroy.push_back(e); });
-            for (const Entity e : toDestroy)
-                gm.destroyEntity(e);
+            destroyTagged<LobbyListItem>(gm);
+            gm.view<LobbyListClient>().each([](Entity, LobbyListClient &l) {
+                l.shown = false;
+                l.wanted = false;
+                l.popupOpen = false;
+                l.createRequested = false;
+                l.joinPort = 0;
+                l.selectedPort = 0;
+            });
             activeField = Field::None;
-            createServerPage(gm);
+            createMenu(gm);
         }
 
         void switchToLobby(GameManager &gm, Entity master, uint16_t port)
@@ -320,6 +320,16 @@ namespace RType::Client {
         gm.addComponent<LobbyListClient>(c);
         gm.addComponent<LobbyPortInfo>(c);
         gm.addComponent<LobbyListState>(c);
+        gm.addComponent<LoginClient>(c);
+        gm.addComponent<AccountResult>(c);
+    }
+
+    void openLobbyList(GameManager &gm)
+    {
+        destroyTagged<MenuItem>(gm);
+        activeField = Field::None;
+        gm.view<LobbyListClient>().each(
+            [](Entity, LobbyListClient &l) { l.wanted = true; });
     }
 
     void createLobbyListPage(GameManager &gm)
@@ -341,8 +351,8 @@ namespace RType::Client {
         const Entity leave = addButton(gm,
             static_cast<float>(WINDOW_WIDTH) - BUTTON_WIDTH - BUTTON_GAP * 2,
             buttonsY,
-            "Leave Server",
-            leaveServer);
+            "Back",
+            backToMenu);
 
         scroll = 0;
         gm.addComponent<LobbyListItem>(title);
@@ -383,7 +393,10 @@ namespace RType::Client {
                 if (info.refused) {
                     info.refused = false;
                     l.joinPort = 0;
+                    l.createRequested = false;
                 }
+                if (!l.wanted)
+                    return;
                 if (!l.shown) {
                     l.shown = true;
                     show = true;

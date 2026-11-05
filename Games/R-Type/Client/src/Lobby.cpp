@@ -14,6 +14,7 @@
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
+#include "Login.hpp"
 #include "Menu.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Texture2D.hpp"
@@ -287,23 +288,45 @@ namespace RType::Client {
             gm.destroyEntity(e);
     }
 
+    namespace {
+
+        /** @brief Closes every connection and destroys every page. */
+        void clearScreens(GameManager &gm)
+        {
+            std::vector<Entity> toDestroy;
+
+            gm.view<ClientManager>().each([&](Entity e, ClientManager &c) {
+                toDestroy.push_back(e);
+                for (auto &[id, entity] : c.getContext().map)
+                    if (gm.hasEntity(entity))
+                        toDestroy.push_back(entity);
+            });
+            collect<LobbyItem>(gm, toDestroy);
+            collect<LobbyListItem>(gm, toDestroy);
+            collect<ConnectingText>(gm, toDestroy);
+            collect<MenuItem>(gm, toDestroy);
+            collect<LoginPopupItem>(gm, toDestroy);
+            collect<ServerItem>(gm, toDestroy);
+            for (const Entity e : toDestroy)
+                gm.destroyEntity(e);
+            activeField = Field::None;
+        }
+
+    } // namespace
+
     void returnToMenu(GameManager &gm)
     {
-        std::vector<Entity> toDestroy;
+        clearScreens(gm);
+        connectToMaster(gm, _clInfos._ip, LOGIN_SERVER_PORT);
+        showConnecting(gm);
+    }
 
-        gm.view<ClientManager>().each([&](Entity e, ClientManager &c) {
-            toDestroy.push_back(e);
-            for (auto &[id, entity] : c.getContext().map)
-                if (gm.hasEntity(entity))
-                    toDestroy.push_back(entity);
-        });
-        collect<LobbyItem>(gm, toDestroy);
-        collect<LobbyListItem>(gm, toDestroy);
-        collect<ConnectingText>(gm, toDestroy);
-        for (const Entity e : toDestroy)
-            gm.destroyEntity(e);
-        activeField = Field::None;
-        createMenu(gm);
+    void returnToServerPage(GameManager &gm)
+    {
+        clearScreens(gm);
+        _account = {};
+        _clInfos._password.clear();
+        createServerPage(gm);
     }
 
     void systemLobby(GameManager &gm)

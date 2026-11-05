@@ -9,6 +9,7 @@
 #include "Assets.hpp"
 #include "Font.hpp"
 #include "GameManager.hpp"
+#include "Login.hpp"
 #include "Menu.hpp"
 #include "Setup.hpp"
 #include "Sound.hpp"
@@ -58,7 +59,8 @@ int main()
         auto s = RType::Client::createSound(gm);
 
         RType::Client::createSystems(gm);
-        RType::Client::createMenu(gm);
+        RType::Client::loadSavedServer();
+        RType::Client::createServerPage(gm);
         while (!WindowShouldClose() && !RType::Client::quitRequested)
             gm.update();
         RType::Texture2D::unloadTextures2D(gm);

@@ -43,12 +43,10 @@ namespace RType {
 
         [[nodiscard]] bool allReady() const
         {
-            if (players.empty() ||
+            return !players.empty() &&
                 std::ranges::all_of(players.begin(),
                     players.end(),
-                    [](const LobbyPlayerInfo &p) { return !p.ready; }))
-                return false;
-            return true;
+                    [](const LobbyPlayerInfo &p) { return p.ready; });
         }
     };
 

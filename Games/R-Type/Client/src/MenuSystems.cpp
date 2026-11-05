@@ -30,6 +30,8 @@ namespace RType::Client {
                 return _clInfos._ip;
             if (field == Field::LobbyName)
                 return _clInfos._lobbyName;
+            if (field == Field::Password)
+                return _clInfos._password;
             return _clInfos._username;
         }
 
@@ -39,7 +41,9 @@ namespace RType::Client {
                 return "127.0.0.1";
             if (field == Field::LobbyName)
                 return _clInfos._lobbyNameDefault;
-            return "Player";
+            if (field == Field::Password)
+                return "";
+            return "Player1";
         }
 
         std::size_t fieldMaxLength(const Field field)
@@ -48,6 +52,8 @@ namespace RType::Client {
                 return IP_MAX_LENGTH;
             if (field == Field::LobbyName)
                 return LOBBY_NAME_MAX_LENGTH;
+            if (field == Field::Password)
+                return PASSWORD_MAX_LENGTH;
             return USERNAME_MAX_LENGTH;
         }
 
@@ -62,7 +68,10 @@ namespace RType::Client {
                     (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') ||
                     extra.find(static_cast<char>(key)) != std::string::npos;
             }
-            return key >= 32 && key <= 125;
+            if (field == Field::Password)
+                return key > ' ' && key <= '~';
+            return (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') ||
+                (key >= '0' && key <= '9') || key == '_';
         }
 
         bool contains(const Rectangle &rect, const Vector2 &point)
@@ -126,7 +135,9 @@ namespace RType::Client {
                 f.elapsed += clock.getElapsed();
                 const bool blink =
                     activeField == f.id && (f.elapsed.count() / 400) % 2 == 0;
-                button.label = fieldValue(f.id) + (blink ? "_" : "");
+                button.label = f.id == Field::Password
+                    ? ""
+                    : fieldValue(f.id) + (blink ? "_" : "");
                 button.error = f.id == Field::Ip && ipInvalid;
             });
     }
@@ -134,12 +145,18 @@ namespace RType::Client {
     void systemServerLost(GameManager &gm)
     {
         bool lost = false;
+        bool masterLost = false;
 
-        gm.view<ClientManager>().each([&](Entity, ClientManager &c) {
-            if (c.isTimedOut())
-                lost = true;
+        gm.view<ClientManager>().each([&](Entity e, ClientManager &c) {
+            if (!c.isTimedOut())
+                return;
+            lost = true;
+            if (gm.hasComponent<LobbyListClient>(e))
+                masterLost = true;
         });
-        if (lost)
+        if (masterLost)
+            returnToServerPage(gm);
+        else if (lost)
             returnToMenu(gm);
     }
 
@@ -185,7 +202,7 @@ namespace RType::Client {
 
                 if (button.disabled)
                     sheet.currentTile = BUTTON_TILE_DISABLED;
-                else if (button.hovered || editing)
+                else if (button.hovered || editing || button.selected)
                     sheet.currentTile = BUTTON_TILE_HOVERED;
                 else
                     sheet.currentTile = BUTTON_TILE_NORMAL;

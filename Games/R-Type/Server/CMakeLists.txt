@@ -33,6 +33,7 @@ set(GAME_SRCS
         src/Player.cpp
         src/Setup.cpp
         src/TcpConnection.cpp
+        src/UserDB.cpp
         src/Terrain.cpp
 )
 

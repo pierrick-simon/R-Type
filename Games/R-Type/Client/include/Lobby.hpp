@@ -76,7 +76,11 @@ namespace RType::Client {
 
     void createLobby(GameManager &gm);
     void destroyLobby(GameManager &gm);
+    /** @brief Leaves the lobby/game and goes back to the main menu
+     *         (reconnects to the master server). */
     void returnToMenu(GameManager &gm);
+    /** @brief Master server lost: back to the server IP page, logged out. */
+    void returnToServerPage(GameManager &gm);
     void systemLobby(GameManager &gm);
 
 } // namespace RType::Client

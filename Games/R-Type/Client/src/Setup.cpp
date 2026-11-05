@@ -14,6 +14,7 @@
 #include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
+#include "Login.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
@@ -71,6 +72,7 @@ namespace RType::Client {
         gm.createSystem<>(systemConnecting);
         gm.createSystem<>(systemLobby);
         gm.createSystem<>(systemLobbyListPage);
+        gm.createSystem<>(systemLogin);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
@@ -85,9 +87,11 @@ namespace RType::Client {
         });
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
+        gm.createSystem<>(systemDrawLoginPopup);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
+        gm.createSystem<>(systemDrawPasswordFields);
         gm.createSystem<Sound>(Sound::systemSound);
         gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
