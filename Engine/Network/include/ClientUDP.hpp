@@ -36,6 +36,11 @@ namespace RType {
                 EngineException("Client error: " + str) {};
         };
 
+        [[nodiscard]] const Lagometer::Info &getLagometerInfo() const
+        {
+            return _lagometer.getInfo();
+        }
+
     private:
         void receive();
         void manageCommands(
