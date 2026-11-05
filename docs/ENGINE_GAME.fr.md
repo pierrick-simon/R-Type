@@ -119,7 +119,7 @@ Un module est une fonctionnalité du moteur que le jeu active par son nom. Chacu
 
 | Module | Ce qu'il crée | A besoin de |
 |---|---|---|
-| `Window` | une entité avec une `Window` (taille et titre pris dans `GameConfig`), et le système qui l'efface et la rafraîchit à chaque frame | |
+| `Window` | une entité avec une `Window` (taille et titre pris dans `GameConfig`), et le système qui l'efface et la rafraîchit à chaque frame ; les scripts savent si elle doit se fermer avec `gm:windowShouldClose()` | |
 | `Keyboard` | une entité avec un `KeyboardManager`, et le système qui lit les touches ; les scripts le lisent avec `gm:keyboard()` | `Window` |
 | `Mouse` | une entité avec un `MouseManager`, et le système qui lit la souris ; les scripts la lisent avec `gm:mouse()` | `Window` |
 | `Audio` | une entité avec le point qui entend les sons, et le système qui joue les `Sound` | |
@@ -188,7 +188,7 @@ Le binaire est placé dans `Games/`. Il doit être **lancé depuis le dossier du
 
 ## 5. Un jeu complet
 
-Un vaisseau qui traverse la fenêtre et rebondit sur ses bords. `Échap` quitte le jeu.
+Un vaisseau qui traverse la fenêtre et rebondit sur ses bords. `Échap` ou le bouton de fermeture quittent le jeu.
 
 ```cpp
 // src/Setup.cpp
@@ -210,7 +210,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:keyboard():isPressed(Key.Escape) then gm:stop() end
+    if gm:windowShouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -228,7 +228,7 @@ end
 ```
 
 - **`Setup.cpp`** active seulement la fenêtre et le clavier. Le module `Window` efface déjà la fenêtre à chaque frame.
-- **`start`** tourne une fois : il crée le vaisseau, puis enregistre quatre systèmes, qui tournent à chaque frame dans cet ordre. `quit` et `bounce` sont propres au jeu : `quit` arrête le jeu avec `gm:stop()` quand `Échap` est pressée ; `MasterVelocity2D` (mouvement) et `DrawSprite2D` (dessin) viennent du moteur.
+- **`start`** tourne une fois : il crée le vaisseau, puis enregistre quatre systèmes, qui tournent à chaque frame dans cet ordre. `quit` et `bounce` sont propres au jeu : `quit` arrête le jeu avec `gm:stop()` quand la fenêtre doit se fermer ; `MasterVelocity2D` (mouvement) et `DrawSprite2D` (dessin) viennent du moteur.
 
 Tout ce qu'un script peut faire est dans [le guide du scripting Lua](LUA_GUIDE.fr.md).
 

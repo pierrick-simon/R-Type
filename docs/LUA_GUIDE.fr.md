@@ -221,8 +221,8 @@ end
 
 ```lua
 local function quit(gm)
-    if gm:keyboard():isPressed(Key.Escape) then
-        gm:stop()                     -- Échap quitte le jeu
+    if gm:windowShouldClose() then
+        gm:stop()                     -- la croix ou Échap quittent le jeu
     end
 end
 
@@ -233,6 +233,8 @@ end
 
 - Les systèmes qui suivent dans la même frame tournent encore, et les changements de la frame sont appliqués.
 - Appeler `gm:stop()` plusieurs fois ne fait rien de plus.
+- `gm:windowShouldClose()` renvoie `true` quand le bouton de fermeture de la fenêtre ou `Échap` a été pressé. Il a besoin du module `Window`.
+- Un jeu qui veut quitter avec une autre touche lit le clavier ([plus bas](#lire-le-clavier-et-la-souris)) et appelle `gm:stop()` de la même façon.
 
 ### Lire le clavier et la souris
 
@@ -400,7 +402,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:keyboard():isPressed(Key.Escape) then gm:stop() end
+    if gm:windowShouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -417,7 +419,7 @@ function start(gm)
 end
 ```
 
-À chaque frame : `quit` arrête le jeu si `Échap` est pressée, `bounce` fait demi-tour au vaisseau sur les bords, `MasterVelocity2D` le déplace, `DrawSprite2D` le dessine.
+À chaque frame : `quit` arrête le jeu si la fenêtre doit se fermer, `bounce` fait demi-tour au vaisseau sur les bords, `MasterVelocity2D` le déplace, `DrawSprite2D` le dessine.
 
 ---
 
@@ -450,7 +452,7 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `scripts/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
 | `Unknown component: Postion2D` | le nom n'est pas un des [composants](#les-composants) | corriger le nom (la casse compte) |
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
-| `gm:keyboard needs the Keyboard module` | `gm:keyboard()` ou `gm:mouse()` sans le module correspondant | ajouter `"Keyboard"` ou `"Mouse"` aux `modules` du `Setup.cpp` |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()` ou `gm:windowShouldClose()` sans le module correspondant | ajouter `"Keyboard"`, `"Mouse"` ou `"Window"` aux `modules` |
 | `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
 | `Sound needs the Audio module` | un `Sound` sans le module `Audio` | ajouter `"Audio"` aux `modules` du `Setup.cpp` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier depuis lequel le jeu est lancé |
@@ -500,6 +502,7 @@ Les cas particuliers (champs imbriqués, méthodes, enums, composants construits
 | `gm:destroyEntity(e)` | détruit une entité et ses composants |
 | `gm:hasEntity(e)` | si l'entité existe |
 | `gm:stop()` | arrête le jeu après la frame en cours |
+| `gm:windowShouldClose()` | si le bouton de fermeture ou `Échap` a été pressé |
 | `gm:addComponent(e, nom [, champs])` | ajoute un composant, construit à partir de la table |
 | `gm:getComponent(e, nom)` | le vrai composant |
 | `gm:hasComponent(e, nom)` | si l'entité a le composant |

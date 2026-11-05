@@ -119,7 +119,7 @@ A module is an engine feature the game turns on by name. Each one creates its en
 
 | Module | What it creates | Needs |
 |---|---|---|
-| `Window` | an entity with a `Window` (size and title from `GameConfig`), and the system that clears and refreshes it each frame | |
+| `Window` | an entity with a `Window` (size and title from `GameConfig`), and the system that clears and refreshes it each frame; scripts know whether it should close with `gm:windowShouldClose()` | |
 | `Keyboard` | an entity with a `KeyboardManager`, and the system that reads the keys; scripts read it with `gm:keyboard()` | `Window` |
 | `Mouse` | an entity with a `MouseManager`, and the system that reads the mouse; scripts read it with `gm:mouse()` | `Window` |
 | `Audio` | an entity with the point that hears the sounds, and the system that plays the `Sound`s | |
@@ -188,7 +188,7 @@ The binary is placed in `Games/`. It must be **started from the game's folder**:
 
 ## 5. A complete game
 
-A ship crossing the window and bouncing off its edges. `Escape` quits the game.
+A ship crossing the window and bouncing off its edges. `Escape` or the close button quit the game.
 
 ```cpp
 // src/Setup.cpp
@@ -210,7 +210,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:keyboard():isPressed(Key.Escape) then gm:stop() end
+    if gm:windowShouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -228,7 +228,7 @@ end
 ```
 
 - **`Setup.cpp`** only turns on the window and the keyboard. The `Window` module already clears the window each frame.
-- **`start`** runs once: it creates the ship, then registers four systems, which run each frame in this order. `quit` and `bounce` are the game's own: `quit` stops the game with `gm:stop()` when `Escape` is pressed; `MasterVelocity2D` (movement) and `DrawSprite2D` (drawing) come from the engine.
+- **`start`** runs once: it creates the ship, then registers four systems, which run each frame in this order. `quit` and `bounce` are the game's own: `quit` stops the game with `gm:stop()` when the window should close; `MasterVelocity2D` (movement) and `DrawSprite2D` (drawing) come from the engine.
 
 Everything the script can do is in [the Lua scripting guide](LUA_GUIDE.en.md).
 
