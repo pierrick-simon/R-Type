@@ -155,6 +155,8 @@ namespace RType {
          * gm:addSystem("DrawSprite2D"). The name is the C++ function's
          * without its "system" prefix.
          * @throw UnknownSystem If the name is not an engine system.
+         * @warning As gm:createSystem, gm:addSystem must not be called from
+         * a system's function (a process function), only from start.
          */
         static void registerSystems(sol::state &lua);
 
@@ -363,6 +365,10 @@ namespace RType {
          * @throw UnknownComponent If a name is not a component.
          * @throw InvalidComponentList If the list holds something else than
          * a name, or the same name twice.
+         * @warning gm:createSystem must not be called from a system's
+         * function (a process function), only from start: the new system
+         * would run in the current frame, and one created for each entity
+         * at each frame would make the systems pile up.
          */
         static void registerSystem(sol::state &lua);
 
