@@ -42,7 +42,7 @@ namespace RType {
 
         raylib::Color clearScreenColor = raylib::Color::Black();
 
-        int fps = 120;
+        int fps = 60;
 
         /**
          * @brief System handling the window each frame.

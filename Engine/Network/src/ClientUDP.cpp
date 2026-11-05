@@ -64,6 +64,7 @@ namespace RType {
         _socket.async_send_to(asio::buffer(_sendBuffer),
             _serverEndpoint,
             [](std::error_code, std::size_t) {});
+        _lagometer.packetSent();
     }
 
     void UDPClient::receive()
@@ -78,6 +79,7 @@ namespace RType {
                             std::vector<uint8_t>(
                                 _recvBuffer.begin() + Header::SIZE,
                                 _recvBuffer.begin() + long(bytesRecvd)));
+                        _lagometer.packetRecieved();
                     }
                 }
                 receive();
@@ -108,15 +110,22 @@ namespace RType {
         if (payload.size() < 2)
             return;
         _myId = (payload[0] << 8) | payload[1];
-        // std::cout << "My id = " << _myId << std::endl;
     }
 
     void UDPClient::manageHealth(
         const Header &header, const std::vector<uint8_t> &payload)
     {
-        // std::cout << "[Debug] Health check from server to client" <<
-        // std::endl;
+        _lagometer.start();
         sendNow(Opcode::HEALTH, {});
+    }
+
+    void UDPClient::manageStat(
+        const Header &header, const std::vector<uint8_t> &payload)
+    {
+        _lagometer.stop();
+        auto info = Lagometer::parseLagometer(payload);
+        if (info)
+            _lagometer.stat(info->beenSent, info->beenRecieved);
     }
 
     void UDPClient::manageLogout(const Header &, const std::vector<uint8_t> &)

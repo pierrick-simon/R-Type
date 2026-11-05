@@ -56,6 +56,7 @@ int main()
         auto control = RType::Client::createControl(gm);
         auto mc = RType::Client::createMasterClock(gm);
         auto s = RType::Client::createSound(gm);
+        auto m = RType::Client::createMetric(gm);
 
         RType::Client::createSystems(gm);
         RType::Client::createMenu(gm);

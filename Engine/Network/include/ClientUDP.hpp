@@ -9,6 +9,7 @@
     #define CLIENTUDP_HPP
 
     #include "Exceptions.hpp"
+    #include "Lagometer.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -35,6 +36,11 @@ namespace RType {
                 EngineException("Client error: " + str) {};
         };
 
+        [[nodiscard]] const Lagometer::Info &getLagometerInfo() const
+        {
+            return _lagometer.getInfo();
+        }
+
     private:
         void receive();
         void manageCommands(
@@ -54,15 +60,20 @@ namespace RType {
         uint32_t _seq = 0;
         std::atomic<uint16_t> _myId {0};
 
+        std::chrono::steady_clock::time_point _lastReceived =
+            std::chrono::steady_clock::now();
+        bool _closedByServer = false;
+
+        Lagometer _lagometer;
+
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
         void manageLogout(
             const Header &header, const std::vector<uint8_t> &payload);
-        std::chrono::steady_clock::time_point _lastReceived =
-            std::chrono::steady_clock::now();
-        bool _closedByServer = false;
+        void manageStat(
+            const Header &header, const std::vector<uint8_t> &payload);
 
         std::map<uint8_t, ManageFunc> _protocolClient = {
             {Opcode::LOGIN,
@@ -76,6 +87,10 @@ namespace RType {
             {Opcode::LOGOUT,
                 [this](const Header &h, const std::vector<uint8_t> &p) {
                     manageLogout(h, p);
+                }},
+            {Opcode::STAT,
+                [this](const Header &h, const std::vector<uint8_t> &p) {
+                    manageStat(h, p);
                 }},
         };
     };

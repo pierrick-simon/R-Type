@@ -18,6 +18,7 @@ set(SRCS
     src/MenuSystems.cpp
     src/Lobby.cpp
     src/LobbyListPage.cpp
+    src/Metric.cpp
 )
 
 add_executable(r-type_client ${MAIN} ${SRCS})
