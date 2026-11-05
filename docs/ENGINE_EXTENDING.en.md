@@ -35,6 +35,7 @@ In `engine-game`, everything is in the `RType::Game` namespace, one class per ro
 | File | Role |
 |---|---|
 | `Runner` | the engine's `main`: modules, scripts, loop |
+| `ConfigBuilder` | reading `config.conf`, which updates `GameConfig` |
 | `Modules` | the modules a game can ask for |
 | `Scripts` | loading the scripts and converting their errors |
 | `GameManagerBinding` | exposes the `GameManager` and the entities, then calls the other bindings |
@@ -233,3 +234,4 @@ lua["GameManager"]["countComponents"] =
 | a system | a static function `systemName` | one `makeSystem` line in `engineSystems`, unless it belongs to a module | the engine's systems table of the Lua guide |
 | a module | an entry in `Modules::allowed` | a binding class with `findModuleComponent`, called by `GameManagerBinding` | the modules table of the `engine-game` guide, and a subsection of the Lua guide |
 | a `gm:` function | | a lambda in the `registerFunctions` of a binding class | the Lua guide's cheat sheet |
+| a `config.conf` setting | a field of `GameInfo` | an entry in `ConfigBuilder::setters`, which reads the value and updates the field | the `config.conf` file of the `engine-game` guide |

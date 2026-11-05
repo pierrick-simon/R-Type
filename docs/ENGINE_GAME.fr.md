@@ -35,13 +35,14 @@ Le moteur s'occupe du reste : il crée le `GameManager`, charge les modules, lan
 
 Le `main` se trouve dans [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) et appelle `RType::Game::Runner::run()`. Dans l'ordre, il :
 
-1. crée le `GameManager` (en mode debug si le moteur est compilé avec `__DEBUG__`, voir la [section 6](#6-le-mode-debug)) ;
-2. charge les modules demandés dans `GameConfig.modules`, plus `Clock`, toujours chargé (voir la [section 3](#3-les-modules)) ;
-3. charge tous les fichiers `.lua` du dossier `TestLua/` et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
-4. lance `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)` : la boucle continue tant que `runningCondition()` renvoie `true` ;
-5. si une `RType::EngineException` remonte, du moteur ou d'un script, affiche son message et quitte avec le code `84`.
+1. lit le fichier `config.conf`, s'il existe, et met à jour `GameConfig` avec ses valeurs (voir [le fichier `config.conf`](#le-fichier-configconf)) ;
+2. crée le `GameManager` (en mode debug si le moteur est compilé avec `__DEBUG__`, voir la [section 6](#6-le-mode-debug)) ;
+3. charge les modules demandés dans `GameConfig.modules`, plus `Clock`, toujours chargé (voir la [section 3](#3-les-modules)) ;
+4. charge tous les fichiers `.lua` du dossier `TestLua/` et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
+5. lance `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)` : la boucle continue tant que `runningCondition()` renvoie `true` ;
+6. si une `RType::EngineException` remonte, du moteur ou d'un script, affiche son message et quitte avec le code `84`.
 
-Le dossier `TestLua/` est cherché **dans le dossier depuis lequel le jeu est lancé**.
+Le fichier `config.conf` et le dossier `TestLua/` sont cherchés **dans le dossier depuis lequel le jeu est lancé**.
 
 ---
 
@@ -87,6 +88,27 @@ RType::GameInfo RType::GameConfig = {
 ```
 
 Les champs doivent être écrits **dans l'ordre de la structure** : `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `modules`. On peut en omettre, pas les intervertir.
+
+### Le fichier `config.conf`
+
+Tous les champs, sauf `runningCondition`, peuvent aussi être donnés dans un fichier `config.conf`, à côté du dossier `TestLua/`. Changer la fenêtre ou les modules ne demande alors pas de recompiler le jeu :
+
+```
+# fenêtre
+windowFPS = 60
+windowWidth = 1280
+windowHeight = 720
+windowName = Bounce
+
+modules = Window, Keyboard, Mouse, Audio
+```
+
+- **Une ligne par réglage**, sous la forme `clé = valeur`. Les espaces autour de la clé, du `=` et de la valeur sont ignorés.
+- **Tout est facultatif.** Une clé absente garde la valeur du `.cpp`, et sans fichier rien ne change. Si une clé apparaît deux fois, la dernière l'emporte.
+- **Les valeurs du fichier remplacent celles du `.cpp`.** `modules` remplace toute la liste : il ne s'ajoute pas aux modules du `.cpp`.
+- **Les lignes vides et celles qui commencent par `#` sont ignorées.**
+- **`windowFPS`, `windowWidth` et `windowHeight`** sont des nombres entiers plus grands que 0. **`modules`** est une liste de noms séparés par des virgules.
+- **Une ligne invalide arrête le jeu** avant que quoi que ce soit ne tourne, avec le fichier et la ligne (voir la [section 8](#8-les-erreurs-et-comment-les-régler)).
 
 ---
 
@@ -280,6 +302,17 @@ terminate called after throwing an instance of 'std::bad_function_call'
 
 **Cause :** `runningCondition` n'est pas fourni : la boucle appelle une `std::function` vide.
 **Solution :** définir `.runningCondition`, par exemple `[] { return !WindowShouldClose(); }`.
+
+### `Engine Error: Config error: ...` (code de sortie `84`)
+
+```
+Engine Error: Config error: config.conf:2: unknown key 'fps'
+Engine Error: Config error: config.conf:1: windowWidth expects a number greater than 0, got 'abc'
+Engine Error: Config error: config.conf:4: expected 'key = value'
+```
+
+**Cause :** une ligne de `config.conf` a une clé qui n'existe pas, une valeur invalide, ou pas de `=`. Le message donne la ligne.
+**Solution :** corriger la ligne, avec les clés et les valeurs du [fichier `config.conf`](#le-fichier-configconf). Les clés respectent la casse.
 
 ### `Engine Error: No such module: ...` (code de sortie `84`)
 

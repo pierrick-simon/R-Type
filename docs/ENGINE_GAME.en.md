@@ -35,13 +35,14 @@ The engine does the rest: it creates the `GameManager`, loads the modules, runs 
 
 The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) and calls `RType::Game::Runner::run()`. In order, it:
 
-1. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
-2. loads the modules asked for in `GameConfig.modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
-3. loads every `.lua` file of the `TestLua/` folder and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
-4. runs `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)`: the loop goes on as long as `runningCondition()` returns `true`;
-5. if an `RType::EngineException` comes up, from the engine or from a script, prints its message and exits with code `84`.
+1. reads the `config.conf` file, if it exists, and updates `GameConfig` with its values (see [the `config.conf` file](#the-configconf-file));
+2. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
+3. loads the modules asked for in `GameConfig.modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
+4. loads every `.lua` file of the `TestLua/` folder and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
+5. runs `gm.run(GameConfig.windowFPS, GameConfig.runningCondition)`: the loop goes on as long as `runningCondition()` returns `true`;
+6. if an `RType::EngineException` comes up, from the engine or from a script, prints its message and exits with code `84`.
 
-The `TestLua/` folder is looked for **in the directory the game is started from**.
+The `config.conf` file and the `TestLua/` folder are looked for **in the directory the game is started from**.
 
 ---
 
@@ -87,6 +88,27 @@ RType::GameInfo RType::GameConfig = {
 ```
 
 Fields must be written **in the struct's order**: `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`, `modules`. You can skip some, not swap them.
+
+### The `config.conf` file
+
+Every field but `runningCondition` can also be given in a `config.conf` file, next to the `TestLua/` folder. Changing the window or the modules then needs no recompiling:
+
+```
+# window
+windowFPS = 60
+windowWidth = 1280
+windowHeight = 720
+windowName = Bounce
+
+modules = Window, Keyboard, Mouse, Audio
+```
+
+- **One line per setting**, as `key = value`. The spaces around the key, the `=` and the value are ignored.
+- **Everything is optional.** A key left out keeps the `.cpp`'s value, and without the file nothing changes. If a key appears twice, the last one wins.
+- **The file's values replace the `.cpp`'s.** `modules` replaces the whole list: it is not added to the `.cpp`'s modules.
+- **Empty lines and lines starting with `#` are ignored.**
+- **`windowFPS`, `windowWidth` and `windowHeight`** are whole numbers greater than 0. **`modules`** is a list of names separated by commas.
+- **An invalid line stops the game** before anything runs, with the file and the line (see [section 8](#8-errors-and-how-to-fix-them)).
 
 ---
 
@@ -280,6 +302,17 @@ terminate called after throwing an instance of 'std::bad_function_call'
 
 **Cause:** `runningCondition` is not provided: the loop calls an empty `std::function`.
 **Fix:** define `.runningCondition`, for instance `[] { return !WindowShouldClose(); }`.
+
+### `Engine Error: Config error: ...` (exit code `84`)
+
+```
+Engine Error: Config error: config.conf:2: unknown key 'fps'
+Engine Error: Config error: config.conf:1: windowWidth expects a number greater than 0, got 'abc'
+Engine Error: Config error: config.conf:4: expected 'key = value'
+```
+
+**Cause:** a line of `config.conf` has a key that does not exist, an invalid value, or no `=`. The message gives the line.
+**Fix:** correct the line, with the keys and values of [the `config.conf` file](#the-configconf-file). Keys are case sensitive.
 
 ### `Engine Error: No such module: ...` (exit code `84`)
 
