@@ -35,7 +35,7 @@ The engine does the rest: it creates the `GameManager`, loads the modules, runs 
 
 The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) and calls `RType::Game::Runner::run()`. In order, it:
 
-1. reads the `config.conf` file, if it exists, and updates `GameConfig` with its values (see [the `config.conf` file](#the-configconf-file));
+1. reads the `config.conf` file, which must exist, and updates `GameConfig` with its values (see [the `config.conf` file](#the-configconf-file));
 2. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
 3. loads the modules asked for in `GameConfig.modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
 4. loads every `.lua` file of the scripts folder (`GameConfig.srcDir`) and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
@@ -107,7 +107,8 @@ modules = Window, Keyboard, Mouse, Audio
 ```
 
 - **One line per setting**, as `key = value`. The spaces around the key, the `=` and the value are ignored.
-- **Everything is optional.** A key left out keeps the `.cpp`'s value, and without the file nothing changes. If a key appears twice, the last one wins.
+- **The file is required**, even empty: without it, the game stops at start.
+- **Every key is optional.** A key left out keeps the `.cpp`'s value. If a key appears twice, the last one wins.
 - **The file's values replace the `.cpp`'s.** `modules` replaces the whole list: it is not added to the `.cpp`'s modules.
 - **Empty lines and lines starting with `#` are ignored.**
 - **`windowFPS`, `windowWidth` and `windowHeight`** are whole numbers greater than 0. **`srcDirectory`** gives `srcDir`. **`modules`** is a list of names separated by commas.
@@ -313,10 +314,11 @@ terminate called after throwing an instance of 'std::bad_function_call'
 Engine Error: Config error: config.conf:2: unknown key 'fps'
 Engine Error: Config error: config.conf:1: windowWidth expects a number greater than 0, got 'abc'
 Engine Error: Config error: config.conf:4: expected 'key = value'
+Engine Error: Config error: config.conf: cannot be opened
 ```
 
-**Cause:** a line of `config.conf` has a key that does not exist, an invalid value, or no `=`. The message gives the line.
-**Fix:** correct the line, with the keys and values of [the `config.conf` file](#the-configconf-file). Keys are case sensitive.
+**Cause:** a line of `config.conf` has a key that does not exist, an invalid value, or no `=`, and the message gives the line. Or the file is not in the directory the game is started from.
+**Fix:** correct the line, with the keys and values of [the `config.conf` file](#the-configconf-file), keys being case sensitive. Or create `config.conf` in the game's folder, even empty.
 
 ### `Engine Error: No such module: ...` (exit code `84`)
 

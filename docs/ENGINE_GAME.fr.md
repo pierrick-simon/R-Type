@@ -35,7 +35,7 @@ Le moteur s'occupe du reste : il crée le `GameManager`, charge les modules, lan
 
 Le `main` se trouve dans [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) et appelle `RType::Game::Runner::run()`. Dans l'ordre, il :
 
-1. lit le fichier `config.conf`, s'il existe, et met à jour `GameConfig` avec ses valeurs (voir [le fichier `config.conf`](#le-fichier-configconf)) ;
+1. lit le fichier `config.conf`, qui doit exister, et met à jour `GameConfig` avec ses valeurs (voir [le fichier `config.conf`](#le-fichier-configconf)) ;
 2. crée le `GameManager` (en mode debug si le moteur est compilé avec `__DEBUG__`, voir la [section 6](#6-le-mode-debug)) ;
 3. charge les modules demandés dans `GameConfig.modules`, plus `Clock`, toujours chargé (voir la [section 3](#3-les-modules)) ;
 4. charge tous les fichiers `.lua` du dossier des scripts (`GameConfig.srcDir`) et de ses sous-dossiers, **dans l'ordre alphabétique de leur chemin**, et appelle la fonction `start(gm)` de chacun (voir [le guide Lua](LUA_GUIDE.fr.md)) ;
@@ -107,7 +107,8 @@ modules = Window, Keyboard, Mouse, Audio
 ```
 
 - **Une ligne par réglage**, sous la forme `clé = valeur`. Les espaces autour de la clé, du `=` et de la valeur sont ignorés.
-- **Tout est facultatif.** Une clé absente garde la valeur du `.cpp`, et sans fichier rien ne change. Si une clé apparaît deux fois, la dernière l'emporte.
+- **Le fichier est obligatoire**, même vide : sans lui, le jeu s'arrête au démarrage.
+- **Chaque clé est facultative.** Une clé absente garde la valeur du `.cpp`. Si une clé apparaît deux fois, la dernière l'emporte.
 - **Les valeurs du fichier remplacent celles du `.cpp`.** `modules` remplace toute la liste : il ne s'ajoute pas aux modules du `.cpp`.
 - **Les lignes vides et celles qui commencent par `#` sont ignorées.**
 - **`windowFPS`, `windowWidth` et `windowHeight`** sont des nombres entiers plus grands que 0. **`srcDirectory`** donne `srcDir`. **`modules`** est une liste de noms séparés par des virgules.
@@ -313,10 +314,11 @@ terminate called after throwing an instance of 'std::bad_function_call'
 Engine Error: Config error: config.conf:2: unknown key 'fps'
 Engine Error: Config error: config.conf:1: windowWidth expects a number greater than 0, got 'abc'
 Engine Error: Config error: config.conf:4: expected 'key = value'
+Engine Error: Config error: config.conf: cannot be opened
 ```
 
-**Cause :** une ligne de `config.conf` a une clé qui n'existe pas, une valeur invalide, ou pas de `=`. Le message donne la ligne.
-**Solution :** corriger la ligne, avec les clés et les valeurs du [fichier `config.conf`](#le-fichier-configconf). Les clés respectent la casse.
+**Cause :** une ligne de `config.conf` a une clé qui n'existe pas, une valeur invalide, ou pas de `=`, et le message donne la ligne. Ou bien le fichier n'est pas dans le dossier depuis lequel le jeu est lancé.
+**Solution :** corriger la ligne, avec les clés et les valeurs du [fichier `config.conf`](#le-fichier-configconf), les clés respectant la casse. Ou bien créer `config.conf` dans le dossier du jeu, même vide.
 
 ### `Engine Error: No such module: ...` (code de sortie `84`)
 

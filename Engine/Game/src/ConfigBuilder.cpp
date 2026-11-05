@@ -49,7 +49,7 @@ namespace RType::Game {
         std::string line;
 
         if (!file)
-            return;
+            throw ConfigError(path, "cannot be opened");
         for (std::size_t number = 1; std::getline(file, line); number++) {
             try {
                 applyLine(info, trim(line));

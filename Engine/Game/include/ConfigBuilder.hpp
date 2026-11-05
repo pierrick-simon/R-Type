@@ -22,9 +22,9 @@ namespace RType::Game {
      * @brief Updates a GameInfo from a configuration file, so that the
      * window and the modules can be changed without recompiling the game.
      *
-     * The file holds one "key = value" per line. Every key is optional: a
-     * key left out keeps the value given by the game. Empty lines and lines
-     * starting with '#' are ignored.
+     * The file must exist. It holds one "key = value" per line. Every key
+     * is optional: a key left out keeps the value given by the game. Empty
+     * lines and lines starting with '#' are ignored.
      *
      * windowFPS = 60
      * windowWidth = 1280
@@ -38,12 +38,12 @@ namespace RType::Game {
         ConfigBuilder() = delete;
 
         /**
-         * @brief Applies every line of the file to the GameInfo. Does
-         * nothing if the file does not exist or cannot be opened.
+         * @brief Applies every line of the file to the GameInfo.
          * @param info The GameInfo to update, usually GameConfig.
          * @param path The path of the configuration file.
-         * @throw ConfigError If a line has no '=', an unknown key or an
-         * invalid value, with the file and the line.
+         * @throw ConfigError If the file does not exist or cannot be
+         * opened, or if a line has no '=', an unknown key or an invalid
+         * value, with the file and the line.
          */
         static void build(GameInfo &info, const std::string &path);
 

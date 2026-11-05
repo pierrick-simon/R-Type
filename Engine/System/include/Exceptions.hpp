@@ -144,13 +144,14 @@ namespace RType {
     };
 
     /**
-     * @brief Raised when the configuration file holds a line the engine
-     * does not understand.
+     * @brief Raised when the configuration file cannot be opened, or holds
+     * a line the engine does not understand.
      */
     class ConfigError : public EngineException {
     public:
         /**
-         * @param where The file and the line, such as "config.conf:3".
+         * @param where The file, and the line if there is one, such as
+         * "config.conf:3".
          * @param reason What is wrong.
          */
         ConfigError(const std::string &where, const std::string &reason) :
