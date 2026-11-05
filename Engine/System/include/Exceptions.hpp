@@ -128,6 +128,22 @@ namespace RType {
     };
 
     /**
+     * @brief Raised when a script uses a feature of a module the game did
+     * not load.
+     */
+    class ModuleNotLoaded : public EngineException {
+    public:
+        /**
+         * @param function The function the script called.
+         * @param module The module it needs.
+         */
+        ModuleNotLoaded(const std::string &function, const std::string &module) :
+            EngineException(function + " needs the " + module + " module")
+        {
+        }
+    };
+
+    /**
      * @brief Raised when a Lua script fails to load or one of its
      * functions raises an error.
      */

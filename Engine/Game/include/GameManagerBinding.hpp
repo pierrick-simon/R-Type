@@ -21,9 +21,9 @@ namespace RType::Game {
 
         /**
          * @brief Exposes GameManager and Entity to Lua, with everything
-         * scripts can do on them: entities here, then components, systems
-         * and views through their own bindings. Called once, before any
-         * script is loaded.
+         * scripts can do on them: entities here, then components, systems,
+         * views and inputs through their own bindings. Called once, before
+         * any script is loaded.
          */
         static void registerFunctions(sol::state &lua);
     };

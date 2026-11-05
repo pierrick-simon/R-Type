@@ -236,6 +236,7 @@ set(SRCS_GAME
     ${GAME}/src/ComponentBinding.cpp
     ${GAME}/src/SystemBinding.cpp
     ${GAME}/src/ViewBinding.cpp
+    ${GAME}/src/InputBinding.cpp
     ${GAME}/src/EngineBindings.cpp
 )
 
