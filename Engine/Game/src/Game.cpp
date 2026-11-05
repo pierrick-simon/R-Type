@@ -103,7 +103,7 @@ namespace RType {
                 return "#" + std::to_string(entity.index()) + " ("
                     + std::to_string(entity.generation()) + ")";
             });
-        registerSystem<>(lua);
+        registerSystem(lua);
         lua["GameManager"]["createEntity"] = &GameManager::createEntity;
         lua["GameManager"]["destroyEntity"] = &GameManager::destroyEntity;
         lua["GameManager"]["hasEntity"] = &GameManager::hasEntity;

@@ -349,21 +349,31 @@ namespace RType {
         static void registerGameManager(sol::state &lua);
 
         /**
-         * @brief Exposes GameManager to Lua, so that scripts can call
-         * gm:createSystem(func). The given Lua function is called each
-         * update() with the GameManager.
+         * @brief Lets scripts create their own systems, in two forms:
+         * - gm:createSystem(func): func(gm) is called once each update();
+         * - gm:createSystem({"Position2D", "Velocity2D"}, func):
+         *   func(gm, entity, position, velocity) is called each update()
+         *   for every entity that has all the components, given in the
+         *   list's order. They are the real components: writing their
+         *   fields changes them in C++ too. An empty list is the same as
+         *   the first form.
+         *
+         * The names are resolved when the system is created, so that a
+         * wrong one stops the script's start.
+         * @throw UnknownComponent If a name is not a component.
+         * @throw InvalidComponentList If the list holds something else than
+         * a name, or the same name twice.
          */
-        template <typename... Components>
-        static void registerSystem(sol::state &lua)
-        {
-            
-                lua["GameManager"]["createSystem"] = [](GameManager &gm, sol::protected_function f) {
-                    return gm.createSystem<Components...>(
-                        [f](GameManager &gm, Components &...c) {
-                            checkScriptResult(f(gm, c...));
-                        });
-                };
-        }
+        static void registerSystem(sol::state &lua);
+
+        /**
+         * @brief Calls a script's system on every entity that has all the
+         * given components, iterating over the one that has the fewest
+         * entities. Does nothing if one of them has never been added.
+         */
+        static void runScriptSystem(GameManager &gm,
+            const std::vector<const ComponentEntry *> &entries,
+            const sol::protected_function &func);
 
     };
 
