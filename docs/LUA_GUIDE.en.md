@@ -110,9 +110,9 @@ gm:countComponents('Position2D')            -- number of entities that have one
 | `ModelAnimation3D` | `path` (**required**) | the animations of a 3D model |
 | `Sprite3D` | `scale` (1) | draws the entity's `Model3D` |
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, in ms), `animation` (true), `scale` (1) | plays an animation of the `Model3D` |
-| `Listener` | | the point that hears the 2D sounds |
+| `Sound` | `path` (**required**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (very large), methods `setVolume(v)` and `setPitch(p)` | a sound, loaded from `path` (see [sounds](#sounds)) |
 
-The four components marked **required** are built from a file: `gm:addComponent(e, 'Texture2D', {path = 'TestLua/sprites/ship.png'})`.
+The five components marked **required** are built from a file, then given the table's other fields: `gm:addComponent(e, 'Texture2D', {path = 'TestLua/sprites/ship.png'})`.
 
 ---
 
@@ -177,12 +177,12 @@ end
 | `DrawSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `Position3D` | draws them in 3D, animated |
 | `MasterAnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D` | animates them, with the game's clock |
 | `AnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D`, `Clock` | animates them, with their own clock |
-| `Listener2D` | `Listener`, `Position2D` | moves the point that hears the sounds |
+| `Sound2D` | `Sound`, `Position2D` | puts the `stereo` sounds at their entity's position |
 | `KeyboardManagerClear` | the keyboard | empties the keys read this frame |
 
 The `Master…` systems use the game's clock, which the engine always runs: they are the simplest choice. The others use a `Clock` given to each entity, to slow down or speed up some entities only (with its `speed`), and need the `Clock` system too.
 
-The systems of the window, the keyboard, the mouse and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. The other engine systems (`Draw3D`, `UpdateCamera`, `UpdateKeybind`, `Sound`, `Sound2D`) act on components that are created from C++.
+The systems of the window, the keyboard, the mouse, the sound and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. The other engine systems (`Draw3D`, `UpdateCamera`, `UpdateKeybind`) act on components that are created from C++.
 
 ### The order of the systems
 
@@ -272,6 +272,39 @@ end
 ```
 
 An entity that has its own `Clock` reads its time with `gm:getComponent(e, 'Clock'):elapsed()`. It is multiplied by its `speed` and only moves forward with the `Clock` system. The game's clock belongs to the engine: a script cannot create another one.
+
+### Sounds
+
+Sounds need the `Audio` module (see [the modules](ENGINE_GAME.en.md#3-the-modules)): it creates the point that hears the sounds and the system that plays them. A sound is loaded once, in `start`, then played as many times as needed:
+
+```lua
+local shot
+
+function shoot(gm)
+    if gm:keyboard():isPressed(Key.Space) then
+        gm:getComponent(shot, 'Sound').state = SoundState.PLAY
+    end
+end
+
+function start(gm)
+    shot = gm:createEntity()
+    gm:addComponent(shot, 'Sound', {path = 'TestLua/sounds/shot.mp3'})
+    gm:createSystem(shoot)
+end
+```
+
+| `state` | Effect |
+|---|---|
+| `SoundState.PLAY` | plays the sound from the start |
+| `SoundState.START` | resumes the sound where it stopped |
+| `SoundState.PAUSED` | pauses the sound |
+| `SoundState.STOP` | stops the sound and rewinds it |
+| `SoundState.PLAYING` | the sound is playing: the engine sets it itself, then sets `STOP` back once the sound is over |
+
+- `loop = true` plays the sound again and again, for instance for a music.
+- `sound:setVolume(v)` sets the volume (`1` by default) and `sound:setPitch(p)` the pitch (`1` by default).
+- A `stereo = true` sound is placed in space: with the `Sound2D` system, it follows its entity's `Position2D`, and its volume drops with the distance according to `attenuation` (`Attenuation.NONE`, `INVERSE`, `LINEAR` or `EXPONENTIAL`), between `minDistance` and `maxDistance`.
+- The point that hears the sounds belongs to the module: a script cannot create another one.
 
 ---
 
@@ -394,6 +427,8 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
 | `gm:keyboard needs the Keyboard module` | `gm:keyboard()` or `gm:mouse()` without the matching module | add `"Keyboard"` or `"Mouse"` to the `modules` of `Setup.cpp` |
 | `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
+| `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `"Audio"` to the `modules` of `Setup.cpp` |
+| `Cannot load sound TestLua/sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder that holds `TestLua/` |
 | `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y` or `mouse.wheel` | only read them |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |
 | `Invalid arguments for Position2D: no field 'z'` | the table gives a field the component does not have | remove or rename the field |
@@ -421,41 +456,14 @@ These come **at the end of a frame**, without a file or a line: a change asked f
 
 ## 10. For engine developers: exposing a component or a system
 
-Everything that makes the engine usable from Lua is listed in one file, [`Engine/Game/src/EngineBindings.cpp`](../Engine/Game/src/EngineBindings.cpp).
-
-### A component
-
-Add one `bindComponent` line to `ComponentBinding::bindEngineComponents`: the C++ type, the name scripts use, then each field as `"name", &Type::member`.
+Everything that makes the engine usable from Lua is listed in one file, [`Engine/Game/src/EngineBindings.cpp`](../Engine/Game/src/EngineBindings.cpp): one `bindComponent` line per component, and one `makeSystem` line per system.
 
 ```cpp
-bindComponent<Position2D>(lua, "Position2D",
-    "x", &Position2D::x, "y", &Position2D::y);
-```
-
-This single line gives the component everything of [section 3](#3-components) and of the systems and views: `addComponent` with a table and defaults, the field checks and their messages, `getComponent`, `hasComponent`, `removeComponent`, `countComponents`, and its use in `createSystem` and `gm:view`. Changing a field means changing only this line.
-
-- **A component without a default constructor**, such as `Texture2D`, is built from the script's `path` field. Give it no field: `bindComponent<Texture2D>(lua, "Texture2D");`.
-- **A field of a field** is exposed with `nested`. `SpriteSheet2D::recNb.height` becomes `rows`:
-
-  ```cpp
-  "rows", nested(&SpriteSheet2D::recNb, &Size2D::height),
-  ```
-
-- **A `std::chrono::milliseconds` member** is exposed as a number of milliseconds with `milliseconds`:
-
-  ```cpp
-  "frameDuration", milliseconds(&SpriteSheet2D::frameDuration),
-  ```
-
-### A system
-
-Add one line to `SystemBinding::engineSystems`: the name scripts use, which is the C++ function's without its `system` prefix, then `makeSystem` with the function.
-
-```cpp
+bindComponent<Position2D>(lua, "Position2D", "x", &Position2D::x, "y", &Position2D::y);
 {"DrawSprite2D", makeSystem(Sprite2D::systemDrawSprite2D)},
 ```
 
-`makeSystem` reads the components from the function's own parameters, with or without a `GameManager &` first: there is nothing else to write.
+The special cases (nested fields, methods, enums, components built from a file), the modules and new `gm:` functions are explained in [the guide to extending the engine](ENGINE_EXTENDING.en.md).
 
 ---
 

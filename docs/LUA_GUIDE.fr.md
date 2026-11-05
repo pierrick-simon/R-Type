@@ -110,9 +110,9 @@ gm:countComponents('Position2D')            -- nombre d'entités qui en ont un
 | `ModelAnimation3D` | `path` (**obligatoire**) | les animations d'un modèle 3D |
 | `Sprite3D` | `scale` (1) | dessine le `Model3D` de l'entité |
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, en ms), `animation` (true), `scale` (1) | joue une animation du `Model3D` |
-| `Listener` | | le point qui entend les sons 2D |
+| `Sound` | `path` (**obligatoire**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (très grande), méthodes `setVolume(v)` et `setPitch(p)` | un son, chargé depuis `path` (voir [les sons](#les-sons)) |
 
-Les quatre composants marqués **obligatoire** sont construits à partir d'un fichier : `gm:addComponent(e, 'Texture2D', {path = 'TestLua/sprites/ship.png'})`.
+Les cinq composants marqués **obligatoire** sont construits à partir d'un fichier, puis reçoivent les autres champs de la table : `gm:addComponent(e, 'Texture2D', {path = 'TestLua/sprites/ship.png'})`.
 
 ---
 
@@ -177,12 +177,12 @@ end
 | `DrawSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `Position3D` | les dessine en 3D, animés |
 | `MasterAnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D` | les anime, avec l'horloge du jeu |
 | `AnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D`, `Clock` | les anime, avec leur propre horloge |
-| `Listener2D` | `Listener`, `Position2D` | déplace le point qui entend les sons |
+| `Sound2D` | `Sound`, `Position2D` | place les sons `stereo` à la position de leur entité |
 | `KeyboardManagerClear` | le clavier | vide les touches lues pendant la frame |
 
 Les systèmes `Master…` utilisent l'horloge du jeu, que le moteur fait toujours tourner : c'est le choix le plus simple. Les autres utilisent une `Clock` donnée à chaque entité, pour ralentir ou accélérer certaines entités seulement (avec son `speed`), et ont aussi besoin du système `Clock`.
 
-Les systèmes de la fenêtre, du clavier, de la souris et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. Les autres systèmes du moteur (`Draw3D`, `UpdateCamera`, `UpdateKeybind`, `Sound`, `Sound2D`) agissent sur des composants créés depuis le C++.
+Les systèmes de la fenêtre, du clavier, de la souris, du son et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. Les autres systèmes du moteur (`Draw3D`, `UpdateCamera`, `UpdateKeybind`) agissent sur des composants créés depuis le C++.
 
 ### L'ordre des systèmes
 
@@ -272,6 +272,39 @@ end
 ```
 
 Une entité qui a sa propre `Clock` lit son temps avec `gm:getComponent(e, 'Clock'):elapsed()`. Il est multiplié par son `speed` et n'avance qu'avec le système `Clock`. L'horloge du jeu appartient au moteur : un script ne peut pas en créer une autre.
+
+### Les sons
+
+Les sons demandent le module `Audio` (voir [les modules](ENGINE_GAME.fr.md#3-les-modules)) : il crée le point qui entend les sons et le système qui les joue. Un son se charge une fois, dans `start`, puis se joue autant de fois que voulu :
+
+```lua
+local shot
+
+function shoot(gm)
+    if gm:keyboard():isPressed(Key.Space) then
+        gm:getComponent(shot, 'Sound').state = SoundState.PLAY
+    end
+end
+
+function start(gm)
+    shot = gm:createEntity()
+    gm:addComponent(shot, 'Sound', {path = 'TestLua/sounds/shot.mp3'})
+    gm:createSystem(shoot)
+end
+```
+
+| `state` | Effet |
+|---|---|
+| `SoundState.PLAY` | joue le son depuis le début |
+| `SoundState.START` | reprend le son là où il s'était arrêté |
+| `SoundState.PAUSED` | met le son en pause |
+| `SoundState.STOP` | arrête le son et le remet au début |
+| `SoundState.PLAYING` | le son est en train de jouer : le moteur le met lui-même, puis remet `STOP` à la fin du son |
+
+- `loop = true` rejoue le son en boucle, par exemple pour une musique.
+- `sound:setVolume(v)` règle le volume (`1` par défaut) et `sound:setPitch(p)` la hauteur (`1` par défaut).
+- Un son `stereo = true` est placé dans l'espace : avec le système `Sound2D`, il suit la `Position2D` de son entité, et son volume baisse avec la distance selon `attenuation` (`Attenuation.NONE`, `INVERSE`, `LINEAR` ou `EXPONENTIAL`), entre `minDistance` et `maxDistance`.
+- Le point qui entend les sons appartient au module : un script ne peut pas en créer d'autre.
 
 ---
 
@@ -394,6 +427,8 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
 | `gm:keyboard needs the Keyboard module` | `gm:keyboard()` ou `gm:mouse()` sans le module correspondant | ajouter `"Keyboard"` ou `"Mouse"` aux `modules` du `Setup.cpp` |
 | `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
+| `Sound needs the Audio module` | un `Sound` sans le module `Audio` | ajouter `"Audio"` aux `modules` du `Setup.cpp` |
+| `Cannot load sound TestLua/sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier qui contient `TestLua/` |
 | `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y` ou `mouse.wheel` | ne faire que les lire |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |
@@ -421,41 +456,14 @@ Elles arrivent **à la fin d'une frame**, sans fichier ni ligne : un changement 
 
 ## 10. Pour les développeurs du moteur : exposer un composant ou un système
 
-Tout ce qui rend le moteur utilisable depuis Lua est listé dans un seul fichier, [`Engine/Game/src/EngineBindings.cpp`](../Engine/Game/src/EngineBindings.cpp).
-
-### Un composant
-
-Ajoutez une ligne `bindComponent` dans `ComponentBinding::bindEngineComponents` : le type C++, le nom utilisé par les scripts, puis chaque champ sous la forme `"nom", &Type::membre`.
+Tout ce qui rend le moteur utilisable depuis Lua est listé dans un seul fichier, [`Engine/Game/src/EngineBindings.cpp`](../Engine/Game/src/EngineBindings.cpp) : une ligne `bindComponent` par composant, et une ligne `makeSystem` par système.
 
 ```cpp
-bindComponent<Position2D>(lua, "Position2D",
-    "x", &Position2D::x, "y", &Position2D::y);
-```
-
-Cette seule ligne donne au composant tout ce qui est dans la [section 3](#3-les-composants) et dans les systèmes et les vues : `addComponent` avec une table et des valeurs par défaut, la vérification des champs et ses messages, `getComponent`, `hasComponent`, `removeComponent`, `countComponents`, et son utilisation dans `createSystem` et `gm:view`. Changer un champ ne demande de modifier que cette ligne.
-
-- **Un composant sans constructeur par défaut**, comme `Texture2D`, est construit à partir du champ `path` du script. Ne lui donnez aucun champ : `bindComponent<Texture2D>(lua, "Texture2D");`.
-- **Un champ d'un champ** s'expose avec `nested`. `SpriteSheet2D::recNb.height` devient `rows` :
-
-  ```cpp
-  "rows", nested(&SpriteSheet2D::recNb, &Size2D::height),
-  ```
-
-- **Un membre `std::chrono::milliseconds`** s'expose comme un nombre de millisecondes avec `milliseconds` :
-
-  ```cpp
-  "frameDuration", milliseconds(&SpriteSheet2D::frameDuration),
-  ```
-
-### Un système
-
-Ajoutez une ligne dans `SystemBinding::engineSystems` : le nom utilisé par les scripts, qui est celui de la fonction C++ sans son préfixe `system`, puis `makeSystem` avec la fonction.
-
-```cpp
+bindComponent<Position2D>(lua, "Position2D", "x", &Position2D::x, "y", &Position2D::y);
 {"DrawSprite2D", makeSystem(Sprite2D::systemDrawSprite2D)},
 ```
 
-`makeSystem` lit les composants dans les paramètres de la fonction elle-même, avec ou sans `GameManager &` en premier : il n'y a rien d'autre à écrire.
+Les cas particuliers (champs imbriqués, méthodes, enums, composants construits à partir d'un fichier), les modules et les nouvelles fonctions `gm:` sont expliqués dans [le guide pour étendre le moteur](ENGINE_EXTENDING.fr.md).
 
 ---
 
