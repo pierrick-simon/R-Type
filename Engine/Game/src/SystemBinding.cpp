@@ -46,7 +46,7 @@ namespace RType::Game {
     }
 
     void SystemBinding::checkNotUpdating(
-        const GameManager &gm, const char *function)
+        const GameManager &gm, const std::string &function)
     {
         if (gm.isUpdating())
             throw SystemCreatedInSystem(function);

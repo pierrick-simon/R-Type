@@ -89,7 +89,7 @@ namespace RType::Game {
          * @throw SystemCreatedInSystem If called during update().
          */
         static void checkNotUpdating(
-            const GameManager &gm, const char *function);
+            const GameManager &gm, const std::string &function);
 
         /**
          * @brief Calls a script's system on every entity that has all the

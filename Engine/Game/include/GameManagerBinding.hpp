@@ -8,6 +8,7 @@
 #ifndef GAMEMANAGERBINDING_HPP_
 #define GAMEMANAGERBINDING_HPP_
 
+#include <string>
 #include <sol/sol.hpp>
 
 #include "Exceptions.hpp"
@@ -42,12 +43,14 @@ namespace RType::Game {
          */
         template <typename Component>
         static Component &findModuleComponent(
-            GameManager &gm, const char *function, const char *module);
+            GameManager &gm, const std::string &function,
+            const std::string &module);
     };
 
     template <typename Component>
     Component &GameManagerBinding::findModuleComponent(
-        GameManager &gm, const char *function, const char *module)
+        GameManager &gm, const std::string &function,
+        const std::string &module)
     {
         Component *found = nullptr;
 

@@ -11,7 +11,9 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
@@ -167,7 +169,7 @@ namespace RType::Game {
          * a wrong field stops inside Lua and comes back as a normal error,
          * instead of jumping over C++ code.
          */
-        static const char *const setFieldsScript;
+        static const std::string_view setFieldsScript;
 
         /**
          * @brief Builds a component from the script's table: its defaults
@@ -197,7 +199,8 @@ namespace RType::Game {
          */
         template <typename Component>
         static void setFields(Component &component, const std::string &name,
-            const sol::table &fields, const char *skip = nullptr);
+            const sol::table &fields,
+            std::optional<std::string_view> skip = std::nullopt);
 
         /**
          * @brief Exposes a std::chrono::milliseconds member to Lua as a
@@ -242,12 +245,13 @@ namespace RType::Game {
 
     template <typename Component>
     void ComponentBinding::setFields(Component &component,
-        const std::string &name, const sol::table &fields, const char *skip)
+        const std::string &name, const sol::table &fields,
+        std::optional<std::string_view> skip)
     {
         sol::state_view lua(fields.lua_state());
         sol::protected_function script = lua.registry()["setFields"];
         sol::protected_function_result result = skip
-            ? script(&component, fields, skip)
+            ? script(&component, fields, *skip)
             : script(&component, fields);
 
         if (!result.valid()) {

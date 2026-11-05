@@ -15,7 +15,7 @@ namespace RType::Game {
     std::unordered_map<std::string, ComponentBinding::Entry>
         ComponentBinding::entries;
 
-    const char *const ComponentBinding::setFieldsScript = R"(
+    const std::string_view ComponentBinding::setFieldsScript = R"(
         local component, fields, skip = ...
         for key, value in pairs(fields) do
             if key == skip then goto continue end
