@@ -10,8 +10,10 @@
 #include "Clock.hpp"
 #include "Exceptions.hpp"
 #include "KeyboardManager.hpp"
+#include "Listener.hpp"
 #include "Modules.hpp"
 #include "MouseManager.hpp"
+#include "Sound.hpp"
 #include "Window.hpp"
 
 namespace RType::Game {
@@ -39,6 +41,12 @@ namespace RType::Game {
                     gm.addComponent<MouseManager>(gm.createEntity());
                     gm.createSystem<MouseManager>(
                         MouseManager::systemMouseManager);
+                }}},
+        {"Audio",
+            {{},
+                [](GameManager &gm, const GameInfo &) {
+                    gm.addComponent<Listener>(gm.createEntity());
+                    gm.createSystem<Sound>(Sound::systemSound);
                 }}},
         {"Clock",
             {{},

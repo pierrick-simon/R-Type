@@ -16,8 +16,9 @@ namespace RType::Game {
         ComponentBinding::entries;
 
     const char *const ComponentBinding::setFieldsScript = R"(
-        local component, fields = ...
+        local component, fields, skip = ...
         for key, value in pairs(fields) do
+            if key == skip then goto continue end
             local found, current = pcall(function() return component[key] end)
             if not found or current == nil then
                 return "no field '" .. tostring(key) .. "'"
@@ -30,6 +31,7 @@ namespace RType::Game {
             if not ok then
                 return "field '" .. tostring(key) .. "': " .. tostring(err)
             end
+            ::continue::
         end
         return nil
     )";

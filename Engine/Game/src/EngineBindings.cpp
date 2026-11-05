@@ -11,6 +11,7 @@
 #include "Draw3D.hpp"
 #include "Font.hpp"
 #include "Friction2D.hpp"
+#include "GameManagerBinding.hpp"
 #include "GravityField2D.hpp"
 #include "Keybind.hpp"
 #include "KeyboardManager.hpp"
@@ -59,10 +60,17 @@ namespace RType::Game {
         {"MasterAnimateSpriteSheet3D", makeSystem(SpriteSheet3D::systemMasterAnimateSpriteSheet3D)},
         {"DrawSpriteSheet3D", makeSystem(SpriteSheet3D::systemDrawSpriteSheet3D)},
         // engine-audio
-        {"Sound", makeSystem(Sound::systemSound)},
         {"Sound2D", makeSystem(Sound::systemSound2D)},
-        {"Listener2D", makeSystem(Listener::systemListener2D)},
     };
+
+    template <>
+    Sound ComponentBinding::construct<Sound>(
+        GameManager &gm, const std::string &path)
+    {
+        return Sound(GameManagerBinding::findModuleComponent<Listener>(
+                         gm, "Sound", "Audio"),
+            path);
+    }
 
     void ComponentBinding::bindEngineComponents(sol::state &lua)
     {
@@ -116,7 +124,42 @@ namespace RType::Game {
             "scale", &SpriteSheet3D::scale);
 
         // engine-audio
-        bindComponent<Listener>(lua, "Listener");
+        lua.new_enum<SoundInfo::State>("SoundState", {
+            {"PLAY", SoundInfo::State::PLAY},
+            {"PLAYING", SoundInfo::State::PLAYING},
+            {"PAUSED", SoundInfo::State::PAUSED},
+            {"START", SoundInfo::State::START},
+            {"STOP", SoundInfo::State::STOP},
+        });
+        lua.new_enum<SoundInfo::Attenuation>("Attenuation", {
+            {"NONE", SoundInfo::Attenuation::NONE},
+            {"INVERSE", SoundInfo::Attenuation::INVERSE},
+            {"LINEAR", SoundInfo::Attenuation::LINEAR},
+            {"EXPONENTIAL", SoundInfo::Attenuation::EXPONENTIAL},
+        });
+        bindComponent<Sound>(lua, "Sound",
+            "state", sol::property(
+                [](const Sound &s) { return s.state; },
+                [](Sound &s, SoundInfo::State state) { s.state = state; }),
+            "loop", sol::property(
+                [](const Sound &s) { return s.loop; },
+                [](Sound &s, bool loop) { s.loop = loop; }),
+            "stereo", sol::property(
+                [](const Sound &s) { return s.stereo; },
+                [](Sound &s, bool stereo) { s.stereo = stereo; }),
+            "attenuation", sol::property(
+                [](const Sound &s) { return s.attenuation; },
+                [](Sound &s, SoundInfo::Attenuation attenuation) {
+                    s.attenuation = attenuation;
+                }),
+            "minDistance", sol::property(
+                [](const Sound &s) { return s.minDistance; },
+                [](Sound &s, float distance) { s.minDistance = distance; }),
+            "maxDistance", sol::property(
+                [](const Sound &s) { return s.maxDistance; },
+                [](Sound &s, float distance) { s.maxDistance = distance; }),
+            "setVolume", &Sound::setVolume,
+            "setPitch", &Sound::setPitch);
     }
 
 } // namespace RType::Game

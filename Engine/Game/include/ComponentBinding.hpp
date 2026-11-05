@@ -171,14 +171,33 @@ namespace RType::Game {
 
         /**
          * @brief Builds a component from the script's table: its defaults
-         * overwritten by the table's fields, or, for a component that has
-         * no default constructor, from the table's "path".
+         * overwritten by the table's fields. A component that has no
+         * default constructor is built by construct from the table's
+         * "path", then given the table's other fields.
          * @throw InvalidComponentArgs If a field does not exist or has the
          * wrong type, or if the path is missing.
          */
         template <typename Component>
         static Component makeComponent(
-            const std::string &name, const Args &args);
+            GameManager &gm, const std::string &name, const Args &args);
+
+        /**
+         * @brief Builds a component that has no default constructor, from
+         * the path given by the script. Specialized in EngineBindings.cpp
+         * for a component whose constructor needs more than the path.
+         */
+        template <typename Component>
+        static Component construct(GameManager &gm, const std::string &path);
+
+        /**
+         * @brief Copies the fields of the script's table onto the
+         * component, through its usertype, except the one named skip.
+         * @throw InvalidComponentArgs If a field does not exist or has the
+         * wrong type.
+         */
+        template <typename Component>
+        static void setFields(Component &component, const std::string &name,
+            const sol::table &fields, const char *skip = nullptr);
 
         /**
          * @brief Exposes a std::chrono::milliseconds member to Lua as a
@@ -222,27 +241,40 @@ namespace RType::Game {
     }
 
     template <typename Component>
+    void ComponentBinding::setFields(Component &component,
+        const std::string &name, const sol::table &fields, const char *skip)
+    {
+        sol::state_view lua(fields.lua_state());
+        sol::protected_function script = lua.registry()["setFields"];
+        sol::protected_function_result result = skip
+            ? script(&component, fields, skip)
+            : script(&component, fields);
+
+        if (!result.valid()) {
+            sol::error error = result;
+            throw InvalidComponentArgs(name, error.what());
+        }
+        sol::optional<std::string> reason = result;
+        if (reason)
+            throw InvalidComponentArgs(name, *reason);
+    }
+
+    template <typename Component>
+    Component ComponentBinding::construct(
+        GameManager &, const std::string &path)
+    {
+        return Component(path);
+    }
+
+    template <typename Component>
     Component ComponentBinding::makeComponent(
-        const std::string &name, const Args &args)
+        GameManager &gm, const std::string &name, const Args &args)
     {
         if constexpr (std::is_default_constructible_v<Component>) {
             Component component {};
 
-            if (args) {
-                sol::state_view lua(args->lua_state());
-                sol::protected_function setFields =
-                    lua.registry()["setFields"];
-                sol::protected_function_result result =
-                    setFields(&component, *args);
-
-                if (!result.valid()) {
-                    sol::error error = result;
-                    throw InvalidComponentArgs(name, error.what());
-                }
-                sol::optional<std::string> reason = result;
-                if (reason)
-                    throw InvalidComponentArgs(name, *reason);
-            }
+            if (args)
+                setFields(component, name, *args);
             return component;
         } else {
             sol::optional<std::string> path;
@@ -251,7 +283,10 @@ namespace RType::Game {
                 path = args->get<sol::optional<std::string>>("path");
             if (!path)
                 throw InvalidComponentArgs(name, "missing 'path'");
-            return Component(*path);
+            Component component = construct<Component>(gm, *path);
+
+            setFields(component, name, *args, "path");
+            return component;
         }
     }
 
@@ -264,7 +299,7 @@ namespace RType::Game {
             .add =
                 [name](GameManager &gm, Entity entity, const Args &args) {
                     gm.addComponent<Component>(
-                        entity, makeComponent<Component>(name, args));
+                        entity, makeComponent<Component>(gm, name, args));
                 },
             .remove =
                 [](GameManager &gm, Entity entity) {
