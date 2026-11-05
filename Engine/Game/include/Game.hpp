@@ -16,7 +16,8 @@ namespace RType {
 
     /**
      * @brief What the game gives the engine: its window, its scripts and
-     * the modules it needs. Defined by the game as GameConfig.
+     * the modules it needs. Defined by the engine as GameConfig, filled
+     * from the game's config.conf by ConfigBuilder.
      */
     struct GameInfo {
         int windowFPS = 60;

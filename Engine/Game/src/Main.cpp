@@ -6,6 +6,9 @@
 */
 
 #include "Runner.hpp"
+#include "Game.hpp"
+
+RType::GameInfo RType::GameConfig = {};
 
 int main()
 {
