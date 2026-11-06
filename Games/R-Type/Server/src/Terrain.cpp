@@ -11,6 +11,7 @@
 #include <functional>
 #include <raylib-cpp.hpp>
 
+#include "Assets.hpp"
 #include "Components.hpp"
 #include "Config.hpp"
 #include "Exceptions.hpp"
@@ -20,14 +21,16 @@ namespace RType::Server {
     namespace {
         constexpr int PLATFORM_TOLERANCE = 8;
 
-        const std::string &assetPath(GameManager &gm, AssetId id)
+        const std::string &assetPath(AssetId id)
         {
-            const auto &assets = gm.getAssetsMap();
-            const auto it = assets.find(id);
+            const auto &assets = Asset::makeAssetList();
+            const auto it = std::find_if(assets.begin(),
+                assets.end(),
+                [id](const AssetEntry &e) { return e.id == id; });
 
             if (it == assets.end())
                 throw EngineException("No such asset: " + std::to_string(id));
-            return it->second;
+            return it->path;
         }
 
         CollisionMask makeMask(const raylib::Image &image, int left, int width,
@@ -91,7 +94,7 @@ namespace RType::Server {
     Entity createTerrain(GameManager &gm)
     {
         try {
-            const raylib::Image image(assetPath(gm, Asset::LEVEL1_MASK));
+            const raylib::Image image(assetPath(Asset::LEVEL1_MASK));
             CollisionMask mask =
                 makeMask(image, 0, image.width, [](raylib::Color c) {
                     return c.r != 0 || c.g != 0 || c.b != 0;
@@ -110,7 +113,7 @@ namespace RType::Server {
     Entity createSpriteMasks(GameManager &gm, AssetId asset, int tiles)
     {
         try {
-            const raylib::Image image(assetPath(gm, asset));
+            const raylib::Image image(assetPath(asset));
             const float tileWidth = float(image.width) / float(tiles);
             SpriteMasks masks {asset, {}};
             const Entity entity = gm.createEntity();
