@@ -6,9 +6,11 @@
 */
 
 #include "Setup.hpp"
+#include "AssetManager.hpp"
 #include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
+#include "Decoder.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
@@ -71,7 +73,7 @@ namespace RType::Client {
     Entity createMetric(GameManager &gm)
     {
         Entity m = gm.createEntity();
-        gm.addComponent<Metric>(m, gm.getAssetsMap()[Asset::FONT], true);
+        gm.addComponent<Metric>(m, Asset::FONT, true);
         gm.createSystem<MasterClock>(Metric::systemUpdateMetric);
         gm.createSystem<ClientManager>(Metric::systemUpdateMetricLagometer);
         gm.createSystem<KeyboardManager>([&gm](const KeyboardManager &k) {
@@ -87,6 +89,19 @@ namespace RType::Client {
                 m.activate();
         });
         return m;
+    }
+
+    Entity createAssetManager(GameManager &gm)
+    {
+        auto am = gm.createEntity();
+        gm.addComponent<Assets>(am, gm, Asset::makeAssetList());
+        gm.createSystem<Assets>(
+            Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(SpriteSheet2D::
+                systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(
+            Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
+        return am;
     }
 
     void createSystems(GameManager &gm)
@@ -106,11 +121,6 @@ namespace RType::Client {
             for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
                 Friction2D::systemFriction2D(f, v, c);
         });
-        gm.createSystem<Sprite2D, Texture2D, Position2D>(
-            Sprite2D::systemDrawSprite2D);
-        gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
-            SpriteSheet2D::systemDrawSpriteSheet2D);
-        gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sound>(Sound::systemSound);
         gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
