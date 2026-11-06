@@ -276,3 +276,35 @@ Test(weapons, shots_stop_on_the_walls)
     shotTerrainSystem(gm);
     cr_assert_not(gm.hasComponent<Projectile>(enemy));
 }
+
+Test(weapons, reflect_beam_stops_on_the_first_enemy)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+    const Entity player = addPlayer(gm);
+    std::optional<Entity> front;
+
+    pickUp(gm, player, LaserType::Reflect);
+    pickUp(gm, player, LaserType::Reflect);
+    fireLaser(gm, *findForce(gm, player));
+    cr_assert_eq(countOf(gm, ReflectShot {}), 3 * FORCE_MAX_LEVEL);
+    for (auto [shot, reflect, pos, velocity] :
+        gm.view<ReflectShot, Position2D, Velocity2D>().getVector())
+        if (velocity.y == 0.f &&
+            (!front || pos.x > gm.getComponent<Position2D>(*front).x))
+            front = shot;
+    const auto &pos = gm.getComponent<Position2D>(*front);
+    const Entity scout = spawnEnemy(gm, EnemyType::Scout, 0.f, 0.f);
+    const auto &box = gm.getComponent<Hitbox>(scout);
+
+    gm.getComponent<Position2D>(scout) = {
+        pos.x + REFLECT_WIDTH - box.offsetX - box.width / 2.f,
+        pos.y + REFLECT_HEIGHT / 2.f - box.offsetY - box.height / 2.f};
+    systemEnemyCombat(gm, director, {});
+    reflectSystem(gm, clock);
+    cr_assert_eq(countOf(gm, ReflectShot {}), 2 * FORCE_MAX_LEVEL);
+    for (auto [_, reflect, velocity] :
+        gm.view<ReflectShot, Velocity2D>().getVector())
+        cr_assert_neq(velocity.y, 0.f);
+}

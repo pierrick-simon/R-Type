@@ -31,6 +31,8 @@ namespace RType::Server {
     {
         for (auto [entity, player] : gm.view<Player>().getVector()) {
             player.lives = PLAYER_LIVES;
+            if (gm.hasComponent<Scorer>(entity))
+                gm.getComponent<Scorer>(entity).score = 0;
             respawnPlayer(gm, entity);
         }
         resetEnemies(gm);

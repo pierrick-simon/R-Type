@@ -17,6 +17,7 @@
 #include "KeyboardManager.hpp"
 #include "LobbyProtocol.hpp"
 #include "MouseManager.hpp"
+#include "Player/Hud.hpp"
 #include "ServerManager.hpp"
 
 namespace RType::Server {
@@ -73,6 +74,7 @@ namespace RType::Server {
             gameStarted = true;
             createBackground(gm);
             createEnemyDirector(gm);
+            spawnTeamScore(gm);
         }
 
         void resetLevel(GameManager &gm)
@@ -85,6 +87,7 @@ namespace RType::Server {
             destroyAllOf<Background>(gm);
             destroyAllOf<Bullet>(gm);
             destroyAllOf<Force>(gm);
+            destroyAllOf<ScoreLabel>(gm);
             destroyAllOf<PlayerExplosion>(gm);
         }
 

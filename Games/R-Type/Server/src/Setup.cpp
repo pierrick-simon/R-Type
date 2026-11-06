@@ -116,6 +116,7 @@ namespace RType::Server {
         gm.createSystem<>(shotTerrainSystem);
         gm.createSystem<>(chargeEffectSystem);
         gm.createSystem<>(livesHudSystem);
+        gm.createSystem<>(scoreHudSystem);
         gm.createSystem<ChargedShot, SpriteSheet2D>(chargedShotAnimation);
     }
 

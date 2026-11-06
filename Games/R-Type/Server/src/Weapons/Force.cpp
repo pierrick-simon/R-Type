@@ -50,7 +50,8 @@ namespace RType::Server {
         gm.addComponent<Force>(force, Force {player, 1, laser});
         gm.addComponent<ShotBlocker>(force);
         gm.addComponent<ContactDamage>(force,
-            ContactDamage {FORCE_CONTACT_DAMAGE, FORCE_CONTACT_COOLDOWN});
+            ContactDamage {
+                FORCE_CONTACT_DAMAGE, FORCE_CONTACT_COOLDOWN, 0.f, player});
         gm.addComponent<Hitbox>(force, forceHitbox(1));
         gm.addComponent<Position2D>(
             force, forcePosition(gm.getComponent<Position2D>(player)));

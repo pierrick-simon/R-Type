@@ -18,9 +18,9 @@ namespace RType {
 
 namespace RType::Server {
 
-    void spawnBullet(GameManager &gm, const Position2D &shooter);
+    void spawnBullet(GameManager &gm, Entity owner, const Position2D &shooter);
     void spawnChargedShot(
-        GameManager &gm, const Position2D &shooter, int level);
+        GameManager &gm, Entity owner, const Position2D &shooter, int level);
     void spawnChargeEffect(GameManager &gm, Entity player);
     void bulletSystem(GameManager &gm);
     void shotTerrainSystem(GameManager &gm);

@@ -120,7 +120,7 @@ namespace RType::Server {
                 fireLaser(gm, *force);
                 player.cooldown = LASER_COOLDOWN;
             } else {
-                spawnBullet(gm, pos);
+                spawnBullet(gm, entity, pos);
                 player.cooldown = SHOOT_COOLDOWN;
             }
         }
@@ -128,7 +128,8 @@ namespace RType::Server {
         player.charge = 0.f;
     }
 
-    void releaseFire(GameManager &gm, Player &player, const Position2D &pos)
+    void releaseFire(
+        GameManager &gm, Entity entity, Player &player, const Position2D &pos)
     {
         const int level =
             std::min(int(player.charge / CHARGE_LEVEL_TIME), CHARGE_MAX_LEVEL);
@@ -137,7 +138,7 @@ namespace RType::Server {
         player.charge = 0.f;
         if (level <= 0)
             return;
-        spawnChargedShot(gm, pos, level);
+        spawnChargedShot(gm, entity, pos, level);
         player.cooldown = SHOOT_COOLDOWN;
     }
 
@@ -168,7 +169,7 @@ namespace RType::Server {
         for (const auto &key : keyboard.keyReleased) {
             setHeld(player, key, false);
             if (alive && key == Key::Value::Space && player.charging)
-                releaseFire(gm, player, pos);
+                releaseFire(gm, entity, player, pos);
         }
         keyboard.keyPressed.clear();
         keyboard.keyReleased.clear();
@@ -335,6 +336,8 @@ namespace RType::Server {
             taken.insert(state.slot);
             gm.addComponent<Player>(entity, state);
             spawnLifeIcons(gm, entity, state);
+            spawnPlayerScore(gm, entity, state);
+            gm.addComponent<Scorer>(entity);
             gm.addComponent<EnemyTarget>(entity);
             gm.addComponent<Health>(entity, Health {PLAYER_HP, PLAYER_HP});
             gm.addComponent<Hitbox>(

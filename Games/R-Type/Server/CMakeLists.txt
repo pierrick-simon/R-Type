@@ -51,6 +51,7 @@ if (TARGET criterion)
             tests/tests_init.cpp
             tests/tests_boss.cpp
             tests/tests_lives.cpp
+            tests/tests_score.cpp
             tests/tests_weapons.cpp
     )
 

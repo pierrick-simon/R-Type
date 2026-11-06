@@ -9,6 +9,8 @@
 #define ENEMY_HPP_
 
 #include <cstdint>
+#include <optional>
+#include "Entity.hpp"
 
 namespace RType {
 
@@ -120,6 +122,12 @@ namespace RType {
         int damage = 1;
         bool fromPlayer = false;
         bool piercing = false;
+        std::optional<Entity> owner = std::nullopt;
+    };
+
+    /** @brief Earns the points of the enemies killed by what it owns. */
+    struct Scorer {
+        int score = 0;
     };
 
     struct EnemyTarget {};
@@ -140,6 +148,7 @@ namespace RType {
         int damage = 1;
         float cooldown = 0.f;
         float timer = 0.f;
+        std::optional<Entity> owner = std::nullopt;
     };
 } // namespace RType
 

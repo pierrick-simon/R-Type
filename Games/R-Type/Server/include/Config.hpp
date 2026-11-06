@@ -66,6 +66,22 @@ namespace RType::Server {
     inline constexpr float HUD_MARGIN = 20.f;
     inline constexpr float HUD_SPACING = 8.f;
 
+    inline constexpr float SCORE_FONT_SIZE = 28.f;
+    inline constexpr std::size_t SCORE_DIGITS = 6;
+    inline constexpr float SCORE_Y =
+        WINDOW_HEIGHT - HUD_MARGIN - SCORE_FONT_SIZE;
+    inline constexpr float SCORE_PLAYERS_X = 400.f;
+    inline constexpr float SCORE_SPACING = 300.f;
+    // Main color of each player sheet.
+    inline constexpr std::array<std::array<unsigned char, 3>, PLAYER_COLORS>
+        PLAYER_SCORE_COLORS = {{
+            {82, 115, 255},
+            {255, 132, 107},
+            {123, 255, 123},
+            {230, 90, 230},
+            {0, 231, 222},
+        }};
+
     inline constexpr int CHARGE_FRAMES = 8;
     inline constexpr float CHARGE_SIZE = 32.f * SCALE;
     inline constexpr float CHARGE_OVERLAP = 4.f * SCALE;

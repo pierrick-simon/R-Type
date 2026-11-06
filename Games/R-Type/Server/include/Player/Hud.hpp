@@ -15,6 +15,9 @@ namespace RType::Server {
 
     void spawnLifeIcons(GameManager &gm, Entity player, const Player &state);
     void livesHudSystem(GameManager &gm);
+    void spawnTeamScore(GameManager &gm);
+    void spawnPlayerScore(GameManager &gm, Entity player, const Player &state);
+    void scoreHudSystem(GameManager &gm);
 
 } // namespace RType::Server
 

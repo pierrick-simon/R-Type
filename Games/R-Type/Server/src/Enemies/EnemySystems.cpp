@@ -154,6 +154,14 @@ namespace RType {
                 !bossExposed(gm.getComponent<Boss>(enemy));
         }
 
+        void awardScore(GameManager &gm, EnemyDirector &director,
+            const std::optional<Entity> &scorer, int points)
+        {
+            director.score += points;
+            if (scorer && gm.hasComponent<Scorer>(*scorer))
+                gm.getComponent<Scorer>(*scorer).score += points;
+        }
+
         void killEnemy(GameManager &gm, const EnemyHooks &hooks, Entity enemy,
             const Position2D &pos, const Hitbox &box)
         {
@@ -212,7 +220,8 @@ namespace RType {
                             health.hp -= contact.damage;
                             if (health.hp > 0)
                                 return;
-                            director.score += info.scoreValue;
+                            awardScore(
+                                gm, director, contact.owner, info.scoreValue);
                             killEnemy(gm, hooks, enemy, ep, eb);
                         });
                 });
@@ -789,7 +798,8 @@ namespace RType {
                             consumed = !shot.piercing || shot.damage <= 0;
                             if (health.hp > 0)
                                 return;
-                            director.score += info.scoreValue;
+                            awardScore(
+                                gm, director, shot.owner, info.scoreValue);
                             killEnemy(gm, hooks, enemy, ep, eb);
                         });
                 } else if (blockedByShield(gm, bulletRect)) {

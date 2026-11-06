@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
+#include <unordered_map>
 
 #include "Assets.hpp"
 #include "Common/Terrain.hpp"
@@ -71,7 +73,7 @@ namespace RType::Server {
             e, EntityType::SPRITESHEET, Asset::LASER_MUZZLE, gm, e);
     }
 
-    void fireReflect(GameManager &gm, float x, float y, int level)
+    void fireReflect(GameManager &gm, Entity owner, float x, float y, int level)
     {
         const float diagonal = LASER_SPEED / std::sqrt(2.f);
         const std::array<std::pair<std::size_t, Velocity2D>, 3> beams = {{
@@ -79,9 +81,12 @@ namespace RType::Server {
             {REFLECT_UP, {diagonal, -diagonal}},
             {REFLECT_DOWN, {diagonal, diagonal}},
         }};
+        thread_local std::uint32_t nextBeam = 0;
         bool sound = true;
 
         for (const auto &[tile, velocity] : beams) {
+            const std::uint32_t beam = nextBeam++;
+
             for (int piece = 0; piece < level; ++piece) {
                 const float back = float(piece) * REFLECT_WIDTH / velocity.x;
                 const LaserShot shot {.asset = Asset::REFLECT_LASER,
@@ -89,7 +94,7 @@ namespace RType::Server {
                         y - REFLECT_HEIGHT / 2.f - velocity.y * back},
                     .velocity = velocity,
                     .hitbox = {REFLECT_WIDTH, REFLECT_HEIGHT},
-                    .projectile = {REFLECT_DAMAGE, true},
+                    .projectile = {REFLECT_DAMAGE, true, false, owner},
                     .sheet = SpriteSheet2D(Size2D(1, REFLECT_FRAMES),
                         tile,
                         MUZZLE_FRAME_MS,
@@ -97,13 +102,13 @@ namespace RType::Server {
                         false)};
                 const Entity e = spawnLaserShot(gm, shot, sound);
 
-                gm.addComponent<ReflectShot>(e);
+                gm.addComponent<ReflectShot>(e, ReflectShot {beam, level});
                 sound = false;
             }
         }
     }
 
-    void fireHelix(GameManager &gm, float x, float y, int level)
+    void fireHelix(GameManager &gm, Entity owner, float x, float y, int level)
     {
         const LaserShot shot {.asset = Asset::HELIX_LASER,
             .pos = {x, y - HELIX_HEIGHT / 2.f},
@@ -111,14 +116,17 @@ namespace RType::Server {
             .hitbox = {.width = HELIX_WIDTH * 0.9f,
                 .height = HELIX_HEIGHT * 0.8f,
                 .offsetY = HELIX_HEIGHT * 0.1f},
-            .projectile = {HELIX_DAMAGE[std::size_t(level - 1)], true, true},
+            .projectile = {HELIX_DAMAGE[std::size_t(level - 1)],
+                true,
+                true,
+                owner},
             .sheet = SpriteSheet2D(
                 Size2D(1, HELIX_FRAMES), HELIX_FRAME_MS, LASER_SCALE)};
 
         spawnLaserShot(gm, shot, true);
     }
 
-    void fireRing(GameManager &gm, float x, float y, int level)
+    void fireRing(GameManager &gm, Entity owner, float x, float y, int level)
     {
         for (int ring = 0; ring < level; ++ring) {
             const float offset =
@@ -127,7 +135,7 @@ namespace RType::Server {
                 .pos = {x - RING_WIDTH / 2.f, y + offset - RING_HEIGHT / 2.f},
                 .velocity = {RING_SPEED, 0.f},
                 .hitbox = {},
-                .projectile = {RING_DAMAGE, true},
+                .projectile = {RING_DAMAGE, true, false, owner},
                 .sheet = SpriteSheet2D(
                     Size2D(1, RING_FRAMES), RING_FRAME_MS, LASER_SCALE)};
             const Entity e = spawnLaserShot(gm, shot, ring == 0);
@@ -148,13 +156,13 @@ namespace RType::Server {
         spawnMuzzle(gm, x, y);
         switch (state.laser) {
             case LaserType::Helix:
-                fireHelix(gm, x, y, state.level);
+                fireHelix(gm, state.owner, x, y, state.level);
                 break;
             case LaserType::Ring:
-                fireRing(gm, x, y, state.level);
+                fireRing(gm, state.owner, x, y, state.level);
                 break;
             default:
-                fireReflect(gm, x, y, state.level);
+                fireReflect(gm, state.owner, x, y, state.level);
         }
     }
 
@@ -205,10 +213,18 @@ namespace RType::Server {
     void reflectSystem(GameManager &gm, const MasterClock &clock)
     {
         const float elapsed = elapsedSeconds(clock);
+        std::unordered_map<std::uint32_t, int> alive;
 
+        for (auto [_, reflect] : gm.view<ReflectShot>().getVector())
+            ++alive[reflect.beam];
         for (auto [shot, reflect, pos, velocity, sheet] :
             gm.view<ReflectShot, Position2D, Velocity2D, SpriteSheet2D>()
                 .getVector()) {
+            // A piece hit an enemy: the whole beam stops there.
+            if (alive[reflect.beam] < reflect.pieces) {
+                destroyNetworked(gm, shot);
+                continue;
+            }
             if (reflectHits(gm, pos.x, pos.y)) {
                 if (reflect.bounces >= REFLECT_MAX_BOUNCES) {
                     destroyNetworked(gm, shot);

@@ -19,7 +19,7 @@
 
 namespace RType::Server {
 
-    void spawnBullet(GameManager &gm, const Position2D &shooter)
+    void spawnBullet(GameManager &gm, Entity owner, const Position2D &shooter)
     {
         const float x = shooter.x + PLAYER_WIDTH / 2;
         const float y =
@@ -27,7 +27,7 @@ namespace RType::Server {
         auto bullet = gm.createEntity();
 
         gm.addComponent<Bullet>(bullet);
-        gm.addComponent<Projectile>(bullet, Projectile {1, true});
+        gm.addComponent<Projectile>(bullet, Projectile {1, true, false, owner});
         gm.addComponent<Hitbox>(bullet, Hitbox {BULLET_WIDTH, BULLET_HEIGHT});
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
@@ -43,7 +43,8 @@ namespace RType::Server {
             Asset::GUNSHOT_SOUND);
     }
 
-    void spawnChargedShot(GameManager &gm, const Position2D &shooter, int level)
+    void spawnChargedShot(
+        GameManager &gm, Entity owner, const Position2D &shooter, int level)
     {
         const ChargedShotLevel &info = CHARGED_SHOT_LEVELS[level - 1];
         const float width = info.width * SCALE;
@@ -62,7 +63,8 @@ namespace RType::Server {
         gm.addComponent<Bullet>(shot);
         gm.addComponent<ChargedShot>(
             shot, ChargedShot {std::size_t(level - 1)});
-        gm.addComponent<Projectile>(shot, Projectile {info.damage, true, true});
+        gm.addComponent<Projectile>(
+            shot, Projectile {info.damage, true, true, owner});
         gm.addComponent<Hitbox>(shot, hitbox);
         gm.addComponent<Position2D>(shot, x, y);
         gm.addComponent<Velocity2D>(shot, CHARGED_SHOT_SPEED, 0.f);

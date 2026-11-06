@@ -6,6 +6,7 @@
 */
 
 #include "Setup.hpp"
+#include <algorithm>
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Friction2D.hpp"
@@ -25,14 +26,36 @@
 #include "Window.hpp"
 
 namespace RType::Client {
+    namespace {
+        constexpr float GAME_WIDTH = 1920.f;
+        constexpr float GAME_HEIGHT = 1080.f;
+
+        // The window manager may shrink the window (dock, top bar): the game
+        // is scaled down to fit it, and the mouse scaled back up.
+        ::Camera2D fitGameToWindow()
+        {
+            const auto width = float(::GetScreenWidth());
+            const auto height = float(::GetScreenHeight());
+            const float zoom =
+                std::min(width / GAME_WIDTH, height / GAME_HEIGHT);
+            const ::Vector2 offset = {(width - GAME_WIDTH * zoom) / 2.f,
+                (height - GAME_HEIGHT * zoom) / 2.f};
+
+            ::SetMouseOffset(int(-offset.x), int(-offset.y));
+            ::SetMouseScale(1.f / zoom, 1.f / zoom);
+            return {offset, {0.f, 0.f}, 0.f, zoom};
+        }
+    } // namespace
+
     Entity createWindow(GameManager &gm)
     {
         auto w = gm.createEntity();
-        gm.addComponent<Window>(w, 1920, 1080, "R-type");
+        gm.addComponent<Window>(w, int(GAME_WIDTH), int(GAME_HEIGHT), "R-type");
         ::SetExitKey(KEY_NULL);
         gm.createSystem<Window>([](Window &win) {
             win.setTargetFps();
             win.beginDrawing();
+            ::BeginMode2D(fitGameToWindow());
         });
         return w;
     }
@@ -86,7 +109,10 @@ namespace RType::Client {
             SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sound>(Sound::systemSound);
-        gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
+        gm.createSystem<Window>([](Window &win) {
+            ::EndMode2D();
+            win.endDrawing();
+        });
     }
 
     Entity createSound(GameManager &gm)
