@@ -10,10 +10,10 @@
 #include <algorithm>
 #include <iostream>
 
+#include "AccountProtocol.hpp"
 #include "Connexion/Instance.hpp"
 #include "Connexion/InstanceLink.hpp"
 #include "Connexion/MasterLink.hpp"
-#include "AccountProtocol.hpp"
 #include "KeyboardManager.hpp"
 #include "MasterProtocol.hpp"
 #include "MouseManager.hpp"

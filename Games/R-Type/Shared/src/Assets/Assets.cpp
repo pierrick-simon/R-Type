@@ -59,9 +59,12 @@ namespace RType::Asset {
 
             {FONT, "R-Type/sprites/Fonts/r-type.otf"},
 
-            {MENU_BACKGROUND, "R-Type/sprites/Menu/Background.png"},
+            {MENU_BACKGROUND, "R-Type/sprites/Menu/BackgroundMainMenu.png"},
             {MENU_BUTTON, "R-Type/sprites/Menu/Buttons.png"},
             {MENU_PLAYER_BACK, "R-Type/sprites/Menu/PlayerBack.png"},
+            {MENU_BACK, "R-Type/sprites/Menu/Background.png"},
+            {MENU_BACK_SIDE, "R-Type/sprites/Menu/BackgroundSide.png"},
+            {MENU_LIST_FRAME, "R-Type/sprites/Menu/LobbyListFrame.png"},
         };
     }
 

@@ -22,7 +22,6 @@
 namespace RType::Client {
 
     constexpr float WINDOW_MODE_TITLE_SPACE = 20.f;
-    /** @brief Main menu: 5 buttons, a bit closer than BUTTON_GAP to fit. */
     constexpr float MENU_FIRST_Y = 360.f;
     constexpr float MENU_BUTTON_GAP = 25.f;
 

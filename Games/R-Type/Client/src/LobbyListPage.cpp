@@ -5,8 +5,6 @@
 ** LobbyListPage
 */
 
-#include "LobbyListPage.hpp"
-
 #include <algorithm>
 #include <optional>
 #include <set>
@@ -16,10 +14,12 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "KeyboardManager.hpp"
+#include "LobbyListPage.hpp"
 #include "Login.hpp"
 #include "MasterProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
+#include "Texture2D.hpp"
 
 namespace RType::Client {
 
@@ -354,6 +354,12 @@ namespace RType::Client {
             "Back",
             backToMenu);
 
+        const Entity frame = gm.createEntity();
+
+        gm.addComponent<LobbyListItem>(frame);
+        gm.addComponent<LobbyListFrame>(frame);
+        gm.addComponent<Texture2D>(
+            frame, gm.getAssetsMap().at(Asset::MENU_LIST_FRAME));
         scroll = 0;
         gm.addComponent<LobbyListItem>(title);
         gm.addComponent<LobbyListItem>(create);
@@ -471,6 +477,12 @@ namespace RType::Client {
             return ::MeasureTextEx(*font, str.c_str(), size, 1.f).x;
         };
 
+        ::BeginScissorMode(0,
+            static_cast<int>(LOBBY_LIST_VISIBLE_TOP),
+            WINDOW_WIDTH,
+            static_cast<int>(
+                LOBBY_LIST_VISIBLE_BOTTOM - LOBBY_LIST_VISIBLE_TOP));
+
         if (state->lobbies.empty()) {
             const std::string empty = state->received
                 ? "No lobby yet, create one"
@@ -521,16 +533,11 @@ namespace RType::Client {
                 lobby.started ? Color {255, 170, 60, 255}
                               : Color {90, 230, 120, 255});
         }
-        ::DrawRectangleRec(
-            Rectangle {
-                0, 0, static_cast<float>(WINDOW_WIDTH), LOBBY_LIST_VISIBLE_TOP},
-            Color {60, 60, 100, 255});
-        ::DrawRectangleRec(
-            Rectangle {0,
-                LOBBY_LIST_VISIBLE_BOTTOM,
-                static_cast<float>(WINDOW_WIDTH),
-                static_cast<float>(WINDOW_HEIGTH) - LOBBY_LIST_VISIBLE_BOTTOM},
-            Color {60, 60, 100, 255});
+        ::EndScissorMode();
+        gm.view<LobbyListFrame, Texture2D>().each(
+            [](Entity, LobbyListFrame &, Texture2D &frame) {
+                ::DrawTexture(frame, 0, 0, WHITE);
+            });
         if (!client->popupOpen)
             return;
         const Rectangle panel {

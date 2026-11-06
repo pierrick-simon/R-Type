@@ -290,7 +290,6 @@ namespace RType::Client {
 
     namespace {
 
-        /** @brief Closes every connection and destroys every page. */
         void clearScreens(GameManager &gm)
         {
             std::vector<Entity> toDestroy;
@@ -348,7 +347,6 @@ namespace RType::Client {
                 }
                 if (!state.received)
                     return;
-                // The host left the game over screen for the lobby.
                 if (lobby.inGame && !state.started) {
                     lobby.inGame = false;
                     lobby.startRequested = false;

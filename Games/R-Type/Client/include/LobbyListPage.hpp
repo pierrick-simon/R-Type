@@ -37,6 +37,8 @@ namespace RType::Client {
 
     struct LobbyListItem {};
 
+    struct LobbyListFrame {};
+
     struct CreateLobbyButton {};
 
     struct JoinLobbyButton {};
@@ -47,7 +49,6 @@ namespace RType::Client {
 
     struct LobbyListClient {
         bool shown = false;
-        /** @brief The player clicked "Start Game": show the list. */
         bool wanted = false;
         bool createRequested = false;
         std::string createName;
@@ -61,7 +62,6 @@ namespace RType::Client {
 
     void connectToMaster(GameManager &gm, const std::string &host, int port);
 
-    /** @brief "Start Game" of the main menu: shows the lobby list. */
     void openLobbyList(GameManager &gm);
     void createLobbyListPage(GameManager &gm);
     void destroyLobbyListPage(GameManager &gm);

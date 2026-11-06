@@ -5,6 +5,7 @@
 ** MenuSystems
 */
 
+#include <optional>
 #include <vector>
 
 #include "Assets.hpp"
@@ -242,33 +243,43 @@ namespace RType::Client {
 
     void systemMenuBackground(GameManager &gm)
     {
-        bool hidden = false;
+        bool inGame = false;
+        bool lobbyPage = false;
         std::vector<Entity> backgrounds;
+        std::optional<AssetId> wanted = Asset::MENU_BACKGROUND;
 
-        gm.view<LobbyClient>().each([&hidden](Entity, LobbyClient &l) {
-            hidden = hidden || l.inGame || l.shown;
+        gm.view<LobbyClient>().each([&](Entity, LobbyClient &l) {
+            inGame = inGame || l.inGame;
+            lobbyPage = lobbyPage || l.shown;
         });
-        gm.view<LobbyListClient>().each([&hidden](Entity, LobbyListClient &l) {
-            hidden = hidden || l.shown;
-        });
-        if (!gm.view<ConnectingText>().getVector().empty())
-            hidden = true;
+        gm.view<LobbyListClient>().each(
+            [&lobbyPage](Entity, LobbyListClient &l) {
+                lobbyPage = lobbyPage || l.shown;
+            });
+        if (inGame)
+            wanted = std::nullopt;
+        else if (lobbyPage)
+            wanted = Asset::MENU_BACK_SIDE;
+        else if (!gm.view<ConnectingText>().getVector().empty())
+            wanted = Asset::MENU_BACK;
+        bool upToDate = false;
+
         gm.view<MenuBackground>().each(
-            [&backgrounds](
-                Entity e, MenuBackground &) { backgrounds.push_back(e); });
-        if (hidden) {
-            for (const Entity e : backgrounds)
-                gm.destroyEntity(e);
-            return;
-        }
-        if (!backgrounds.empty())
+            [&](Entity e, MenuBackground &background) {
+                if (wanted && background.asset == *wanted && !upToDate)
+                    upToDate = true;
+                else
+                    backgrounds.push_back(e);
+            });
+        for (const Entity e : backgrounds)
+            gm.destroyEntity(e);
+        if (!wanted || upToDate)
             return;
         const Entity e = gm.createEntity();
 
-        gm.addComponent<MenuBackground>(e);
+        gm.addComponent<MenuBackground>(e, MenuBackground {*wanted});
         gm.addComponent<Sprite2D>(e, 1.f);
-        gm.addComponent<Texture2D>(
-            e, gm.getAssetsMap().at(Asset::MENU_BACKGROUND));
+        gm.addComponent<Texture2D>(e, gm.getAssetsMap().at(*wanted));
         gm.addComponent<Position2D>(e, 0.f, 0.f);
     }
 

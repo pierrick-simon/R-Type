@@ -13,6 +13,7 @@
 #include <raylib-cpp.hpp>
 #include <string>
 
+#include "Assets.hpp"
 #include "Font.hpp"
 #include "GameManager.hpp"
 #include "Text2D.hpp"
@@ -44,7 +45,11 @@ namespace RType::Client {
 
     constexpr float SERVER_LABEL_SIZE = 32.f;
 
-    struct MenuBackground {};
+    /** @brief Full-screen background of the current page (see
+     *         systemMenuBackground for which page uses which sprite). */
+    struct MenuBackground {
+        AssetId asset;
+    };
 
     struct TextAnchor {
         float x = 0.5f;
