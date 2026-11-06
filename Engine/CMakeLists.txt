@@ -5,254 +5,58 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-include(FetchContent)
-find_package(Threads REQUIRED)
+set(CMAKE_FIND_PACKAGE_TARGETS_GLOBAL ON)
+list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+include(GNUInstallDirs)
 
-FetchContent_Declare(asio
-    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-    GIT_TAG        asio-1-34-2
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
+# ---- Options (engine-system is always built) ----
+option(RTYPE_FETCH_MISSING_DEPS "Download dependencies that are not found on the system" ON)
+option(RTYPE_BUILD_GRAPHICAL2D  "Build engine-graphical2D" ON)
+option(RTYPE_BUILD_GRAPHICAL3D  "Build engine-graphical3D (requires GRAPHICAL2D)" ON)
+option(RTYPE_BUILD_NETWORK      "Build engine-network" ON)
+option(RTYPE_BUILD_AUDIO        "Build engine-audio" ON)
+option(RTYPE_BUILD_GAME         "Build the game binary (requires GRAPHICAL2D, GRAPHICAL3D, AUDIO)" ON)
 
-FetchContent_Declare(plf-colony
-    GIT_REPOSITORY https://github.com/mattreecebentley/plf_colony.git
-    GIT_TAG        899f576280cd038cabb15935edd7304866e93501
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(raylib-cpp
-    GIT_REPOSITORY https://github.com/RobLoach/raylib-cpp.git
-    GIT_TAG        v5.5.0
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG        5.5
-    GIT_SHALLOW    TRUE
-)
-
-FetchContent_Declare(miniaudio
-    GIT_REPOSITORY https://github.com/mackron/miniaudio.git
-    GIT_TAG        0.11.22
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(sol2
-    GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-    GIT_TAG        v3.5.0
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(lua
-    GIT_REPOSITORY https://github.com/walterschell/Lua.git
-    GIT_TAG        v5.4.7
-    GIT_SHALLOW    TRUE
-)
-
-FetchContent_MakeAvailable(asio plf-colony raylib-cpp miniaudio sol2)
-
-set(LUA_ENABLE_SHARED OFF CACHE BOOL "" FORCE)
-set(LUA_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-set(LUA_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(lua)
-
-set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(raylib)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-
-# --- Asio ---
-add_library(asio INTERFACE)
-add_library(asio::asio ALIAS asio)
-target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
-target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
-target_link_libraries(asio INTERFACE Threads::Threads)
-if (WIN32)
-    target_compile_definitions(asio INTERFACE _WIN32_WINNT=0x0A00)
-    target_link_libraries(asio INTERFACE ws2_32 mswsock)
+# ---- Resolve inter-module dependencies (order matters: Game first, then 3D) ----
+if (RTYPE_BUILD_GAME)
+    foreach (dep GRAPHICAL2D GRAPHICAL3D AUDIO)
+        if (NOT RTYPE_BUILD_${dep})
+            message(STATUS "RTYPE_BUILD_GAME needs RTYPE_BUILD_${dep}: enabling it")
+            set(RTYPE_BUILD_${dep} ON)
+        endif ()
+    endforeach ()
 endif ()
 
-# --- plf_colony ---
-add_library(plf-colony INTERFACE)
-target_include_directories(plf-colony SYSTEM INTERFACE ${plf-colony_SOURCE_DIR})
-
-# --- raylib-cpp (header-only wrapper, needs raylib) ---
-add_library(raylib-cpp INTERFACE)
-add_library(raylib-cpp::raylib-cpp ALIAS raylib-cpp)
-target_include_directories(raylib-cpp SYSTEM INTERFACE ${raylib-cpp_SOURCE_DIR}/include)
-target_link_libraries(raylib-cpp INTERFACE raylib)
-
-# --- miniaudio (single header) ---
-add_library(miniaudio INTERFACE)
-add_library(miniaudio::miniaudio ALIAS miniaudio)
-target_include_directories(miniaudio SYSTEM INTERFACE ${miniaudio_SOURCE_DIR})
-target_link_libraries(miniaudio INTERFACE Threads::Threads ${CMAKE_DL_LIBS})
-if (UNIX)
-    target_link_libraries(miniaudio INTERFACE m)
+if (RTYPE_BUILD_GRAPHICAL3D AND NOT RTYPE_BUILD_GRAPHICAL2D)
+    message(STATUS "RTYPE_BUILD_GRAPHICAL3D needs RTYPE_BUILD_GRAPHICAL2D: enabling it")
+    set(RTYPE_BUILD_GRAPHICAL2D ON)
 endif ()
 
-# --- sol2 (header-only Lua binding) ---
-add_library(sol2 INTERFACE)
-add_library(sol2::sol2 ALIAS sol2)
-target_include_directories(sol2 SYSTEM INTERFACE ${sol2_SOURCE_DIR}/include)
-target_link_libraries(sol2 INTERFACE lua_static)
-
-# Create System engine lib
-
-set(SYSTEM_LIB_NAME engine-system)
-set(SYSTEM System)
-
-set(SRCS_SYSTEM
-    ${SYSTEM}/src/GameManager.cpp
-    ${SYSTEM}/src/Entity.cpp
-    ${SYSTEM}/src/ComponentManager.cpp
-    ${SYSTEM}/src/SystemManager.cpp
-    ${SYSTEM}/src/BuiltIn/Clock.cpp
-    ${SYSTEM}/src/BuiltIn/Velocity2D.cpp
-    ${SYSTEM}/src/BuiltIn/Friction2D.cpp
-    ${SYSTEM}/src/BuiltIn/GravityField2D.cpp
-)
-
-set(INCLUDE_SYSTEM
-    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/Components
-    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/System
-    ${CMAKE_CURRENT_SOURCE_DIR}/${SYSTEM}/include/BuiltIn
-)
-
-add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM})
-target_include_directories(${SYSTEM_LIB_NAME} PUBLIC ${INCLUDE_SYSTEM})
-target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC plf-colony)
-
-# Create Graphical2D engine lib
-
-set(GRAPHICAL2D_LIB_NAME engine-graphical2D)
-set(GRAPHICAL2D Graphical2D)
-
-set(SRCS_GRAPHICAL2D
-    ${GRAPHICAL2D}/src/Window.cpp
-    ${GRAPHICAL2D}/src/Text2D.cpp
-    ${GRAPHICAL2D}/src/Sprite2D.cpp
-    ${GRAPHICAL2D}/src/SpriteSheet2D.cpp
-    ${GRAPHICAL2D}/src/Font.cpp
-    ${GRAPHICAL2D}/src/Texture2D.cpp
-    ${GRAPHICAL2D}/src/KeyboardManager.cpp
-    ${GRAPHICAL2D}/src/MouseManager.cpp
-    ${GRAPHICAL2D}/src/Keybind.cpp
-)
-
-add_library(${GRAPHICAL2D_LIB_NAME} SHARED ${SRCS_GRAPHICAL2D})
-target_include_directories(${GRAPHICAL2D_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL2D}/include
-)
-target_link_libraries(${GRAPHICAL2D_LIB_NAME} PUBLIC engine-system raylib-cpp::raylib-cpp)
-
-if (MSVC)
-    target_compile_options(${GRAPHICAL2D_LIB_NAME} PRIVATE /wd4251)
+# ---- Windows: put every DLL next to the executables ----
+if (WIN32 AND PROJECT_IS_TOP_LEVEL)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 endif ()
 
-# Create Graphical3D engine lib
+# ---- Modules ----
+add_subdirectory(System)
 
-set(GRAPHICAL3D_LIB_NAME engine-graphical3D)
-set(GRAPHICAL3D Graphical3D)
-
-set(SRCS_GRAPHICAL3D
-    ${GRAPHICAL3D}/src/Camera3D.cpp
-    ${GRAPHICAL3D}/src/Model3D.cpp
-    ${GRAPHICAL3D}/src/Sprite3D.cpp
-    ${GRAPHICAL3D}/src/ModelAnimation3D.cpp
-    ${GRAPHICAL3D}/src/SpriteSheet3D.cpp
-    ${GRAPHICAL3D}/src/Draw3D.cpp
-)
-
-add_library(${GRAPHICAL3D_LIB_NAME} SHARED ${SRCS_GRAPHICAL3D})
-target_include_directories(${GRAPHICAL3D_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/${GRAPHICAL3D}/include
-)
-target_link_libraries(${GRAPHICAL3D_LIB_NAME} PUBLIC engine-system engine-graphical2D raylib-cpp::raylib-cpp)
-
-if (MSVC)
-    target_compile_options(${GRAPHICAL3D_LIB_NAME} PRIVATE /wd4251)
+if (RTYPE_BUILD_GRAPHICAL2D)
+    add_subdirectory(Graphical2D)
+endif ()
+if (RTYPE_BUILD_GRAPHICAL3D)
+    add_subdirectory(Graphical3D)
+endif ()
+if (RTYPE_BUILD_NETWORK)
+    add_subdirectory(Network)
+endif ()
+if (RTYPE_BUILD_AUDIO)
+    add_subdirectory(Audio)
+endif ()
+if (RTYPE_BUILD_GAME)
+    add_subdirectory(Game)
 endif ()
 
-# Create Network engine lib
-
-set(NETWORK_LIB_NAME engine-network)
-set(NETWORK Network)
-
-set(SRCS_NETWORK
-    ${NETWORK}/src/ClientUDP.cpp
-    ${NETWORK}/src/ServerUDP.cpp
-    ${NETWORK}/src/Utils.cpp
-    ${NETWORK}/src/Lagometer.cpp
-)
-
-add_library(${NETWORK_LIB_NAME} SHARED ${SRCS_NETWORK})
-target_include_directories(${NETWORK_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/${NETWORK}/include/BuiltIn
-)
-target_link_libraries(${NETWORK_LIB_NAME} PUBLIC engine-system asio::asio)
-
-# Create Audio engine lib
-
-set(AUDIO_LIB_NAME engine-audio)
-set(AUDIO Audio)
-
-set(SRCS_AUDIO
-    ${AUDIO}/src/MiniaudioImpl.cpp
-    ${AUDIO}/src/Listener.cpp
-    ${AUDIO}/src/Sound.cpp
-    ${AUDIO}/src/Decoder.cpp
-)
-
-set_source_files_properties(${AUDIO}/src/MiniaudioImpl.cpp PROPERTIES
-    COMPILE_OPTIONS "$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-fvisibility=hidden;-w>"
-)
-
-add_library(${AUDIO_LIB_NAME} SHARED ${SRCS_AUDIO})
-target_include_directories(${AUDIO_LIB_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/${AUDIO}/include
-)
-target_link_libraries(${AUDIO_LIB_NAME} PUBLIC engine-system miniaudio::miniaudio)
-
-# Create Game engine binary
-
-set(GAME_BIN_NAME game)
-set(GAME Game)
-
-set(SRCS_GAME
-    ${GAME}/src/Main.cpp
-    ${GAME}/src/Runner.cpp
-    ${GAME}/src/ConfigBuilder.cpp
-    ${GAME}/src/Modules.cpp
-    ${GAME}/src/Scripts.cpp
-    ${GAME}/src/GameManagerBinding.cpp
-    ${GAME}/src/ComponentBinding.cpp
-    ${GAME}/src/SystemBinding.cpp
-    ${GAME}/src/ViewBinding.cpp
-    ${GAME}/src/InputBinding.cpp
-    ${GAME}/src/TimeBinding.cpp
-    ${GAME}/src/WindowBinding.cpp
-    ${GAME}/src/EngineBindings.cpp
-)
-
-add_executable(${GAME_BIN_NAME} ${SRCS_GAME} ${SRCS_SHARED})
-target_include_directories(${GAME_BIN_NAME} PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/${GAME}/include
-)
-target_link_libraries(${GAME_BIN_NAME} PRIVATE engine-system engine-graphical2D engine-graphical3D engine-audio sol2::sol2)
-
-install(TARGETS ${SYSTEM_LIB_NAME} ${GRAPHICAL2D_LIB_NAME} ${GRAPHICAL3D_LIB_NAME} ${NETWORK_LIB_NAME} ${AUDIO_LIB_NAME} ${GAME_BIN_NAME}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+message(STATUS "r-type_engine: system=ON 2D=${RTYPE_BUILD_GRAPHICAL2D} 3D=${RTYPE_BUILD_GRAPHICAL3D} network=${RTYPE_BUILD_NETWORK} audio=${RTYPE_BUILD_AUDIO} game=${RTYPE_BUILD_GAME}")
