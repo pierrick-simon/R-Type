@@ -10,7 +10,9 @@
 
 #include <raylib-cpp.hpp>
 #include <string>
+#include <string_view>
 #include <vector>
+#include "GameManager.hpp"
 
 namespace RType {
     /**
@@ -18,6 +20,8 @@ namespace RType {
      */
     class ModelAnimation3D {
     public:
+        static constexpr std::string_view TYPE = "modelAnimation3D";
+
         /**
          * @brief Loads the animations from a file.
          * @param path Path to the file containing the animations.
@@ -59,6 +63,8 @@ namespace RType {
         {
             return _animations[index % _animations.size()];
         }
+
+        static void unload([[maybe_unused]] GameManager &gm) {};
 
     private:
         std::vector<raylib::ModelAnimation> _animations;
