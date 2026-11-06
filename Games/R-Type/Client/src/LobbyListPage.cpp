@@ -434,28 +434,29 @@ namespace RType::Client {
             switchToLobby(gm, target->first, target->second);
     }
 
-    void systemDrawLobbyList(GameManager &gm)
+    void systemDrawLobbyList(GameManager &gm, Assets &assets)
     {
         const LobbyListState *state = nullptr;
         const LobbyListClient *client = nullptr;
-        const Font *font = nullptr;
+        auto assetFont = assets.get<Font>(Asset::FONT);
+        if (!assetFont)
+            return;
+        auto &font = assetFont.value().get();
 
         gm.view<LobbyListState, LobbyListClient>().each(
             [&](Entity, LobbyListState &s, LobbyListClient &l) {
                 state = &s;
                 client = &l;
             });
-        gm.view<LobbyListItem, Font>().each(
-            [&font](Entity, LobbyListItem &, Font &f) { font = &f; });
-        if (state == nullptr || font == nullptr)
+        if (state == nullptr)
             return;
         const float size = LOBBY_LIST_TEXT_SIZE;
         auto text =
             [&](const std::string &str, float tx, float ty, Color color) {
-                ::DrawTextEx(*font, str.c_str(), {tx, ty}, size, 1.f, color);
+                ::DrawTextEx(font, str.c_str(), {tx, ty}, size, 1.f, color);
             };
         auto width = [&](const std::string &str) {
-            return ::MeasureTextEx(*font, str.c_str(), size, 1.f).x;
+            return ::MeasureTextEx(font, str.c_str(), size, 1.f).x;
         };
 
         if (state->lobbies.empty()) {
@@ -494,7 +495,7 @@ namespace RType::Client {
                 ? size * LOBBY_LIST_NAME_MAX_WIDTH / nameWidth
                 : size;
 
-            ::DrawTextEx(*font,
+            ::DrawTextEx(font,
                 name.c_str(),
                 {rect.x + 30.f,
                     rect.y + (LOBBY_LIST_ROW_HEIGHT - nameSize) / 2.f},

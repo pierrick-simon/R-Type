@@ -96,6 +96,8 @@ namespace RType::Client {
         auto am = gm.createEntity();
         gm.addComponent<Assets>(am, gm, Asset::makeAssetList());
         gm.createSystem<Assets>(
+            systemTextAnchorManager<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(
             Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(SpriteSheet2D::
                 systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
@@ -107,16 +109,15 @@ namespace RType::Client {
     void createSystems(GameManager &gm)
     {
         gm.createSystem<>(systemConnecting);
-        gm.createSystem<>(systemLobby);
+        gm.createSystem<Assets>(systemLobby);
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
         gm.createSystem<>(systemTextFields);
-        gm.createSystem<>(systemButtonVisuals);
+        gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
-        gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
-        gm.createSystem<>(systemDrawLobbyList);
+        gm.createSystem<Assets>(systemDrawLobbyList);
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
                 Friction2D::systemFriction2D(f, v, c);

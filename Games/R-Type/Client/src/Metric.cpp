@@ -6,7 +6,6 @@
 */
 
 #include "Metric.hpp"
-#include "Font.hpp"
 #include "Text2D.hpp"
 
 namespace RType::Client {
