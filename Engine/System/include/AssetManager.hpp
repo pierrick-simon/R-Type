@@ -31,8 +31,8 @@ namespace RType {
      * constructed from @c path.
      */
     struct AssetEntry {
-        int id;                ///< Unique id used to retrieve the asset later.
-        std::string path;      ///< Path of the file to load.
+        int id; ///< Unique id used to retrieve the asset later.
+        std::string path; ///< Path of the file to load.
         std::string_view type; ///< Asset type tag (e.g. "texture", "sound").
     };
 

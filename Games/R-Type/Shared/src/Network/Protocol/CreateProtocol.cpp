@@ -47,7 +47,10 @@ namespace RType {
     {
         auto &gm = ctx.gm->get();
         auto s = gm.createEntity();
-        gm.addComponent<RType::Sprite2D>(s, e.assetId);
+        Sprite2D sprite;
+        sprite.color.a = 0;
+        sprite.assetId = e.assetId;
+        gm.addComponent<RType::Sprite2D>(s, sprite);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
         ctx.map.emplace(e.id, s);
@@ -58,7 +61,10 @@ namespace RType {
     {
         auto &gm = ctx.gm->get();
         auto s = gm.createEntity();
-        gm.addComponent<RType::SpriteSheet2D>(s, e.assetId);
+        RType::SpriteSheet2D sheet;
+        sheet.color.a = 0;
+        sheet.assetId = e.assetId;
+        gm.addComponent<RType::SpriteSheet2D>(s, sheet);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
         if (e.assetId >= Asset::PLAYER_SHEET_1 &&
@@ -97,7 +103,10 @@ namespace RType {
     {
         auto &gm = ctx.gm->get();
         auto s = gm.createEntity();
-        gm.addComponent<RType::Text2D>(s, e.assetId);
+        Text2D text;
+        text.color.a = 0;
+        text.assetId = e.assetId;
+        gm.addComponent<RType::Text2D>(s, text);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
         ctx.map.emplace(e.id, s);
