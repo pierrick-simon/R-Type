@@ -21,9 +21,9 @@ namespace RType {
         }
     }
 
-    void Decoder::DecoderDeleter::operator()(ma_decoder *e) const
+    void Decoder::DecoderDeleter::operator()(ma_decoder *d) const
     {
-        ma_decoder_uninit(e);
+        ma_decoder_uninit(d);
     }
 
     void Decoder::unload(GameManager &gm)

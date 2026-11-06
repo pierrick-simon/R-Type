@@ -76,7 +76,7 @@ namespace RType {
              *
              * @param s The decoder to uninitialise.
              */
-            void operator()(ma_decoder *s) const;
+            void operator()(ma_decoder *d) const;
         };
 
         std::unique_ptr<ma_decoder, DecoderDeleter> _decoder;

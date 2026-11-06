@@ -280,7 +280,7 @@ namespace RType::Game {
                 path = args->get<sol::optional<std::string>>("path");
             if (!path)
                 throw InvalidComponentArgs(name, "missing 'path'");
-            Component component = construct<Component>(gm, *path);
+            auto component = construct<Component>(gm, *path);
 
             setFields(component, name, *args, "path");
             return component;
