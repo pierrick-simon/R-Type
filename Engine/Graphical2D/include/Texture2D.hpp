@@ -9,6 +9,7 @@
 #define TEXTURE2D_HPP_
 
     #include <raylib-cpp.hpp>
+    #include <string_view>
     #include "GameManager.hpp"
 
 namespace RType {
@@ -19,6 +20,8 @@ namespace RType {
      * Used by Sprite2D and SpriteSheet2D systems.
      */
     struct Texture2D : raylib::Texture2D {
+        static constexpr std::string_view TYPE = "texture2D";
+
         /**
          * @brief Load a texture from an image file.
          *
@@ -33,6 +36,7 @@ namespace RType {
         Texture2D(const std::string &path);
 
         static void unloadTextures2D(GameManager &gm);
+        static void unload([[maybe_unused]] GameManager &gm) {};
     };
 
 } // namespace RType
