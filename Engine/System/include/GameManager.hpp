@@ -242,6 +242,7 @@ namespace RType {
          * @tparam Components The component types the system operates on.
          * Their order does not matter: the smallest array is iterated over.
          * @param func Callback applied to each matching entity.
+         * @param layer The Layer of the system 0 by default
          * @return Id identifying the created system, usable with
          * destroySystem.
          * @warning Must not be called during update(): the new system
@@ -249,9 +250,10 @@ namespace RType {
          */
         template<typename... Components>
         SystemId createSystem(
-            std::type_identity_t<std::function<void(Components &...)>> func)
+            std::type_identity_t<std::function<void(Components &...)>> func,
+            int layer = 0)
         {
-            SystemId id = _sm.createSystem<Components...>(func);
+            SystemId id = _sm.createSystem<Components...>(func, layer);
 
             if (_debug)
                 log("createSystem with ( ",
