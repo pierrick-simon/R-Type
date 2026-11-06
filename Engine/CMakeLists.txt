@@ -5,105 +5,56 @@ if (NOT CMAKE_CXX_STANDARD)
     set(CMAKE_CXX_STANDARD 20)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
-
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+option(RTYPE_FETCH_MISSING_DEPS "Download dependencies that are not found on the system" ON)
 
 include(FetchContent)
 find_package(Threads REQUIRED)
 
-FetchContent_Declare(asio
-    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-    GIT_TAG        asio-1-34-2
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(plf-colony
-    GIT_REPOSITORY https://github.com/mattreecebentley/plf_colony.git
-    GIT_TAG        899f576280cd038cabb15935edd7304866e93501
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(raylib-cpp
-    GIT_REPOSITORY https://github.com/RobLoach/raylib-cpp.git
-    GIT_TAG        v5.5.0
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG        5.5
-    GIT_SHALLOW    TRUE
-)
-
-FetchContent_Declare(miniaudio
-    GIT_REPOSITORY https://github.com/mackron/miniaudio.git
-    GIT_TAG        0.11.22
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(sol2
-    GIT_REPOSITORY https://github.com/ThePhD/sol2.git
-    GIT_TAG        v3.5.0
-    GIT_SHALLOW    TRUE
-    SOURCE_SUBDIR  _no_cmake
-)
-
-FetchContent_Declare(lua
-    GIT_REPOSITORY https://github.com/walterschell/Lua.git
-    GIT_TAG        v5.4.7
-    GIT_SHALLOW    TRUE
-)
-
-FetchContent_MakeAvailable(asio plf-colony raylib-cpp miniaudio sol2)
-
-set(LUA_ENABLE_SHARED OFF CACHE BOOL "" FORCE)
-set(LUA_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
-set(LUA_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(lua)
-
-set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(raylib)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-
-# --- Asio ---
-add_library(asio INTERFACE)
-add_library(asio::asio ALIAS asio)
-target_include_directories(asio SYSTEM INTERFACE ${asio_SOURCE_DIR}/asio/include)
-target_compile_definitions(asio INTERFACE ASIO_STANDALONE ASIO_NO_DEPRECATED)
-target_link_libraries(asio INTERFACE Threads::Threads)
-if (WIN32)
-    target_compile_definitions(asio INTERFACE _WIN32_WINNT=0x0A00)
-    target_link_libraries(asio INTERFACE ws2_32 mswsock)
+# ---- Lua: system first, else fetch ----
+find_package(Lua 5.4 QUIET)
+if (Lua_FOUND OR LUA_FOUND)
+    set(RTYPE_LUA_TARGET Lua::Lua)
+elseif (RTYPE_FETCH_MISSING_DEPS)
+    FetchContent_Declare(lua
+        GIT_REPOSITORY https://github.com/walterschell/Lua.git
+        GIT_TAG        v5.4.7
+        GIT_SHALLOW    TRUE
+    )
+    set(LUA_ENABLE_SHARED  OFF CACHE BOOL "" FORCE)
+    set(LUA_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+    set(LUA_BUILD_COMPILER OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(lua)
+    set(RTYPE_LUA_TARGET lua_static)
+else ()
+    message(FATAL_ERROR "Lua not found and RTYPE_FETCH_MISSING_DEPS=OFF")
 endif ()
 
-# --- plf_colony ---
-add_library(plf-colony INTERFACE)
-target_include_directories(plf-colony SYSTEM INTERFACE ${plf-colony_SOURCE_DIR})
-
-# --- raylib-cpp (header-only wrapper, needs raylib) ---
-add_library(raylib-cpp INTERFACE)
-add_library(raylib-cpp::raylib-cpp ALIAS raylib-cpp)
-target_include_directories(raylib-cpp SYSTEM INTERFACE ${raylib-cpp_SOURCE_DIR}/include)
-target_link_libraries(raylib-cpp INTERFACE raylib)
-
-# --- miniaudio (single header) ---
-add_library(miniaudio INTERFACE)
-add_library(miniaudio::miniaudio ALIAS miniaudio)
-target_include_directories(miniaudio SYSTEM INTERFACE ${miniaudio_SOURCE_DIR})
-target_link_libraries(miniaudio INTERFACE Threads::Threads ${CMAKE_DL_LIBS})
-if (UNIX)
-    target_link_libraries(miniaudio INTERFACE m)
+# ---- raylib: system first, else fetch ----
+find_package(raylib 5.5 QUIET CONFIG)
+if (NOT raylib_FOUND AND RTYPE_FETCH_MISSING_DEPS)
+    FetchContent_Declare(raylib
+        GIT_REPOSITORY https://github.com/raysan5/raylib.git
+        GIT_TAG        5.5
+        GIT_SHALLOW    TRUE
+    )
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(raylib)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+elseif (NOT raylib_FOUND)
+    message(FATAL_ERROR "raylib not found")
 endif ()
 
-# --- sol2 (header-only Lua binding) ---
-add_library(sol2 INTERFACE)
-add_library(sol2::sol2 ALIAS sol2)
-target_include_directories(sol2 SYSTEM INTERFACE ${sol2_SOURCE_DIR}/include)
-target_link_libraries(sol2 INTERFACE lua_static)
+# ---- Header-only deps via Find modules ----
+find_package(Asio REQUIRED)
+find_package(PlfColony REQUIRED)
+find_package(RaylibCpp REQUIRED)
+find_package(Miniaudio REQUIRED)
+find_package(Sol2 REQUIRED)
 
 # Create System engine lib
 
@@ -130,7 +81,7 @@ set(INCLUDE_SYSTEM
 
 add_library(${SYSTEM_LIB_NAME} SHARED ${SRCS_SYSTEM})
 target_include_directories(${SYSTEM_LIB_NAME} PUBLIC ${INCLUDE_SYSTEM})
-target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC plf-colony)
+target_link_libraries(${SYSTEM_LIB_NAME} PUBLIC plf::colony)
 
 # Create Graphical2D engine lib
 
