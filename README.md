@@ -25,6 +25,7 @@ server and client, and a proof-of-concept program (`Poc`) that tests the ECS.
 - [Architecture](#architecture)
 - [Requirements](#requirements)
 - [Build](#build)
+- [Install](#install)
 - [Usage](#usage)
 - [Tests](#tests)
 - [Documentation](#documentation)
@@ -127,6 +128,33 @@ folder afterwards.
 > [!WARNING]
 > Don't use `cmake .` at the root: it configures in-source and pollutes
 > the repo (`CMakeCache.txt`, `CMakeFiles/`, `Makefile`, ...).
+
+---
+
+## Install
+
+Once the project is built, it can be installed system-wide, so the `game`
+executable can be launched from anywhere without staying in the repo:
+
+```sh
+# linux
+sudo cmake --install build
+
+# windows (from an administrator terminal)
+cmake --install build --config Release
+```
+
+This copies the `game` executable into `bin/` and the engine's libraries
+(`engine-system`, `engine-graphical2D`, `engine-graphical3D`, `engine-network`,
+`engine-audio`) into `lib/`, under the install prefix: `/usr/local` on Linux,
+`C:\Program Files\R-Type` on Windows.
+
+To install somewhere else, for example in your home folder without `sudo`,
+pass a prefix:
+
+```sh
+cmake --install build --prefix ~/.local
+```
 
 ---
 
