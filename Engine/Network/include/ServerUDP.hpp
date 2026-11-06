@@ -8,6 +8,8 @@
 #ifndef SERVERUDP_HPP_
     #define SERVERUDP_HPP_
 
+    #include <memory>
+
     #include "Exceptions.hpp"
     #include "Network.hpp"
 
@@ -17,8 +19,6 @@ namespace RType {
         uint32_t seq = 0;
         uint16_t id = 0;
         asio::ip::udp::endpoint endpoint;
-        std::vector<uint8_t> sendBuffer;
-        std::vector<std::string> msgSentHistory;
         std::pair<Header, std::vector<uint8_t>> lastMsgReceived;
         std::chrono::steady_clock::time_point lastSeen =
             std::chrono::steady_clock::now();
