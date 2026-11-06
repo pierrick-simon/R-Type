@@ -15,6 +15,7 @@
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Login.hpp"
+#include "Settings.hpp"
 #include "Menu.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Texture2D.hpp"
@@ -306,6 +307,7 @@ namespace RType::Client {
             collect<MenuItem>(gm, toDestroy);
             collect<LoginPopupItem>(gm, toDestroy);
             collect<ServerItem>(gm, toDestroy);
+            collect<SettingsItem>(gm, toDestroy);
             for (const Entity e : toDestroy)
                 gm.destroyEntity(e);
             activeField = Field::None;

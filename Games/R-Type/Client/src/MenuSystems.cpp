@@ -20,6 +20,7 @@
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
+#include "Settings.hpp"
 
 namespace RType::Client {
 
@@ -260,7 +261,8 @@ namespace RType::Client {
             wanted = std::nullopt;
         else if (lobbyPage)
             wanted = Asset::MENU_BACK_SIDE;
-        else if (!gm.view<ConnectingText>().getVector().empty())
+        else if (!gm.view<ConnectingText>().getVector().empty() ||
+            !gm.view<SettingsItem>().getVector().empty())
             wanted = Asset::MENU_BACK;
         bool upToDate = false;
 

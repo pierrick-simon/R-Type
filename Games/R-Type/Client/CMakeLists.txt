@@ -19,6 +19,7 @@ set(SRCS
     src/Lobby.cpp
     src/LobbyListPage.cpp
     src/Login.cpp
+    src/Settings.cpp
     src/GameOver.cpp
 )
 

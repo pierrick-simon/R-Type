@@ -18,10 +18,10 @@
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
+#include "Settings.hpp"
 
 namespace RType::Client {
 
-    constexpr float WINDOW_MODE_TITLE_SPACE = 20.f;
     constexpr float MENU_FIRST_Y = 360.f;
     constexpr float MENU_BUTTON_GAP = 25.f;
 
@@ -162,22 +162,6 @@ namespace RType::Client {
             [](GameManager &) { quitRequested = true; });
     }
 
-    struct FullscreenButton {};
-
-    std::string windowModeLabel()
-    {
-        return ::IsWindowFullscreen() ? "Fullscreen" : "Windowed";
-    }
-
-    void changeFullScreen(GameManager &gm)
-    {
-        ::ToggleFullscreen();
-        gm.view<FullscreenButton, Button>().each(
-            [](Entity, FullscreenButton &, Button &button) {
-                button.label = windowModeLabel();
-            });
-    }
-
     void createMenu(GameManager &gm)
     {
         const float step = BUTTON_HEIGHT + MENU_BUTTON_GAP;
@@ -188,22 +172,17 @@ namespace RType::Client {
             gm, firstX, MENU_FIRST_Y + step, "Login", openLoginPopup);
         const Entity disconnect = addMenuButton(
             gm, firstX, MENU_FIRST_Y + step * 2.f, "Disconnect", logout);
-        const float modeY = MENU_FIRST_Y + step * 3.f + WINDOW_MODE_TITLE_SPACE;
-        const Entity modeButton = addMenuButton(
-            gm, firstX, modeY, windowModeLabel(), changeFullScreen);
-        const Entity modeText = addText(gm,
-            firstX + BUTTON_WIDTH / 2.f,
-            modeY - BUTTON_GAP / 2.f,
-            "Window Mode",
-            25.f);
 
         gm.addComponent<StartGameButton>(start);
         gm.addComponent<LoginButton>(login);
         gm.addComponent<DisconnectButton>(disconnect);
-        gm.addComponent<FullscreenButton>(modeButton);
-        gm.addComponent<MenuItem>(modeText);
         addMenuButton(
-            gm, firstX, modeY + step, "Change Server", returnToServerPage);
+            gm, firstX, MENU_FIRST_Y + step * 3.f, "Settings", openSettings);
+        addMenuButton(gm,
+            firstX,
+            MENU_FIRST_Y + step * 4.f,
+            "Change Server",
+            returnToServerPage);
     }
 
     void connectToServer(
