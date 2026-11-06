@@ -73,7 +73,10 @@ namespace RType::Server {
     inline constexpr float SCORE_PLAYERS_X = 400.f;
     // The game font is monospaced: a character is as wide as the font size.
     inline constexpr float GAME_OVER_SCORE_SIZE = 64.f;
-    inline constexpr float GAME_OVER_SCORE_Y = 470.f;
+    inline constexpr float GAME_OVER_SCORE_Y = 450.f;
+    inline constexpr float GAME_OVER_PLAYER_SIZE = 36.f;
+    inline constexpr float GAME_OVER_PLAYERS_Y = 540.f;
+    inline constexpr float GAME_OVER_PLAYER_SPACING = 46.f;
     inline constexpr float SCORE_SPACING = 300.f;
     // Main color of each player sheet.
     inline constexpr std::array<std::array<unsigned char, 3>, PLAYER_COLORS>

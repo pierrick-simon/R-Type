@@ -7,7 +7,9 @@
 
 #include "GameOver.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <string>
 #include <vector>
 
 #include "Assets.hpp"
@@ -24,7 +26,7 @@ namespace RType::Client {
 
     namespace {
 
-        const raylib::Color COLOR_WAITING(200, 205, 225, 255);
+        const raylib::Color COLOR_INFO(200, 205, 225, 255);
         const raylib::Color COLOR_TITLE(255, 95, 95, 255);
 
         void choose(GameManager &gm, const GameOverChoice choice)
@@ -47,21 +49,30 @@ namespace RType::Client {
 
         void addGameOverButton(GameManager &gm, float x,
             const std::string &label,
-            std::function<void(GameManager &)> onClick)
+            std::function<void(GameManager &)> onClick, GameOverChoice choice)
         {
             const Entity e = addButton(
                 gm, x, GAME_OVER_BUTTONS_Y, label, std::move(onClick));
 
             gm.addComponent<GameOverItem>(e);
-            gm.addComponent<GameOverButton>(e);
+            gm.addComponent<GameOverButton>(e, GameOverButton {choice});
         }
 
-        /** @brief Sends the host's choice until the server acts on it. */
-        void sendChoice(ClientManager &c, LobbyClient &lobby)
+        bool hasVoted(const LobbyState &state, const uint16_t myId)
+        {
+            return std::ranges::any_of(
+                state.players, [myId](const LobbyPlayerInfo &p) {
+                    return p.id == myId && p.replay;
+                });
+        }
+
+        /** @brief Sends the choice until the server takes it into account. */
+        void sendChoice(ClientManager &c, LobbyClient &lobby, bool voted)
         {
             const auto now = std::chrono::steady_clock::now();
 
             if (lobby.choice == GameOverChoice::None ||
+                (lobby.choice == GameOverChoice::Restart && voted) ||
                 now - lobby.lastChoice < LOBBY_RESEND_RATE)
                 return;
             lobby.lastChoice = now;
@@ -71,15 +82,20 @@ namespace RType::Client {
                 LobbyProtocol::sendReturn(c);
         }
 
-        void updateGameOver(GameManager &gm, const bool isHost)
+        void updateGameOver(GameManager &gm, const LobbyState &state,
+            const bool isHost, const bool voted)
         {
+            const std::string votes = std::to_string(state.replayVotes()) +
+                " / " + std::to_string(state.players.size());
+
             gm.view<GameOverButton, Button>().each(
-                [isHost](Entity, GameOverButton &, Button &button) {
-                    button.disabled = !isHost;
+                [&](Entity, GameOverButton &tag, Button &button) {
+                    button.disabled =
+                        tag.choice == GameOverChoice::Restart ? voted : !isHost;
                 });
             gm.view<GameOverStatus, Text2D>().each(
-                [isHost](Entity, GameOverStatus &, Text2D &text) {
-                    text.str = isHost ? "" : "Waiting for the host...";
+                [&](Entity, GameOverStatus &, Text2D &text) {
+                    text.str = "Play again  " + votes;
                 });
         }
 
@@ -109,13 +125,17 @@ namespace RType::Client {
             "",
             GAME_OVER_STATUS_SIZE,
             {},
-            COLOR_WAITING);
+            COLOR_INFO);
 
         gm.addComponent<GameOverItem>(status);
         gm.addComponent<GameOverStatus>(status);
-        addGameOverButton(gm, x, "Play Again", requestRestart);
         addGameOverButton(
-            gm, x + BUTTON_WIDTH + BUTTON_GAP, "Back to Lobby", requestReturn);
+            gm, x, "Play Again", requestRestart, GameOverChoice::Restart);
+        addGameOverButton(gm,
+            x + BUTTON_WIDTH + BUTTON_GAP,
+            "Back to Lobby",
+            requestReturn,
+            GameOverChoice::Return);
     }
 
     void destroyGameOver(GameManager &gm)
@@ -133,6 +153,8 @@ namespace RType::Client {
         bool show = false;
         bool hide = false;
         bool isHost = false;
+        bool voted = false;
+        LobbyState current;
 
         gm.view<ClientManager, LobbyState, LobbyClient>().each(
             [&](Entity,
@@ -145,18 +167,19 @@ namespace RType::Client {
                     lobby.gameOverShown = false;
                     return;
                 }
+                current = state;
                 isHost = state.hostId == c.getMyId();
+                voted = hasVoted(state, c.getMyId());
                 show = !lobby.gameOverShown;
                 lobby.gameOverShown = true;
-                if (isHost)
-                    sendChoice(c, lobby);
+                sendChoice(c, lobby, voted);
             });
         if (show)
             createGameOver(gm);
         if (hide)
             destroyGameOver(gm);
         if (!hide)
-            updateGameOver(gm, isHost);
+            updateGameOver(gm, current, isHost, voted);
     }
 
 } // namespace RType::Client

@@ -140,7 +140,7 @@ namespace RType {
 
             out.resize(at + 4 + name.size());
             put16(&out[at], p.id);
-            out[at + 2] = p.ready ? 1 : 0;
+            out[at + 2] = (p.ready ? 1 : 0) | (p.replay ? 2 : 0);
             out[at + 3] = static_cast<uint8_t>(name.size());
             std::copy(name.begin(), name.end(), out.begin() + long(at + 4));
         }
@@ -174,7 +174,8 @@ namespace RType {
             const std::size_t len = payload[at + 3];
 
             p.id = get16(&payload[at]);
-            p.ready = payload[at + 2] != 0;
+            p.ready = (payload[at + 2] & 1) != 0;
+            p.replay = (payload[at + 2] & 2) != 0;
             if (payload.size() < at + 4 + len)
                 return std::nullopt;
             p.name.assign(payload.begin() + long(at + 4),

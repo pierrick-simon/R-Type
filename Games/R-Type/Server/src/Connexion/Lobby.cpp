@@ -63,6 +63,7 @@ namespace RType::Server {
                     const auto &member = gm.getComponent<LobbyMember>(entity);
                     info.name = member.name;
                     info.ready = member.ready;
+                    info.replay = member.replayVote;
                 }
                 if (info.name.empty())
                     info.name = "Player " + std::to_string(id);
@@ -118,18 +119,35 @@ namespace RType::Server {
                 member.returnRequested = false;
                 if (start && host && !gameStarted && state.allReady())
                     startGame(gm);
-                if (!host || !isGameOverScreen())
-                    continue;
-                if (restart) {
-                    std::cout << "[Lobby] The host restarts the game"
-                              << std::endl;
-                    restartGame(gm);
-                } else if (back) {
+                member.replayVote =
+                    isGameOverScreen() && (member.replayVote || restart);
+                if (host && back && isGameOverScreen()) {
                     std::cout << "[Lobby] The host goes back to the lobby"
                               << std::endl;
                     resetLevel(gm);
                 }
             }
+        }
+
+        /** @brief Restarts once every connected player asked to play again. */
+        void handleReplayVotes(GameManager &gm, ServerManager &server)
+        {
+            std::size_t votes = 0;
+
+            if (!isGameOverScreen() || server.getClients().empty())
+                return;
+            for (const auto &[id, entity] : server.getClients())
+                if (gm.hasComponent<LobbyMember>(entity) &&
+                    gm.getComponent<LobbyMember>(entity).replayVote)
+                    ++votes;
+            if (votes < server.getClients().size())
+                return;
+            std::cout << "[Lobby] Every player wants to play again"
+                      << std::endl;
+            restartGame(gm);
+            for (const auto &[id, entity] : server.getClients())
+                if (gm.hasComponent<LobbyMember>(entity))
+                    gm.getComponent<LobbyMember>(entity).replayVote = false;
         }
 
         void flushLobbyInputs(GameManager &gm)
@@ -197,6 +215,8 @@ namespace RType::Server {
         LobbyState state = buildState(gm, *server);
 
         handleRequests(gm, *server, state);
+        handleReplayVotes(gm, *server);
+        state = buildState(gm, *server);
         state.started = gameStarted;
         state.gameOver = isGameOverScreen();
         flushLobbyInputs(gm);

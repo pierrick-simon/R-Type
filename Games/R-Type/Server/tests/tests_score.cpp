@@ -11,9 +11,11 @@
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "GameState.hpp"
+#include "LobbyProtocol.hpp"
 #include "Player/Hud.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
+#include "UpdateText2D.hpp"
 #include "Weapons/Force.hpp"
 
 using namespace RType;
@@ -140,4 +142,62 @@ Test(score, team_score_is_big_on_the_game_over_screen)
         cr_assert_float_eq(text.fontSize, SCORE_FONT_SIZE, 0.01f);
         cr_assert_float_eq(pos.y, SCORE_Y, 0.01f);
     }
+}
+
+Test(score, game_over_lists_every_player_under_the_total)
+{
+    GameManager gm;
+    const Entity director = gm.createEntity();
+    const Entity third = addPlayer(gm, 2);
+    const Entity first = addPlayer(gm, 0);
+
+    gm.addComponent<EnemyDirector>(director);
+    spawnTeamScore(gm);
+    spawnPlayerScore(gm, third, gm.getComponent<Player>(third));
+    spawnPlayerScore(gm, first, gm.getComponent<Player>(first));
+    showGameOver(gm);
+    scoreHudSystem(gm);
+    for (auto [_, label, text, pos] :
+        gm.view<ScoreLabel, Text2D, Position2D>().getVector()) {
+        cr_assert_float_eq(pos.x + float(text.str.size()) * text.fontSize / 2.f,
+            WINDOW_WIDTH / 2.f,
+            0.01f);
+        if (!label.player)
+            cr_assert_float_eq(pos.y, GAME_OVER_SCORE_Y, 0.01f);
+        else
+            cr_assert_float_eq(pos.y,
+                GAME_OVER_PLAYERS_Y +
+                    (*label.player == first ? 0.f : GAME_OVER_PLAYER_SPACING),
+                0.01f);
+    }
+}
+
+Test(score, lobby_state_carries_the_replay_votes)
+{
+    LobbyState state;
+
+    state.started = true;
+    state.gameOver = true;
+    state.players = {{1, true, true, "a"}, {2, true, false, "b"}};
+    const auto parsed =
+        LobbyProtocol::parseState(LobbyProtocol::serializeState(state));
+
+    cr_assert(parsed.has_value());
+    cr_assert(parsed->gameOver);
+    cr_assert_eq(parsed->replayVotes(), 1);
+    cr_assert(parsed->players[0].ready);
+    cr_assert(parsed->players[1].ready);
+}
+
+Test(score, a_score_change_waits_for_the_next_send)
+{
+    UpdateText2D update;
+    Text2D text;
+
+    UpdateText2D::systemUpdateText2D(update, text);
+    update.setUpdateText(false);
+    text.str = "SCORE 000000";
+    UpdateText2D::systemUpdateText2D(update, text);
+    UpdateText2D::systemUpdateText2D(update, text);
+    cr_assert(update.getUpdateText());
 }

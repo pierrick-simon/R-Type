@@ -9,19 +9,21 @@
 #define CLIENT_GAMEOVER_HPP_
 
 #include "GameManager.hpp"
+#include "Lobby.hpp"
 
 namespace RType::Client {
 
-    inline constexpr float GAME_OVER_TITLE_Y = 390.f;
-    inline constexpr float GAME_OVER_STATUS_Y = 590.f;
+    inline constexpr float GAME_OVER_TITLE_Y = 380.f;
+    // The server lists the scores between the title and the status.
+    inline constexpr float GAME_OVER_STATUS_Y = 810.f;
     inline constexpr float GAME_OVER_STATUS_SIZE = 30.f;
-    inline constexpr float GAME_OVER_BUTTONS_Y = 640.f;
-
-    // The server draws the team score between the title and the status.
+    inline constexpr float GAME_OVER_BUTTONS_Y = 850.f;
 
     struct GameOverItem {};
 
-    struct GameOverButton {};
+    struct GameOverButton {
+        GameOverChoice choice;
+    };
 
     struct GameOverStatus {};
 

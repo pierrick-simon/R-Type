@@ -9,6 +9,8 @@
 
 #include <algorithm>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include "Assets.hpp"
 #include "Config.hpp"
@@ -114,26 +116,43 @@ namespace RType::Server {
             formatScore(playerLabel(state), 0));
     }
 
-    /** @brief Big and centered on the game over screen, in the corner
-     * otherwise. */
+    float centeredX(const Text2D &text)
+    {
+        return (WINDOW_WIDTH - float(text.str.size()) * text.fontSize) / 2.f;
+    }
+
+    /** @brief On the game over screen, the team score is big and centered,
+     * the players' are listed under it. Along the bottom otherwise. */
     void layoutTeamScore(Text2D &text, Position2D &pos)
     {
-        const bool gameOver = isGameOverScreen();
+        if (!isGameOverScreen()) {
+            text.fontSize = SCORE_FONT_SIZE;
+            text.color = raylib::Color::White();
+            pos = {HUD_MARGIN, SCORE_Y};
+            return;
+        }
+        text.fontSize = GAME_OVER_SCORE_SIZE;
+        text.color = raylib::Color(255, 215, 0, 255);
+        pos = {centeredX(text), GAME_OVER_SCORE_Y};
+    }
 
-        text.fontSize = gameOver ? GAME_OVER_SCORE_SIZE : SCORE_FONT_SIZE;
-        text.color =
-            gameOver ? raylib::Color(255, 215, 0, 255) : raylib::Color::White();
-        pos = gameOver
-            ? Position2D {(WINDOW_WIDTH -
-                              float(text.str.size()) * GAME_OVER_SCORE_SIZE) /
-                      2.f,
-                  GAME_OVER_SCORE_Y}
-            : Position2D {HUD_MARGIN, SCORE_Y};
+    void layoutPlayerScore(
+        Text2D &text, Position2D &pos, std::size_t slot, std::size_t rank)
+    {
+        if (!isGameOverScreen()) {
+            text.fontSize = SCORE_FONT_SIZE;
+            pos = {SCORE_PLAYERS_X + float(slot) * SCORE_SPACING, SCORE_Y};
+            return;
+        }
+        text.fontSize = GAME_OVER_PLAYER_SIZE;
+        pos = {centeredX(text),
+            GAME_OVER_PLAYERS_Y + float(rank) * GAME_OVER_PLAYER_SPACING};
     }
 
     void scoreHudSystem(GameManager &gm)
     {
         int team = 0;
+        std::vector<std::tuple<std::size_t, Text2D *, Position2D *>> players;
 
         for (auto [_, director] : gm.view<EnemyDirector>().getVector())
             team = director.score;
@@ -148,12 +167,20 @@ namespace RType::Server {
                 destroyNetworked(gm, label);
                 continue;
             }
+            const auto &player = gm.getComponent<Player>(*score.player);
             const int points = gm.hasComponent<Scorer>(*score.player)
                 ? gm.getComponent<Scorer>(*score.player).score
                 : 0;
 
-            text.str = formatScore(
-                playerLabel(gm.getComponent<Player>(*score.player)), points);
+            text.str = formatScore(playerLabel(player), points);
+            players.emplace_back(player.slot, &text, &pos);
+        }
+        std::ranges::sort(
+            players, {}, [](const auto &p) { return std::get<0>(p); });
+        for (std::size_t rank = 0; rank < players.size(); ++rank) {
+            auto [slot, text, pos] = players[rank];
+
+            layoutPlayerScore(*text, *pos, slot, rank);
         }
     }
 

@@ -28,11 +28,13 @@ namespace RType {
         bool startRequested = false;
         bool restartRequested = false;
         bool returnRequested = false;
+        bool replayVote = false;
     };
 
     struct LobbyPlayerInfo {
         uint16_t id = 0;
         bool ready = false;
+        bool replay = false;
         std::string name;
     };
 
@@ -43,6 +45,12 @@ namespace RType {
         uint16_t hostId = 0;
         std::vector<LobbyPlayerInfo> players;
         std::string lobbyName;
+
+        [[nodiscard]] std::size_t replayVotes() const
+        {
+            return std::size_t(std::ranges::count_if(
+                players, [](const LobbyPlayerInfo &p) { return p.replay; }));
+        }
 
         [[nodiscard]] bool allReady() const
         {
