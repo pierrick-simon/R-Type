@@ -6,13 +6,20 @@
 */
 
 #include "Setup.hpp"
+#include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Friction2D.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "Listener.hpp"
+#include "Lobby.hpp"
+#include "LobbyListPage.hpp"
+#include "Menu.hpp"
+#include "Metric.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -24,20 +31,21 @@ namespace RType::Client {
     {
         auto w = gm.createEntity();
         gm.addComponent<Window>(w, 1920, 1080, "R-type");
-        gm.createSystem<Window>(Window::systemClearWindow);
+        ::SetExitKey(KEY_NULL);
+        gm.createSystem<Window>([](Window &win) {
+            win.setTargetFps();
+            win.beginDrawing();
+        });
         return w;
     }
 
-    Entity createClient(GameManager &gm)
+    void createClientSystems(GameManager &gm)
     {
-        auto c = gm.createEntity();
-        gm.addComponent<ClientManager>(c, "127.0.0.1", 12345);
         gm.createSystem<ClientManager>(ClientManager::systemClientReceived);
         gm.createSystem<ClientManager>(
             KeyboardProtocol::systemKeyboardProtocol);
         gm.createSystem<ClientManager>(MouseProtocol::systemMouseProtocol);
         gm.createSystem<ClientManager>(ClientManager::systemEntityCreated);
-        return c;
     }
 
     Entity createControl(GameManager &gm)
@@ -60,16 +68,58 @@ namespace RType::Client {
         return mc;
     }
 
+    Entity createMetric(GameManager &gm)
+    {
+        Entity m = gm.createEntity();
+        gm.addComponent<Metric>(m, gm.getAssetsMap()[Asset::FONT], true);
+        gm.createSystem<MasterClock>(Metric::systemUpdateMetric);
+        gm.createSystem<ClientManager>(Metric::systemUpdateMetricLagometer);
+        gm.createSystem<KeyboardManager>([&gm](const KeyboardManager &k) {
+            bool press = false;
+            for (auto key : k.keyPressed)
+                if (key == Key::Value::F5) {
+                    press = true;
+                    break;
+                }
+            if (!press)
+                return;
+            for (auto [_, m] : gm.view<Metric>().getVector())
+                m.activate();
+        });
+        return m;
+    }
+
     void createSystems(GameManager &gm)
     {
+        gm.createSystem<>(systemConnecting);
+        gm.createSystem<>(systemLobby);
+        gm.createSystem<>(systemLobbyListPage);
+        gm.createSystem<>(systemServerLost);
+        gm.createSystem<Clock>(Clock::systemClock);
+        gm.createSystem<>(systemButtons);
+        gm.createSystem<>(systemTextFields);
+        gm.createSystem<>(systemButtonVisuals);
+        gm.createSystem<>(systemMenuBackground);
+        gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
+        gm.createSystem<>(systemDrawLobbyList);
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
                 Friction2D::systemFriction2D(f, v, c);
         });
-        gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
+        gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
+        gm.createSystem<Sound>(Sound::systemSound);
+        gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
+
+    Entity createSound(GameManager &gm)
+    {
+        Entity s = gm.createEntity();
+        gm.addComponent<Listener>(s);
+        return s;
+    }
+
 } // namespace RType::Client

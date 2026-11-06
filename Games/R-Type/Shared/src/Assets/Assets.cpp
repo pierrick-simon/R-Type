@@ -38,6 +38,14 @@ namespace RType::Asset {
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet4.gif"},
             {PLAYER_SHEET_5,
                 "R-Type/sprites/PlayerSheets/r-typePlayerSheet5.gif"},
+            {GUNSHOT_SOUND, "R-Type/sprites/gunshot.mp3"},
+            {EXPLOSION_SOUND, "R-Type/sprites/explosion.mp3"},
+
+            {FONT, "R-Type/sprites/Fonts/r-type.otf"},
+
+            {MENU_BACKGROUND, "R-Type/sprites/Menu/Background.png"},
+            {MENU_BUTTON, "R-Type/sprites/Menu/Buttons.png"},
+            {MENU_PLAYER_BACK, "R-Type/sprites/Menu/PlayerBack.png"},
         };
     }
 

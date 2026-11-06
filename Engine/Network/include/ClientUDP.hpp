@@ -9,6 +9,7 @@
     #define CLIENTUDP_HPP
 
     #include "Exceptions.hpp"
+    #include "Lagometer.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -25,6 +26,7 @@ namespace RType {
         void send(uint8_t op, const std::vector<uint8_t> &msg);
         [[nodiscard]] bool isConnected() const;
         [[nodiscard]] uint16_t getMyId() const;
+        [[nodiscard]] bool isTimedOut() const;
 
         void addManage(uint8_t op, ManageFunc func, bool override = false);
 
@@ -33,6 +35,11 @@ namespace RType {
             ClientException(const std::string &str) :
                 EngineException("Client error: " + str) {};
         };
+
+        [[nodiscard]] const Lagometer::Info &getLagometerInfo() const
+        {
+            return _lagometer.getInfo();
+        }
 
     private:
         void receive();
@@ -53,9 +60,19 @@ namespace RType {
         uint32_t _seq = 0;
         std::atomic<uint16_t> _myId {0};
 
+        std::chrono::steady_clock::time_point _lastReceived =
+            std::chrono::steady_clock::now();
+        bool _closedByServer = false;
+
+        Lagometer _lagometer;
+
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
         void manageHealth(
+            const Header &header, const std::vector<uint8_t> &payload);
+        void manageLogout(
+            const Header &header, const std::vector<uint8_t> &payload);
+        void manageStat(
             const Header &header, const std::vector<uint8_t> &payload);
 
         std::map<uint8_t, ManageFunc> _protocolClient = {
@@ -66,6 +83,14 @@ namespace RType {
             {Opcode::HEALTH,
                 [this](const Header &h, const std::vector<uint8_t> &p) {
                     manageHealth(h, p);
+                }},
+            {Opcode::LOGOUT,
+                [this](const Header &h, const std::vector<uint8_t> &p) {
+                    manageLogout(h, p);
+                }},
+            {Opcode::STAT,
+                [this](const Header &h, const std::vector<uint8_t> &p) {
+                    manageStat(h, p);
                 }},
         };
     };

@@ -12,9 +12,11 @@
 
 namespace RType::Client {
     Entity createWindow(GameManager &gm);
-    Entity createClient(GameManager &gm);
+    void createClientSystems(GameManager &gm);
     Entity createControl(GameManager &gm);
     Entity createMasterClock(GameManager &gm);
+    Entity createSound(GameManager &gm);
+    Entity createMetric(GameManager &gm);
     void createSystems(GameManager &gm);
 } // namespace RType::Client
 

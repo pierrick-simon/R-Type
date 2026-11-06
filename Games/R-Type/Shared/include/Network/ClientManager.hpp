@@ -70,6 +70,26 @@ namespace RType {
             return _ctx;
         }
 
+        [[nodiscard]] bool isTimedOut() const
+        {
+            return _udp->isTimedOut();
+        }
+
+        [[nodiscard]] bool isConnected() const
+        {
+            return _udp->isConnected();
+        }
+
+        [[nodiscard]] uint16_t getMyId() const
+        {
+            return _udp->getMyId();
+        }
+
+        [[nodiscard]] const Lagometer::Info &getLagometerInfo() const
+        {
+            return _udp->getLagometerInfo();
+        }
+
     private:
         /**
          * @brief Add the manage function to the udp Client.

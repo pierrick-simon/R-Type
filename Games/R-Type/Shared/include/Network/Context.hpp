@@ -13,6 +13,8 @@
 
 namespace RType {
 
+    inline constexpr int LOGIN_SERVER_PORT = 4242;
+
     enum OpcodeRType : uint8_t {
         KEY_PRESSED = 10,
         KEY_RELEASED = 11,
@@ -22,11 +24,15 @@ namespace RType {
         MOVE = 21,
         SET = 22,
         TEXT = 23,
-        PLAY = 24,
-        PAUSE = 25,
-        STOP = 26,
         DESTROY = 27,
-        MOVE_VELOCITY = 28
+        MOVE_VELOCITY = 28,
+        LOBBY_INFO = 30,
+        LOBBY_START = 31,
+        LOBBY_STATE = 32,
+        CREATE_LOBBY = 40,
+        LOBBY_PORT = 41,
+        LOBBY_LIST = 42,
+        JOIN_LOBBY = 43
     };
 
     struct Context {

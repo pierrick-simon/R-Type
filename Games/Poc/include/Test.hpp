@@ -11,13 +11,14 @@
 #include <exception>
 #include <functional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace Poc {
 
     class Failure : public std::exception {
     public:
-        Failure(const char *file, int line, const std::string &msg) :
+        Failure(std::string_view file, int line, const std::string &msg) :
             _msg(std::string(file) + ":" + std::to_string(line) + ": " + msg)
         {
         }

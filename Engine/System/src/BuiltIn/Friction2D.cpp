@@ -24,11 +24,12 @@ namespace RType {
     void Friction2D::systemMasterFriction2D(
         GameManager &gm, const MasterClock &clock)
     {
-        auto elapsedSec = float(clock.getElapsed().count()) / MILLI_IN_SEC;
+        auto dt = float(clock.getElapsed().count()) / MILLI_IN_SEC;
 
         for (auto [_, v, f] : gm.view<Velocity2D, Friction2D>().getVector()) {
-            v.x *= elapsedSec * f.f;
-            v.y *= elapsedSec * f.f;
+            const float k = std::exp(-f.f * dt);
+            v.x *= k;
+            v.y *= k;
         }
     }
 }; // namespace RType

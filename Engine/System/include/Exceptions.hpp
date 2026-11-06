@@ -24,7 +24,7 @@ namespace RType {
          * "Engine Error: ".
          */
         EngineException(const std::string &str) :
-            _str("Engine Error: " + str) {};
+            _message(str), _str("Engine Error: " + str) {};
 
         /** @brief Returns the description of the error. */
         [[nodiscard]] const char *what() const noexcept override
@@ -32,7 +32,17 @@ namespace RType {
             return _str.c_str();
         };
 
+        /**
+         * @brief Returns the description of the error, without the
+         * "Engine Error: " prefix.
+         */
+        [[nodiscard]] const std::string &message() const noexcept
+        {
+            return _message;
+        };
+
     private:
+        std::string _message;
         std::string _str;
     };
 
@@ -89,6 +99,145 @@ namespace RType {
     public:
         NoSuchSystem() :
             EngineException("No such system.")
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a user try a non existing module.
+     */
+    class NoSuchModule : public EngineException {
+    public:
+        NoSuchModule(const std::string &module) :
+            EngineException("No such module: " + module)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a module is used without a module it depends on.
+     */
+    class MissingModule : public EngineException {
+    public:
+        MissingModule(
+            const std::string &module, const std::string &dependency) :
+            EngineException(
+                "Module " + module + " requires module " + dependency)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script uses a feature of a module the game did
+     * not load.
+     */
+    class ModuleNotLoaded : public EngineException {
+    public:
+        /**
+         * @param function The function the script called.
+         * @param module The module it needs.
+         */
+        ModuleNotLoaded(
+            const std::string &function, const std::string &module) :
+            EngineException(function + " needs the " + module + " module")
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when the configuration file cannot be opened, or holds
+     * a line the engine does not understand.
+     */
+    class ConfigError : public EngineException {
+    public:
+        /**
+         * @param where The file, and the line if there is one, such as
+         * "config.conf:3".
+         * @param reason What is wrong.
+         */
+        ConfigError(const std::string &where, const std::string &reason) :
+            EngineException("Config error: " + where + ": " + reason)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a Lua script fails to load or one of its
+     * functions raises an error.
+     */
+    class ScriptError : public EngineException {
+    public:
+        /**
+         * @param msg The error reported by Lua.
+         */
+        ScriptError(const std::string &msg) :
+            EngineException("Script error: " + msg)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script asks for an engine system that does not
+     * exist.
+     */
+    class UnknownSystem : public EngineException {
+    public:
+        UnknownSystem(const std::string &system) :
+            EngineException("Unknown system: " + system)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script asks for an engine component that does
+     * not exist.
+     */
+    class UnknownComponent : public EngineException {
+    public:
+        UnknownComponent(const std::string &component) :
+            EngineException("Unknown component: " + component)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script gives a component a field that does not
+     * exist, a value of the wrong type, or leaves out a required field.
+     */
+    class InvalidComponentArgs : public EngineException {
+    public:
+        InvalidComponentArgs(
+            const std::string &component, const std::string &reason) :
+            EngineException(
+                "Invalid arguments for " + component + ": " + reason)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when the list of components a script gives to a system
+     * holds something else than a name, or the same name twice.
+     */
+    class InvalidComponentList : public EngineException {
+    public:
+        InvalidComponentList(const std::string &reason) :
+            EngineException("Invalid component list: " + reason)
+        {
+        }
+    };
+
+    /**
+     * @brief Raised when a script creates a system from a system, instead
+     * of from start.
+     */
+    class SystemCreatedInSystem : public EngineException {
+    public:
+        /**
+         * @param function The function the script called.
+         */
+        SystemCreatedInSystem(const std::string &function) :
+            EngineException(
+                function + " cannot be called from a system, only from start")
         {
         }
     };
