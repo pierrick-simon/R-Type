@@ -18,13 +18,31 @@ namespace RType::Server {
      */
     [[nodiscard]] bool isGameOver(GameManager &gm);
 
+    /** @return true while the game over screen waits for the host. */
+    [[nodiscard]] bool isGameOverScreen();
+
+    /**
+     * @brief Clears the level and waits for the host to restart or to go
+     * back to the lobby, the scores stay.
+     */
+    void showGameOver(GameManager &gm);
+
+    /** @brief Leaves the game over screen without restarting. */
+    void closeGameOver();
+
+    /** @brief Full lives, a fresh ship and no points for every player. */
+    void resetPlayers(GameManager &gm);
+
     /**
      * @brief Gives every player back their lives and restarts the level from
      * its first screen.
      */
     void restartGame(GameManager &gm);
 
-    /** @brief Restarts the game on a game over or once the boss is beaten. */
+    /**
+     * @brief Shows the game over screen when nobody has lives left, restarts
+     * once the boss is beaten.
+     */
     void systemGameState(GameManager &gm);
 
 } // namespace RType::Server

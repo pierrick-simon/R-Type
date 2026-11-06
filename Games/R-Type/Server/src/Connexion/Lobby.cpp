@@ -14,9 +14,11 @@
 #include "Components.hpp"
 #include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
+#include "GameState.hpp"
 #include "KeyboardManager.hpp"
 #include "LobbyProtocol.hpp"
 #include "MouseManager.hpp"
+#include "Player/Destroy.hpp"
 #include "Player/Hud.hpp"
 #include "ServerManager.hpp"
 
@@ -37,7 +39,7 @@ namespace RType::Server {
             gm.view<Component>().each(
                 [&entities](Entity e, Component &) { entities.push_back(e); });
             for (const Entity e : entities)
-                gm.destroyEntity(e);
+                destroyNetworked(gm, e);
         }
 
         LobbyState buildState(GameManager &gm, ServerManager &server)
@@ -50,6 +52,7 @@ namespace RType::Server {
                 clients.end(),
                 [](const auto &a, const auto &b) { return a.first < b.first; });
             state.started = gameStarted;
+            state.gameOver = isGameOverScreen();
             state.lobbyName = lobbyName;
             state.hostId = clients.empty() ? 0 : clients.front().first;
             for (const auto &[id, entity] : clients) {
@@ -75,35 +78,57 @@ namespace RType::Server {
             createBackground(gm);
             createEnemyDirector(gm);
             spawnTeamScore(gm);
+            // The ships of a previous game wait, dead, in the lobby.
+            resetPlayers(gm);
+            for (auto [entity, player] : gm.view<Player>().getVector())
+                spawnPlayerScore(gm, entity, player);
         }
 
         void resetLevel(GameManager &gm)
         {
-            std::cout << "[Lobby] Every player left, back to the lobby"
-                      << std::endl;
             gameStarted = false;
+            closeGameOver();
             resetEnemies(gm);
+            // Only gone at the end of the frame: stops the game state first.
+            for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+                director.paused = true;
             destroyAllOf<EnemyDirector>(gm);
             destroyAllOf<Background>(gm);
             destroyAllOf<Bullet>(gm);
             destroyAllOf<Force>(gm);
+            destroyAllOf<ChargeEffect>(gm);
             destroyAllOf<ScoreLabel>(gm);
             destroyAllOf<PlayerExplosion>(gm);
         }
 
-        void handleStartRequests(
+        void handleRequests(
             GameManager &gm, ServerManager &server, const LobbyState &state)
         {
             for (const auto &[id, entity] : server.getClients()) {
                 if (!gm.hasComponent<LobbyMember>(entity))
                     continue;
                 auto &member = gm.getComponent<LobbyMember>(entity);
+                const bool host = id == state.hostId;
+                const bool start = member.startRequested;
+                const bool restart = member.restartRequested;
+                const bool back = member.returnRequested;
 
-                if (!member.startRequested)
-                    continue;
                 member.startRequested = false;
-                if (!gameStarted && id == state.hostId && state.allReady())
+                member.restartRequested = false;
+                member.returnRequested = false;
+                if (start && host && !gameStarted && state.allReady())
                     startGame(gm);
+                if (!host || !isGameOverScreen())
+                    continue;
+                if (restart) {
+                    std::cout << "[Lobby] The host restarts the game"
+                              << std::endl;
+                    restartGame(gm);
+                } else if (back) {
+                    std::cout << "[Lobby] The host goes back to the lobby"
+                              << std::endl;
+                    resetLevel(gm);
+                }
             }
         }
 
@@ -164,12 +189,16 @@ namespace RType::Server {
             [&server](Entity, ServerManager &s) { server = &s; });
         if (server == nullptr)
             return;
-        if (gameStarted && server->getClients().empty())
+        if (gameStarted && server->getClients().empty()) {
+            std::cout << "[Lobby] Every player left, back to the lobby"
+                      << std::endl;
             resetLevel(gm);
+        }
         LobbyState state = buildState(gm, *server);
 
-        handleStartRequests(gm, *server, state);
+        handleRequests(gm, *server, state);
         state.started = gameStarted;
+        state.gameOver = isGameOverScreen();
         flushLobbyInputs(gm);
         broadcastState(*server, state);
     }

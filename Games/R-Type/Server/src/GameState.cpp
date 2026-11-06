@@ -7,10 +7,13 @@
 
 #include "GameState.hpp"
 
+#include <vector>
+
 #include "Common/Background.hpp"
 #include "Components.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
+#include "Player/Destroy.hpp"
 #include "Player/Player.hpp"
 
 namespace RType::Server {
@@ -27,7 +30,44 @@ namespace RType::Server {
         return anyPlayer;
     }
 
-    void restartGame(GameManager &gm)
+    namespace {
+        thread_local bool gameOver = false;
+
+        bool levelRunning(GameManager &gm)
+        {
+            for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+                if (!director.paused)
+                    return true;
+            return false;
+        }
+    } // namespace
+
+    bool isGameOverScreen()
+    {
+        return gameOver;
+    }
+
+    void showGameOver(GameManager &gm)
+    {
+        std::vector<Entity> backgrounds;
+
+        gameOver = true;
+        clearEnemies(gm);
+        for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+            director.paused = true;
+        // The clients draw the menu background in its place.
+        for (auto [background, tag] : gm.view<Background>().getVector())
+            backgrounds.push_back(background);
+        for (const Entity background : backgrounds)
+            destroyNetworked(gm, background);
+    }
+
+    void closeGameOver()
+    {
+        gameOver = false;
+    }
+
+    void resetPlayers(GameManager &gm)
     {
         for (auto [entity, player] : gm.view<Player>().getVector()) {
             player.lives = PLAYER_LIVES;
@@ -35,13 +75,26 @@ namespace RType::Server {
                 gm.getComponent<Scorer>(entity).score = 0;
             respawnPlayer(gm, entity);
         }
+    }
+
+    void restartGame(GameManager &gm)
+    {
+        closeGameOver();
+        resetPlayers(gm);
         resetEnemies(gm);
-        resetBackground(gm);
+        if (gm.view<Background>().getVector().empty())
+            createBackground(gm);
+        else
+            resetBackground(gm);
     }
 
     void systemGameState(GameManager &gm)
     {
-        if (isGameOver(gm) || levelCleared(gm))
+        if (gameOver || !levelRunning(gm))
+            return;
+        if (isGameOver(gm))
+            showGameOver(gm);
+        else if (levelCleared(gm))
             restartGame(gm);
     }
 

@@ -11,6 +11,7 @@
 
 #include "Components.hpp"
 #include "Enemies/EnemyComponents.hpp"
+#include "Enemies/EnemyManager.hpp"
 #include "GameManager.hpp"
 #include "GameState.hpp"
 #include "Player/Player.hpp"
@@ -78,17 +79,28 @@ Test(lives, out_of_lives_waits_for_the_team)
     cr_assert_eq(gm.getComponent<Health>(b).hp, PLAYER_HP);
 }
 
-Test(lives, game_restarts_when_everyone_is_out)
+Test(lives, game_over_waits_then_restarts)
 {
     GameManager gm;
     MasterClock clock;
     const Entity a = addPlayer(gm);
     const Entity b = addPlayer(gm);
+    const Entity director = gm.createEntity();
 
+    gm.addComponent<EnemyDirector>(director);
+    gm.getComponent<EnemyDirector>(director).score = 700;
     for (int i = 0; i < PLAYER_LIVES; ++i)
         die(gm, clock, a);
+    cr_assert_not(isGameOverScreen());
     for (int i = 0; i < PLAYER_LIVES; ++i)
         die(gm, clock, b);
+    cr_assert(isGameOverScreen());
+    cr_assert(gm.getComponent<EnemyDirector>(director).paused);
+    cr_assert_eq(gm.getComponent<EnemyDirector>(director).score, 700);
+    cr_assert_eq(gm.getComponent<Player>(a).lives, 0);
+    restartGame(gm);
+    cr_assert_not(isGameOverScreen());
+    cr_assert_not(gm.getComponent<EnemyDirector>(director).paused);
     for (const Entity e : {a, b}) {
         cr_assert_eq(gm.getComponent<Player>(e).lives, PLAYER_LIVES);
         cr_assert_eq(gm.getComponent<Health>(e).hp, PLAYER_HP);

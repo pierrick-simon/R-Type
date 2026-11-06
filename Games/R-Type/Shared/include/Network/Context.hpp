@@ -29,6 +29,8 @@ namespace RType {
         LOBBY_INFO = 30,
         LOBBY_START = 31,
         LOBBY_STATE = 32,
+        LOBBY_RESTART = 33,
+        LOBBY_RETURN = 34,
         CREATE_LOBBY = 40,
         LOBBY_PORT = 41,
         LOBBY_LIST = 42,

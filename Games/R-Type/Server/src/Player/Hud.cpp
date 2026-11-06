@@ -14,6 +14,7 @@
 #include "Config.hpp"
 #include "Enemies/EnemyComponents.hpp"
 #include "Enemies/EnemyManager.hpp"
+#include "GameState.hpp"
 #include "Player/Destroy.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -113,16 +114,34 @@ namespace RType::Server {
             formatScore(playerLabel(state), 0));
     }
 
+    /** @brief Big and centered on the game over screen, in the corner
+     * otherwise. */
+    void layoutTeamScore(Text2D &text, Position2D &pos)
+    {
+        const bool gameOver = isGameOverScreen();
+
+        text.fontSize = gameOver ? GAME_OVER_SCORE_SIZE : SCORE_FONT_SIZE;
+        text.color =
+            gameOver ? raylib::Color(255, 215, 0, 255) : raylib::Color::White();
+        pos = gameOver
+            ? Position2D {(WINDOW_WIDTH -
+                              float(text.str.size()) * GAME_OVER_SCORE_SIZE) /
+                      2.f,
+                  GAME_OVER_SCORE_Y}
+            : Position2D {HUD_MARGIN, SCORE_Y};
+    }
+
     void scoreHudSystem(GameManager &gm)
     {
         int team = 0;
 
         for (auto [_, director] : gm.view<EnemyDirector>().getVector())
             team = director.score;
-        for (auto [label, score, text] :
-            gm.view<ScoreLabel, Text2D>().getVector()) {
+        for (auto [label, score, text, pos] :
+            gm.view<ScoreLabel, Text2D, Position2D>().getVector()) {
             if (!score.player) {
                 text.str = formatScore("SCORE", team);
+                layoutTeamScore(text, pos);
                 continue;
             }
             if (!gm.hasComponent<Player>(*score.player)) {

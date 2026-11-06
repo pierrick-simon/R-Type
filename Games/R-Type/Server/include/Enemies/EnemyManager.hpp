@@ -44,6 +44,7 @@ namespace RType {
         bool bossSpawned = false;
         float victoryTimer = 0.f;
         bool levelCleared = false;
+        bool paused = false;
 
         void addWave(
             EnemyType type, float y, int count, float interval, float start);
@@ -58,6 +59,8 @@ namespace RType {
 
     Entity fireAlienBeam(GameManager &gm, float x, float y, bool facingLeft,
         const EnemyHooks &hooks = {});
+
+    void clearEnemies(GameManager &gm);
 
     void resetEnemies(GameManager &gm);
 

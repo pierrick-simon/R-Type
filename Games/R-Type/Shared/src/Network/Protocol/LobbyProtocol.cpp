@@ -58,6 +58,34 @@ namespace RType {
         gm.getComponent<LobbyMember>(it->second).startRequested = true;
     }
 
+    void LobbyProtocol::manageRestart(
+        const Header &header, const std::vector<uint8_t> &, Context &ctx)
+    {
+        if (!ctx.gm)
+            return;
+        auto it = ctx.clients.find(header.senderId);
+        if (it == ctx.clients.end())
+            return;
+        auto &gm = ctx.gm->get();
+        if (!gm.hasComponent<LobbyMember>(it->second))
+            return;
+        gm.getComponent<LobbyMember>(it->second).restartRequested = true;
+    }
+
+    void LobbyProtocol::manageReturn(
+        const Header &header, const std::vector<uint8_t> &, Context &ctx)
+    {
+        if (!ctx.gm)
+            return;
+        auto it = ctx.clients.find(header.senderId);
+        if (it == ctx.clients.end())
+            return;
+        auto &gm = ctx.gm->get();
+        if (!gm.hasComponent<LobbyMember>(it->second))
+            return;
+        gm.getComponent<LobbyMember>(it->second).returnRequested = true;
+    }
+
     void LobbyProtocol::manageState(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
@@ -87,12 +115,22 @@ namespace RType {
         c.send(OpcodeRType::LOBBY_START, {});
     }
 
+    void LobbyProtocol::sendRestart(ClientManager &c)
+    {
+        c.send(OpcodeRType::LOBBY_RESTART, {});
+    }
+
+    void LobbyProtocol::sendReturn(ClientManager &c)
+    {
+        c.send(OpcodeRType::LOBBY_RETURN, {});
+    }
+
     std::vector<uint8_t> LobbyProtocol::serializeState(const LobbyState &s)
     {
         std::vector<uint8_t> out(4);
         const std::size_t count = std::min<std::size_t>(s.players.size(), 255);
 
-        out[0] = s.started ? 1 : 0;
+        out[0] = s.gameOver ? 2 : (s.started ? 1 : 0);
         put16(&out[1], s.hostId);
         out[3] = static_cast<uint8_t>(count);
         for (std::size_t i = 0; i < count; i++) {
@@ -127,6 +165,7 @@ namespace RType {
 
         s.received = true;
         s.started = payload[0] != 0;
+        s.gameOver = payload[0] == 2;
         s.hostId = get16(&payload[1]);
         for (std::size_t i = 0; i < count; i++) {
             if (payload.size() < at + 4)

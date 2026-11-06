@@ -19,6 +19,7 @@
 #include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Friction2D.hpp"
+#include "GameState.hpp"
 #include "KeyboardManager.hpp"
 #include "Player/Hud.hpp"
 #include "UpdateClientEntity.hpp"
@@ -318,7 +319,7 @@ namespace RType::Server {
         std::unordered_set<uint32_t> connected;
         std::unordered_set<std::size_t> taken;
 
-        if (!isGameStarted())
+        if (!isGameStarted() || isGameOverScreen())
             return;
         for (auto [_, player] : gm.view<Player>().getVector())
             taken.insert(player.slot);

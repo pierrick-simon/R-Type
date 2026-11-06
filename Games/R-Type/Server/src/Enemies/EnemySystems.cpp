@@ -714,6 +714,8 @@ namespace RType {
     {
         const float delta = elapsedSeconds(clock);
 
+        if (director.paused)
+            return;
         if (director.victoryTimer > 0.f) {
             director.victoryTimer -= delta;
             if (director.victoryTimer <= 0.f)

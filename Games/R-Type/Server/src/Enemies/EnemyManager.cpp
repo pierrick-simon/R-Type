@@ -150,11 +150,16 @@ namespace RType {
         return beam;
     }
 
-    void resetEnemies(GameManager &gm)
+    void clearEnemies(GameManager &gm)
     {
         destroyAll<Enemy>(gm);
         destroyAll<Projectile>(gm);
         destroyAll<Lifetime>(gm);
+    }
+
+    void resetEnemies(GameManager &gm)
+    {
+        clearEnemies(gm);
         gm.view<EnemyDirector>().each([](Entity, EnemyDirector &director) {
             director.elapsed = 0.f;
             director.next = 0;
@@ -162,6 +167,7 @@ namespace RType {
             director.bossSpawned = false;
             director.victoryTimer = 0.f;
             director.levelCleared = false;
+            director.paused = false;
         });
     }
 

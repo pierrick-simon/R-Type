@@ -10,6 +10,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Friction2D.hpp"
+#include "GameOver.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "Listener.hpp"
@@ -93,6 +94,7 @@ namespace RType::Client {
     {
         gm.createSystem<>(systemConnecting);
         gm.createSystem<>(systemLobby);
+        gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);

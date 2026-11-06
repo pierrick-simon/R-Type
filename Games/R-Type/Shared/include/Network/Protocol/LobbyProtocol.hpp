@@ -26,6 +26,8 @@ namespace RType {
         std::string name;
         bool ready = false;
         bool startRequested = false;
+        bool restartRequested = false;
+        bool returnRequested = false;
     };
 
     struct LobbyPlayerInfo {
@@ -37,6 +39,7 @@ namespace RType {
     struct LobbyState {
         bool received = false;
         bool started = false;
+        bool gameOver = false;
         uint16_t hostId = 0;
         std::vector<LobbyPlayerInfo> players;
         std::string lobbyName;
@@ -60,10 +63,16 @@ namespace RType {
             const std::vector<uint8_t> &payload, Context &ctx);
         static void manageState(const Header &header,
             const std::vector<uint8_t> &payload, Context &ctx);
+        static void manageRestart(const Header &header,
+            const std::vector<uint8_t> &payload, Context &ctx);
+        static void manageReturn(const Header &header,
+            const std::vector<uint8_t> &payload, Context &ctx);
 
         static void sendInfo(
             ClientManager &c, const std::string &name, bool ready);
         static void sendStart(ClientManager &c);
+        static void sendRestart(ClientManager &c);
+        static void sendReturn(ClientManager &c);
 
         static std::vector<uint8_t> serializeState(const LobbyState &s);
         static std::optional<LobbyState> parseState(

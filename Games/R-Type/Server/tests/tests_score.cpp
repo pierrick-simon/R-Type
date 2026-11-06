@@ -115,3 +115,29 @@ Test(score, restart_resets_the_scores)
     restartGame(gm);
     cr_assert_eq(gm.getComponent<Scorer>(player).score, 0);
 }
+
+Test(score, team_score_is_big_on_the_game_over_screen)
+{
+    GameManager gm;
+    const Entity director = gm.createEntity();
+
+    gm.addComponent<EnemyDirector>(director);
+    spawnTeamScore(gm);
+    showGameOver(gm);
+    scoreHudSystem(gm);
+    for (auto [_, label, text, pos] :
+        gm.view<ScoreLabel, Text2D, Position2D>().getVector()) {
+        cr_assert_float_eq(text.fontSize, GAME_OVER_SCORE_SIZE, 0.01f);
+        cr_assert_float_eq(
+            pos.x + float(text.str.size()) * GAME_OVER_SCORE_SIZE / 2.f,
+            WINDOW_WIDTH / 2.f,
+            0.01f);
+    }
+    restartGame(gm);
+    scoreHudSystem(gm);
+    for (auto [_, label, text, pos] :
+        gm.view<ScoreLabel, Text2D, Position2D>().getVector()) {
+        cr_assert_float_eq(text.fontSize, SCORE_FONT_SIZE, 0.01f);
+        cr_assert_float_eq(pos.y, SCORE_Y, 0.01f);
+    }
+}
