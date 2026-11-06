@@ -95,14 +95,6 @@ namespace RType::Client {
     {
         auto am = gm.createEntity();
         gm.addComponent<Assets>(am, gm, Asset::makeAssetList());
-        gm.createSystem<Assets>(
-            systemTextAnchorManager<Font, Texture2D, Decoder>);
-        gm.createSystem<Assets>(
-            Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
-        gm.createSystem<Assets>(SpriteSheet2D::
-                systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
-        gm.createSystem<Assets>(
-            Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
         return am;
     }
 
@@ -122,6 +114,14 @@ namespace RType::Client {
             for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
                 Friction2D::systemFriction2D(f, v, c);
         });
+        gm.createSystem<Assets>(
+            systemTextAnchorManager<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(
+            Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(SpriteSheet2D::
+                systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(
+            Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
         gm.createSystem<Sound>(Sound::systemSound);
         gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
