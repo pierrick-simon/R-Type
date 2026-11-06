@@ -32,9 +32,7 @@ namespace RType::Server {
         {
             try {
                 GameManager gm;
-                AssetList assets = Asset::makeAssetList();
 
-                gm.setAssetsMap(assets);
                 const Entity s = createServer(gm, std::move(manager));
                 const Entity l = gm.createEntity();
 

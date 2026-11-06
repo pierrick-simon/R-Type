@@ -211,6 +211,7 @@ set(SRCS_AUDIO
     ${AUDIO}/src/MiniaudioImpl.cpp
     ${AUDIO}/src/Listener.cpp
     ${AUDIO}/src/Sound.cpp
+    ${AUDIO}/src/Decoder.cpp
 )
 
 set_source_files_properties(${AUDIO}/src/MiniaudioImpl.cpp PROPERTIES

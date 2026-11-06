@@ -9,6 +9,8 @@
 #define FONT_HPP_
 
     #include <raylib-cpp.hpp>
+    #include <string_view>
+    #include "GameManager.hpp"
 
 namespace RType {
 
@@ -18,6 +20,8 @@ namespace RType {
      * Used by Text2D::systemText2D to render text.
      */
     struct Font : public raylib::Font {
+        static constexpr std::string_view TYPE = "font";
+
         /**
          * @brief Load a font from a file.
          *
@@ -30,6 +34,8 @@ namespace RType {
          *          a font, otherwise loading will fail or crash.
          */
         Font(const std::string &path);
+
+        static void unload([[maybe_unused]] GameManager &gm) {};
     };
 
 } // namespace RType
