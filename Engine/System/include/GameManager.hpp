@@ -310,6 +310,12 @@ namespace RType {
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
         /**
+         * @brief Checks whether the systems are currently running.
+         * @return true during update(), false otherwise.
+         */
+        [[nodiscard]] bool isUpdating() const;
+
+        /**
          * @brief Creates a view over the entities that have all the given
          * component types. Never throws: if one of the types has never
          * been added, the view is empty.
@@ -320,6 +326,21 @@ namespace RType {
         View<Components...> view()
         {
             return View<Components...>(_cm);
+        }
+
+        /**
+         * @brief Counts the entities that have a component of the given
+         * type. Never throws.
+         * @tparam Component The component type to count.
+         * @return The number of such entities, 0 if no Component has ever
+         * been added.
+         */
+        template<typename Component>
+        [[nodiscard]] std::size_t countComponents()
+        {
+            if (!_cm.isComponent<Component>())
+                return 0;
+            return _cm.getComponentArray<Component>().nbComponent();
         }
 
         void run(int fps, const std::function<bool()> &keepRunning);

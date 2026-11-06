@@ -25,6 +25,7 @@ server and client, and a proof-of-concept program (`Poc`) that tests the ECS.
 - [Architecture](#architecture)
 - [Requirements](#requirements)
 - [Build](#build)
+- [Install](#install)
 - [Usage](#usage)
 - [Tests](#tests)
 - [Documentation](#documentation)
@@ -130,6 +131,33 @@ folder afterwards.
 
 ---
 
+## Install
+
+Once the project is built, it can be installed system-wide, so the `game`
+executable can be launched from anywhere without staying in the repo:
+
+```sh
+# linux
+sudo cmake --install build
+
+# windows (from an administrator terminal)
+cmake --install build --config Release
+```
+
+This copies the `game` executable into `bin/` and the engine's libraries
+(`engine-system`, `engine-graphical2D`, `engine-graphical3D`, `engine-network`,
+`engine-audio`) into `lib/`, under the install prefix: `/usr/local` on Linux,
+`C:\Program Files\R-Type` on Windows.
+
+To install somewhere else, for example in your home folder without `sudo`,
+pass a prefix:
+
+```sh
+cmake --install build --prefix ~/.local
+```
+
+---
+
 ## Usage
 
 ```sh
@@ -163,7 +191,9 @@ Every document exists in French and English.
 | Document | Content | |
 |---|---|---|
 | **Game making guide** | Create a game on top of the engine: folder, CMake, window, sprites, input, sound, do's and don'ts | [EN](docs/GAME_GUIDE.en.md) · [FR](docs/GAME_GUIDE.fr.md) |
-| **engine-game guide** | Write a game without a `main`: `GameInfo`, inits, CMake, debug mode, do's and don'ts, errors and fixes | [EN](docs/ENGINE_GAME.en.md) · [FR](docs/ENGINE_GAME.fr.md) |
+| **Running a game guide** | Run a game with the `game` executable: `config.conf`, modules, folder, debug mode, do's and don'ts, errors and fixes | [EN](docs/ENGINE_GAME.en.md) · [FR](docs/ENGINE_GAME.fr.md) |
+| **Lua scripting guide** | Write a game's content in Lua: entities, components, systems, views, the frame, errors; exposing a component or a system to Lua | [EN](docs/LUA_GUIDE.en.md) · [FR](docs/LUA_GUIDE.fr.md) |
+| **Extending the engine** | Add a component, a system, a module, a `gm:` function or a `config.conf` setting, and make them usable from Lua | [EN](docs/ENGINE_EXTENDING.en.md) · [FR](docs/ENGINE_EXTENDING.fr.md) |
 | **ECS guide** | Entities, components, systems, views, the frame, errors, pitfalls, recipes, API cheat sheet | [EN](docs/ECS_GUIDE.en.md) · [FR](docs/ECS_GUIDE.fr.md) |
 | **ECS design notes** | Why the ECS is built the way it is | [EN](docs/ECS_DESIGN.en.md) · [FR](docs/ECS_DESIGN.fr.md) |
 | **Accessibility** | What the engine offers for accessibility (rebinding, layouts, input, text, tint), why it helps and who for | [EN](docs/ACCESSIBILITY.en.md) · [FR](docs/ACCESSIBILITY.fr.md) |
