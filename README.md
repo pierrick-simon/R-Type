@@ -113,7 +113,7 @@ nothing to install by hand.
 
 ```sh
 # linux
-cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
+cmake -S . -B build
 cmake --build build -j
 
 # windows
