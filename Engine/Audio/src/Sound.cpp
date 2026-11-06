@@ -26,7 +26,7 @@ namespace RType {
         systemSound(*this);
     }
 
-    Sound::Sound(Listener &l, Decoder &decoder, SoundInfo info = {}) :
+    Sound::Sound(Listener &l, Decoder &decoder, SoundInfo info) :
         SoundInfo(info), _sound(new ma_sound())
     {
         if (ma_sound_init_from_data_source(&l.getEngine(),

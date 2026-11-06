@@ -32,6 +32,8 @@ namespace RType {
      */
     class Decoder {
     public:
+        static constexpr std::string_view TYPE = "sound";
+
         /**
          * @brief Create a decoder and initialise it.
          *
