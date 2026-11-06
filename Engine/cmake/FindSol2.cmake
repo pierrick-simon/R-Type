@@ -17,7 +17,6 @@ endif ()
 find_package_handle_standard_args(Sol2 REQUIRED_VARS Sol2_INCLUDE_DIR)
 
 if (Sol2_FOUND AND NOT TARGET sol2::sol2)
-    add_library(sol2::sol2 INTERFACE IMPORTED)
+    add_library(sol2::sol2 INTERFACE IMPORTED GLOBAL)
     target_include_directories(sol2::sol2 SYSTEM INTERFACE ${Sol2_INCLUDE_DIR})
-    target_link_libraries(sol2::sol2 INTERFACE ${RTYPE_LUA_TARGET})
 endif ()
