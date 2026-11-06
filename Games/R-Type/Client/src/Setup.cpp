@@ -6,10 +6,12 @@
 */
 
 #include "Setup.hpp"
+#include <algorithm>
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "FinishingSound.hpp"
 #include "Friction2D.hpp"
+#include "GameOver.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "Listener.hpp"
@@ -27,14 +29,36 @@
 #include "Window.hpp"
 
 namespace RType::Client {
+    namespace {
+        constexpr float GAME_WIDTH = 1920.f;
+        constexpr float GAME_HEIGHT = 1080.f;
+
+        // The window manager may shrink the window (dock, top bar): the game
+        // is scaled down to fit it, and the mouse scaled back up.
+        ::Camera2D fitGameToWindow()
+        {
+            const auto width = float(::GetScreenWidth());
+            const auto height = float(::GetScreenHeight());
+            const float zoom =
+                std::min(width / GAME_WIDTH, height / GAME_HEIGHT);
+            const ::Vector2 offset = {(width - GAME_WIDTH * zoom) / 2.f,
+                (height - GAME_HEIGHT * zoom) / 2.f};
+
+            ::SetMouseOffset(int(-offset.x), int(-offset.y));
+            ::SetMouseScale(1.f / zoom, 1.f / zoom);
+            return {offset, {0.f, 0.f}, 0.f, zoom};
+        }
+    } // namespace
+
     Entity createWindow(GameManager &gm)
     {
         auto w = gm.createEntity();
-        gm.addComponent<Window>(w, 1920, 1080, "R-type");
+        gm.addComponent<Window>(w, int(GAME_WIDTH), int(GAME_HEIGHT), "R-type");
         ::SetExitKey(KEY_NULL);
         gm.createSystem<Window>([](Window &win) {
             win.setTargetFps();
             win.beginDrawing();
+            ::BeginMode2D(fitGameToWindow());
         });
         return w;
     }
@@ -72,6 +96,7 @@ namespace RType::Client {
     {
         gm.createSystem<>(systemConnecting);
         gm.createSystem<>(systemLobby);
+        gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemLogin);
         gm.createSystem<>(systemServerLost);
@@ -82,10 +107,7 @@ namespace RType::Client {
         gm.createSystem<>(systemMenuBackground);
         gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
         gm.createSystem<>(systemDrawLobbyList);
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Sprite2D, Texture2D, Position2D>(
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<>(systemDrawLoginPopup);
@@ -94,8 +116,10 @@ namespace RType::Client {
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<>(systemDrawPasswordFields);
         gm.createSystem<Sound>(Sound::systemSound);
-        gm.createSystem<>(systemFinishingSound);
-        gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
+        gm.createSystem<Window>([](Window &win) {
+            ::EndMode2D();
+            win.endDrawing();
+        });
     }
 
     Entity createSound(GameManager &gm)

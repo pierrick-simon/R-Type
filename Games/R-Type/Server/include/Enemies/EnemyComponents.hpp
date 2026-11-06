@@ -9,6 +9,8 @@
 #define ENEMY_HPP_
 
 #include <cstdint>
+#include <optional>
+#include "Entity.hpp"
 
 namespace RType {
 
@@ -17,6 +19,7 @@ namespace RType {
         Gunner,
         Walker,
         Alien,
+        Boss,
         Count,
     };
 
@@ -26,6 +29,7 @@ namespace RType {
         ZigZag,
         WalkJump,
         AlienBeam,
+        Boss,
     };
 
     struct MovementPattern {
@@ -45,11 +49,6 @@ namespace RType {
         Land,
     };
 
-    /**
-     * @brief Robot walking along the floor platforms, turning back in front
-     * of higher ones and jumping down onto lower ones
-     * (PatternType::WalkJump).
-     */
     struct Walker {
         WalkerState state = WalkerState::Walk;
         float timer = 0.f;
@@ -69,16 +68,29 @@ namespace RType {
         Exit,
     };
 
-    /**
-     * @brief Alien flying in line with a player, charging then firing a
-     * beam, and landing from time to time (PatternType::AlienBeam).
-     */
     struct Alien {
         AlienState state = AlienState::Fly;
         float timer = 0.f;
         bool facingLeft = true;
         bool grounded = false;
         int shots = 0;
+    };
+
+    enum class BossState : std::uint8_t {
+        Enter,
+        Closed,
+        Opening,
+        Open,
+        Closing,
+        Dying,
+    };
+
+    struct Boss {
+        BossState state = BossState::Enter;
+        float timer = 0.f;
+        float fireTimer = 0.f;
+        int stage = 0;
+        int explosions = 0;
     };
 
     struct Enemy {
@@ -109,12 +121,34 @@ namespace RType {
     struct Projectile {
         int damage = 1;
         bool fromPlayer = false;
+        bool piercing = false;
+        std::optional<Entity> owner = std::nullopt;
+    };
+
+    /** @brief Earns the points of the enemies killed by what it owns. */
+    struct Scorer {
+        int score = 0;
     };
 
     struct EnemyTarget {};
 
+    struct Invincible {
+        float remaining = 0.f;
+    };
+
     struct Lifetime {
         float remaining = 0.f;
+    };
+
+    /** @brief Destroys the enemy projectiles that touch it. */
+    struct ShotBlocker {};
+
+    /** @brief Hurts the enemies it touches, at most once per cooldown. */
+    struct ContactDamage {
+        int damage = 1;
+        float cooldown = 0.f;
+        float timer = 0.f;
+        std::optional<Entity> owner = std::nullopt;
     };
 } // namespace RType
 

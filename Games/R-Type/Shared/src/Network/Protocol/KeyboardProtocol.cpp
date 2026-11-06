@@ -67,6 +67,10 @@ namespace RType {
                 c.send(OpcodeRType::KEY_PRESSED, {toByte(value)});
             for (auto &value : released)
                 c.send(OpcodeRType::KEY_RELEASED, {toByte(value)});
+            for (auto &value : pressed)
+                if (std::ranges::find(km.keyDown, value) == km.keyDown.end() &&
+                    std::ranges::find(released, value) == released.end())
+                    c.send(OpcodeRType::KEY_RELEASED, {toByte(value)});
         });
     }
 

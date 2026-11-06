@@ -19,10 +19,12 @@
 
 namespace RType::Server {
 
+    float elapsedSeconds(const MasterClock &clock);
     void systemCreateSpaceShip(GameManager &gm);
-    void playerHandle(GameManager &gm, Player &player, Velocity2D &velocity,
-        const Position2D &pos, KeyboardManager &keyboard, const Health &health,
-        const MasterClock &clock);
+    void respawnPlayer(GameManager &gm, Entity player);
+    void playerHandle(GameManager &gm, Entity entity, Player &player,
+        Velocity2D &velocity, const Position2D &pos, KeyboardManager &keyboard,
+        const Health &health, const MasterClock &clock);
     void systemMasterPlayerHandle(GameManager &gm, const MasterClock &clock);
     void playerClamp(
         const Player &player, Position2D &pos, Velocity2D &velocity);
@@ -30,6 +32,7 @@ namespace RType::Server {
         const Player &player, const Velocity2D &velocity, SpriteSheet2D &sheet);
     void createPlayerMasks(GameManager &gm);
     void playerTerrainCollision(GameManager &gm);
+    void playerInvincibility(GameManager &gm, const MasterClock &clock);
     void playerDeath(GameManager &gm, const MasterClock &clock);
 
 } // namespace RType::Server

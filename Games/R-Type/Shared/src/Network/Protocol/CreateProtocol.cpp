@@ -22,7 +22,9 @@ namespace RType {
         if (!ctx.gm || payload.size() < ProtocolEntity::SIZE)
             return;
         auto e = parseEntity(payload);
-        if (!e)
+        // A sound may attach to an entity that already exists; anything else
+        // received twice would spawn a copy that is never updated.
+        if (!e || (e->type != EntityType::SOUND && ctx.map.contains(e->id)))
             return;
         switch (e->type) {
             case EntityType::SPRITE:

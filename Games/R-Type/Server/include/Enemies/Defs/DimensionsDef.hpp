@@ -11,6 +11,7 @@
 namespace RType {
 
     constexpr float SPRITE_SCALE = 3.f;
+    constexpr float LEVEL_SCALE = 4.5f;
     constexpr float HITBOX_RATIO = 0.8f;
 
     constexpr float SCREEN_WIDTH = 1920.f;

@@ -5,7 +5,10 @@
 ** Background
 */
 
-#include "Background.hpp"
+#include "Common/Background.hpp"
+
+#include <algorithm>
+
 #include "Assets.hpp"
 #include "Config.hpp"
 #include "SoundInfo.hpp"
@@ -17,19 +20,43 @@
 
 namespace RType::Server {
 
-    void backgroundLoop(const Background &, Position2D &pos)
+    float levelScroll(GameManager &gm)
     {
-        if (pos.x <= -BACKGROUND_PERIOD)
-            pos.x += 2.f * BACKGROUND_PERIOD;
+        float scroll = 0.f;
+
+        for (auto [_, background, pos] :
+            gm.view<Background, Position2D>().getVector())
+            scroll = std::min(scroll, pos.x);
+        return scroll;
+    }
+
+    void backgroundScroll(GameManager &gm)
+    {
+        const float overshoot = LEVEL_END_X - levelScroll(gm);
+
+        if (overshoot < 0.f)
+            return;
+        for (auto [_, background, pos, velocity] :
+            gm.view<Background, Position2D, Velocity2D>().getVector()) {
+            pos.x += overshoot;
+            velocity.x = 0.f;
+        }
+    }
+
+    bool levelEnded(GameManager &gm)
+    {
+        return levelScroll(gm) <= LEVEL_END_X;
     }
 
     void resetBackground(GameManager &gm)
     {
         float index = 0.f;
 
-        gm.view<Background, Position2D>().each(
-            [&index](Entity, Background &, Position2D &pos) {
+        gm.view<Background, Position2D, Velocity2D>().each(
+            [&index](
+                Entity, Background &, Position2D &pos, Velocity2D &velocity) {
                 pos.x = index * BACKGROUND_PERIOD;
+                velocity.x = -BACKGROUND_SPEED;
                 index += 1.f;
             });
     }

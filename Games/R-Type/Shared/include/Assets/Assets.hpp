@@ -41,6 +41,17 @@ namespace RType::Asset {
     inline constexpr AssetId ENEMY_ALIEN = 115;
     inline constexpr AssetId ALIEN_BEAM = 116;
     inline constexpr AssetId ALIEN_CHARGE = 117;
+    inline constexpr AssetId PLAYER_CHARGE = 118;
+    inline constexpr AssetId PLAYER_CHARGED_SHOT = 119;
+    inline constexpr AssetId ENEMY_BOSS = 120;
+    inline constexpr AssetId BOSS_BULLET = 121;
+    inline constexpr AssetId BOSS_EXPLOSION = 122;
+    inline constexpr AssetId POWER_UP = 123;
+    inline constexpr AssetId FORCE = 124;
+    inline constexpr AssetId REFLECT_LASER = 125;
+    inline constexpr AssetId HELIX_LASER = 126;
+    inline constexpr AssetId RING_LASER = 127;
+    inline constexpr AssetId LASER_MUZZLE = 128;
 
     inline constexpr AssetId EXPLOSION_SOUND = 1000;
     inline constexpr AssetId GUNSHOT_SOUND = 1001;

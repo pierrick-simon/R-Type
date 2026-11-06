@@ -5,7 +5,7 @@
 ** Terrain
 */
 
-#include "Terrain.hpp"
+#include "Common/Terrain.hpp"
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -187,6 +187,34 @@ namespace RType::Server {
                             return true;
                     }
                 }
+            }
+        }
+        return false;
+    }
+
+    bool rectTouchesTerrain(
+        GameManager &gm, float x, float y, float width, float height)
+    {
+        for (auto [_, terrain] : gm.view<Terrain>().getVector()) {
+            const CollisionMask &mask = terrain.mask;
+
+            for (auto [entity, background, bgPos] :
+                gm.view<Background, Position2D>().getVector()) {
+                (void) entity;
+                (void) background;
+                const int left =
+                    std::max(0, int(std::floor((x - bgPos.x) / SCALE)));
+                const int right = std::min(
+                    mask.width, int(std::ceil((x + width - bgPos.x) / SCALE)));
+                const int top =
+                    std::max(0, int(std::floor((y - bgPos.y) / SCALE)));
+                const int bottom = std::min(mask.height,
+                    int(std::ceil((y + height - bgPos.y) / SCALE)));
+
+                for (int levelY = top; levelY < bottom; ++levelY)
+                    for (int levelX = left; levelX < right; ++levelX)
+                        if (mask.isSolid(levelX, levelY))
+                            return true;
             }
         }
         return false;

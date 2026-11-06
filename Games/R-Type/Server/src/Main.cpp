@@ -7,8 +7,8 @@
 
 #include <iostream>
 
+#include "Connexion/MasterServer.hpp"
 #include "GameManager.hpp"
-#include "MasterServer.hpp"
 #include "ServerManager.hpp"
 
 int main()
@@ -20,8 +20,6 @@ int main()
 
         gm.run(60, [&] { return server.isRunning(); });
     } catch (const RType::EngineException &e) {
-        std::cout << e.what() << std::endl;
-    } catch (const std::exception &e) {
         std::cout << e.what() << std::endl;
     }
     return 0;

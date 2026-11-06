@@ -10,16 +10,16 @@
 #include <iostream>
 
 #include "Assets.hpp"
+#include "Common/Terrain.hpp"
+#include "Connexion/Instance.hpp"
+#include "Connexion/InstanceLink.hpp"
+#include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "GameManager.hpp"
-#include "Instance.hpp"
-#include "InstanceLink.hpp"
-#include "Lobby.hpp"
-#include "Player.hpp"
+#include "Player/Player.hpp"
 #include "ServerManager.hpp"
 #include "Setup.hpp"
-#include "Terrain.hpp"
 
 namespace RType::Server {
 

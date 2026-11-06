@@ -19,6 +19,7 @@ set(SRCS
     src/Lobby.cpp
     src/LobbyListPage.cpp
     src/Login.cpp
+    src/GameOver.cpp
 )
 
 add_executable(r-type_client ${MAIN} ${SRCS})

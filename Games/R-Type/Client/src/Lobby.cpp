@@ -346,7 +346,14 @@ namespace RType::Client {
                     LobbyProtocol::sendInfo(c, _clInfos._username, lobby.ready);
                     lobby.lastInfo = now;
                 }
-                if (!state.received || lobby.inGame)
+                if (!state.received)
+                    return;
+                // The host left the game over screen for the lobby.
+                if (lobby.inGame && !state.started) {
+                    lobby.inGame = false;
+                    lobby.startRequested = false;
+                }
+                if (lobby.inGame)
                     return;
                 if (state.started) {
                     lobby.inGame = true;

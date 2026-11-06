@@ -5,11 +5,11 @@
 ** InstanceLink
 */
 
-#include "InstanceLink.hpp"
+#include "Connexion/InstanceLink.hpp"
 
 #include <iostream>
 
-#include "Lobby.hpp"
+#include "Connexion/Lobby.hpp"
 #include "ServerManager.hpp"
 
 namespace RType::Server {

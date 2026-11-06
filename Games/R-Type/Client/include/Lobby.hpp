@@ -65,13 +65,18 @@ namespace RType::Client {
         std::size_t row = 0;
     };
 
+    enum class GameOverChoice { None, Restart, Return };
+
     struct LobbyClient {
         bool ready = false;
         bool startRequested = false;
         bool shown = false;
         bool inGame = false;
+        bool gameOverShown = false;
+        GameOverChoice choice = GameOverChoice::None;
         std::chrono::steady_clock::time_point lastInfo {};
         std::chrono::steady_clock::time_point lastStart {};
+        std::chrono::steady_clock::time_point lastChoice {};
     };
 
     void createLobby(GameManager &gm);

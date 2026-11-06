@@ -6,18 +6,20 @@
 */
 
 #include "Setup.hpp"
-#include "Animation.hpp"
-#include "Background.hpp"
-#include "Bullet.hpp"
 #include "Clock.hpp"
+#include "Common/Animation.hpp"
+#include "Common/Background.hpp"
+#include "Common/Bullet.hpp"
 #include "Config.hpp"
+#include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "Friction2D.hpp"
+#include "GameState.hpp"
 #include "KeyboardManager.hpp"
-#include "Lobby.hpp"
-#include "Player.hpp"
+#include "Player/Hud.hpp"
+#include "Player/Player.hpp"
 #include "ServerManager.hpp"
 #include "SetClientEntity.hpp"
 #include "Sprite2D.hpp"
@@ -29,6 +31,9 @@
 #include "UpdateSpriteSheet2D.hpp"
 #include "UpdateText2D.hpp"
 #include "Velocity2D.hpp"
+#include "Weapons/Force.hpp"
+#include "Weapons/Laser.hpp"
+#include "Weapons/PowerUp.hpp"
 #include "Window.hpp"
 
 namespace RType::Server {
@@ -87,17 +92,32 @@ namespace RType::Server {
         gm.createSystem<MasterClock>(
             SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
         gm.createSystem<PlayOnce, SpriteSheet2D>(playOnceAnimation);
-        registerEnemySystems(gm, enemyHooks);
+        EnemyHooks hooks = enemyHooks;
+
+        hooks.onEnemyLoot = dropPowerUp;
+        registerEnemySystems(gm, hooks);
         registerEnemyVisualSystems(gm);
         gm.createSystem<>(systemCreateSpaceShip);
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);
         gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
-        gm.createSystem<Background, Position2D>(backgroundLoop);
+        gm.createSystem<>(backgroundScroll);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
         gm.createSystem<>(playerTerrainCollision);
+        gm.createSystem<MasterClock>(playerInvincibility);
         gm.createSystem<MasterClock>(playerDeath);
+        gm.createSystem<>(systemGameState);
+        gm.createSystem<>(powerUpPickupSystem);
+        gm.createSystem<>(forceSystem);
+        gm.createSystem<Force, SpriteSheet2D>(forceAnimation);
+        gm.createSystem<MasterClock>(reflectSystem);
+        gm.createSystem<RingShot, SpriteSheet2D, Hitbox>(ringHitbox);
         gm.createSystem<>(bulletSystem);
+        gm.createSystem<>(shotTerrainSystem);
+        gm.createSystem<>(chargeEffectSystem);
+        gm.createSystem<>(livesHudSystem);
+        gm.createSystem<>(scoreHudSystem);
+        gm.createSystem<ChargedShot, SpriteSheet2D>(chargedShotAnimation);
     }
 
 } // namespace RType::Server

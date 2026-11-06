@@ -5,12 +5,12 @@
 ** MasterLink
 */
 
-#include "MasterLink.hpp"
+#include "Connexion/MasterLink.hpp"
 
 #include <iostream>
 
-#include "Instance.hpp"
-#include "InstanceLink.hpp"
+#include "Connexion/Instance.hpp"
+#include "Connexion/InstanceLink.hpp"
 
 namespace RType::Server {
 
