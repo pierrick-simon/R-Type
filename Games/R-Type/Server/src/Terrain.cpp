@@ -21,7 +21,7 @@ namespace RType::Server {
     namespace {
         constexpr int PLATFORM_TOLERANCE = 8;
 
-        const std::string &assetPath(AssetId id)
+        std::string assetPath(AssetId id)
         {
             const auto &assets = Asset::makeAssetList();
             const auto it = std::find_if(assets.begin(),
