@@ -23,17 +23,20 @@ namespace RType {
             throw EngineException("Cannot load sound " + path + ": " +
                 ma_result_description(result));
         }
+        systemSound(*this);
+    }
 
-        ma_sound_set_looping(_sound.get(), loop ? MA_TRUE : MA_FALSE);
-
-        if (stereo) {
-            ma_sound_set_attenuation_model(
-                _sound.get(), ma_attenuation_model(attenuation));
-            ma_sound_set_min_distance(_sound.get(), minDistance);
-            ma_sound_set_max_distance(_sound.get(), maxDistance);
-            ma_sound_set_spatialization_enabled(_sound.get(), MA_TRUE);
-        } else
-            ma_sound_set_spatialization_enabled(_sound.get(), MA_FALSE);
+    Sound::Sound(Listener &l, Decoder &decoder, SoundInfo info = {}) :
+        SoundInfo(info), _sound(new ma_sound())
+    {
+        if (ma_sound_init_from_data_source(&l.getEngine(),
+                &decoder.getDecoder(),
+                0,
+                nullptr,
+                _sound.get()) != MA_SUCCESS) {
+            throw EngineException("Failed to initialise sound from decoder");
+        }
+        systemSound(*this);
     }
 
     void Sound::handleState()
