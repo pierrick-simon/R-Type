@@ -32,4 +32,11 @@ namespace RType {
             _systems.end();
     }
 
+    void SystemManager::sortSystemsByLayer()
+    {
+        _systems.sort([](const SystemEntry &a, const SystemEntry &b) {
+            return a.layer < b.layer;
+        });
+    }
+
 } // namespace RType

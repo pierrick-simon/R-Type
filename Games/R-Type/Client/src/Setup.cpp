@@ -34,10 +34,14 @@ namespace RType::Client {
         auto w = gm.createEntity();
         gm.addComponent<Window>(w, 1920, 1080, "R-type");
         ::SetExitKey(KEY_NULL);
-        gm.createSystem<Window>([](Window &win) {
-            win.setTargetFps();
-            win.beginDrawing();
-        });
+        gm.createSystem<Window>(
+            [](Window &win) {
+                win.setTargetFps();
+                win.beginDrawing();
+            },
+            std::numeric_limits<int>::min());
+        gm.createSystem<Window>([](Window &win) { win.endDrawing(); },
+            std::numeric_limits<int>::max());
         return w;
     }
 
@@ -123,7 +127,6 @@ namespace RType::Client {
         gm.createSystem<Assets>(
             Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
         gm.createSystem<Sound>(Sound::systemSound);
-        gm.createSystem<Window>([](Window &win) { win.endDrawing(); });
     }
 
     Entity createSound(GameManager &gm)
