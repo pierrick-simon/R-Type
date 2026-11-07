@@ -63,9 +63,10 @@ namespace RType {
     }
 
     Entity spawnEnemy(GameManager &gm, EnemyType type, float x, float y,
-        const EnemyHooks &hooks)
+        const EnemyHooks &hooks, int healthFactor)
     {
         const EnemyDef &def = enemyDef(type);
+        const int hp = def.hp * healthFactor;
         const SheetInfo &sheet = *def.sheet;
         const Entity entity = gm.createEntity();
 
@@ -87,7 +88,7 @@ namespace RType {
                 y = platform->top - float(sheet.cellH) * SPRITE_SCALE;
         }
         gm.addComponent<Enemy>(entity, Enemy {type, def.scoreValue});
-        gm.addComponent<Health>(entity, Health {def.hp, def.hp});
+        gm.addComponent<Health>(entity, Health {hp, hp});
         gm.addComponent<Position2D>(entity, Position2D {x, y});
         gm.addComponent<Velocity2D>(entity);
         if (def.pattern == PatternType::WalkJump)
@@ -177,10 +178,12 @@ namespace RType {
             [](const auto &entry) { return std::get<1>(entry).levelCleared; });
     }
 
-    Entity createEnemyDirector(GameManager &gm)
+    Entity createEnemyDirector(GameManager &gm, int players)
     {
         const Entity entity = gm.createEntity();
         EnemyDirector director;
+
+        director.players = std::max(players, 1);
 
         director.addWave(EnemyType::Scout, 300.f, 5, 0.5f, 2.f);
         director.addWave(EnemyType::Walker, 0.f, 1, 0.f, 4.f);
@@ -190,6 +193,12 @@ namespace RType {
         director.addWave(EnemyType::Scout, 540.f, 8, 0.4f, 15.f);
         gm.addComponent<EnemyDirector>(entity, std::move(director));
         return entity;
+    }
+
+    void setDirectorPlayers(GameManager &gm, int players)
+    {
+        for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+            director.players = std::max(players, 1);
     }
 
 } // namespace RType

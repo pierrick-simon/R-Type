@@ -89,6 +89,22 @@ Test(boss, spawns_once_at_level_end)
     cr_assert_eq(bossCount(gm), 1);
 }
 
+Test(boss, health_scales_with_the_players)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+
+    director.players = 3;
+    addBackgrounds(gm, Server::LEVEL_END_X);
+    systemEnemyDirector(gm, director, clock, {});
+    for (auto [_, boss, health] : gm.view<Boss, Health>().getVector()) {
+        cr_assert_eq(health.hp, enemyDef(EnemyType::Boss).hp * 3);
+        cr_assert_eq(health.maxHp, health.hp);
+    }
+    cr_assert_eq(bossCount(gm), 1);
+}
+
 Test(boss, closed_belly_absorbs_shots)
 {
     GameManager gm;

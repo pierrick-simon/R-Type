@@ -731,8 +731,12 @@ namespace RType {
         }
         if (Server::levelEnded(gm)) {
             if (!director.bossSpawned)
-                spawnEnemy(
-                    gm, EnemyType::Boss, SCREEN_WIDTH, BOSS_DEF.y, hooks);
+                spawnEnemy(gm,
+                    EnemyType::Boss,
+                    SCREEN_WIDTH,
+                    BOSS_DEF.y,
+                    hooks,
+                    director.players);
             director.bossSpawned = true;
             return;
         }

@@ -128,7 +128,7 @@ namespace RType::Server {
     inline constexpr float POWER_UP_WIDTH = 17.f * SCALE;
     inline constexpr float POWER_UP_HEIGHT = 18.f * SCALE;
     inline constexpr unsigned int POWER_UP_FRAME_MS = 80;
-    inline constexpr float POWER_UP_DROP_CHANCE = 0.12f;
+    inline constexpr float POWER_UP_DROP_CHANCE = 0.05f;
     inline constexpr float POWER_UP_LIFETIME = 12.f;
 
     inline constexpr int FORCE_FRAMES = 6;

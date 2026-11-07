@@ -50,7 +50,7 @@ namespace RType {
 
     inline constexpr BossDef BOSS_DEF = {.x = SCREEN_WIDTH -
             (ROOM_HOLE_X + BOSS_BACK_X - LEVEL_END_MARGIN) * LEVEL_SCALE,
-        .y = (ROOM_HOLE_Y - BOSS_WINDOWS_Y + 30) * LEVEL_SCALE,
+        .y = (ROOM_HOLE_Y - BOSS_WINDOWS_Y + 15) * LEVEL_SCALE,
         .enterSpeed = 270.f,
         .closedTime = 2.5f,
         .stageTime = 0.12f,

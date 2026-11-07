@@ -73,12 +73,12 @@ namespace RType::Server {
             return state;
         }
 
-        void startGame(GameManager &gm)
+        void startGame(GameManager &gm, int players)
         {
             std::cout << "[Lobby] Game started by the host" << std::endl;
             gameStarted = true;
             createBackground(gm);
-            createEnemyDirector(gm);
+            createEnemyDirector(gm, players);
             spawnTeamScore(gm);
             // The ships of a previous game wait, dead, in the lobby.
             resetPlayers(gm);
@@ -119,7 +119,7 @@ namespace RType::Server {
                 member.restartRequested = false;
                 member.returnRequested = false;
                 if (start && host && !gameStarted && state.allReady())
-                    startGame(gm);
+                    startGame(gm, int(server.getClients().size()));
                 member.replayVote =
                     isEndScreen() && (member.replayVote || restart);
                 if (host && back && isEndScreen()) {
@@ -146,6 +146,7 @@ namespace RType::Server {
             std::cout << "[Lobby] Every player wants to play again"
                       << std::endl;
             restartGame(gm);
+            setDirectorPlayers(gm, int(server.getClients().size()));
             for (const auto &[id, entity] : server.getClients())
                 if (gm.hasComponent<LobbyMember>(entity))
                     gm.getComponent<LobbyMember>(entity).replayVote = false;
