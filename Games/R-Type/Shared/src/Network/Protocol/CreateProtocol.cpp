@@ -46,15 +46,13 @@ namespace RType {
     void CreateProtocol::manageCreateSprite2D(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
-        auto asset = gm.getAssetsMap().find(e.assetId);
-
-        if (asset == gm.getAssetsMap().end())
-            return;
-        auto s = ctx.gm->get().createEntity();
-        gm.addComponent<RType::Sprite2D>(s);
+        auto s = gm.createEntity();
+        Sprite2D sprite;
+        sprite.color.a = 0;
+        sprite.assetId = e.assetId;
+        gm.addComponent<RType::Sprite2D>(s, sprite);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
-        gm.addComponent<RType::Texture2D>(s, asset->second);
         ctx.map.emplace(e.id, s);
     }
 
@@ -62,17 +60,13 @@ namespace RType {
         ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
-        auto asset = gm.getAssetsMap().find(e.assetId);
-
-        if (asset == gm.getAssetsMap().end())
-            return;
-        auto s = ctx.gm->get().createEntity();
+        auto s = gm.createEntity();
         RType::SpriteSheet2D sheet;
         sheet.color.a = 0;
+        sheet.assetId = e.assetId;
         gm.addComponent<RType::SpriteSheet2D>(s, sheet);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
-        gm.addComponent<RType::Texture2D>(s, asset->second);
         if (e.assetId >= Asset::PLAYER_SHEET_1 &&
             e.assetId <= Asset::PLAYER_SHEET_5) {
             gm.addComponent<RType::Friction2D>(s, PLAYER_FRICTION);
@@ -84,20 +78,23 @@ namespace RType {
     void CreateProtocol::manageCreateSound(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
-        auto asset = gm.getAssetsMap().find(e.assetId);
         auto entity = ctx.map.find(e.id);
+        std::optional<std::reference_wrapper<Decoder>> decoder;
 
-        if (asset == gm.getAssetsMap().end())
+        for (auto [_, am] : gm.view<Assets>().getVector())
+            decoder = am.get<Decoder>(e.assetId);
+        if (!decoder)
             return;
         for (auto [_, l] : gm.view<Listener>().getVector()) {
             if (entity == ctx.map.end()) {
                 auto s = ctx.gm->get().createEntity();
-                gm.addComponent<RType::Sound>(s, l, asset->second);
+                gm.addComponent<RType::Sound>(s, l, decoder.value().get());
                 gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
                 gm.addComponent<RType::Velocity2D>(s);
                 ctx.map.emplace(e.id, s);
             } else {
-                gm.addComponent<RType::Sound>(entity->second, l, asset->second);
+                gm.addComponent<RType::Sound>(
+                    entity->second, l, decoder.value().get());
             }
         }
     }
@@ -105,13 +102,11 @@ namespace RType {
     void CreateProtocol::manageCreateText2D(ProtocolEntity &e, Context &ctx)
     {
         auto &gm = ctx.gm->get();
-        auto asset = gm.getAssetsMap().find(e.assetId);
-
-        if (asset == gm.getAssetsMap().end())
-            return;
-        auto s = ctx.gm->get().createEntity();
-        gm.addComponent<RType::Text2D>(s);
-        gm.addComponent<RType::Font>(s, asset->second);
+        auto s = gm.createEntity();
+        Text2D text;
+        text.color.a = 0;
+        text.assetId = e.assetId;
+        gm.addComponent<RType::Text2D>(s, text);
         gm.addComponent<RType::Position2D>(s, e.posX, e.posY);
         gm.addComponent<RType::Velocity2D>(s);
         ctx.map.emplace(e.id, s);

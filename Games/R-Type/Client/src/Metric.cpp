@@ -6,14 +6,12 @@
 */
 
 #include "Metric.hpp"
-#include "Font.hpp"
 #include "Text2D.hpp"
 
 namespace RType::Client {
-    Metric::Metric(const std::string &path, bool network) :
-        _network(network)
+    Metric::Metric(int assetId, bool network) :
+        _network(network), _assetId(assetId)
     {
-        _path = path;
     }
 
     void Metric::updateMetric(GameManager &gm)
@@ -33,18 +31,26 @@ namespace RType::Client {
 
     void Metric::createFps(GameManager &gm)
     {
+        Text2D text {};
+        text.assetId = _assetId;
+        text.fontSize = 20;
+        text.str = "";
+
         auto e = gm.createEntity();
-        gm.addComponent<Text2D>(e, 20, "");
-        gm.addComponent<Font>(e, _path);
+        gm.addComponent<Text2D>(e, text);
         gm.addComponent<Position2D>(e, 1920.f - 150.f, 10.f);
         _entities.push_back(e);
     }
 
     void Metric::createLagometer(GameManager &gm)
     {
+        Text2D text {};
+        text.assetId = _assetId;
+        text.fontSize = 20;
+        text.str = "";
+
         auto e = gm.createEntity();
-        gm.addComponent<Text2D>(e, 20, "");
-        gm.addComponent<Font>(e, _path);
+        gm.addComponent<Text2D>(e, text);
         gm.addComponent<Position2D>(e, 1920.f - 400.f, 10.f);
         _entities.push_back(e);
     }

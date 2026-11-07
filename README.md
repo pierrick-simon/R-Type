@@ -113,7 +113,7 @@ nothing to install by hand.
 
 ```sh
 # linux
-cmake -S . -B build -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_C_COMPILER=gcc-14
+cmake -S . -B build
 cmake --build build -j
 
 # windows
@@ -215,6 +215,15 @@ carry Doxygen comments for every class and component.
 The CI (GitHub Actions, Ubuntu 24.04) builds the client and the server, runs
 the Criterion tests and the linter on every push and pull request. The linter also
 checks the code against C++26 (`-std=c++2c`).
+
+To write a game's Lua scripts faster, a VS Code extension for the engine's Lua
+is available. Install it with:
+
+```sh
+code --install-extension ariel-amriou.r-type-lua-engine-epitech
+```
+
+or search for it in the VS Code Marketplace (Extensions view, `Ctrl+Shift+X`).
 
 ---
 

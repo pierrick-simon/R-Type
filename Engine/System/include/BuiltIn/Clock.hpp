@@ -43,6 +43,12 @@ namespace RType {
          */
         static void systemClock(Clock &c);
 
+        /**
+         * @brief Restarts the measure from now, so that the next frame does
+         * not count the time spent before, such as a pause.
+         */
+        void restart();
+
     private:
         std::chrono::steady_clock::time_point _clock =
             std::chrono::steady_clock::now();

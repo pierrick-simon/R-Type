@@ -17,6 +17,7 @@ namespace RType::Client {
     Entity createMasterClock(GameManager &gm);
     Entity createSound(GameManager &gm);
     Entity createMetric(GameManager &gm);
+    Entity createAssetManager(GameManager &gm);
     void createSystems(GameManager &gm);
 } // namespace RType::Client
 

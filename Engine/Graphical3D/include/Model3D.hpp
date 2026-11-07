@@ -9,6 +9,7 @@
 #define MODEL3D_HPP_
 
     #include <raylib-cpp.hpp>
+    #include <string_view>
     #include "GameManager.hpp"
 
 namespace RType {
@@ -16,6 +17,8 @@ namespace RType {
      * @brief 3D model component built on top of raylib::Model.
      */
     struct Model3D : raylib::Model {
+        static constexpr std::string_view TYPE = "model3D";
+
         /**
          * @brief Loads a 3D model from a file.
          * @param path Path to the model file.
@@ -27,6 +30,7 @@ namespace RType {
          * @param gm Game manager owning the models to unload.
          */
         static void unloadModels3D(GameManager &gm);
+        static void unload([[maybe_unused]] GameManager &gm) {};
     };
 } // namespace RType
 #endif /* !MODEL3D_HPP_ */

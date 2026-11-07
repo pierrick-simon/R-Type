@@ -9,6 +9,7 @@
 #define GAMEMANAGER_HPP_
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -242,6 +243,7 @@ namespace RType {
          * @tparam Components The component types the system operates on.
          * Their order does not matter: the smallest array is iterated over.
          * @param func Callback applied to each matching entity.
+         * @param layer The Layer of the system 0 by default
          * @return Id identifying the created system, usable with
          * destroySystem.
          * @warning Must not be called during update(): the new system
@@ -249,9 +251,10 @@ namespace RType {
          */
         template<typename... Components>
         SystemId createSystem(
-            std::type_identity_t<std::function<void(Components &...)>> func)
+            std::type_identity_t<std::function<void(Components &...)>> func,
+            int layer = 0)
         {
-            SystemId id = _sm.createSystem<Components...>(func);
+            SystemId id = _sm.createSystem<Components...>(func, layer);
 
             if (_debug)
                 log("createSystem with ( ",
@@ -316,6 +319,20 @@ namespace RType {
         [[nodiscard]] bool isUpdating() const;
 
         /**
+         * @brief Pauses or resumes the game: while it is paused, run()
+         * skips update(), so no system runs at all. Resuming restarts every
+         * Clock and the MasterClock, so that the first frame after the pause
+         * does not count the time spent paused.
+         */
+        void setPaused(bool paused);
+
+        /**
+         * @brief Checks whether the game is paused.
+         * @return true if setPaused(true) was called last.
+         */
+        [[nodiscard]] bool isPaused() const;
+
+        /**
          * @brief Creates a view over the entities that have all the given
          * component types. Never throws: if one of the types has never
          * been added, the view is empty.
@@ -343,16 +360,6 @@ namespace RType {
             return _cm.getComponentArray<Component>().nbComponent();
         }
 
-        std::unordered_map<int, std::string> &getAssetsMap()
-        {
-            return _assetsMap;
-        }
-
-        void setAssetsMap(std::unordered_map<int, std::string> &map)
-        {
-            _assetsMap = map;
-        }
-
         void run(int fps, const std::function<bool()> &keepRunning);
 
     private:
@@ -360,22 +367,34 @@ namespace RType {
         EntityManager _em;
         SystemManager _sm;
         CommandQueue _cq;
-        std::unordered_map<int, std::string> _assetsMap;
 
         bool _updating = false;
+        bool _paused = false;
         bool _debug = false;
+        mutable std::ofstream _logFile;
 
         /**
-         * @brief Writes one line on std::clog, only in debug mode.
+         * @brief Opens log/{timestamp}.log, creating the log directory if
+         * needed.
+         */
+        void openLogFile();
+
+        /**
+         * @brief Writes one line in the log file, only in debug mode.
+         * Falls back to std::clog if the file could not be opened.
          */
         template<typename... Args>
         void log(const Args &...args) const
         {
             if (!_debug)
                 return;
-            std::clog << "[GameManager] ";
-            (std::clog << ... << args);
-            std::clog << std::endl;
+            std::ostream &out = _logFile.is_open()
+                ? static_cast<std::ostream &>(_logFile)
+                : std::clog;
+
+            out << "[GameManager] ";
+            (out << ... << args);
+            out << std::endl;
         }
 
         /**
