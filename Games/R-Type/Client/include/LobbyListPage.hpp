@@ -39,6 +39,15 @@ namespace RType::Client {
 
     struct LobbyListFrame {};
 
+    /** @brief Sprite sheet of the rows (MENU_LOBBY_ROW: normal, hovered,
+     *         selected), drawn by systemDrawLobbyList inside the visible
+     *         area, not by the SpriteSheet2D system. */
+    struct LobbyListRowSprite {};
+
+    inline constexpr std::size_t LOBBY_ROW_TILE_NORMAL = 0;
+    inline constexpr std::size_t LOBBY_ROW_TILE_HOVERED = 1;
+    inline constexpr std::size_t LOBBY_ROW_TILE_SELECTED = 2;
+
     struct CreateLobbyButton {};
 
     struct JoinLobbyButton {};

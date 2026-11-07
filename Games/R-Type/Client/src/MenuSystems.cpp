@@ -114,7 +114,7 @@ namespace RType::Client {
             [&gm](Entity e, ConnectingText &) { gm.destroyEntity(e); });
     }
 
-    void systemTextFields(GameManager &gm)
+        void systemTextFields(GameManager &gm)
     {
         if (activeField != Field::None) {
             std::string &value = fieldValue(activeField);
@@ -137,9 +137,11 @@ namespace RType::Client {
                 f.elapsed += clock.getElapsed();
                 const bool blink =
                     activeField == f.id && (f.elapsed.count() / 400) % 2 == 0;
-                button.label = f.id == Field::Password
-                    ? ""
-                    : fieldValue(f.id) + (blink ? "_" : "");
+                const std::string &value = fieldValue(f.id);
+                button.label = (f.id == Field::Password
+                                       ? std::string(value.size(), '*')
+                                       : value) +
+                    (blink ? "_" : "");
                 button.error = f.id == Field::Ip && ipInvalid;
             });
     }

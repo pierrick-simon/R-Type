@@ -102,9 +102,7 @@ namespace RType::Client {
     /** @brief Shows the menu once connected, sends the requests, handles
      *         the answers and updates the buttons. */
     void systemLogin(GameManager &gm);
-    /** @brief Draws the password fields as '*' (raylib default font: the
-     *         font of the game has no '*'). Must run after the sprites. */
-    void systemDrawPasswordFields(GameManager &gm);
+
     /** @brief Draws the panel of the login window (raylib). */
     void systemDrawLoginPopup(GameManager &gm);
 

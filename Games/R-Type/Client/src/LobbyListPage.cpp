@@ -335,7 +335,7 @@ namespace RType::Client {
     void createLobbyListPage(GameManager &gm)
     {
         const float buttonsY =
-            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2;
+            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2 - BUTTON_GAP;
         const Entity title = addText(gm,
             static_cast<float>(WINDOW_WIDTH) / 2.f,
             LOBBY_LIST_TITLE_Y,
@@ -360,6 +360,12 @@ namespace RType::Client {
         gm.addComponent<LobbyListFrame>(frame);
         gm.addComponent<Texture2D>(
             frame, gm.getAssetsMap().at(Asset::MENU_LIST_FRAME));
+        const Entity rows = gm.createEntity();
+
+        gm.addComponent<LobbyListItem>(rows);
+        gm.addComponent<LobbyListRowSprite>(rows);
+        gm.addComponent<Texture2D>(
+            rows, gm.getAssetsMap().at(Asset::MENU_LOBBY_ROW));
         scroll = 0;
         gm.addComponent<LobbyListItem>(title);
         gm.addComponent<LobbyListItem>(create);
@@ -468,6 +474,16 @@ namespace RType::Client {
             [&font](Entity, LobbyListItem &, Font &f) { font = &f; });
         if (state == nullptr || font == nullptr)
             return;
+        const Texture2D *rowSprite = nullptr;
+        Vector2 mouse {-1.f, -1.f};
+
+        gm.view<LobbyListRowSprite, Texture2D>().each(
+            [&rowSprite](Entity, LobbyListRowSprite &, Texture2D &t) {
+                rowSprite = &t;
+            });
+        gm.view<MouseManager>().each([&mouse](Entity, MouseManager &m) {
+            mouse = {m.getPos().x, m.getPos().y};
+        });
         const float size = LOBBY_LIST_TEXT_SIZE;
         auto text =
             [&](const std::string &str, float tx, float ty, Color color) {
@@ -477,11 +493,6 @@ namespace RType::Client {
             return ::MeasureTextEx(*font, str.c_str(), size, 1.f).x;
         };
 
-        ::BeginScissorMode(0,
-            static_cast<int>(LOBBY_LIST_VISIBLE_TOP),
-            WINDOW_WIDTH,
-            static_cast<int>(
-                LOBBY_LIST_VISIBLE_BOTTOM - LOBBY_LIST_VISIBLE_TOP));
 
         if (state->lobbies.empty()) {
             const std::string empty = state->received
@@ -508,12 +519,23 @@ namespace RType::Client {
             if (rect.y + rect.height < 0.f ||
                 rect.y > static_cast<float>(WINDOW_HEIGTH))
                 continue;
-            ::DrawRectangleRec(rect,
-                selected ? Color {60, 110, 200, 240} : Color {35, 42, 75, 230});
-            ::DrawRectangleLinesEx(rect,
-                selected ? 5.f : 3.f,
-                selected ? Color {255, 210, 80, 255}
-                         : Color {200, 200, 220, 255});
+            if (rowSprite != nullptr) {
+                const bool hovered = !client->popupOpen &&
+                    mouse.y >= LOBBY_LIST_VISIBLE_TOP &&
+                    mouse.y <= LOBBY_LIST_VISIBLE_BOTTOM &&
+                    ::CheckCollisionPointRec(mouse, rect);
+                const std::size_t tile = selected ? LOBBY_ROW_TILE_SELECTED
+                    : hovered                     ? LOBBY_ROW_TILE_HOVERED
+                                                  : LOBBY_ROW_TILE_NORMAL;
+
+                ::DrawTextureRec(*rowSprite,
+                    {static_cast<float>(tile) * LOBBY_LIST_ROW_WIDTH,
+                        0.f,
+                        LOBBY_LIST_ROW_WIDTH,
+                        LOBBY_LIST_ROW_HEIGHT},
+                    {rect.x, rect.y},
+                    WHITE);
+            }
             const float nameWidth = width(name);
             const float nameSize = nameWidth > LOBBY_LIST_NAME_MAX_WIDTH
                 ? size * LOBBY_LIST_NAME_MAX_WIDTH / nameWidth
@@ -533,7 +555,6 @@ namespace RType::Client {
                 lobby.started ? Color {255, 170, 60, 255}
                               : Color {90, 230, 120, 255});
         }
-        ::EndScissorMode();
         gm.view<LobbyListFrame, Texture2D>().each(
             [](Entity, LobbyListFrame &, Texture2D &frame) {
                 ::DrawTexture(frame, 0, 0, WHITE);

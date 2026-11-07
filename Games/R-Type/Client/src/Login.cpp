@@ -429,33 +429,6 @@ namespace RType::Client {
         updateButtons(gm, findMaster(gm).login);
     }
 
-    void systemDrawPasswordFields(GameManager &gm)
-    {
-        gm.view<TextField, Button>().each(
-            [](Entity, TextField &f, Button &button) {
-                if (f.id != Field::Password)
-                    return;
-                const bool blink =
-                    activeField == f.id && (f.elapsed.count() / 400) % 2 == 0;
-                const std::string str =
-                    std::string(_clInfos._password.size(), '*') +
-                    (blink ? "_" : "");
-                const ::Font font = ::GetFontDefault();
-                const float size = 40.f;
-                const float spacing = 6.f;
-                const Vector2 measure =
-                    ::MeasureTextEx(font, str.c_str(), size, spacing);
-
-                ::DrawTextEx(font,
-                    str.c_str(),
-                    {button.rect.x + (button.rect.width - measure.x) / 2.f,
-                        button.rect.y + (button.rect.height - measure.y) / 2.f},
-                    size,
-                    spacing,
-                    WHITE);
-            });
-    }
-
     void systemDrawLoginPopup(GameManager &gm)
     {
         const LoginClient *l = findMaster(gm).login;

@@ -68,6 +68,7 @@ namespace RType::Asset {
     inline constexpr AssetId MENU_LIST_FRAME = 305;
     inline constexpr AssetId MENU_VOLUME_DOWN = 306;
     inline constexpr AssetId MENU_VOLUME_UP = 307;
+    inline constexpr AssetId MENU_LOBBY_ROW = 308;
 
     [[nodiscard]] AssetList makeAssetList();
 
