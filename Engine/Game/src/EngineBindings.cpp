@@ -11,8 +11,10 @@
 #include "Draw3D.hpp"
 #include "Font.hpp"
 #include "Friction2D.hpp"
+#include "Friction3D.hpp"
 #include "GameManagerBinding.hpp"
 #include "GravityField2D.hpp"
+#include "GravityField3D.hpp"
 #include "Keybind.hpp"
 #include "KeyboardManager.hpp"
 #include "Listener.hpp"
@@ -31,6 +33,7 @@
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
 #include "Velocity2D.hpp"
+#include "Velocity3D.hpp"
 
 namespace RType::Game {
 
@@ -38,16 +41,6 @@ namespace RType::Game {
         SystemBinding::engineSystems = {
             // engine-system
             {"Clock", makeSystem(Clock::systemClock)},
-            {"Velocity2D", makeSystem(Velocity2D::systemVelocity2D)},
-            {"MasterVelocity2D",
-                makeSystem(Velocity2D::systemMasterVelocity2D)},
-            {"Friction2D", makeSystem(Friction2D::systemFriction2D)},
-            {"MasterFriction2D",
-                makeSystem(Friction2D::systemMasterFriction2D)},
-            {"GravityField2D",
-                makeSystem(GravityField2D::systemGravityField2D)},
-            {"MasterGravityField2D",
-                makeSystem(GravityField2D::systemMasterGravityField2D)},
             // engine-graphical2D
             {"KeyboardManagerClear",
                 makeSystem(KeyboardManager::systemKeyboardManagerClear)},
@@ -72,6 +65,27 @@ namespace RType::Game {
                 makeSystem(SpriteSheet3D::systemDrawSpriteSheet3D)},
             // engine-audio
             {"Sound2D", makeSystem(Sound::systemSound2D)},
+            // engine-physics
+            {"Velocity2D", makeSystem(Velocity2D::systemVelocity2D)},
+            {"MasterVelocity2D",
+                makeSystem(Velocity2D::systemMasterVelocity2D)},
+            {"Friction2D", makeSystem(Friction2D::systemFriction2D)},
+            {"MasterFriction2D",
+                makeSystem(Friction2D::systemMasterFriction2D)},
+            {"GravityField2D",
+                makeSystem(GravityField2D::systemGravityField2D)},
+            {"MasterGravityField2D",
+                makeSystem(GravityField2D::systemMasterGravityField2D)},
+            {"Velocity3D", makeSystem(Velocity3D::systemVelocity3D)},
+            {"MasterVelocity3D",
+                makeSystem(Velocity3D::systemMasterVelocity3D)},
+            {"Friction3D", makeSystem(Friction3D::systemFriction3D)},
+            {"MasterFriction3D",
+                makeSystem(Friction3D::systemMasterFriction3D)},
+            {"GravityField3D",
+                makeSystem(GravityField3D::systemGravityField3D)},
+            {"MasterGravityField3D",
+                makeSystem(GravityField3D::systemMasterGravityField3D)},
     };
 
     template<>

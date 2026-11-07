@@ -114,10 +114,7 @@ namespace RType::Client {
         gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
         gm.createSystem<Assets>(systemDrawLobbyList);
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Assets>(
             systemTextAnchorManager<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(
