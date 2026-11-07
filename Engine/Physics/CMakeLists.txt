@@ -5,6 +5,8 @@ add_library(engine-physics SHARED
     src/Friction3D.cpp
     src/GravityField3D.cpp
     src/Velocity3D.cpp
+    src/AngularVelocity2D.cpp
+    src/AngularVelocity3D.cpp
 )
 
 target_include_directories(engine-physics PUBLIC

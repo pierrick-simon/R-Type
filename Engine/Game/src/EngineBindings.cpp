@@ -5,6 +5,8 @@
 ** EngineBindings
 */
 
+#include "AngularVelocity2D.hpp"
+#include "AngularVelocity3D.hpp"
 #include "Camera3D.hpp"
 #include "Clock.hpp"
 #include "ComponentBinding.hpp"
@@ -86,6 +88,14 @@ namespace RType::Game {
                 makeSystem(GravityField3D::systemGravityField3D)},
             {"MasterGravityField3D",
                 makeSystem(GravityField3D::systemMasterGravityField3D)},
+            {"AngularVelocity2D",
+                makeSystem(AngularVelocity2D::systemAngularVelocity2D)},
+            {"MasterAngularVelocity2D",
+                makeSystem(AngularVelocity2D::systemMasterAngularVelocity2D)},
+            {"AngularVelocity3D",
+                makeSystem(AngularVelocity3D::systemAngularVelocity3D)},
+            {"MasterAngularVelocity3D",
+                makeSystem(AngularVelocity3D::systemMasterAngularVelocity3D)},
     };
 
     template<>
@@ -220,6 +230,18 @@ namespace RType::Game {
             &Sound::setPitch);
 
         // engine-physics
+        bindComponent<Rotation2D>(
+            lua, "Rotation2D", "angle", &Rotation2D::angle);
+        bindComponent<Rotation3D>(lua,
+            "Rotation3D",
+            "x",
+            &Rotation3D::x,
+            "y",
+            &Rotation3D::y,
+            "z",
+            &Rotation3D::z,
+            "w",
+            &Rotation3D::w);
         bindComponent<Velocity2D>(
             lua, "Velocity2D", "x", &Velocity2D::x, "y", &Velocity2D::y);
         bindComponent<Friction2D>(lua, "Friction2D", "f", &Friction2D::f);
@@ -250,6 +272,16 @@ namespace RType::Game {
             &GravityField3D::z,
             "g",
             &GravityField3D::g);
+        bindComponent<AngularVelocity2D>(
+            lua, "AngularVelocity2D", "w", &AngularVelocity2D::w);
+        bindComponent<AngularVelocity3D>(lua,
+            "AngularVelocity3D",
+            "x",
+            &AngularVelocity3D::x,
+            "y",
+            &AngularVelocity3D::y,
+            "z",
+            &AngularVelocity3D::z);
     }
 
 } // namespace RType::Game
