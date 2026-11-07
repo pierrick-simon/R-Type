@@ -8,8 +8,6 @@
 #ifndef RUNNER_HPP_
 #define RUNNER_HPP_
 
-#include <atomic>
-
 namespace RType::Game {
 
     /**
@@ -29,10 +27,9 @@ namespace RType::Game {
 
         /**
          * @brief Read before each frame: the main loop goes on as long as
-         * it is true. Set to false by gm:stop(). Atomic since the console
-         * thread reads it too.
+         * it is true. Set to false by gm:stop().
          */
-        static std::atomic<bool> running;
+        static bool running;
     };
 
 } // namespace RType::Game

@@ -5,7 +5,6 @@
 ** Runner
 */
 
-#include <functional>
 #include <iostream>
 #include <sol/sol.hpp>
 #include <thread>
@@ -21,15 +20,12 @@
 
 namespace RType::Game {
 
-    std::atomic<bool> Runner::running = true;
+    bool Runner::running = true;
 
     int Runner::run()
     {
         sol::state lua;
 
-#if defined(__DEBUG__)
-        std::ios::sync_with_stdio(false);
-#endif
         lua.open_libraries(sol::lib::base, sol::lib::math);
         lua.set_exception_handler(&Scripts::handleException);
         GameManagerBinding::registerFunctions(lua);
@@ -47,13 +43,15 @@ namespace RType::Game {
             for (auto &path : Scripts::findPaths(GameConfig.srcDir))
                 Scripts::load(lua, path, gm);
 #if defined(__DEBUG__)
-            std::thread(Console::listen, std::cref(running)).detach();
-            gm.run(GameConfig.windowFPS, [&lua, &gm] {
-                Console::run(lua, gm);
-                return running.load();
+            Console console(lua, gm);
+
+            std::thread(Console::listen).detach();
+            gm.run(GameConfig.windowFPS, [&console] {
+                console.run();
+                return running;
             });
 #else
-            gm.run(GameConfig.windowFPS, [] { return running.load(); });
+            gm.run(GameConfig.windowFPS, [] { return running; });
 #endif
         } catch (const EngineException &e) {
             std::cout << e.what() << std::endl;

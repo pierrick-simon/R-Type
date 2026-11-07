@@ -5,200 +5,206 @@
 ** Console
 */
 
-#include "Console.hpp"
-#include <exception>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
-#include "Scripts.hpp"
+#include "Console.hpp"
+#include "Exceptions.hpp"
 
-namespace RType {
+namespace RType::Game {
 
-    const std::unordered_map<std::string, Console::Command> Console::_commands = {
-        {"help", &Console::help},
-        {"createEntity", &Console::createEntity},
-        {"destroyEntity", &Console::destroyEntity},
-        {"addComponent", &Console::addComponent},
-        {"removeComponent", &Console::removeComponent},
-        {"enableSystem", &Console::enableSystem},
-        {"disableSystem", &Console::disableSystem},
-        {"exit", &Console::exitGame},
-        {"exitConsole", &Console::exitConsole},
+    const std::map<std::string, Console::Command> Console::_commands = {
+        {"help", {&Console::help, ""}},
+        {"createEntity", {&Console::createEntity, ""}},
+        {"destroyEntity", {&Console::destroyEntity, "<index> <generation>"}},
+        {"addComponent",
+            {&Console::addComponent,
+                "<index> <generation> <component> [{fields}]"}},
+        {"removeComponent",
+            {&Console::removeComponent, "<index> <generation> <component>"}},
+        {"enableSystem", {&Console::enableSystem, "<system>"}},
+        {"disableSystem", {&Console::disableSystem, "<id>"}},
+        {"exit", {&Console::exitGame, ""}},
+        {"exitConsole", {&Console::exitConsole, ""}},
     };
 
     std::queue<std::string> Console::_pending;
     std::mutex Console::_mutex;
-    bool Console::_needPrompt = true;
-    bool Console::_started = false;
-    bool Console::_closed = false;
 
-    template<typename... Args>
-    sol::protected_function_result Console::call(
-        sol::state &lua, const std::string &function, GameManager &gm, Args &&...args)
+    Console::Console(sol::state &lua, GameManager &gm) :
+        _lua(lua), _gm(gm)
     {
-        sol::protected_function func = lua["GameManager"][function];
-        sol::protected_function_result result = func(&gm, std::forward<Args>(args)...);
-
-        if (!result.valid()) {
-            sol::error error = result;
-            std::string message = error.what();
-
-            throw ScriptError(message.substr(0, message.find("\nstack traceback:")));
-        }
-        return result;
+        std::ios::sync_with_stdio(false);
     }
 
-    Entity Console::readEntity(std::istringstream &stream)
+    void Console::listen()
     {
-        std::size_t index = 0;
-        std::size_t generation = 0;
-
-        if (!(stream >> index >> generation))
-            throw std::invalid_argument("expected <index> <generation>");
-        return Entity(index, generation);
-    }
-
-    void Console::help(sol::state &, GameManager &, const std::string &)
-    {
-        for (const auto &[name, _] : _commands)
-            std::cout << name << std::endl;
-    }
-
-    void Console::createEntity(sol::state &lua, GameManager &gm, const std::string &)
-    {
-        Entity entity = call(lua, "createEntity", gm).get<Entity>();
-
-        std::cout << "#" << entity.index() << " (" << entity.generation() << ")" << std::endl;
-    }
-
-    void Console::destroyEntity(sol::state &lua, GameManager &gm, const std::string &args)
-    {
-        std::istringstream stream(args);
-        Entity entity = readEntity(stream);
-
-        if (entity.index() == 0 && entity.generation() == 0)
-            throw std::invalid_argument("cannot destroy the window");
-        call(lua, "destroyEntity", gm, entity);
-    }
-
-    void Console::addComponent(sol::state &lua, GameManager &gm, const std::string &args)
-    {
-        std::istringstream stream(args);
-        Entity entity = readEntity(stream);
-        std::string name;
-        std::string fields;
-
-        if (!(stream >> name))
-            throw std::invalid_argument("expected <index> <generation> <component> [{fields}]");
-        std::getline(stream >> std::ws, fields);
-        if (fields.empty()) {
-            call(lua, "addComponent", gm, entity, name);
-            return;
-        }
-        sol::protected_function_result table = lua.safe_script("return " + fields, &sol::script_pass_on_error);
-        Game::Scripts::checkResult(table);
-        if (table.get_type() != sol::type::table)
-            throw std::invalid_argument("fields must be a Lua table, such as {x = 10}");
-        call(lua, "addComponent", gm, entity, name, table.get<sol::table>());
-    }
-
-    void Console::removeComponent(sol::state &lua, GameManager &gm, const std::string &args)
-    {
-        std::istringstream stream(args);
-        Entity entity = readEntity(stream);
+        std::string line;
         std::string name;
 
-        if (!(stream >> name))
-            throw std::invalid_argument("expected <index> <generation> <component>");
-        call(lua, "removeComponent", gm, entity, name);
-    }
-
-    void Console::enableSystem(sol::state &lua, GameManager &gm, const std::string &args)
-    {
-        std::istringstream stream(args);
-        std::string name;
-
-        if (!(stream >> name))
-            throw std::invalid_argument("expected <system>");
-        SystemId id = call(lua, "addSystem", gm, name).get<SystemId>();
-
-        std::cout << "system " << id << std::endl;
-    }
-
-    void Console::disableSystem(sol::state &lua, GameManager &gm, const std::string &args)
-    {
-        std::istringstream stream(args);
-        SystemId id = 0;
-
-        if (!(stream >> id))
-            throw std::invalid_argument("expected <id>");
-        call(lua, "destroySystem", gm, id);
-    }
-
-    void Console::exitConsole(sol::state &, GameManager &, const std::string &)
-    {
-        _closed = true;
-    }
-
-    void Console::exitGame(sol::state &lua, GameManager &gm, const std::string &)
-    {
-        call(lua, "stop", gm);
-        _closed = true;
-    }
-
-    void Console::listen(const std::atomic<bool> &running)
-    {
-        std::string input;
-
-        while (running && std::getline(std::cin, input)) {
-            const std::string name = input.substr(0, input.find(' '));
-
-            {
-                std::lock_guard lock(_mutex);
-                _pending.push(input);
-            }
+        while (std::getline(std::cin, line)) {
+            _mutex.lock();
+            _pending.push(line);
+            _mutex.unlock();
+            name = line.substr(0, line.find(' '));
             if (name == "exit" || name == "exitConsole")
                 return;
         }
     }
 
-    void Console::run(sol::state &lua, GameManager &gm)
+    void Console::run()
     {
-        std::queue<std::string> pending;
+        std::queue<std::string> lines;
 
-        {
-            std::lock_guard lock(_mutex);
-            std::swap(pending, _pending);
+        _mutex.lock();
+        std::swap(lines, _pending);
+        _mutex.unlock();
+        while (!lines.empty()) {
+            execute(lines.front());
+            lines.pop();
+            _prompt = true;
         }
-        if (!pending.empty())
-            _needPrompt = true;
-        for (; !pending.empty(); pending.pop())
-            execute(lua, gm, pending.front());
-        if (_needPrompt && _started && !_closed) {
+        if (_prompt && _open) {
             std::cout << "> " << std::flush;
-            _needPrompt = false;
+            _prompt = false;
         }
-        _started = true;
     }
 
-    void Console::execute(sol::state &lua, GameManager &gm, const std::string &input)
+    void Console::execute(const std::string &line)
     {
-        const std::size_t space = input.find(' ');
-        const std::string name = input.substr(0, space);
-        const std::string args = space == std::string::npos ? "" : input.substr(space + 1);
+        std::istringstream args(line);
+        std::string name;
 
-        auto it = _commands.find(name);
-        if (it == _commands.end()) {
+        args >> name;
+        if (name.empty())
+            return;
+        if (!_commands.contains(name)) {
             std::cerr << "Unknown command: " << name << std::endl;
             return;
         }
+        const Command &command = _commands.at(name);
+
         try {
-            it->second(lua, gm, args);
+            (this->*command.function)(args);
+        } catch (const std::invalid_argument &) {
+            std::cerr << "usage: " << name << " " << command.usage << std::endl;
         } catch (const std::exception &e) {
             std::cerr << name << ": " << e.what() << std::endl;
-        } catch (...) {
-            std::cerr << name << ": unknown error" << std::endl;
         }
     }
 
-} // namespace RType
+    void Console::help(std::istream &)
+    {
+        for (const auto &[name, command] : _commands)
+            std::cout << name << " " << command.usage << std::endl;
+    }
+
+    void Console::createEntity(std::istream &)
+    {
+        Entity entity = call("createEntity").get<Entity>();
+
+        std::cout << "#" << entity.index() << " (" << entity.generation() << ")"
+                  << std::endl;
+    }
+
+    void Console::destroyEntity(std::istream &args)
+    {
+        std::size_t index = readNumber(args);
+        std::size_t generation = readNumber(args);
+
+        if (index == 0 && generation == 0)
+            throw std::runtime_error("cannot destroy the window");
+        call("destroyEntity", Entity(index, generation));
+    }
+
+    void Console::addComponent(std::istream &args)
+    {
+        std::size_t index = readNumber(args);
+        std::size_t generation = readNumber(args);
+        std::string name = readWord(args);
+        std::string fields;
+
+        args >> std::ws;
+        std::getline(args, fields);
+        if (fields.empty()) {
+            call("addComponent", Entity(index, generation), name);
+            return;
+        }
+        sol::protected_function_result table =
+            _lua.safe_script("return " + fields, &sol::script_pass_on_error);
+
+        check(table);
+        if (table.get_type() != sol::type::table)
+            throw std::runtime_error(
+                "fields must be a table, such as {x = 10}");
+        call("addComponent",
+            Entity(index, generation),
+            name,
+            table.get<sol::table>());
+    }
+
+    void Console::removeComponent(std::istream &args)
+    {
+        std::size_t index = readNumber(args);
+        std::size_t generation = readNumber(args);
+        std::string name = readWord(args);
+
+        call("removeComponent", Entity(index, generation), name);
+    }
+
+    void Console::enableSystem(std::istream &args)
+    {
+        std::string name = readWord(args);
+        SystemId id = call("addSystem", name).get<SystemId>();
+
+        std::cout << "system " << id << std::endl;
+    }
+
+    void Console::disableSystem(std::istream &args)
+    {
+        SystemId id = readNumber(args);
+
+        call("destroySystem", id);
+    }
+
+    void Console::exitGame(std::istream &)
+    {
+        call("stop");
+        _open = false;
+    }
+
+    void Console::exitConsole(std::istream &)
+    {
+        _open = false;
+    }
+
+    void Console::check(const sol::protected_function_result &result)
+    {
+        if (result.valid())
+            return;
+        sol::error error = result;
+        std::string message = error.what();
+
+        throw ScriptError(message.substr(0, message.find("\nstack traceback")));
+    }
+
+    std::size_t Console::readNumber(std::istream &args)
+    {
+        std::size_t number = 0;
+
+        if (!(args >> number))
+            throw std::invalid_argument("expected a number");
+        return number;
+    }
+
+    std::string Console::readWord(std::istream &args)
+    {
+        std::string word;
+
+        if (!(args >> word))
+            throw std::invalid_argument("expected a word");
+        return word;
+    }
+
+} // namespace RType::Game
