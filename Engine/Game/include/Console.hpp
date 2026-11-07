@@ -77,6 +77,7 @@ namespace RType::Game {
         void disableSystem(std::istream &args);
         void exitGame(std::istream &args);
         void exitConsole(std::istream &args);
+        void pause(std::istream &args);
 
         /**
          * @brief Calls gm:function(args...) through its Lua binding.
