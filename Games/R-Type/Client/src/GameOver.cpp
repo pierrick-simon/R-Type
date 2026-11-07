@@ -64,6 +64,30 @@ namespace RType::Client {
             gm.addComponent<GameOverButton>(e, GameOverButton {choice});
         }
 
+        float secondsSince(std::chrono::steady_clock::time_point start)
+        {
+            return std::chrono::duration<float>(
+                std::chrono::steady_clock::now() - start)
+                .count();
+        }
+
+        /** @brief Opacity of the black screen of the victory, 0 without. */
+        float fadeAlpha(const LobbyClient &lobby)
+        {
+            if (!lobby.fadeStart)
+                return 0.f;
+            const float t = secondsSince(*lobby.fadeStart);
+
+            if (t < VICTORY_FADE_SECONDS)
+                return t / VICTORY_FADE_SECONDS;
+            if (t < VICTORY_FADE_SECONDS + VICTORY_HOLD_SECONDS)
+                return 1.f;
+            return std::max(0.f,
+                1.f -
+                    (t - VICTORY_FADE_SECONDS - VICTORY_HOLD_SECONDS) /
+                        VICTORY_FADE_IN_SECONDS);
+        }
+
         bool hasVoted(const LobbyState &state, const uint16_t myId)
         {
             return std::ranges::any_of(
@@ -178,9 +202,17 @@ namespace RType::Client {
                 LobbyClient &lobby) {
                 if (!lobby.inGame || !state.gameOver) {
                     lobby.choice = GameOverChoice::None;
+                    lobby.fadeStart.reset();
                     hide = lobby.gameOverShown;
                     lobby.gameOverShown = false;
                     return;
+                }
+                if (state.victory && !lobby.gameOverShown) {
+                    if (!lobby.fadeStart)
+                        lobby.fadeStart = std::chrono::steady_clock::now();
+                    if (secondsSince(*lobby.fadeStart) <
+                        VICTORY_FADE_SECONDS + VICTORY_HOLD_SECONDS)
+                        return;
                 }
                 current = state;
                 isHost = state.hostId == c.getMyId();
@@ -195,6 +227,19 @@ namespace RType::Client {
             destroyGameOver(gm);
         if (!hide)
             updateGameOver(gm, current, isHost, voted);
+    }
+
+    void systemDrawFade(LobbyClient &lobby)
+    {
+        const float alpha = fadeAlpha(lobby);
+
+        if (alpha <= 0.f)
+            return;
+        ::DrawRectangle(0,
+            0,
+            WINDOW_WIDTH,
+            WINDOW_HEIGTH,
+            {0, 0, 0, static_cast<unsigned char>(alpha * 255.f)});
     }
 
 } // namespace RType::Client

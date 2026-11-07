@@ -157,6 +157,9 @@ namespace RType::Client {
         gm.createSystem<Assets>(
             Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
         gm.createSystem<Sound>(Sound::systemSound);
+        // Over everything, right before the end of the drawing.
+        gm.createSystem<LobbyClient>(
+            systemDrawFade, std::numeric_limits<int>::max() - 1);
     }
 
     Entity createSound(GameManager &gm)

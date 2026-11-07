@@ -10,6 +10,7 @@
 
 #include <array>
 #include <cstddef>
+#include "Enemies/Defs/DimensionsDef.hpp"
 
 namespace RType::Server {
 
@@ -21,7 +22,7 @@ namespace RType::Server {
     inline constexpr int BACKGROUND_WIDTH = 4224;
     inline constexpr float BACKGROUND_PERIOD = BACKGROUND_WIDTH * SCALE - 2.f;
     inline constexpr float LEVEL_END_X =
-        WINDOW_WIDTH - BACKGROUND_WIDTH * SCALE;
+        WINDOW_WIDTH - (BACKGROUND_WIDTH - LEVEL_END_MARGIN) * SCALE;
 
     inline constexpr int PLAYER_FRAMES = 5;
     inline constexpr float PLAYER_WIDTH = 166.f / PLAYER_FRAMES * SCALE;
@@ -65,6 +66,9 @@ namespace RType::Server {
         PLAYER_HEIGHT / SCALE * LIFE_ICON_SCALE;
     inline constexpr float HUD_MARGIN = 20.f;
     inline constexpr float HUD_SPACING = 8.f;
+
+    inline constexpr float NAME_TAG_SIZE = 22.f;
+    inline constexpr float NAME_TAG_GAP = 6.f;
 
     inline constexpr float SCORE_FONT_SIZE = 28.f;
     inline constexpr std::size_t SCORE_DIGITS = 6;

@@ -106,7 +106,7 @@ namespace RType::Server {
         gm.createSystem<>(playerTerrainCollision);
         gm.createSystem<MasterClock>(playerInvincibility);
         gm.createSystem<MasterClock>(playerDeath);
-        gm.createSystem<>(systemGameState);
+        gm.createSystem<MasterClock>(systemGameState);
         gm.createSystem<>(powerUpPickupSystem);
         gm.createSystem<>(forceSystem);
         gm.createSystem<Force, SpriteSheet2D>(forceAnimation);
@@ -117,6 +117,7 @@ namespace RType::Server {
         gm.createSystem<>(chargeEffectSystem);
         gm.createSystem<>(livesHudSystem);
         gm.createSystem<>(scoreHudSystem);
+        gm.createSystem<>(nameTagSystem);
         gm.createSystem<ChargedShot, SpriteSheet2D>(chargedShotAnimation);
     }
 

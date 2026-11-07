@@ -37,6 +37,11 @@ namespace RType::Server {
         int index = 0;
     };
 
+    /** @brief The player's name, above its ship. */
+    struct NameTag {
+        Entity owner {0};
+    };
+
     /** @brief Bottom HUD score, of the team when it has no player. */
     struct ScoreLabel {
         std::optional<Entity> player;

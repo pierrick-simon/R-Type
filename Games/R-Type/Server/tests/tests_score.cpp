@@ -205,3 +205,34 @@ Test(score, a_score_change_waits_for_the_next_send)
     UpdateText2D::systemUpdateText2D(update, text);
     cr_assert(update.getUpdateText());
 }
+
+Test(score, name_tag_follows_its_ship)
+{
+    GameManager gm;
+    const Entity player = addPlayer(gm, 1);
+
+    gm.addComponent<LobbyMember>(player, LobbyMember {.name = "aaron"});
+    spawnNameTag(gm, player, gm.getComponent<Player>(player));
+    gm.getComponent<Position2D>(player) = {500.f, 400.f};
+    nameTagSystem(gm);
+    for (auto [_, tag, text, pos] :
+        gm.view<NameTag, Text2D, Position2D>().getVector()) {
+        cr_assert_str_eq(text.str.c_str(), "aaron");
+        cr_assert_float_eq(pos.x + 5.f * NAME_TAG_SIZE / 2.f,
+            500.f + PLAYER_WIDTH / 2.f,
+            0.01f);
+        cr_assert_lt(pos.y + NAME_TAG_SIZE, 400.f);
+        cr_assert_eq(text.color.a, 255);
+    }
+    gm.getComponent<Position2D>(player) = {500.f, 0.f};
+    gm.getComponent<Player>(player).dying = true;
+    nameTagSystem(gm);
+    for (auto [_, tag, text, pos] :
+        gm.view<NameTag, Text2D, Position2D>().getVector()) {
+        cr_assert_gt(pos.y, PLAYER_HEIGHT);
+        cr_assert_eq(text.color.a, 0);
+    }
+    gm.removeComponent<Player>(player);
+    nameTagSystem(gm);
+    cr_assert(gm.view<NameTag>().getVector().empty());
+}

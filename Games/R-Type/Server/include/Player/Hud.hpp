@@ -18,6 +18,8 @@ namespace RType::Server {
     void spawnTeamScore(GameManager &gm);
     void spawnPlayerScore(GameManager &gm, Entity player, const Player &state);
     void scoreHudSystem(GameManager &gm);
+    void spawnNameTag(GameManager &gm, Entity player, const Player &state);
+    void nameTagSystem(GameManager &gm);
 
 } // namespace RType::Server
 

@@ -338,6 +338,7 @@ namespace RType::Server {
             gm.addComponent<Player>(entity, state);
             spawnLifeIcons(gm, entity, state);
             spawnPlayerScore(gm, entity, state);
+            spawnNameTag(gm, entity, state);
             gm.addComponent<Scorer>(entity);
             gm.addComponent<EnemyTarget>(entity);
             gm.addComponent<Health>(entity, Health {PLAYER_HP, PLAYER_HP});

@@ -31,12 +31,8 @@ namespace RType {
         float takeOffTime;
     };
 
-    /**
-     * @brief Alien tuning, in screen pixels. It hovers around hoverX, fires
-     * once its gun is within alignTolerance of a player's center, lands
-     * every shotsBeforeLanding shots and leaves after maxShots.
-     */
-    inline constexpr AlienDef ALIEN_DEF = {.hoverX = 1450.f,
+    inline constexpr AlienDef ALIEN_DEF = {
+        .hoverX = 1450.f,
         .minY = 100.f,
         .alignTolerance = 12.f,
         .chargeTime = 0.8f,
@@ -44,7 +40,7 @@ namespace RType {
         .beamSpeed = 1100.f,
         .beamDamage = 1,
         .shotsBeforeLanding = 2,
-        .maxShots = 6,
+        .maxShots = 10,
         .landSpeed = 320.f,
         .landedTime = 2.f,
         .takeOffTime = 0.4f};

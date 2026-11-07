@@ -17,10 +17,12 @@
 #include "Enemies/EnemyComponents.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "GameState.hpp"
+#include "LobbyProtocol.hpp"
 #include "Player/Destroy.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "UpdateClientEntity.hpp"
+#include "Velocity2D.hpp"
 
 namespace RType::Server {
 
@@ -62,7 +64,7 @@ namespace RType::Server {
             const auto &player = gm.getComponent<Player>(life.owner);
 
             sheet.color.a =
-                life.index < player.lives && !isEndScreen() ? 255 : 0;
+                life.index < player.lives && !isEndScreenReady() ? 255 : 0;
         }
     }
 
@@ -126,7 +128,7 @@ namespace RType::Server {
      * the players' are listed under it. Along the bottom otherwise. */
     void layoutTeamScore(Text2D &text, Position2D &pos)
     {
-        if (!isEndScreen()) {
+        if (!isEndScreenReady()) {
             text.fontSize = SCORE_FONT_SIZE;
             text.color = raylib::Color::White();
             pos = {HUD_MARGIN, SCORE_Y};
@@ -140,7 +142,7 @@ namespace RType::Server {
     void layoutPlayerScore(
         Text2D &text, Position2D &pos, std::size_t slot, std::size_t rank)
     {
-        if (!isEndScreen()) {
+        if (!isEndScreenReady()) {
             text.fontSize = SCORE_FONT_SIZE;
             pos = {SCORE_PLAYERS_X + float(slot) * SCORE_SPACING, SCORE_Y};
             return;
@@ -182,6 +184,62 @@ namespace RType::Server {
             auto [slot, text, pos] = players[rank];
 
             layoutPlayerScore(*text, *pos, slot, rank);
+        }
+    }
+
+    std::string playerName(GameManager &gm, Entity player)
+    {
+        if (gm.hasComponent<LobbyMember>(player) &&
+            !gm.getComponent<LobbyMember>(player).name.empty())
+            return gm.getComponent<LobbyMember>(player).name;
+        if (gm.hasComponent<DefaulClient>(player))
+            return "Player " +
+                std::to_string(gm.getComponent<DefaulClient>(player).getId());
+        return "";
+    }
+
+    void spawnNameTag(GameManager &gm, Entity player, const Player &state)
+    {
+        const Entity tag = gm.createEntity();
+        const auto &rgb = PLAYER_SCORE_COLORS[state.slot % PLAYER_COLORS];
+        Text2D text;
+
+        text.fontSize = NAME_TAG_SIZE;
+        text.str = playerName(gm, player);
+        text.color = raylib::Color(rgb[0], rgb[1], rgb[2], 255);
+        gm.addComponent<NameTag>(tag, NameTag {player});
+        gm.addComponent<Position2D>(tag);
+        gm.addComponent<Velocity2D>(tag);
+        gm.addComponent<Text2D>(tag, text);
+        gm.addComponent<UpdateClientEntity>(
+            tag, EntityType::TEXT_ENTITY, Asset::FONT, gm, tag);
+    }
+
+    /** @brief Centered above the ship, under it against the top edge. */
+    Position2D nameTagPosition(const Text2D &text, const Position2D &ship)
+    {
+        const float width = float(text.str.size()) * text.fontSize;
+        const float above = ship.y - NAME_TAG_GAP - text.fontSize;
+
+        return {ship.x + (PLAYER_WIDTH - width) / 2.f,
+            above >= 0.f ? above : ship.y + PLAYER_HEIGHT + NAME_TAG_GAP};
+    }
+
+    void nameTagSystem(GameManager &gm)
+    {
+        for (auto [tag, name, text, pos, velocity] :
+            gm.view<NameTag, Text2D, Position2D, Velocity2D>().getVector()) {
+            if (!gm.hasComponent<Player>(name.owner)) {
+                destroyNetworked(gm, tag);
+                continue;
+            }
+            const auto &player = gm.getComponent<Player>(name.owner);
+            const auto &ship = gm.getComponent<Position2D>(name.owner);
+
+            text.str = playerName(gm, name.owner);
+            text.color.a = player.dying || isEndScreen() ? 0 : 255;
+            pos = nameTagPosition(text, ship);
+            velocity = gm.getComponent<Velocity2D>(name.owner);
         }
     }
 

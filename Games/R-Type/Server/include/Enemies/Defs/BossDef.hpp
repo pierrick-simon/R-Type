@@ -41,20 +41,17 @@ namespace RType {
     inline constexpr float BOSS_WIDTH = float(BOSS_SHEET.cellW) * LEVEL_SCALE;
     inline constexpr float BOSS_HEIGHT = float(BOSS_SHEET.cellH) * LEVEL_SCALE;
 
-    // Middle of the two eyes on the boss room's wall, in level pixels from
-    // the level's right edge, and of the two windows on the boss's belly, in
-    // BOSS_SHEET pixels: the windows sit on the eyes.
-    inline constexpr float ROOM_EYES_X = 30.f;
-    inline constexpr float ROOM_EYES_Y = 119.f;
-    inline constexpr float BOSS_WINDOWS_X = 121.f;
+    // Entrance of the hole through the back wall, in level pixels from the
+    // level's right edge: the boss's back, in BOSS_SHEET pixels, stands on it.
+    inline constexpr float ROOM_HOLE_X = 127.f;
+    inline constexpr float ROOM_HOLE_Y = 119.f;
+    inline constexpr float BOSS_BACK_X = 147.f;
     inline constexpr float BOSS_WINDOWS_Y = 118.f;
 
-    // Hitbox and muzzle in BOSS_SHEET pixels: the body's right part and the
-    // mouth of the alien coming out of its belly.
-    inline constexpr BossDef BOSS_DEF = {
-        .x = SCREEN_WIDTH - (ROOM_EYES_X + BOSS_WINDOWS_X) * LEVEL_SCALE,
-        .y = (ROOM_EYES_Y - BOSS_WINDOWS_Y) * LEVEL_SCALE,
-        .enterSpeed = 150.f,
+    inline constexpr BossDef BOSS_DEF = {.x = SCREEN_WIDTH -
+            (ROOM_HOLE_X + BOSS_BACK_X - LEVEL_END_MARGIN) * LEVEL_SCALE,
+        .y = (ROOM_HOLE_Y - BOSS_WINDOWS_Y + 30) * LEVEL_SCALE,
+        .enterSpeed = 270.f,
         .closedTime = 2.5f,
         .stageTime = 0.12f,
         .openTime = 3.5f,

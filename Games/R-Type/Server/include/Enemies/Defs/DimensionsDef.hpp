@@ -17,6 +17,9 @@ namespace RType {
     constexpr float SCREEN_WIDTH = 1920.f;
     constexpr float SCREEN_HEIGHT = 1080.f;
     constexpr float SPAWN_MARGIN = 80.f;
+    // Level pixels left off screen, past the right edge, once the scroll
+    // stops: more room for the players in front of the boss.
+    constexpr float LEVEL_END_MARGIN = 40.f;
 
 } // namespace RType
 

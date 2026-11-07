@@ -10,6 +10,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <optional>
 
 #include "Assets.hpp"
 #include "GameManager.hpp"
@@ -78,6 +79,7 @@ namespace RType::Client {
         std::chrono::steady_clock::time_point lastInfo {};
         std::chrono::steady_clock::time_point lastStart {};
         std::chrono::steady_clock::time_point lastChoice {};
+        std::optional<std::chrono::steady_clock::time_point> fadeStart;
     };
 
     void createLobby(GameManager &gm);

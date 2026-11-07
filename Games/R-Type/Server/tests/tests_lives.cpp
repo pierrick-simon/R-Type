@@ -14,6 +14,7 @@
 #include "Enemies/EnemyManager.hpp"
 #include "GameManager.hpp"
 #include "GameState.hpp"
+#include "LobbyProtocol.hpp"
 #include "Player/Player.hpp"
 #include "SpriteSheet2D.hpp"
 
@@ -43,7 +44,7 @@ namespace {
             std::chrono::duration<float>(PLAYER_DEATH_DURATION + 0.05f));
         MasterClock::systemMasterClock(clock);
         playerDeath(gm, clock);
-        systemGameState(gm);
+        systemGameState(gm, clock);
     }
 
 } // namespace
@@ -133,9 +134,10 @@ Test(lives, invincibility_wears_off)
     cr_assert_eq(gm.getComponent<SpriteSheet2D>(a).color.a, 255);
 }
 
-Test(lives, beating_the_boss_shows_the_victory_screen)
+Test(lives, beating_the_boss_fades_to_the_victory_screen)
 {
     GameManager gm;
+    MasterClock clock;
     const Entity a = addPlayer(gm);
     const Entity director = gm.createEntity();
 
@@ -143,10 +145,17 @@ Test(lives, beating_the_boss_shows_the_victory_screen)
     gm.getComponent<EnemyDirector>(director).levelCleared = true;
     gm.getComponent<EnemyDirector>(director).score = 5000;
     gm.addComponent<Invincible>(a, Invincible {1.f});
-    systemGameState(gm);
+    systemGameState(gm, clock);
     cr_assert(isEndScreen());
     cr_assert(isVictoryScreen());
     cr_assert(gm.getComponent<EnemyDirector>(director).paused);
+    cr_assert_not(isEndScreenReady());
+    cr_assert_not(gm.getComponent<Player>(a).dying);
+    std::this_thread::sleep_for(
+        std::chrono::duration<float>(VICTORY_FADE_SECONDS + 0.05f));
+    MasterClock::systemMasterClock(clock);
+    systemGameState(gm, clock);
+    cr_assert(isEndScreenReady());
     cr_assert_eq(gm.getComponent<EnemyDirector>(director).score, 5000);
     cr_assert(gm.getComponent<Player>(a).dying);
     cr_assert_eq(gm.getComponent<SpriteSheet2D>(a).color.a, 0);
