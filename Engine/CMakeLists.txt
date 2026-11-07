@@ -242,6 +242,7 @@ set(SRCS_GAME
     ${GAME}/src/TimeBinding.cpp
     ${GAME}/src/WindowBinding.cpp
     ${GAME}/src/EngineBindings.cpp
+    ${GAME}/src/Console.cpp
 )
 
 add_executable(${GAME_BIN_NAME} ${SRCS_GAME} ${SRCS_SHARED})
