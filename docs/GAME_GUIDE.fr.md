@@ -71,7 +71,7 @@ Tous ces types sont dans le namespace `RType`. Leur documentation complète (Dox
 
 ### La structure
 
-Un jeu vit dans son propre dossier sous `Games/`, à côté du R-Type et du Poc :
+Un jeu vit dans son propre dossier sous `Games/`, à côté du R-Type :
 
 ```
 Games/
@@ -670,4 +670,4 @@ Ce que le moteur ne fait pas encore, et comment faire en attendant :
 | [Accessibilité](ACCESSIBILITY.fr.md) | Ce que le moteur offre pour l'accessibilité, pourquoi c'est utile et pour qui |
 | [Études comparatives](comparative-studies/fr/README.md) | Les choix techniques du projet et leurs alternatives : langage, build, ECS, raylib, réseau, protocole, tests… |
 | `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | La documentation Doxygen de chaque composant fourni |
-| `Games/Poc/` | Les tests de l'ECS : un exemple d'utilisation pour chaque comportement |
+| `tests/engine/` | Les tests unitaires de l'ECS : un exemple d'utilisation pour chaque comportement |
