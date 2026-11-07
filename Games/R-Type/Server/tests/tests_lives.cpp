@@ -91,15 +91,15 @@ Test(lives, game_over_waits_then_restarts)
     gm.getComponent<EnemyDirector>(director).score = 700;
     for (int i = 0; i < PLAYER_LIVES; ++i)
         die(gm, clock, a);
-    cr_assert_not(isGameOverScreen());
+    cr_assert_not(isEndScreen());
     for (int i = 0; i < PLAYER_LIVES; ++i)
         die(gm, clock, b);
-    cr_assert(isGameOverScreen());
+    cr_assert(isEndScreen());
     cr_assert(gm.getComponent<EnemyDirector>(director).paused);
     cr_assert_eq(gm.getComponent<EnemyDirector>(director).score, 700);
     cr_assert_eq(gm.getComponent<Player>(a).lives, 0);
     restartGame(gm);
-    cr_assert_not(isGameOverScreen());
+    cr_assert_not(isEndScreen());
     cr_assert_not(gm.getComponent<EnemyDirector>(director).paused);
     for (const Entity e : {a, b}) {
         cr_assert_eq(gm.getComponent<Player>(e).lives, PLAYER_LIVES);
@@ -131,4 +131,28 @@ Test(lives, invincibility_wears_off)
     playerInvincibility(gm, clock);
     cr_assert_not(gm.hasComponent<Invincible>(a));
     cr_assert_eq(gm.getComponent<SpriteSheet2D>(a).color.a, 255);
+}
+
+Test(lives, beating_the_boss_shows_the_victory_screen)
+{
+    GameManager gm;
+    const Entity a = addPlayer(gm);
+    const Entity director = gm.createEntity();
+
+    gm.addComponent<EnemyDirector>(director);
+    gm.getComponent<EnemyDirector>(director).levelCleared = true;
+    gm.getComponent<EnemyDirector>(director).score = 5000;
+    gm.addComponent<Invincible>(a, Invincible {1.f});
+    systemGameState(gm);
+    cr_assert(isEndScreen());
+    cr_assert(isVictoryScreen());
+    cr_assert(gm.getComponent<EnemyDirector>(director).paused);
+    cr_assert_eq(gm.getComponent<EnemyDirector>(director).score, 5000);
+    cr_assert(gm.getComponent<Player>(a).dying);
+    cr_assert_eq(gm.getComponent<SpriteSheet2D>(a).color.a, 0);
+    cr_assert_not(gm.hasComponent<Invincible>(a));
+    restartGame(gm);
+    cr_assert_not(isEndScreen());
+    cr_assert_not(gm.getComponent<Player>(a).dying);
+    cr_assert_eq(gm.getComponent<Player>(a).lives, PLAYER_LIVES);
 }

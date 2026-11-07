@@ -27,6 +27,9 @@ namespace RType::Client {
 
     struct GameOverStatus {};
 
+    /** @brief "GAME OVER" or "VICTORY", from the lobby state. */
+    struct GameOverTitle {};
+
     void createGameOver(GameManager &gm);
     void destroyGameOver(GameManager &gm);
     void systemGameOver(GameManager &gm);

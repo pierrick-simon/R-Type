@@ -27,6 +27,7 @@ namespace RType::Client {
 
         const raylib::Color COLOR_INFO(200, 205, 225, 255);
         const raylib::Color COLOR_TITLE(255, 95, 95, 255);
+        const raylib::Color COLOR_VICTORY(90, 230, 120, 255);
 
         void choose(GameManager &gm, const GameOverChoice choice)
         {
@@ -44,6 +45,12 @@ namespace RType::Client {
         void requestReturn(GameManager &gm)
         {
             choose(gm, GameOverChoice::Return);
+        }
+
+        void leaveToMenu(GameManager &gm)
+        {
+            destroyGameOver(gm);
+            returnToMenu(gm);
         }
 
         void addGameOverButton(GameManager &gm, float x,
@@ -89,8 +96,15 @@ namespace RType::Client {
 
             gm.view<GameOverButton, Button>().each(
                 [&](Entity, GameOverButton &tag, Button &button) {
-                    button.disabled =
-                        tag.choice == GameOverChoice::Restart ? voted : !isHost;
+                    if (tag.choice == GameOverChoice::Restart)
+                        button.disabled = voted;
+                    if (tag.choice == GameOverChoice::Return)
+                        button.disabled = !isHost;
+                });
+            gm.view<GameOverTitle, Text2D>().each(
+                [&](Entity, GameOverTitle &, Text2D &text) {
+                    text.str = state.victory ? "VICTORY" : "GAME OVER";
+                    text.color = state.victory ? COLOR_VICTORY : COLOR_TITLE;
                 });
             gm.view<GameOverStatus, Text2D>().each(
                 [&](Entity, GameOverStatus &, Text2D &text) {
@@ -103,19 +117,18 @@ namespace RType::Client {
     void createGameOver(GameManager &gm)
     {
         const float center = static_cast<float>(WINDOW_WIDTH) / 2.f;
-        const float x = center - BUTTON_WIDTH - BUTTON_GAP / 2.f;
+        const float x = center - (3.f * BUTTON_WIDTH + 2.f * BUTTON_GAP) / 2.f;
+        const float step = BUTTON_WIDTH + BUTTON_GAP;
         const Entity background = gm.createEntity();
 
         gm.addComponent<GameOverItem>(background);
         gm.addComponent<Sprite2D>(background, Asset::MENU_BACKGROUND);
         gm.addComponent<Position2D>(background, 0.f, 0.f);
-        gm.addComponent<GameOverItem>(addText(gm,
-            center,
-            GAME_OVER_TITLE_Y,
-            "GAME OVER",
-            TITLE_SIZE,
-            {},
-            COLOR_TITLE));
+        const Entity title = addText(
+            gm, center, GAME_OVER_TITLE_Y, "", TITLE_SIZE, {}, COLOR_TITLE);
+
+        gm.addComponent<GameOverItem>(title);
+        gm.addComponent<GameOverTitle>(title);
         const Entity status = addText(gm,
             center,
             GAME_OVER_STATUS_Y,
@@ -129,10 +142,15 @@ namespace RType::Client {
         addGameOverButton(
             gm, x, "Play Again", requestRestart, GameOverChoice::Restart);
         addGameOverButton(gm,
-            x + BUTTON_WIDTH + BUTTON_GAP,
+            x + step,
             "Back to Lobby",
             requestReturn,
             GameOverChoice::Return);
+        addGameOverButton(gm,
+            x + 2.f * step,
+            "Main Menu",
+            leaveToMenu,
+            GameOverChoice::Leave);
     }
 
     void destroyGameOver(GameManager &gm)

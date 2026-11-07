@@ -66,7 +66,7 @@ namespace RType::Client {
         std::size_t row = 0;
     };
 
-    enum class GameOverChoice { None, Restart, Return };
+    enum class GameOverChoice { None, Restart, Return, Leave };
 
     struct LobbyClient {
         bool ready = false;

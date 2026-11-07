@@ -32,38 +32,66 @@ namespace RType::Server {
     }
 
     namespace {
-        thread_local bool gameOver = false;
+        enum class EndScreen { None, GameOver, Victory };
+
+        thread_local EndScreen endScreen = EndScreen::None;
 
         bool levelRunning(GameManager &gm)
         {
             return std::ranges::any_of(gm.view<EnemyDirector>().getVector(),
                 [](const auto &entry) { return !std::get<1>(entry).paused; });
         }
+
+        void showEndScreen(GameManager &gm, EndScreen screen)
+        {
+            std::vector<Entity> backgrounds;
+
+            endScreen = screen;
+            clearEnemies(gm);
+            for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+                director.paused = true;
+            // The clients draw the menu background in its place.
+            for (auto [background, tag] : gm.view<Background>().getVector())
+                backgrounds.push_back(background);
+            for (const Entity background : backgrounds)
+                destroyNetworked(gm, background);
+        }
     } // namespace
 
-    bool isGameOverScreen()
+    bool isEndScreen()
     {
-        return gameOver;
+        return endScreen != EndScreen::None;
+    }
+
+    bool isVictoryScreen()
+    {
+        return endScreen == EndScreen::Victory;
     }
 
     void showGameOver(GameManager &gm)
     {
-        std::vector<Entity> backgrounds;
-
-        gameOver = true;
-        clearEnemies(gm);
-        for (auto [_, director] : gm.view<EnemyDirector>().getVector())
-            director.paused = true;
-        // The clients draw the menu background in its place.
-        for (auto [background, tag] : gm.view<Background>().getVector())
-            backgrounds.push_back(background);
-        for (const Entity background : backgrounds)
-            destroyNetworked(gm, background);
+        showEndScreen(gm, EndScreen::GameOver);
     }
 
-    void closeGameOver()
+    void showVictory(GameManager &gm)
     {
-        gameOver = false;
+        showEndScreen(gm, EndScreen::Victory);
+        // The survivors leave the screen to the scores, until the restart.
+        for (auto [entity, player, sheet] :
+            gm.view<Player, SpriteSheet2D>().getVector()) {
+            player.dying = true;
+            player.deathTimer = 0.f;
+            player.charging = false;
+            sheet.color.a = 0;
+            gm.getComponent<Velocity2D>(entity) = {};
+            if (gm.hasComponent<Invincible>(entity))
+                gm.removeComponent<Invincible>(entity);
+        }
+    }
+
+    void closeEndScreen()
+    {
+        endScreen = EndScreen::None;
     }
 
     void resetPlayers(GameManager &gm)
@@ -78,7 +106,7 @@ namespace RType::Server {
 
     void restartGame(GameManager &gm)
     {
-        closeGameOver();
+        closeEndScreen();
         resetPlayers(gm);
         resetEnemies(gm);
         if (gm.view<Background>().getVector().empty())
@@ -89,12 +117,12 @@ namespace RType::Server {
 
     void systemGameState(GameManager &gm)
     {
-        if (gameOver || !levelRunning(gm))
+        if (isEndScreen() || !levelRunning(gm))
             return;
         if (isGameOver(gm))
             showGameOver(gm);
         else if (levelCleared(gm))
-            restartGame(gm);
+            showVictory(gm);
     }
 
 } // namespace RType::Server

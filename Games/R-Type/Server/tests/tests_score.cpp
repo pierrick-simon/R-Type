@@ -184,7 +184,11 @@ Test(score, lobby_state_carries_the_replay_votes)
 
     cr_assert(parsed.has_value());
     cr_assert(parsed->gameOver);
+    cr_assert_not(parsed->victory);
     cr_assert_eq(parsed->replayVotes(), 1);
+    state.victory = true;
+    cr_assert(LobbyProtocol::parseState(LobbyProtocol::serializeState(state))
+            ->victory);
     cr_assert(parsed->players[0].ready);
     cr_assert(parsed->players[1].ready);
 }

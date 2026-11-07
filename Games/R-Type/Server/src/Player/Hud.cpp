@@ -61,7 +61,8 @@ namespace RType::Server {
             }
             const auto &player = gm.getComponent<Player>(life.owner);
 
-            sheet.color.a = life.index < player.lives ? 255 : 0;
+            sheet.color.a =
+                life.index < player.lives && !isEndScreen() ? 255 : 0;
         }
     }
 
@@ -125,7 +126,7 @@ namespace RType::Server {
      * the players' are listed under it. Along the bottom otherwise. */
     void layoutTeamScore(Text2D &text, Position2D &pos)
     {
-        if (!isGameOverScreen()) {
+        if (!isEndScreen()) {
             text.fontSize = SCORE_FONT_SIZE;
             text.color = raylib::Color::White();
             pos = {HUD_MARGIN, SCORE_Y};
@@ -139,7 +140,7 @@ namespace RType::Server {
     void layoutPlayerScore(
         Text2D &text, Position2D &pos, std::size_t slot, std::size_t rank)
     {
-        if (!isGameOverScreen()) {
+        if (!isEndScreen()) {
             text.fontSize = SCORE_FONT_SIZE;
             pos = {SCORE_PLAYERS_X + float(slot) * SCORE_SPACING, SCORE_Y};
             return;

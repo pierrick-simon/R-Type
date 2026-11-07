@@ -41,7 +41,8 @@ namespace RType {
     struct LobbyState {
         bool received = false;
         bool started = false;
-        bool gameOver = false;
+        bool gameOver = false; // an end screen: game over or victory
+        bool victory = false;
         uint16_t hostId = 0;
         std::vector<LobbyPlayerInfo> players;
         std::string lobbyName;

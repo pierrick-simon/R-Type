@@ -319,7 +319,7 @@ namespace RType::Server {
         std::unordered_set<uint32_t> connected;
         std::unordered_set<std::size_t> taken;
 
-        if (!isGameStarted() || isGameOverScreen())
+        if (!isGameStarted() || isEndScreen())
             return;
         for (auto [_, player] : gm.view<Player>().getVector())
             taken.insert(player.slot);
