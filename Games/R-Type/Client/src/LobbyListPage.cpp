@@ -335,7 +335,7 @@ namespace RType::Client {
     void createLobbyListPage(GameManager &gm)
     {
         const float buttonsY =
-            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2 - BUTTON_GAP;
+            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2;
         const Entity title = addText(gm,
             static_cast<float>(WINDOW_WIDTH) / 2.f,
             LOBBY_LIST_TITLE_Y,

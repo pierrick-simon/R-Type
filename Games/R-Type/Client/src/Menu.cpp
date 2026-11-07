@@ -22,8 +22,8 @@
 
 namespace RType::Client {
 
-    constexpr float MENU_FIRST_Y = 360.f;
-    constexpr float MENU_BUTTON_GAP = 25.f;
+    constexpr float MENU_FIRST_Y = 400.f;
+    constexpr float MENU_BUTTON_GAP = 15.f;
 
     bool isValidIp(const std::string &ip)
     {
