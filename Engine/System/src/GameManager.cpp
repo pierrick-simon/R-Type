@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "Clock.hpp"
 #include "GameManager.hpp"
 
 namespace RType {
@@ -52,7 +53,8 @@ namespace RType {
             throw;
         }
         _updating = false;
-        log("update: applying ", _cq.size(), " queued command(s)");
+        if (!_cq.empty())
+            log("update: applying ", _cq.size(), " queued command(s)");
         flush();
     }
 
@@ -113,6 +115,21 @@ namespace RType {
         return _updating;
     }
 
+    void GameManager::setPaused(bool paused)
+    {
+        if (_paused && !paused) {
+            view<Clock>().each([](Entity, Clock &clock) { clock.restart(); });
+            view<MasterClock>().each(
+                [](Entity, MasterClock &clock) { clock.restart(); });
+        }
+        _paused = paused;
+    }
+
+    bool GameManager::isPaused() const
+    {
+        return _paused;
+    }
+
     void GameManager::flush()
     {
         std::exception_ptr error = nullptr;
@@ -149,7 +166,8 @@ namespace RType {
         auto next = clock::now();
         log("run at ", fps, " fps");
         while (keepRunning()) {
-            update();
+            if (!_paused)
+                update();
             next += step;
             if (next < clock::now())
                 next = clock::now();

@@ -319,6 +319,20 @@ namespace RType {
         [[nodiscard]] bool isUpdating() const;
 
         /**
+         * @brief Pauses or resumes the game: while it is paused, run()
+         * skips update(), so no system runs at all. Resuming restarts every
+         * Clock and the MasterClock, so that the first frame after the pause
+         * does not count the time spent paused.
+         */
+        void setPaused(bool paused);
+
+        /**
+         * @brief Checks whether the game is paused.
+         * @return true if setPaused(true) was called last.
+         */
+        [[nodiscard]] bool isPaused() const;
+
+        /**
          * @brief Creates a view over the entities that have all the given
          * component types. Never throws: if one of the types has never
          * been added, the view is empty.
@@ -355,6 +369,7 @@ namespace RType {
         CommandQueue _cq;
 
         bool _updating = false;
+        bool _paused = false;
         bool _debug = false;
         mutable std::ofstream _logFile;
 

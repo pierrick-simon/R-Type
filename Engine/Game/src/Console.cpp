@@ -27,6 +27,7 @@ namespace RType::Game {
         {"disableSystem", {&Console::disableSystem, "<id>"}},
         {"exit", {&Console::exitGame, ""}},
         {"exitConsole", {&Console::exitConsole, ""}},
+        {"pause", {&Console::pause, ""}},
     };
 
     std::queue<std::string> Console::_pending;
@@ -177,6 +178,15 @@ namespace RType::Game {
     void Console::exitConsole(std::istream &)
     {
         _open = false;
+    }
+
+    void Console::pause(std::istream &)
+    {
+        _gm.setPaused(!_gm.isPaused());
+        if (_gm.isPaused())
+            std::cout << "paused" << std::endl;
+        else
+            std::cout << "resumed" << std::endl;
     }
 
     void Console::check(const sol::protected_function_result &result)
