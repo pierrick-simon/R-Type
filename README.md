@@ -10,7 +10,7 @@
 A multiplayer **R-Type** game written in C++20, Epitech project (2026). The
 repository is organized around a reusable in-house engine (`Engine`), built on
 an Entity-Component-System, and consumed by the games in `Games`: the R-Type
-server and client, and a proof-of-concept program (`Poc`) that tests the ECS.
+server and client.
 
 > [!NOTE]
 > The project is still in progress: the engine is in place (ECS, basic
@@ -58,12 +58,12 @@ R-Type/
 ├── Engine/                  # Reusable engine, independent from any game
 │   ├── System/              # ECS (GameManager) and basic components -> `engine-system`
 │   ├── Graphical/           # Window, sprites, text, sound, input (raylib) -> `engine-graphical`
-│   └── Network/             # Networking (Asio) -> `engine-network`
+│   ├── Network/             # Networking (Asio) -> `engine-network`
+│   └── tests/               # ECS unit tests (Criterion) -> `engine_tests_run`
 ├── Games/
 │   ├── R-Type/
 │   │   ├── Client/          # `r-type_client` executable
-│   │   └── Server/          # `r-type_server` executable
-│   └── Poc/                 # `r-type_poc` executable: ECS test suite
+│       └── Server/          # `r-type_server` executable
 ├── docs/                    # Guides and comparative studies (French and English)
 └── script/                  # Format and lint scripts
 ```
@@ -74,8 +74,8 @@ R-Type/
   and **plf::colony**.
 - **`Games/R-Type`** contains the client and the server, both of which rely on
   the engine, each with its own sources, headers and tests.
-- **`Games/Poc`** checks the behavior of the ECS (more than 200 tests, built
-  with AddressSanitizer and UndefinedBehaviorSanitizer by default).
+- **`Engine/tests`** checks the behavior of the ECS (more than 200 unit tests,
+  built with AddressSanitizer and UndefinedBehaviorSanitizer by default).
 - All executables are written directly to `Games/`.
 
 ---
@@ -85,7 +85,7 @@ R-Type/
 | Tool | Version | Notes |
 |---|---|---|
 | **CMake** | ≥ 3.25 (tested with 4.4) | |
-| **C++ compiler** | C++20 | **GCC** ≥ 14 (`g++-14`) on Linux, **MSVC** on Windows. GCC 14 also enables stack traces in the Poc |
+| **C++ compiler** | C++20 | **GCC** ≥ 14 (`g++-14`) on Linux, **MSVC** on Windows. |
 | **Criterion** | | Unit tests, Linux only for now: `sudo apt install libcriterion-dev` |
 
 On Linux, raylib also needs the X11 and OpenGL development packages (the same
@@ -163,7 +163,6 @@ cmake --install build --prefix ~/.local
 ```sh
 ./Games/r-type_server
 ./Games/r-type_client
-./Games/r-type_poc       # runs the ECS test suite
 ```
 
 ---
@@ -171,16 +170,17 @@ cmake --install build --prefix ~/.local
 ## Tests
 
 ```sh
+cmake --build build --target engine_tests_run
 cmake --build build --target client_tests_run
 cmake --build build --target server_tests_run
 ```
 
-- The client and server tests use **Criterion**, with code coverage
-  (`--coverage`). They are only built when Criterion is installed, and are
-  currently disabled on Windows (see the
+- The engine, client and server tests use **Criterion** (the client and
+  server ones with code coverage, `--coverage`). They are only built when
+  Criterion is installed, and are currently disabled on Windows (see the
   [test framework study](docs/comparative-studies/en/11-test-framework.md)).
-- The ECS is tested by the Poc: `./Games/r-type_poc`. To build it without the
-  sanitizers, configure with `-DPOC_SANITIZE=OFF`.
+- The engine tests cover the ECS. To build them without the sanitizers,
+  configure with `-DENGINE_TESTS_SANITIZE=OFF`.
 
 ---
 

@@ -13,7 +13,7 @@ A `Makefile` does not work as is with the Windows compiler (MSVC), and cannot do
 
 ## Context
 
-The project has three libraries (`engine-system`, `engine-graphical`, `engine-network`), three executables (client, server, Poc), tests, and four external dependencies (raylib, raylib-cpp, Asio, plf::colony). It must build on **Linux (GCC, Clang)** and on **Windows (MSVC)** ([study 01](01-operating-systems.md)).
+The project has three libraries (`engine-system`, `engine-graphical`, `engine-network`), two executables (client, server), tests, and four external dependencies (raylib, raylib-cpp, Asio, plf::colony). It must build on **Linux (GCC, Clang)** and on **Windows (MSVC)** ([study 01](01-operating-systems.md)).
 
 A build tool must therefore:
 
