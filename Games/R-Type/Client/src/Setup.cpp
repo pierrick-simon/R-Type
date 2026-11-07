@@ -27,6 +27,7 @@
 #include "Text2D.hpp"
 #include "Velocity2D.hpp"
 #include "Window.hpp"
+#include "Settings.hpp"
 
 namespace RType::Client {
     namespace {
@@ -109,10 +110,12 @@ namespace RType::Client {
             Sprite2D::systemDrawSprite2D);
         gm.createSystem<>(systemDrawLobbyList);
         gm.createSystem<>(systemDrawLoginPopup);
+        gm.createSystem<>(systemDrawSettings);
         gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
             SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<>(systemDrawPasswordFields);
+        gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
         gm.createSystem<Window>([](Window &win) {
             ::EndMode2D();

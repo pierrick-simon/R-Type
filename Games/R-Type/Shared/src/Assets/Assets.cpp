@@ -65,6 +65,8 @@ namespace RType::Asset {
             {MENU_BACK, "R-Type/sprites/Menu/Background.png"},
             {MENU_BACK_SIDE, "R-Type/sprites/Menu/BackgroundSide.png"},
             {MENU_LIST_FRAME, "R-Type/sprites/Menu/LobbyListFrame.png"},
+            {MENU_VOLUME_DOWN, "R-Type/sprites/Menu/VolumeDown.png"},
+            {MENU_VOLUME_UP, "R-Type/sprites/Menu/VolumeUp.png"},
         };
     }
 
