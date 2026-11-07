@@ -260,13 +260,15 @@ the Criterion tests and the linter on every push and pull request. The linter al
 checks the code against C++26 (`-std=c++2c`).
 
 To write a game's Lua scripts faster, a VS Code extension for the engine's Lua
-is available. Install it with:
+is available: **R-Type lua engine epitech**, published by Ariel Amriou
+(publisher ID `ariel-amriou`). Install it with:
 
 ```sh
 code --install-extension ariel-amriou.r-type-lua-engine-epitech
 ```
 
-or search for it in the VS Code Marketplace (Extensions view, `Ctrl+Shift+X`).
+or search for "R-Type lua engine epitech" in the VS Code Marketplace
+(Extensions view, `Ctrl+Shift+X`).
 
 ---
 
