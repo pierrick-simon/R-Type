@@ -12,6 +12,7 @@ cmake_install.cmake
 Makefile
 credentials.txt
 userDB.txt
+settings.txt
 
 # Directories
 .vs/

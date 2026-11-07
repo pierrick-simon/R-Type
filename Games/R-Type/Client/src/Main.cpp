@@ -14,6 +14,7 @@
 #include "Setup.hpp"
 #include "Sound.hpp"
 #include "Texture2D.hpp"
+#include "Settings.hpp"
 
 namespace {
 
@@ -59,6 +60,7 @@ int main()
         auto s = RType::Client::createSound(gm);
 
         RType::Client::createSystems(gm);
+        RType::Client::loadSettings();
         RType::Client::loadSavedServer();
         RType::Client::createServerPage(gm);
         while (!WindowShouldClose() && !RType::Client::quitRequested)

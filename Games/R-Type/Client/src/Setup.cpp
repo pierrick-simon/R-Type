@@ -115,6 +115,7 @@ namespace RType::Client {
             SpriteSheet2D::systemDrawSpriteSheet2D);
         gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
         gm.createSystem<>(systemDrawPasswordFields);
+        gm.createSystem<>(systemSettings);
         gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
         gm.createSystem<Window>([](Window &win) {
