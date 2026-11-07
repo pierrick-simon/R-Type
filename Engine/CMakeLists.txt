@@ -59,4 +59,9 @@ if (RTYPE_BUILD_GAME)
     add_subdirectory(Game)
 endif ()
 
+# Criterion is optional: the tests only exist when it was found
+if (TARGET criterion)
+    add_subdirectory(tests)
+endif ()
+
 message(STATUS "r-type_engine: system=ON 2D=${RTYPE_BUILD_GRAPHICAL2D} 3D=${RTYPE_BUILD_GRAPHICAL3D} network=${RTYPE_BUILD_NETWORK} audio=${RTYPE_BUILD_AUDIO} game=${RTYPE_BUILD_GAME}")

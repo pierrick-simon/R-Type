@@ -2,7 +2,7 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Systems
+** tests_systems
 */
 
 #include <map>
@@ -11,28 +11,97 @@
 #include <utility>
 #include <vector>
 
-#include "Components.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 namespace {
+
+    struct Owned {
+        RType::Entity owner;
+        int value;
+    };
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Name {
+        std::string value;
+    };
+
+    struct Body {
+        float x;
+        float y;
+        float vx;
+        float vy;
+    };
+
+    struct Lifetime {
+        RType::Entity owner;
+        int ticks;
+    };
+
+    struct Tracked {
+        static inline int alive = 0;
+
+        int value;
+
+        explicit Tracked(int v = 0) :
+            value(v)
+        {
+            alive++;
+        }
+
+        Tracked(const Tracked &other) :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked(Tracked &&other) noexcept :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked &operator=(const Tracked &) = default;
+        Tracked &operator=(Tracked &&) noexcept = default;
+
+        ~Tracked()
+        {
+            alive--;
+        }
+    };
 
     using RType::Entity;
     using RType::GameManager;
     using RType::SystemId;
-    using namespace Poc;
 
-    void updateWithoutSystems()
+    Test(systems, updateWithoutSystems,
+        .description = "update without systems does nothing")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 5);
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(gm.getComponent<Health>(e).hp == 5);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(gm.getComponent<Health>(e).hp == 5);
     }
 
-    void systemModifiesStoredComponents()
+    Test(systems, systemModifiesStoredComponents,
+        .description = "a system modifies the stored components")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -45,11 +114,12 @@ namespace {
         gm.createSystem<Health>([](Health &h) { h.hp += 1000; });
         gm.update();
         for (std::size_t i = 0; i < entities.size(); i++)
-            POC_CHECK(gm.getComponent<Health>(entities[i]).hp ==
+            cr_assert(gm.getComponent<Health>(entities[i]).hp ==
                 static_cast<int>(i) + 1000);
     }
 
-    void systemDoesNotCopyComponents()
+    Test(systems, systemDoesNotCopyComponents,
+        .description = "a system does not copy the components")
     {
         Tracked::alive = 0;
         GameManager gm;
@@ -60,11 +130,12 @@ namespace {
         gm.createSystem<Tracked>(
             [&seenAlive](Tracked &) { seenAlive = Tracked::alive; });
         gm.update();
-        POC_CHECK(seenAlive == 3);
-        POC_CHECK(Tracked::alive == 3);
+        cr_assert(seenAlive == 3);
+        cr_assert(Tracked::alive == 3);
     }
 
-    void systemOnlyTouchesItsType()
+    Test(systems, systemOnlyTouchesItsType,
+        .description = "a system only touches its own type")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -73,11 +144,12 @@ namespace {
         gm.addComponent<Velocity>(e, 1.f, 1.f);
         gm.createSystem<Position>([](Position &p) { p.x = 42.f; });
         gm.update();
-        POC_CHECK(gm.getComponent<Position>(e).x == 42.f);
-        POC_CHECK(gm.getComponent<Velocity>(e).x == 1.f);
+        cr_assert(gm.getComponent<Position>(e).x == 42.f);
+        cr_assert(gm.getComponent<Velocity>(e).x == 1.f);
     }
 
-    void systemVisitsEachComponentOnce()
+    Test(systems, systemVisitsEachComponentOnce,
+        .description = "a system visits each component exactly once")
     {
         GameManager gm;
         std::map<int, int> visits;
@@ -86,12 +158,13 @@ namespace {
             gm.addComponent<Health>(gm.createEntity(), i);
         gm.createSystem<Health>([&visits](Health &h) { visits[h.hp]++; });
         gm.update();
-        POC_CHECK(visits.size() == 500);
+        cr_assert(visits.size() == 500);
         for (const auto &[_, count] : visits)
-            POC_CHECK(count == 1);
+            cr_assert(count == 1);
     }
 
-    void systemsRunInCreationOrder()
+    Test(systems, systemsRunInCreationOrder,
+        .description = "systems run in creation order")
     {
         GameManager gm;
         std::vector<int> order;
@@ -102,10 +175,11 @@ namespace {
         gm.createSystem<Health>([&order](Health &) { order.push_back(3); });
         gm.update();
         gm.update();
-        POC_CHECK((order == std::vector<int> {1, 2, 3, 1, 2, 3}));
+        cr_assert((order == std::vector<int> {1, 2, 3, 1, 2, 3}));
     }
 
-    void laterSystemSeesEarlierChanges()
+    Test(systems, laterSystemSeesEarlierChanges,
+        .description = "a later system sees the changes of an earlier one")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -115,12 +189,13 @@ namespace {
         gm.createSystem<Health>([](Health &h) { h.hp += 1; });
         gm.createSystem<Health>([&seen](Health &h) { seen = h.hp; });
         gm.update();
-        POC_CHECK(seen == 1);
+        cr_assert(seen == 1);
         gm.update();
-        POC_CHECK(seen == 2);
+        cr_assert(seen == 2);
     }
 
-    void destroyedSystemStopsRunning()
+    Test(systems, destroyedSystemStopsRunning,
+        .description = "a destroyed system stops running")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -130,10 +205,11 @@ namespace {
         gm.update();
         gm.destroySystem(sys);
         gm.update();
-        POC_CHECK(gm.getComponent<Health>(e).hp == 1);
+        cr_assert(gm.getComponent<Health>(e).hp == 1);
     }
 
-    void orderKeptAfterDestroyAndCreate()
+    Test(systems, orderKeptAfterDestroyAndCreate,
+        .description = "order is kept after destroy then create")
     {
         GameManager gm;
         std::vector<char> order;
@@ -146,10 +222,11 @@ namespace {
         gm.destroySystem(b);
         gm.createSystem<Health>([&order](Health &) { order.push_back('D'); });
         gm.update();
-        POC_CHECK((order == std::vector<char> {'A', 'C', 'D'}));
+        cr_assert((order == std::vector<char> {'A', 'C', 'D'}));
     }
 
-    void handlesStayValidAfterOtherDestroys()
+    Test(systems, handlesStayValidAfterOtherDestroys,
+        .description = "system handles stay valid after other destroys")
     {
         GameManager gm;
         std::vector<char> order;
@@ -163,23 +240,25 @@ namespace {
         gm.destroySystem(handles[3]);
         gm.destroySystem(handles[0]);
         gm.update();
-        POC_CHECK((order == std::vector<char> {'C', 'E'}));
+        cr_assert((order == std::vector<char> {'C', 'E'}));
     }
 
-    void systemCreatedBeforeAnyComponent()
+    Test(systems, systemCreatedBeforeAnyComponent,
+        .description = "a system created before any component of its type")
     {
         GameManager gm;
         int visits = 0;
 
         gm.createSystem<Health>([&visits](Health &) { visits++; });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(visits == 0);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(visits == 0);
         gm.addComponent<Health>(gm.createEntity(), 1);
         gm.update();
-        POC_CHECK(visits == 1);
+        cr_assert(visits == 1);
     }
 
-    void systemFollowsAddsAndRemoves()
+    Test(systems, systemFollowsAddsAndRemoves,
+        .description = "a system follows adds, removes and destroys")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -191,23 +270,24 @@ namespace {
             gm.addComponent<Health>(entities.back(), i);
         }
         gm.update();
-        POC_CHECK(visits == 10);
+        cr_assert(visits == 10);
         visits = 0;
         gm.removeComponent<Health>(entities[0]);
         gm.destroyEntity(entities[5]);
         entities.erase(entities.begin() + 5);
         gm.addComponent<Health>(gm.createEntity(), 99);
         gm.update();
-        POC_CHECK(visits == 9);
+        cr_assert(visits == 9);
         visits = 0;
         for (Entity e : entities)
             if (gm.hasEntity(e))
                 gm.destroyEntity(e);
         gm.update();
-        POC_CHECK(visits == 1);
+        cr_assert(visits == 1);
     }
 
-    void systemOnEmptiedArray()
+    Test(systems, systemOnEmptiedArray,
+        .description = "a system on an emptied array")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -216,11 +296,12 @@ namespace {
         gm.addComponent<Health>(e, 1);
         gm.createSystem<Health>([&visits](Health &) { visits++; });
         gm.removeComponent<Health>(e);
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(visits == 0);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(visits == 0);
     }
 
-    void repeatedUpdatesAccumulate()
+    Test(systems, repeatedUpdatesAccumulate,
+        .description = "1000 updates accumulate")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -229,10 +310,11 @@ namespace {
         gm.createSystem<Health>([](Health &h) { h.hp += 1; });
         for (int i = 0; i < 1000; i++)
             gm.update();
-        POC_CHECK(gm.getComponent<Health>(e).hp == 1000);
+        cr_assert(gm.getComponent<Health>(e).hp == 1000);
     }
 
-    void twoSystemsOnDifferentTypes()
+    Test(systems, twoSystemsOnDifferentTypes,
+        .description = "two systems on different types")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -243,11 +325,13 @@ namespace {
         gm.createSystem<Health>([](Health &h) { h.hp -= 1; });
         gm.update();
         gm.update();
-        POC_CHECK(gm.getComponent<Position>(e).x == 2.f);
-        POC_CHECK(gm.getComponent<Health>(e).hp == 8);
+        cr_assert(gm.getComponent<Position>(e).x == 2.f);
+        cr_assert(gm.getComponent<Health>(e).hp == 8);
     }
 
-    void systemAddsOtherTypeDuringUpdate()
+    Test(systems, systemAddsOtherTypeDuringUpdate,
+        .description =
+            "a system creates entities of another type during update")
     {
         GameManager gm;
         std::vector<Entity> spawned;
@@ -262,13 +346,14 @@ namespace {
             spawned.push_back(bullet);
         });
         gm.update();
-        POC_CHECK(spawned.size() == 20);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 20);
+        cr_assert(spawned.size() == 20);
+        cr_assert(gm.getArray<Health>().nbComponent() == 20);
         for (auto &s : spawned)
-            POC_CHECK(gm.hasComponent<Health>(s));
+            cr_assert(gm.hasComponent<Health>(s));
     }
 
-    void systemAddsWithTemporaryArguments()
+    Test(systems, systemAddsWithTemporaryArguments,
+        .description = "a system adds components with temporary arguments")
     {
         GameManager gm;
         std::vector<std::pair<Entity, int>> spawned;
@@ -285,15 +370,16 @@ namespace {
             spawned.emplace_back(e, o.value);
         });
         gm.update();
-        POC_CHECK(spawned.size() == 20);
+        cr_assert(spawned.size() == 20);
         for (const auto &[e, value] : spawned) {
-            POC_CHECK(gm.getComponent<Name>(e).value ==
+            cr_assert(gm.getComponent<Name>(e).value ==
                 std::string(64, 'x') + std::to_string(value));
-            POC_CHECK(gm.getComponent<Health>(e).hp == value * 10);
+            cr_assert(gm.getComponent<Health>(e).hp == value * 10);
         }
     }
 
-    void systemModifiesOtherTypeThroughOwner()
+    Test(systems, systemModifiesOtherTypeThroughOwner,
+        .description = "a system modifies another type through an owner id")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -309,11 +395,12 @@ namespace {
         });
         gm.update();
         for (std::size_t i = 0; i < entities.size(); i++)
-            POC_CHECK(gm.getComponent<Health>(entities[i]).hp ==
+            cr_assert(gm.getComponent<Health>(entities[i]).hp ==
                 static_cast<int>(i) * 2);
     }
 
-    void systemDestroysOtherSystem()
+    Test(systems, systemDestroysOtherSystem,
+        .description = "a system destroys a later system during update")
     {
         GameManager gm;
         std::vector<char> order;
@@ -332,11 +419,12 @@ namespace {
             [&order](Health &) { order.push_back('C'); });
         gm.update();
         gm.update();
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
-        POC_CHECK((order == std::vector<char> {'A', 'B', 'C', 'A', 'B'}));
+        cr_assert(gm.getArray<Health>().nbComponent() == 1);
+        cr_assert((order == std::vector<char> {'A', 'B', 'C', 'A', 'B'}));
     }
 
-    void systemAddsOwnTypeDuringUpdate()
+    Test(systems, systemAddsOwnTypeDuringUpdate,
+        .description = "[design] a system adds its own type during update")
     {
         GameManager gm;
         int calls = 0;
@@ -350,11 +438,13 @@ namespace {
                     gm.addComponent<Health>(gm.createEntity(), 2);
         });
         gm.update();
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 404);
-        POC_CHECK(calls >= 4 && calls <= 404);
+        cr_assert(gm.getArray<Health>().nbComponent() == 404);
+        cr_assert(calls >= 4 && calls <= 404);
     }
 
-    void systemDestroysCurrentEntity()
+    Test(systems, systemDestroysCurrentEntity,
+        .description =
+            "[design] a system destroys the current entity during update")
     {
         GameManager gm;
 
@@ -367,12 +457,13 @@ namespace {
                 gm.destroyEntity(o.owner);
         });
         gm.update();
-        POC_CHECK(gm.getArray<Owned>().nbComponent() == 50);
+        cr_assert(gm.getArray<Owned>().nbComponent() == 50);
         for (const auto &pack : gm.getArray<Owned>().getDense())
-            POC_CHECK(pack.component.value % 2 == 1);
+            cr_assert(pack.component.value % 2 == 1);
     }
 
-    void systemDestroysEveryEntity()
+    Test(systems, systemDestroysEveryEntity,
+        .description = "[design] a system destroys every entity during update")
     {
         GameManager gm;
         int visits = 0;
@@ -386,11 +477,12 @@ namespace {
             gm.destroyEntity(o.owner);
         });
         gm.update();
-        POC_CHECK(visits == 100);
-        POC_CHECK(gm.getArray<Owned>().nbComponent() == 0);
+        cr_assert(visits == 100);
+        cr_assert(gm.getArray<Owned>().nbComponent() == 0);
     }
 
-    void systemDestroysItself()
+    Test(systems, systemDestroysItself,
+        .description = "[design] a system destroys itself during update")
     {
         GameManager gm;
         SystemId self = 0;
@@ -404,10 +496,11 @@ namespace {
         gm.createSystem<Health>([&runs](Health &) { runs += 10; });
         gm.update();
         gm.update();
-        POC_CHECK(runs == 21);
+        cr_assert(runs == 21);
     }
 
-    void throwingSystemDoesNotLockQueue()
+    Test(systems, throwingSystemDoesNotLockQueue,
+        .description = "a throwing system does not leave the queue locked")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -425,10 +518,12 @@ namespace {
         } catch (const std::runtime_error &) {
         }
         gm.addComponent<Position>(e, 1.f, 1.f);
-        POC_CHECK(gm.hasComponent<Position>(e));
+        cr_assert(gm.hasComponent<Position>(e));
     }
 
-    void sameEntityDestroyedTwiceInOneUpdate()
+    Test(systems, sameEntityDestroyedTwiceInOneUpdate,
+        .description =
+            "[design] two bullets destroy the same enemy in one update")
     {
         GameManager gm;
         Entity enemy = gm.createEntity();
@@ -443,12 +538,13 @@ namespace {
             if (o.value == 1)
                 gm.addComponent<Health>(other, 7);
         });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(!gm.hasEntity(enemy));
-        POC_CHECK(gm.hasComponent<Health>(other));
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(!gm.hasEntity(enemy));
+        cr_assert(gm.hasComponent<Health>(other));
     }
 
-    void particlesWithSystems()
+    Test(systems, particlesWithSystems,
+        .description = "300 ticks of particles driven by systems")
     {
         struct Expected {
             float x0;
@@ -485,8 +581,8 @@ namespace {
             moveVisits = 0;
             ageVisits = 0;
             gm.update();
-            POC_CHECK(moveVisits == static_cast<int>(particles.size()));
-            POC_CHECK(ageVisits == static_cast<int>(particles.size()));
+            cr_assert(moveVisits == static_cast<int>(particles.size()));
+            cr_assert(ageVisits == static_cast<int>(particles.size()));
             std::vector<Entity> expired;
             for (const auto &pack : gm.getArray<Lifetime>().getDense())
                 if (pack.component.ticks <= 0)
@@ -500,68 +596,14 @@ namespace {
             for (const auto &[e, p] : particles) {
                 int age = tick - p.spawnTick + 1;
                 const Body &b = gm.getComponent<Body>(e);
-                POC_CHECK(b.x == p.x0 + p.vx * static_cast<float>(age));
-                POC_CHECK(b.y == static_cast<float>(age));
-                POC_CHECK(
+                cr_assert(b.x == p.x0 + p.vx * static_cast<float>(age));
+                cr_assert(b.y == static_cast<float>(age));
+                cr_assert(
                     gm.getComponent<Lifetime>(e).ticks == p.lifetime - age);
             }
-            POC_CHECK(gm.getArray<Body>().nbComponent() == particles.size());
+            cr_assert(gm.getArray<Body>().nbComponent() == particles.size());
         }
-        POC_CHECK(destroyed > 1000);
+        cr_assert(destroyed > 1000);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList systemTests()
-    {
-        return {
-            {"update without systems does nothing", updateWithoutSystems},
-            {"a system modifies the stored components",
-                systemModifiesStoredComponents},
-            {"a system does not copy the components",
-                systemDoesNotCopyComponents},
-            {"a system only touches its own type", systemOnlyTouchesItsType},
-            {"a system visits each component exactly once",
-                systemVisitsEachComponentOnce},
-            {"systems run in creation order", systemsRunInCreationOrder},
-            {"a later system sees the changes of an earlier one",
-                laterSystemSeesEarlierChanges},
-            {"a destroyed system stops running", destroyedSystemStopsRunning},
-            {"order is kept after destroy then create",
-                orderKeptAfterDestroyAndCreate},
-            {"system handles stay valid after other destroys",
-                handlesStayValidAfterOtherDestroys},
-            {"a system created before any component of its type",
-                systemCreatedBeforeAnyComponent},
-            {"a system follows adds, removes and destroys",
-                systemFollowsAddsAndRemoves},
-            {"a system on an emptied array", systemOnEmptiedArray},
-            {"1000 updates accumulate", repeatedUpdatesAccumulate},
-            {"two systems on different types", twoSystemsOnDifferentTypes},
-            {"a system creates entities of another type during update",
-                systemAddsOtherTypeDuringUpdate},
-            {"a system adds components with temporary arguments",
-                systemAddsWithTemporaryArguments},
-            {"a system modifies another type through an owner id",
-                systemModifiesOtherTypeThroughOwner},
-            {"a system destroys a later system during update",
-                systemDestroysOtherSystem},
-            {"[design] a system adds its own type during update",
-                systemAddsOwnTypeDuringUpdate},
-            {"[design] a system destroys the current entity during update",
-                systemDestroysCurrentEntity},
-            {"[design] a system destroys every entity during update",
-                systemDestroysEveryEntity},
-            {"[design] a system destroys itself during update",
-                systemDestroysItself},
-            {"a throwing system does not leave the queue locked",
-                throwingSystemDoesNotLockQueue},
-            {"[design] two bullets destroy the same enemy in one update",
-                sameEntityDestroyedTwiceInOneUpdate},
-            {"300 ticks of particles driven by systems", particlesWithSystems},
-        };
-    }
-
-} // namespace Poc

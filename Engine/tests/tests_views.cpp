@@ -2,20 +2,21 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Views
+** tests_views
 */
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <random>
+#include <type_traits>
 #include <vector>
 
+#include <criterion/criterion.h>
 #include "ComponentManager.hpp"
-#include "Components.hpp"
+
 #include "Entity.hpp"
-#include "EntityUtils.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 #include "View.hpp"
 
 // Expected API (steps 1 to 3):
@@ -25,25 +26,132 @@
 
 namespace {
 
+    struct Player {};
+
+    struct Enemy {};
+
+    struct Bullet {};
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    struct Tracked {
+        static inline int alive = 0;
+
+        int value;
+
+        explicit Tracked(int v = 0) :
+            value(v)
+        {
+            alive++;
+        }
+
+        Tracked(const Tracked &other) :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked(Tracked &&other) noexcept :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked &operator=(const Tracked &) = default;
+        Tracked &operator=(Tracked &&) noexcept = default;
+
+        ~Tracked()
+        {
+            alive--;
+        }
+    };
+
+    template<typename E>
+    std::size_t indexOf(const E &entity)
+    {
+        if constexpr (std::is_integral_v<E>)
+            return static_cast<std::size_t>(entity);
+        else if constexpr (requires { entity.index(); })
+            return static_cast<std::size_t>(entity.index());
+        else
+            return static_cast<std::size_t>(entity.index);
+    }
+
+    class EntitySet {
+    public:
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
+        {
+            return std::find(_entities.begin(), _entities.end(), entity) !=
+                _entities.end();
+        }
+
+        void insert(const RType::Entity &entity)
+        {
+            if (!contains(entity))
+                _entities.push_back(entity);
+        }
+
+        void clear()
+        {
+            _entities.clear();
+        }
+
+        [[nodiscard]] std::size_t size() const
+        {
+            return _entities.size();
+        }
+
+        [[nodiscard]] auto begin() const
+        {
+            return _entities.begin();
+        }
+
+        [[nodiscard]] auto end() const
+        {
+            return _entities.end();
+        }
+
+    private:
+        std::vector<RType::Entity> _entities;
+    };
+
     using RType::ComponentManager;
     using RType::Entity;
     using RType::EntityManager;
     using RType::GameManager;
     using RType::View;
-    using namespace Poc;
 
-    void viewOnNeverAddedTypeIsEmpty()
+    Test(views, viewOnNeverAddedTypeIsEmpty,
+        .description = "[view] a view on a never added type is empty")
     {
         ComponentManager cm;
         int calls = 0;
 
-        POC_CHECK_NOTHROW(View<Health>(cm));
+        cr_assert_no_throw(static_cast<void>(View<Health>(cm)), std::exception);
         View<Health> view(cm);
-        POC_CHECK_NOTHROW(view.each([&calls](Entity, Health &) { calls++; }));
-        POC_CHECK(calls == 0);
+        cr_assert_no_throw(
+            view.each([&calls](Entity, Health &) { calls++; }), std::exception);
+        cr_assert(calls == 0);
     }
 
-    void viewWithOneMissingTypeIsEmpty()
+    Test(views, viewWithOneMissingTypeIsEmpty,
+        .description = "[view] a view with one missing type is empty")
     {
         ComponentManager cm;
         EntityManager em;
@@ -51,12 +159,14 @@ namespace {
 
         cm.addComponent<Health>(em.createEntity(), 1);
         View<Health, Damage> view(cm);
-        POC_CHECK_NOTHROW(
-            view.each([&calls](Entity, Health &, Damage &) { calls++; }));
-        POC_CHECK(calls == 0);
+        cr_assert_no_throw(
+            view.each([&calls](Entity, Health &, Damage &) { calls++; }),
+            std::exception);
+        cr_assert(calls == 0);
     }
 
-    void viewOnASingleType()
+    Test(views, viewOnASingleType,
+        .description = "[view] a view on a single type")
     {
         ComponentManager cm;
         EntityManager em;
@@ -70,12 +180,13 @@ namespace {
         }
         View<Health>(cm).each(
             [&visited](Entity e, Health &) { visited.insert(e); });
-        POC_CHECK(visited.size() == expected.size());
+        cr_assert(visited.size() == expected.size());
         for (Entity e : expected)
-            POC_CHECK(visited.contains(e));
+            cr_assert(visited.contains(e));
     }
 
-    void viewVisitsOnlyEntitiesWithAllTypes()
+    Test(views, viewVisitsOnlyEntitiesWithAllTypes,
+        .description = "[view] visits only entities that have all the types")
     {
         ComponentManager cm;
         EntityManager em;
@@ -92,12 +203,13 @@ namespace {
         }
         View<Health, Damage>(cm).each(
             [&visited](Entity e, Health &, Damage &) { visited.insert(e); });
-        POC_CHECK(visited.size() == expected.size());
+        cr_assert(visited.size() == expected.size());
         for (Entity e : expected)
-            POC_CHECK(visited.contains(e));
+            cr_assert(visited.contains(e));
     }
 
-    void viewGivesTheRightEntity()
+    Test(views, viewGivesTheRightEntity,
+        .description = "[view] gives the right entity")
     {
         ComponentManager cm;
         EntityManager em;
@@ -116,11 +228,12 @@ namespace {
                     &cm.getComponent<Damage>(e) != &d || d.value != h.hp * 2)
                     ok = false;
             });
-        POC_CHECK(calls == 50);
-        POC_CHECK(ok);
+        cr_assert(calls == 50);
+        cr_assert(ok);
     }
 
-    void viewGivesTheCurrentGeneration()
+    Test(views, viewGivesTheCurrentGeneration,
+        .description = "[view] gives the current generation of a recycled slot")
     {
         ComponentManager cm;
         EntityManager em;
@@ -131,16 +244,17 @@ namespace {
         cm.removeComponents(old);
         em.destroyEntity(old);
         Entity reused = em.createEntity();
-        POC_CHECK(indexOf(reused) == indexOf(old));
+        cr_assert(indexOf(reused) == indexOf(old));
         cm.addComponent<Health>(reused, 1);
         View<Health>(cm).each(
             [&seen](Entity e, Health &) { seen.push_back(e); });
-        POC_CHECK(seen.size() == 1);
-        POC_CHECK(seen[0] == reused);
-        POC_CHECK(!(seen[0] == old));
+        cr_assert(seen.size() == 1);
+        cr_assert(seen[0] == reused);
+        cr_assert(!(seen[0] == old));
     }
 
-    void viewModificationsReachTheStoredComponents()
+    Test(views, viewModificationsReachTheStoredComponents,
+        .description = "[view] modifications reach the stored components")
     {
         ComponentManager cm;
         EntityManager em;
@@ -152,11 +266,12 @@ namespace {
             p.x += v.x;
             p.y += v.y;
         });
-        POC_CHECK(cm.getComponent<Position>(e).x == 2.f);
-        POC_CHECK(cm.getComponent<Position>(e).y == 3.f);
+        cr_assert(cm.getComponent<Position>(e).x == 2.f);
+        cr_assert(cm.getComponent<Position>(e).y == 3.f);
     }
 
-    void viewArgumentsFollowTheTemplateOrder()
+    Test(views, viewArgumentsFollowTheTemplateOrder,
+        .description = "[view] arguments follow the template order")
     {
         ComponentManager cm;
         EntityManager em;
@@ -168,10 +283,11 @@ namespace {
         View<Damage, Health>(cm).each([&ok](Entity, Damage &d, Health &h) {
             ok = d.value == 3 && h.hp == 7;
         });
-        POC_CHECK(ok);
+        cr_assert(ok);
     }
 
-    void viewTypeOrderDoesNotChangeTheResult()
+    Test(views, viewTypeOrderDoesNotChangeTheResult,
+        .description = "[view] the type order does not change the result")
     {
         ComponentManager cm;
         EntityManager em;
@@ -190,13 +306,14 @@ namespace {
         View<Health, Player>(cm).each(
             [&commonFirst](
                 Entity e, Health &, Player &) { commonFirst.insert(e); });
-        POC_CHECK(rareFirst.size() == 4);
-        POC_CHECK(commonFirst.size() == 4);
+        cr_assert(rareFirst.size() == 4);
+        cr_assert(commonFirst.size() == 4);
         for (Entity e : rareFirst)
-            POC_CHECK(commonFirst.contains(e));
+            cr_assert(commonFirst.contains(e));
     }
 
-    void viewAcceptsAGenericLambda()
+    Test(views, viewAcceptsAGenericLambda,
+        .description = "[view] accepts a generic lambda")
     {
         ComponentManager cm;
         EntityManager em;
@@ -208,10 +325,11 @@ namespace {
             cm.addComponent<Damage>(e, i);
         }
         View<Health, Damage>(cm).each([&calls](auto, auto &...) { calls++; });
-        POC_CHECK(calls == 5);
+        cr_assert(calls == 5);
     }
 
-    void viewAcceptsConstParameters()
+    Test(views, viewAcceptsConstParameters,
+        .description = "[view] accepts const parameters")
     {
         ComponentManager cm;
         EntityManager em;
@@ -221,10 +339,11 @@ namespace {
         cm.addComponent<Health>(e, 4);
         View<Health>(cm).each(
             [&seen](const Entity &, const Health &h) { seen = h.hp; });
-        POC_CHECK(seen == 4);
+        cr_assert(seen == 4);
     }
 
-    void viewDoesNotCopyComponents()
+    Test(views, viewDoesNotCopyComponents,
+        .description = "[view] does not copy the components")
     {
         Tracked::alive = 0;
         ComponentManager cm;
@@ -239,11 +358,12 @@ namespace {
         View<Tracked, Health>(cm).each(
             [&seenAlive](
                 Entity, Tracked &, Health &) { seenAlive = Tracked::alive; });
-        POC_CHECK(seenAlive == 3);
-        POC_CHECK(Tracked::alive == 3);
+        cr_assert(seenAlive == 3);
+        cr_assert(Tracked::alive == 3);
     }
 
-    void viewSeesComponentsAddedAfterItsCreation()
+    Test(views, viewSeesComponentsAddedAfterItsCreation,
+        .description = "[view] sees components added after its creation")
     {
         ComponentManager cm;
         EntityManager em;
@@ -253,10 +373,11 @@ namespace {
         View<Health> view(cm);
         cm.addComponent<Health>(em.createEntity(), 1);
         view.each([&calls](Entity, Health &) { calls++; });
-        POC_CHECK(calls == 2);
+        cr_assert(calls == 2);
     }
 
-    void viewOnThreeTypesMatchesAModel()
+    Test(views, viewOnThreeTypesMatchesAModel,
+        .description = "[view] 1000 entities on three types match a model")
     {
         ComponentManager cm;
         EntityManager em;
@@ -281,15 +402,15 @@ namespace {
         }
         View<Health, Damage, Player>(cm).each(
             [&visited](Entity e, Health &h, Damage &d, Player &) {
-                POC_CHECK(h.hp == d.value);
+                cr_assert(h.hp == d.value);
                 visited.insert(e);
             });
         std::size_t expected = 0;
         for (std::size_t i = 0; i < entities.size(); i++) {
             expected += match[i] ? 1 : 0;
-            POC_CHECK(visited.contains(entities[i]) == match[i]);
+            cr_assert(visited.contains(entities[i]) == match[i]);
         }
-        POC_CHECK(visited.size() == expected);
+        cr_assert(visited.size() == expected);
     }
 
     // Step 5: through GameManager, gm.view<Ts...>() returning a View.
@@ -307,19 +428,24 @@ namespace {
             [func = std::move(func)](FrameTag<N> &) { func(); });
     }
 
-    void gmViewOnNeverAddedTypeIsEmpty()
+    Test(views, gmViewOnNeverAddedTypeIsEmpty,
+        .description = "[view] gm.view on a never added type is empty")
     {
         GameManager gm;
         int calls = 0;
 
         gm.createEntity();
         // Parenthesized: the comma in view<Health, Damage> splits macro args.
-        POC_CHECK_NOTHROW((gm.view<Health, Damage>().each(
-            [&calls](Entity, Health &, Damage &) { calls++; })));
-        POC_CHECK(calls == 0);
+        cr_assert_no_throw(
+            (gm.view<Health, Damage>().each(
+                [&calls](Entity, Health &, Damage &) { calls++; })),
+            std::exception);
+        cr_assert(calls == 0);
     }
 
-    void gmViewGivesLiveEntitiesWithAllTypes()
+    Test(views, gmViewGivesLiveEntitiesWithAllTypes,
+        .description =
+            "[view] gm.view gives live entities that have all the types")
     {
         GameManager gm;
         EntitySet expected;
@@ -341,13 +467,14 @@ namespace {
                     &gm.getComponent<Damage>(e) != &d)
                     ok = false;
             });
-        POC_CHECK(ok);
-        POC_CHECK(visited.size() == expected.size());
+        cr_assert(ok);
+        cr_assert(visited.size() == expected.size());
         for (Entity e : expected)
-            POC_CHECK(visited.contains(e));
+            cr_assert(visited.contains(e));
     }
 
-    void gmViewSkipsDestroyedEntities()
+    Test(views, gmViewSkipsDestroyedEntities,
+        .description = "[view] gm.view skips destroyed entities")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -364,14 +491,16 @@ namespace {
             gm.addComponent<Health>(gm.createEntity(), 100 + i);
         gm.view<Health>().each(
             [&visited](Entity e, Health &) { visited.insert(e); });
-        POC_CHECK(visited.size() == 15);
+        cr_assert(visited.size() == 15);
         for (std::size_t i = 0; i < entities.size(); i += 2)
-            POC_CHECK(!visited.contains(entities[i]));
+            cr_assert(!visited.contains(entities[i]));
         for (Entity e : visited)
-            POC_CHECK(gm.hasEntity(e));
+            cr_assert(gm.hasEntity(e));
     }
 
-    void gmViewEntityCanBeDestroyedInASystem()
+    Test(views, gmViewEntityCanBeDestroyedInASystem,
+        .description =
+            "[view] an entity from gm.view can be destroyed in a system")
     {
         GameManager gm;
         int seenInLaterSystem = 0;
@@ -392,17 +521,19 @@ namespace {
             });
         });
         gm.update();
-        POC_CHECK(seenInLaterSystem == 10);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 6);
+        cr_assert(seenInLaterSystem == 10);
+        cr_assert(gm.getArray<Health>().nbComponent() == 6);
         int left = 0;
         gm.view<Health>().each([&left](Entity, Health &h) {
-            POC_CHECK(h.hp == 10);
+            cr_assert(h.hp == 10);
             left++;
         });
-        POC_CHECK(left == 6);
+        cr_assert(left == 6);
     }
 
-    void gmViewAddDuringUpdateIsVisibleNextFrame()
+    Test(views, gmViewAddDuringUpdateIsVisibleNextFrame,
+        .description =
+            "[view] a component added during update is visible next frame")
     {
         GameManager gm;
         int damaged = 0;
@@ -419,12 +550,13 @@ namespace {
                 [&damaged](Entity, Health &, Damage &) { damaged++; });
         });
         gm.update();
-        POC_CHECK(damaged == 0);
+        cr_assert(damaged == 0);
         gm.update();
-        POC_CHECK(damaged == 5);
+        cr_assert(damaged == 5);
     }
 
-    void gmViewBulletsHitEnemies()
+    Test(views, gmViewBulletsHitEnemies,
+        .description = "[view] bullets hit enemies through two nested views")
     {
         GameManager gm;
         std::vector<Entity> enemies;
@@ -455,55 +587,10 @@ namespace {
                 });
         });
         gm.update();
-        POC_CHECK(gm.getComponent<Health>(enemies[0]).hp == 1);
-        POC_CHECK(gm.getComponent<Health>(enemies[1]).hp == 2);
-        POC_CHECK(gm.getComponent<Health>(enemies[2]).hp == 3);
-        POC_CHECK(gm.getArray<Bullet>().nbComponent() == 1);
+        cr_assert(gm.getComponent<Health>(enemies[0]).hp == 1);
+        cr_assert(gm.getComponent<Health>(enemies[1]).hp == 2);
+        cr_assert(gm.getComponent<Health>(enemies[2]).hp == 3);
+        cr_assert(gm.getArray<Bullet>().nbComponent() == 1);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList viewTests()
-    {
-        return {
-            {"[view] a view on a never added type is empty",
-                viewOnNeverAddedTypeIsEmpty},
-            {"[view] a view with one missing type is empty",
-                viewWithOneMissingTypeIsEmpty},
-            {"[view] a view on a single type", viewOnASingleType},
-            {"[view] visits only entities that have all the types",
-                viewVisitsOnlyEntitiesWithAllTypes},
-            {"[view] gives the right entity", viewGivesTheRightEntity},
-            {"[view] gives the current generation of a recycled slot",
-                viewGivesTheCurrentGeneration},
-            {"[view] modifications reach the stored components",
-                viewModificationsReachTheStoredComponents},
-            {"[view] arguments follow the template order",
-                viewArgumentsFollowTheTemplateOrder},
-            {"[view] the type order does not change the result",
-                viewTypeOrderDoesNotChangeTheResult},
-            {"[view] accepts a generic lambda", viewAcceptsAGenericLambda},
-            {"[view] accepts const parameters", viewAcceptsConstParameters},
-            {"[view] does not copy the components", viewDoesNotCopyComponents},
-            {"[view] sees components added after its creation",
-                viewSeesComponentsAddedAfterItsCreation},
-            {"[view] 1000 entities on three types match a model",
-                viewOnThreeTypesMatchesAModel},
-            {"[view] gm.view on a never added type is empty",
-                gmViewOnNeverAddedTypeIsEmpty},
-            {"[view] gm.view gives live entities that have all the types",
-                gmViewGivesLiveEntitiesWithAllTypes},
-            {"[view] gm.view skips destroyed entities",
-                gmViewSkipsDestroyedEntities},
-            {"[view] an entity from gm.view can be destroyed in a system",
-                gmViewEntityCanBeDestroyedInASystem},
-            {"[view] a component added during update is visible next frame",
-                gmViewAddDuringUpdateIsVisibleNextFrame},
-            {"[view] bullets hit enemies through two nested views",
-                gmViewBulletsHitEnemies},
-        };
-    }
-
-} // namespace Poc

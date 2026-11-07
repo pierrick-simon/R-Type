@@ -89,6 +89,10 @@ jobs:
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-14
 
+      - name: Run engine tests
+        timeout-minutes: 10
+        run: cmake --build build -j --target engine_tests_run
+
       - name: Run client tests
         timeout-minutes: 10
         run: cmake --build build -j --target client_tests_run
