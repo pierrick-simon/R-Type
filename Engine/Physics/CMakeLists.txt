@@ -2,6 +2,9 @@ add_library(engine-physics SHARED
     src/Friction2D.cpp
     src/GravityField2D.cpp
     src/Velocity2D.cpp
+    src/Friction3D.cpp
+    src/GravityField3D.cpp
+    src/Velocity3D.cpp
 )
 
 target_include_directories(engine-physics PUBLIC
