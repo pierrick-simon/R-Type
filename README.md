@@ -32,6 +32,7 @@ server and client.
 - [Tests](#tests)
 - [Documentation](#documentation)
 - [Development](#development)
+- [Contributing](#contributing)
 - [Clean](#clean)
 - [Troubleshooting](#troubleshooting)
 - [Authors](#authors)
@@ -280,6 +281,57 @@ code --install-extension ariel-amriou.r-type-lua-engine-epitech
 
 or search for "R-Type lua engine epitech" in the VS Code Marketplace
 (Extensions view, `Ctrl+Shift+X`).
+
+---
+
+## Contributing
+
+Pick the guide that matches what you change:
+
+| You want to... | Read |
+|---|---|
+| Understand the ECS before touching it | [ECS guide](docs/ECS_GUIDE.en.md) and [ECS design notes](docs/ECS_DESIGN.en.md) |
+| Add a component, a system, a module, a `gm:` function or a `config.conf` setting | [Extending the engine](docs/ENGINE_EXTENDING.en.md) |
+| Write or change a game on top of the engine | [Game making guide](docs/GAME_GUIDE.en.md), [running a game](docs/ENGINE_GAME.en.md), [Lua scripting guide](docs/LUA_GUIDE.en.md) |
+| Change the network protocol | [Protocol specification](docs/ENGINE_PROTOCOL.txt), to keep in sync with the code |
+| Know why a library or a tool was chosen | [Comparative studies](docs/comparative-studies/en/README.md) |
+
+Every guide also exists in French (`*.fr.md`). When you change one, update
+both languages.
+
+Before opening a pull request against `dev`:
+
+- build the project, then run `./script/clang.sh` and `./script/lint.sh`
+  (see [Development](#development)): the CI fails if either reports a problem;
+- run the [tests](#tests), especially `engine_tests_run` after any change to
+  the ECS.
+
+### Commits
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
+`type(scope): summary`.
+
+- **Type:** `feat`, `fix`, `docs`, `refactor` or `style`.
+- **Scope:** the area touched, as a path (`engine`, `engine/game`,
+  `engine/lua`). Leave it out for docs that cover the whole repo.
+- **Summary:** in English, lowercase, imperative, no trailing period, and
+  saying what changes for the user, e.g.
+  `feat(engine/game): stop the game from Lua with gm:stop()`.
+- **Body** (optional, when the change needs explaining): plain prose wrapped
+  at about 72 columns, explaining the behavior and the why. Code identifiers
+  are written as-is, without backticks.
+- **One logical change per commit:** code and its docs go in separate commits
+  (`feat(...)`, then `docs(...)`).
+
+### Branches and pull requests
+
+- **Branch:** `type/short-name` (`feat/cmake-install`, `docs/vscode-extension`),
+  opened against `dev`.
+- **PR title:** the branch name, capitalized (`Feat/cmake install`).
+- **PR body:** one past-tense sentence summarizing the change ("Added an
+  install step: ..."), then a short `-` bullet list of the concrete points with
+  identifiers in backticks, then `Closes #N` when there is an issue. No
+  headings, no test plan section.
 
 ---
 
