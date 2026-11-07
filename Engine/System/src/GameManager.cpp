@@ -53,7 +53,7 @@ namespace RType {
             throw;
         }
         _updating = false;
-        if (_cq.size())
+        if (!_cq.empty())
             log("update: applying ", _cq.size(), " queued command(s)");
         flush();
     }
