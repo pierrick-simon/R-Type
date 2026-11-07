@@ -19,7 +19,7 @@ namespace RType::Client {
             LAGOMETER,
         };
 
-        Metric(const std::string &path, bool network = false);
+        Metric(int assetId, bool network = false);
 
         void setOn(bool on)
         {
@@ -41,7 +41,7 @@ namespace RType::Client {
         void createFps(GameManager &gm);
         void createLagometer(GameManager &gm);
         bool _on = false;
-        std::string _path;
+        int _assetId;
         Lagometer::Info _lagInfo;
         int _fps = 0.f;
         bool _network;

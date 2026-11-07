@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cstddef>
 
+#include "Assets.hpp"
 #include "GameManager.hpp"
 
 namespace RType::Client {
@@ -77,7 +78,7 @@ namespace RType::Client {
     void createLobby(GameManager &gm);
     void destroyLobby(GameManager &gm);
     void returnToMenu(GameManager &gm);
-    void systemLobby(GameManager &gm);
+    void systemLobby(GameManager &gm, Assets &assets);
 
 } // namespace RType::Client
 
