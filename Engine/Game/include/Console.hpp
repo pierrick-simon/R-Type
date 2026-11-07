@@ -8,6 +8,7 @@
 #ifndef CONSOLE_HPP_
 #define CONSOLE_HPP_
 
+#include <functional>
 #include <istream>
 #include <map>
 #include <mutex>
@@ -48,10 +49,11 @@ namespace RType::Game {
         void run();
 
     private:
-        typedef void (Console::*CommandFunction)(std::istream &args);
+        typedef std::function<void(Console &, std::istream &args)>
+            CommandFunction;
 
         struct Command {
-            CommandFunction function = nullptr;
+            CommandFunction function;
             std::string usage;
         };
 
@@ -66,7 +68,7 @@ namespace RType::Game {
 
         void execute(const std::string &line);
 
-        void help(std::istream &args);
+        static void help(Console &console, std::istream &args);
         void createEntity(std::istream &args);
         void destroyEntity(std::istream &args);
         void addComponent(std::istream &args);

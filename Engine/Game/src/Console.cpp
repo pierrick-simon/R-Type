@@ -86,7 +86,7 @@ namespace RType::Game {
         const Command &command = _commands.at(name);
 
         try {
-            (this->*command.function)(args);
+            command.function(*this, args);
         } catch (const std::invalid_argument &) {
             std::cerr << "usage: " << name << " " << command.usage << std::endl;
         } catch (const std::exception &e) {
@@ -94,7 +94,7 @@ namespace RType::Game {
         }
     }
 
-    void Console::help(std::istream &)
+    void Console::help(Console &, std::istream &)
     {
         for (const auto &[name, command] : _commands)
             std::cout << name << " " << command.usage << std::endl;
