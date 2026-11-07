@@ -2,25 +2,91 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Simulation
+** tests_simulation
 */
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
+#include <cstddef>
 #include <set>
+#include <string>
 #include <vector>
 
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 namespace {
 
+    struct Player {};
+
+    struct Enemy {};
+
+    struct Bullet {};
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    struct Name {
+        std::string value;
+    };
+
+    class EntitySet {
+    public:
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
+        {
+            return std::find(_entities.begin(), _entities.end(), entity) !=
+                _entities.end();
+        }
+
+        void insert(const RType::Entity &entity)
+        {
+            if (!contains(entity))
+                _entities.push_back(entity);
+        }
+
+        void clear()
+        {
+            _entities.clear();
+        }
+
+        [[nodiscard]] std::size_t size() const
+        {
+            return _entities.size();
+        }
+
+        [[nodiscard]] auto begin() const
+        {
+            return _entities.begin();
+        }
+
+        [[nodiscard]] auto end() const
+        {
+            return _entities.end();
+        }
+
+    private:
+        std::vector<RType::Entity> _entities;
+    };
+
     using RType::Entity;
     using RType::GameManager;
-    using namespace Poc;
 
     constexpr float SCREEN_WIDTH = 200.f;
     constexpr float SCREEN_HEIGHT = 100.f;
@@ -54,12 +120,12 @@ namespace {
             for (Entity e : _entities)
                 _gm.destroyEntity(e);
             _entities.clear();
-            POC_CHECK(_gm.getArray<Position>().nbComponent() == 0);
-            POC_CHECK(_gm.getArray<Velocity>().nbComponent() == 0);
-            POC_CHECK(_gm.getArray<Health>().nbComponent() == 0);
-            POC_CHECK(_gm.getArray<Damage>().nbComponent() == 0);
-            POC_CHECK(_gm.getArray<Enemy>().nbComponent() == 0);
-            POC_CHECK(_gm.getArray<Bullet>().nbComponent() == 0);
+            cr_assert(_gm.getArray<Position>().nbComponent() == 0);
+            cr_assert(_gm.getArray<Velocity>().nbComponent() == 0);
+            cr_assert(_gm.getArray<Health>().nbComponent() == 0);
+            cr_assert(_gm.getArray<Damage>().nbComponent() == 0);
+            cr_assert(_gm.getArray<Enemy>().nbComponent() == 0);
+            cr_assert(_gm.getArray<Bullet>().nbComponent() == 0);
         }
 
         int kills = 0;
@@ -180,22 +246,22 @@ namespace {
             std::size_t bullets = 0;
 
             for (Entity e : _entities) {
-                POC_CHECK(_gm.hasComponent<Position>(e));
-                POC_CHECK(_gm.hasComponent<Velocity>(e));
+                cr_assert(_gm.hasComponent<Position>(e));
+                cr_assert(_gm.hasComponent<Velocity>(e));
                 enemies += _gm.hasComponent<Enemy>(e) ? 1 : 0;
                 bullets += _gm.hasComponent<Bullet>(e) ? 1 : 0;
                 if (_gm.hasComponent<Bullet>(e))
-                    POC_CHECK(_gm.hasComponent<Damage>(e));
+                    cr_assert(_gm.hasComponent<Damage>(e));
                 if (_gm.hasComponent<Enemy>(e))
-                    POC_CHECK(_gm.getComponent<Health>(e).hp > 0);
+                    cr_assert(_gm.getComponent<Health>(e).hp > 0);
             }
-            POC_CHECK(
+            cr_assert(
                 _gm.getArray<Position>().nbComponent() == _entities.size());
-            POC_CHECK(
+            cr_assert(
                 _gm.getArray<Velocity>().nbComponent() == _entities.size());
-            POC_CHECK(_gm.getArray<Enemy>().nbComponent() == enemies);
-            POC_CHECK(_gm.getArray<Bullet>().nbComponent() == bullets);
-            POC_CHECK(_gm.getArray<Damage>().nbComponent() == bullets);
+            cr_assert(_gm.getArray<Enemy>().nbComponent() == enemies);
+            cr_assert(_gm.getArray<Bullet>().nbComponent() == bullets);
+            cr_assert(_gm.getArray<Damage>().nbComponent() == bullets);
         }
 
         GameManager _gm;
@@ -205,31 +271,24 @@ namespace {
         int _tick = 0;
     };
 
-    void miniShootEmUp()
+    Test(
+        simulation, miniShootEmUp, .description = "mini shoot'em up simulation")
     {
         World world;
 
         for (int tick = 0; tick < TICKS; tick++)
             world.tick(tick);
-        std::cout << "         " << TICKS << " ticks, " << world.bulletsFired
-                  << " bullets, " << world.kills << " kills, "
-                  << world.hitsTaken << " hits taken, player died at tick "
-                  << world.playerDiedAt << ", peak " << world.maxAlive
-                  << " entities" << std::endl;
-        POC_CHECK(world.kills > 0);
-        POC_CHECK(world.hitsTaken > 0);
+        cr_log_info("%d ticks, %d bullets, %d kills, %d hits taken, player "
+                    "died at tick %d, peak %zu entities",
+            TICKS,
+            world.bulletsFired,
+            world.kills,
+            world.hitsTaken,
+            world.playerDiedAt,
+            world.maxAlive);
+        cr_assert(world.kills > 0);
+        cr_assert(world.hitsTaken > 0);
         world.shutdown();
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList simulationTests()
-    {
-        return {
-            {"mini shoot'em up simulation", miniShootEmUp},
-        };
-    }
-
-} // namespace Poc

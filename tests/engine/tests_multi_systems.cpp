@@ -2,27 +2,135 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** MultiSystems
+** tests_multi_systems
 */
 
+#include <algorithm>
 #include <cstddef>
 #include <random>
+#include <type_traits>
 #include <vector>
 
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 namespace {
 
+    struct Player {};
+
+    struct Owned {
+        RType::Entity owner;
+        int value;
+    };
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    struct Tracked {
+        static inline int alive = 0;
+
+        int value;
+
+        explicit Tracked(int v = 0) :
+            value(v)
+        {
+            alive++;
+        }
+
+        Tracked(const Tracked &other) :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked(Tracked &&other) noexcept :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked &operator=(const Tracked &) = default;
+        Tracked &operator=(Tracked &&) noexcept = default;
+
+        ~Tracked()
+        {
+            alive--;
+        }
+    };
+
+    template<typename E>
+    std::size_t indexOf(const E &entity)
+    {
+        if constexpr (std::is_integral_v<E>)
+            return static_cast<std::size_t>(entity);
+        else if constexpr (requires { entity.index(); })
+            return static_cast<std::size_t>(entity.index());
+        else
+            return static_cast<std::size_t>(entity.index);
+    }
+
+    class EntitySet {
+    public:
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
+        {
+            return std::find(_entities.begin(), _entities.end(), entity) !=
+                _entities.end();
+        }
+
+        void insert(const RType::Entity &entity)
+        {
+            if (!contains(entity))
+                _entities.push_back(entity);
+        }
+
+        void clear()
+        {
+            _entities.clear();
+        }
+
+        [[nodiscard]] std::size_t size() const
+        {
+            return _entities.size();
+        }
+
+        [[nodiscard]] auto begin() const
+        {
+            return _entities.begin();
+        }
+
+        [[nodiscard]] auto end() const
+        {
+            return _entities.end();
+        }
+
+    private:
+        std::vector<RType::Entity> _entities;
+    };
+
     using RType::Entity;
     using RType::GameManager;
-    using namespace Poc;
 
     // Owned identifies the visited entity inside a callback (owner field).
 
-    void visitsOnlyEntitiesWithAllTypes()
+    Test(multi_systems, visitsOnlyEntitiesWithAllTypes,
+        .description = "[multi] visits only entities that have all the types")
     {
         GameManager gm;
         EntitySet expected;
@@ -39,12 +147,14 @@ namespace {
         gm.createSystem<Owned, Health>(
             [&visited](Owned &o, Health &) { visited.insert(o.owner); });
         gm.update();
-        POC_CHECK(visited.size() == expected.size());
+        cr_assert(visited.size() == expected.size());
         for (Entity e : expected)
-            POC_CHECK(visited.contains(e));
+            cr_assert(visited.contains(e));
     }
 
-    void firstEntityMissingATypeDoesNotStopTheSystem()
+    Test(multi_systems, firstEntityMissingATypeDoesNotStopTheSystem,
+        .description =
+            "[multi] a first entity missing a type does not stop the system")
     {
         GameManager gm;
         int calls = 0;
@@ -59,10 +169,12 @@ namespace {
         gm.createSystem<Owned, Health>(
             [&calls](Owned &, Health &) { calls++; });
         gm.update();
-        POC_CHECK(calls == 5);
+        cr_assert(calls == 5);
     }
 
-    void entityMissingATypeInTheMiddle()
+    Test(multi_systems, entityMissingATypeInTheMiddle,
+        .description =
+            "[multi] an entity missing a type in the middle is skipped")
     {
         GameManager gm;
         int calls = 0;
@@ -76,10 +188,11 @@ namespace {
         gm.createSystem<Owned, Health>(
             [&calls](Owned &, Health &) { calls++; });
         gm.update();
-        POC_CHECK(calls == 8);
+        cr_assert(calls == 8);
     }
 
-    void componentsBelongToTheSameEntity()
+    Test(multi_systems, componentsBelongToTheSameEntity,
+        .description = "[multi] the components belong to the same entity")
     {
         GameManager gm;
         int calls = 0;
@@ -97,11 +210,12 @@ namespace {
                 paired = false;
         });
         gm.update();
-        POC_CHECK(calls == 200);
-        POC_CHECK(paired);
+        cr_assert(calls == 200);
+        cr_assert(paired);
     }
 
-    void pairingSurvivesRemovalsAndRecycling()
+    Test(multi_systems, pairingSurvivesRemovalsAndRecycling,
+        .description = "[multi] pairing survives removals and recycling")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -128,11 +242,12 @@ namespace {
                     paired = false;
             });
         gm.update();
-        POC_CHECK(calls == 80);
-        POC_CHECK(paired);
+        cr_assert(calls == 80);
+        cr_assert(paired);
     }
 
-    void modificationsReachTheStoredComponents()
+    Test(multi_systems, modificationsReachTheStoredComponents,
+        .description = "[multi] modifications reach the stored components")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -146,12 +261,13 @@ namespace {
         });
         gm.update();
         gm.update();
-        POC_CHECK(gm.getComponent<Position>(e).x == 5.f);
-        POC_CHECK(gm.getComponent<Position>(e).y == 6.f);
-        POC_CHECK(gm.getComponent<Velocity>(e).x == 4.f);
+        cr_assert(gm.getComponent<Position>(e).x == 5.f);
+        cr_assert(gm.getComponent<Position>(e).y == 6.f);
+        cr_assert(gm.getComponent<Velocity>(e).x == 4.f);
     }
 
-    void argumentsFollowTheTemplateOrder()
+    Test(multi_systems, argumentsFollowTheTemplateOrder,
+        .description = "[multi] arguments follow the template order")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -162,10 +278,11 @@ namespace {
         gm.createSystem<Damage, Health>(
             [&ok](Damage &d, Health &h) { ok = d.value == 3 && h.hp == 7; });
         gm.update();
-        POC_CHECK(ok);
+        cr_assert(ok);
     }
 
-    void typeOrderDoesNotChangeTheResult()
+    Test(multi_systems, typeOrderDoesNotChangeTheResult,
+        .description = "[multi] the type order does not change the result")
     {
         GameManager gm;
         EntitySet rareFirst;
@@ -183,13 +300,14 @@ namespace {
             commonFirst.insert(o.owner);
         });
         gm.update();
-        POC_CHECK(rareFirst.size() == 4);
-        POC_CHECK(commonFirst.size() == 4);
+        cr_assert(rareFirst.size() == 4);
+        cr_assert(commonFirst.size() == 4);
         for (Entity e : rareFirst)
-            POC_CHECK(commonFirst.contains(e));
+            cr_assert(commonFirst.contains(e));
     }
 
-    void threeTypes()
+    Test(multi_systems, threeTypes,
+        .description = "[multi] a system on three types")
     {
         GameManager gm;
         int calls = 0;
@@ -205,14 +323,15 @@ namespace {
         gm.createSystem<Owned, Health, Damage>(
             [&calls](Owned &o, Health &h, Damage &d) {
                 calls++;
-                POC_CHECK(o.value % 6 == 0);
-                POC_CHECK(h.hp == o.value && d.value == o.value);
+                cr_assert(o.value % 6 == 0);
+                cr_assert(h.hp == o.value && d.value == o.value);
             });
         gm.update();
-        POC_CHECK(calls == 5);
+        cr_assert(calls == 5);
     }
 
-    void typeNeverAddedDoesNothing()
+    Test(multi_systems, typeNeverAddedDoesNothing,
+        .description = "[multi] a type never added does nothing")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -221,14 +340,15 @@ namespace {
         gm.addComponent<Health>(e, 1);
         gm.createSystem<Health, Damage>(
             [&calls](Health &, Damage &) { calls++; });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 0);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 0);
         gm.addComponent<Damage>(e, 1);
         gm.update();
-        POC_CHECK(calls == 1);
+        cr_assert(calls == 1);
     }
 
-    void emptiedFirstArrayDoesNothing()
+    Test(multi_systems, emptiedFirstArrayDoesNothing,
+        .description = "[multi] an emptied first array does nothing")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -239,11 +359,12 @@ namespace {
         gm.removeComponent<Health>(e);
         gm.createSystem<Health, Damage>(
             [&calls](Health &, Damage &) { calls++; });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 0);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 0);
     }
 
-    void multiSystemDoesNotCopyComponents()
+    Test(multi_systems, multiSystemDoesNotCopyComponents,
+        .description = "[multi] a system does not copy the components")
     {
         Tracked::alive = 0;
         GameManager gm;
@@ -257,11 +378,12 @@ namespace {
         gm.createSystem<Health, Tracked>(
             [&seenAlive](Health &, Tracked &) { seenAlive = Tracked::alive; });
         gm.update();
-        POC_CHECK(seenAlive == 3);
-        POC_CHECK(Tracked::alive == 3);
+        cr_assert(seenAlive == 3);
+        cr_assert(Tracked::alive == 3);
     }
 
-    void constParameters()
+    Test(multi_systems, constParameters,
+        .description = "[multi] const parameters")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -273,10 +395,11 @@ namespace {
             [&seen](
                 const Position &p, const Velocity &v) { seen = p.x + v.x; });
         gm.update();
-        POC_CHECK(seen == 5.f);
+        cr_assert(seen == 5.f);
     }
 
-    void followsAddsAndRemovesAcrossFrames()
+    Test(multi_systems, followsAddsAndRemovesAcrossFrames,
+        .description = "[multi] follows adds and removes across frames")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -287,19 +410,20 @@ namespace {
             [&calls](Health &, Damage &) { calls++; });
         gm.addComponent<Damage>(gm.createEntity(), 0);
         gm.update();
-        POC_CHECK(calls == 0);
+        cr_assert(calls == 0);
         gm.addComponent<Damage>(e, 1);
         gm.update();
-        POC_CHECK(calls == 1);
+        cr_assert(calls == 1);
         gm.removeComponent<Health>(e);
         gm.update();
-        POC_CHECK(calls == 1);
+        cr_assert(calls == 1);
         gm.addComponent<Health>(e, 2);
         gm.update();
-        POC_CHECK(calls == 2);
+        cr_assert(calls == 2);
     }
 
-    void removalDuringUpdateIsDeferred()
+    Test(multi_systems, removalDuringUpdateIsDeferred,
+        .description = "[multi] a removal during update is deferred")
     {
         GameManager gm;
         int calls = 0;
@@ -313,14 +437,16 @@ namespace {
             calls++;
             gm.removeComponent<Health>(o.owner);
         });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 10);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 0);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 10);
+        cr_assert(gm.getArray<Health>().nbComponent() == 0);
         gm.update();
-        POC_CHECK(calls == 10);
+        cr_assert(calls == 10);
     }
 
-    void destroyDuringUpdateStaysVisibleThisFrame()
+    Test(multi_systems, destroyDuringUpdateStaysVisibleThisFrame,
+        .description =
+            "[multi] a destroyed entity stays visible until the frame ends")
     {
         GameManager gm;
         int firstCalls = 0;
@@ -338,14 +464,15 @@ namespace {
         gm.createSystem<Health, Owned>(
             [&secondCalls](Health &, Owned &) { secondCalls++; });
         gm.update();
-        POC_CHECK(firstCalls == 10);
-        POC_CHECK(secondCalls == 10);
+        cr_assert(firstCalls == 10);
+        cr_assert(secondCalls == 10);
         gm.update();
-        POC_CHECK(firstCalls == 10);
-        POC_CHECK(secondCalls == 10);
+        cr_assert(firstCalls == 10);
+        cr_assert(secondCalls == 10);
     }
 
-    void recycledSlotDoesNotInheritComponents()
+    Test(multi_systems, recycledSlotDoesNotInheritComponents,
+        .description = "[multi] a recycled slot does not inherit components")
     {
         GameManager gm;
         int calls = 0;
@@ -355,15 +482,16 @@ namespace {
         gm.addComponent<Health>(old, 0);
         gm.destroyEntity(old);
         Entity reused = gm.createEntity();
-        POC_CHECK(indexOf(reused) == indexOf(old));
+        cr_assert(indexOf(reused) == indexOf(old));
         gm.addComponent<Owned>(reused, reused, 1);
         gm.createSystem<Owned, Health>(
             [&calls](Owned &, Health &) { calls++; });
         gm.update();
-        POC_CHECK(calls == 0);
+        cr_assert(calls == 0);
     }
 
-    void denseKnowsTheOwnerOfEachComponent()
+    Test(multi_systems, denseKnowsTheOwnerOfEachComponent,
+        .description = "[multi] the dense knows the owner of each component")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -380,14 +508,15 @@ namespace {
         std::size_t count = 0;
         for (auto &pack : gm.getArray<Health>().getDense()) {
             count++;
-            POC_CHECK(gm.hasEntity(pack.entity()));
-            POC_CHECK(
+            cr_assert(gm.hasEntity(pack.entity()));
+            cr_assert(
                 &gm.getComponent<Health>(pack.entity()) == &pack.component);
         }
-        POC_CHECK(count == gm.getArray<Health>().nbComponent());
+        cr_assert(count == gm.getArray<Health>().nbComponent());
     }
 
-    void randomSubsetsMatchModel()
+    Test(multi_systems, randomSubsetsMatchModel,
+        .description = "[multi] 1000 random subsets match a model")
     {
         GameManager gm;
         std::mt19937 rng(1234);
@@ -415,55 +544,9 @@ namespace {
         for (std::size_t i = 0; i < entities.size(); i++) {
             bool match = hasHealth[i] && hasDamage[i];
             expected += match ? 1 : 0;
-            POC_CHECK(visited.contains(entities[i]) == match);
+            cr_assert(visited.contains(entities[i]) == match);
         }
-        POC_CHECK(visited.size() == expected);
+        cr_assert(visited.size() == expected);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList multiSystemTests()
-    {
-        return {
-            {"[multi] visits only entities that have all the types",
-                visitsOnlyEntitiesWithAllTypes},
-            {"[multi] a first entity missing a type does not stop the system",
-                firstEntityMissingATypeDoesNotStopTheSystem},
-            {"[multi] an entity missing a type in the middle is skipped",
-                entityMissingATypeInTheMiddle},
-            {"[multi] the components belong to the same entity",
-                componentsBelongToTheSameEntity},
-            {"[multi] pairing survives removals and recycling",
-                pairingSurvivesRemovalsAndRecycling},
-            {"[multi] modifications reach the stored components",
-                modificationsReachTheStoredComponents},
-            {"[multi] arguments follow the template order",
-                argumentsFollowTheTemplateOrder},
-            {"[multi] the type order does not change the result",
-                typeOrderDoesNotChangeTheResult},
-            {"[multi] a system on three types", threeTypes},
-            {"[multi] a type never added does nothing",
-                typeNeverAddedDoesNothing},
-            {"[multi] an emptied first array does nothing",
-                emptiedFirstArrayDoesNothing},
-            {"[multi] a system does not copy the components",
-                multiSystemDoesNotCopyComponents},
-            {"[multi] const parameters", constParameters},
-            {"[multi] follows adds and removes across frames",
-                followsAddsAndRemovesAcrossFrames},
-            {"[multi] a removal during update is deferred",
-                removalDuringUpdateIsDeferred},
-            {"[multi] a destroyed entity stays visible until the frame ends",
-                destroyDuringUpdateStaysVisibleThisFrame},
-            {"[multi] a recycled slot does not inherit components",
-                recycledSlotDoesNotInheritComponents},
-            {"[multi] the dense knows the owner of each component",
-                denseKnowsTheOwnerOfEachComponent},
-            {"[multi] 1000 random subsets match a model",
-                randomSubsetsMatchModel},
-        };
-    }
-
-} // namespace Poc

@@ -2,91 +2,205 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** EdgeCases
+** tests_edge_cases
 */
 
+#include <algorithm>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <random>
 #include <set>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 namespace {
 
+    struct Player {};
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Name {
+        std::string value;
+    };
+
+    struct MoveOnly {
+        std::unique_ptr<int> ptr;
+    };
+
+    struct Tracked {
+        static inline int alive = 0;
+
+        int value;
+
+        explicit Tracked(int v = 0) :
+            value(v)
+        {
+            alive++;
+        }
+
+        Tracked(const Tracked &other) :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked(Tracked &&other) noexcept :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked &operator=(const Tracked &) = default;
+        Tracked &operator=(Tracked &&) noexcept = default;
+
+        ~Tracked()
+        {
+            alive--;
+        }
+    };
+
+    template<typename E>
+    std::size_t indexOf(const E &entity)
+    {
+        if constexpr (std::is_integral_v<E>)
+            return static_cast<std::size_t>(entity);
+        else if constexpr (requires { entity.index(); })
+            return static_cast<std::size_t>(entity.index());
+        else
+            return static_cast<std::size_t>(entity.index);
+    }
+
+    class EntitySet {
+    public:
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
+        {
+            return std::find(_entities.begin(), _entities.end(), entity) !=
+                _entities.end();
+        }
+
+        void insert(const RType::Entity &entity)
+        {
+            if (!contains(entity))
+                _entities.push_back(entity);
+        }
+
+        void clear()
+        {
+            _entities.clear();
+        }
+
+        [[nodiscard]] std::size_t size() const
+        {
+            return _entities.size();
+        }
+
+        [[nodiscard]] auto begin() const
+        {
+            return _entities.begin();
+        }
+
+        [[nodiscard]] auto end() const
+        {
+            return _entities.end();
+        }
+
+    private:
+        std::vector<RType::Entity> _entities;
+    };
+
     using RType::Entity;
     using RType::GameManager;
-    using namespace Poc;
 
     struct NeverAdded {
         int unused;
     };
 
-    void addIsImmediateOutsideUpdate()
+    Test(edge_cases, addIsImmediateOutsideUpdate,
+        .description = "addComponent is immediate outside update")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Position>(e, 1.f, 2.f);
         auto &pos = gm.getComponent<Position>(e);
-        POC_CHECK(pos.x == 1.f && pos.y == 2.f);
+        cr_assert(pos.x == 1.f && pos.y == 2.f);
         pos.x = 10.f;
-        POC_CHECK(gm.getComponent<Position>(e).x == 10.f);
-        POC_CHECK(&gm.getComponent<Position>(e) == &pos);
+        cr_assert(gm.getComponent<Position>(e).x == 10.f);
+        cr_assert(&gm.getComponent<Position>(e) == &pos);
     }
 
-    void addWithoutArgumentsValueInitializes()
+    Test(edge_cases, addWithoutArgumentsValueInitializes,
+        .description = "addComponent without arguments value-initializes")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Position>(e);
         const Position &pos = gm.getComponent<Position>(e);
-        POC_CHECK(pos.x == 0.f && pos.y == 0.f);
+        cr_assert(pos.x == 0.f && pos.y == 0.f);
     }
 
-    void failedCommandDoesNotReplay()
+    Test(edge_cases, failedCommandDoesNotReplay,
+        .description = "a failed command does not replay on later operations")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 1);
-        POC_CHECK_THROWS(
+        cr_assert_throw(
             gm.addComponent<Health>(e, 2), RType::AlreadyExistingComponent);
-        POC_CHECK_NOTHROW(gm.addComponent<Position>(e, 3.f, 3.f));
-        POC_CHECK_NOTHROW(gm.removeComponent<Health>(e));
-        POC_CHECK(!gm.hasComponent<Health>(e));
-        POC_CHECK(gm.getComponent<Position>(e).x == 3.f);
+        cr_assert_no_throw(
+            gm.addComponent<Position>(e, 3.f, 3.f), std::exception);
+        cr_assert_no_throw(gm.removeComponent<Health>(e), std::exception);
+        cr_assert(!gm.hasComponent<Health>(e));
+        cr_assert(gm.getComponent<Position>(e).x == 3.f);
     }
 
-    void addWithTemporaryArguments()
+    Test(edge_cases, addWithTemporaryArguments,
+        .description = "addComponent with temporary arguments")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Name>(e, std::string(64, 'a') + "b");
-        POC_CHECK(gm.getComponent<Name>(e).value == std::string(64, 'a') + "b");
+        cr_assert(gm.getComponent<Name>(e).value == std::string(64, 'a') + "b");
     }
 
-    void firstEntityIdZeroWorks()
+    Test(edge_cases, firstEntityIdZeroWorks,
+        .description = "entity 0 behaves like any other entity")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
-        POC_CHECK(indexOf(e) == 0);
+        cr_assert(indexOf(e) == 0);
         gm.addComponent<Health>(e, 3);
-        POC_CHECK(gm.hasComponent<Health>(e));
+        cr_assert(gm.hasComponent<Health>(e));
         gm.removeComponent<Health>(e);
-        POC_CHECK(!gm.hasComponent<Health>(e));
+        cr_assert(!gm.hasComponent<Health>(e));
     }
 
-    void eachEntityHasItsOwnComponent()
+    Test(edge_cases, eachEntityHasItsOwnComponent,
+        .description = "each entity has its own component")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -97,59 +211,66 @@ namespace {
         gm.addComponent<Health>(b, 2);
         gm.addComponent<Health>(c, 3);
         gm.getComponent<Health>(b).hp = 20;
-        POC_CHECK(gm.getComponent<Health>(a).hp == 1);
-        POC_CHECK(gm.getComponent<Health>(b).hp == 20);
-        POC_CHECK(gm.getComponent<Health>(c).hp == 3);
+        cr_assert(gm.getComponent<Health>(a).hp == 1);
+        cr_assert(gm.getComponent<Health>(b).hp == 20);
+        cr_assert(gm.getComponent<Health>(c).hp == 3);
     }
 
-    void sameLayoutTypesDoNotCollide()
+    Test(edge_cases, sameLayoutTypesDoNotCollide,
+        .description = "types with the same layout do not collide")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Position>(e, 1.f, 1.f);
         gm.addComponent<Velocity>(e, 5.f, 5.f);
-        POC_CHECK(gm.getComponent<Position>(e).x == 1.f);
-        POC_CHECK(gm.getComponent<Velocity>(e).x == 5.f);
-        POC_CHECK(gm.getArray<Position>().nbComponent() == 1);
-        POC_CHECK(gm.getArray<Velocity>().nbComponent() == 1);
+        cr_assert(gm.getComponent<Position>(e).x == 1.f);
+        cr_assert(gm.getComponent<Velocity>(e).x == 5.f);
+        cr_assert(gm.getArray<Position>().nbComponent() == 1);
+        cr_assert(gm.getArray<Velocity>().nbComponent() == 1);
     }
 
-    void addTwiceThrows()
+    Test(edge_cases, addTwiceThrows,
+        .description = "adding the same component twice throws")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 5);
-        POC_CHECK_THROWS(
+        cr_assert_throw(
             gm.addComponent<Health>(e, 99), RType::AlreadyExistingComponent);
-        POC_CHECK(gm.getComponent<Health>(e).hp == 5);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
+        cr_assert(gm.getComponent<Health>(e).hp == 5);
+        cr_assert(gm.getArray<Health>().nbComponent() == 1);
     }
 
-    void getMissingThrows()
+    Test(edge_cases, getMissingThrows,
+        .description = "getComponent on a missing component throws")
     {
         GameManager gm;
         Entity a = gm.createEntity();
         Entity b = gm.createEntity();
 
         gm.addComponent<Health>(a, 1);
-        POC_CHECK_THROWS(gm.getComponent<Health>(b), RType::NoSuchComponent);
-        POC_CHECK_THROWS(
-            gm.getComponent<NeverAdded>(a), RType::NoSuchComponent);
+        cr_assert_throw(static_cast<void>(gm.getComponent<Health>(b)),
+            RType::NoSuchComponent);
+        cr_assert_throw(static_cast<void>(gm.getComponent<NeverAdded>(a)),
+            RType::NoSuchComponent);
     }
 
-    void hasFalseForUnknownType()
+    Test(edge_cases, hasFalseForUnknownType,
+        .description = "hasComponent is false for a type never added")
     {
         GameManager gm;
         Entity e = gm.createEntity();
         bool has = true;
 
-        POC_CHECK_NOTHROW(has = gm.hasComponent<NeverAdded>(e));
-        POC_CHECK(!has);
+        cr_assert_no_throw(
+            has = gm.hasComponent<NeverAdded>(e), std::exception);
+        cr_assert(!has);
     }
 
-    void hasThroughConstGameManager()
+    Test(edge_cases, hasThroughConstGameManager,
+        .description = "hasComponent works through a const GameManager")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -157,11 +278,12 @@ namespace {
         const GameManager &cgm = gm;
 
         gm.addComponent<Health>(a, 1);
-        POC_CHECK(cgm.hasComponent<Health>(a));
-        POC_CHECK(!cgm.hasComponent<Health>(b));
+        cr_assert(cgm.hasComponent<Health>(a));
+        cr_assert(!cgm.hasComponent<Health>(b));
     }
 
-    void removeOnlyTargetsOneComponent()
+    Test(edge_cases, removeOnlyTargetsOneComponent,
+        .description = "removeComponent only removes that component")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -171,27 +293,29 @@ namespace {
         gm.addComponent<Velocity>(a, 2.f, 2.f);
         gm.addComponent<Position>(b, 3.f, 3.f);
         gm.removeComponent<Position>(a);
-        POC_CHECK(!gm.hasComponent<Position>(a));
-        POC_CHECK(gm.hasComponent<Velocity>(a));
-        POC_CHECK(gm.getComponent<Velocity>(a).x == 2.f);
-        POC_CHECK(gm.getComponent<Position>(b).x == 3.f);
-        POC_CHECK(gm.getArray<Position>().nbComponent() == 1);
+        cr_assert(!gm.hasComponent<Position>(a));
+        cr_assert(gm.hasComponent<Velocity>(a));
+        cr_assert(gm.getComponent<Velocity>(a).x == 2.f);
+        cr_assert(gm.getComponent<Position>(b).x == 3.f);
+        cr_assert(gm.getArray<Position>().nbComponent() == 1);
     }
 
-    void removeMissingThrows()
+    Test(edge_cases, removeMissingThrows,
+        .description = "removeComponent on a missing component throws")
     {
         GameManager gm;
         Entity a = gm.createEntity();
         Entity b = gm.createEntity();
 
         gm.addComponent<Health>(a, 1);
-        POC_CHECK_THROWS(gm.removeComponent<Health>(b), RType::NoSuchComponent);
-        POC_CHECK_THROWS(
+        cr_assert_throw(gm.removeComponent<Health>(b), RType::NoSuchComponent);
+        cr_assert_throw(
             gm.removeComponent<NeverAdded>(a), RType::NoSuchComponent);
-        POC_CHECK(gm.getComponent<Health>(a).hp == 1);
+        cr_assert(gm.getComponent<Health>(a).hp == 1);
     }
 
-    void reAddAfterRemove()
+    Test(edge_cases, reAddAfterRemove,
+        .description = "a component can be re-added after removal")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -199,11 +323,12 @@ namespace {
         gm.addComponent<Health>(e, 1);
         gm.removeComponent<Health>(e);
         gm.addComponent<Health>(e, 2);
-        POC_CHECK(gm.getComponent<Health>(e).hp == 2);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
+        cr_assert(gm.getComponent<Health>(e).hp == 2);
+        cr_assert(gm.getArray<Health>().nbComponent() == 1);
     }
 
-    void destroyRemovesEveryComponent()
+    Test(edge_cases, destroyRemovesEveryComponent,
+        .description = "destroyEntity removes components of every type")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -214,16 +339,17 @@ namespace {
         gm.addComponent<Health>(a, 1);
         gm.addComponent<Health>(b, 2);
         gm.destroyEntity(a);
-        POC_CHECK(!gm.hasComponent<Position>(a));
-        POC_CHECK(!gm.hasComponent<Velocity>(a));
-        POC_CHECK(!gm.hasComponent<Health>(a));
-        POC_CHECK(gm.getArray<Position>().nbComponent() == 0);
-        POC_CHECK(gm.getArray<Velocity>().nbComponent() == 0);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
-        POC_CHECK(gm.getComponent<Health>(b).hp == 2);
+        cr_assert(!gm.hasComponent<Position>(a));
+        cr_assert(!gm.hasComponent<Velocity>(a));
+        cr_assert(!gm.hasComponent<Health>(a));
+        cr_assert(gm.getArray<Position>().nbComponent() == 0);
+        cr_assert(gm.getArray<Velocity>().nbComponent() == 0);
+        cr_assert(gm.getArray<Health>().nbComponent() == 1);
+        cr_assert(gm.getComponent<Health>(b).hp == 2);
     }
 
-    void destroyWithSomeComponentTypesOnly()
+    Test(edge_cases, destroyWithSomeComponentTypesOnly,
+        .description = "destroyEntity with only some component types")
     {
         GameManager gm;
         Entity b = gm.createEntity();
@@ -233,23 +359,25 @@ namespace {
         for (int i = 0; i < 50; i++)
             a = gm.createEntity();
         gm.addComponent<Position>(a, 1.f, 1.f);
-        POC_CHECK_NOTHROW(gm.destroyEntity(a));
-        POC_CHECK(!gm.hasComponent<Position>(a));
-        POC_CHECK(gm.getComponent<Velocity>(b).x == 7.f);
+        cr_assert_no_throw(gm.destroyEntity(a), std::exception);
+        cr_assert(!gm.hasComponent<Position>(a));
+        cr_assert(gm.getComponent<Velocity>(b).x == 7.f);
     }
 
-    void destroyWithoutAnyComponent()
+    Test(edge_cases, destroyWithoutAnyComponent,
+        .description = "destroyEntity on an entity without components")
     {
         GameManager gm;
         Entity a = gm.createEntity();
         Entity b = gm.createEntity();
 
         gm.addComponent<Health>(a, 1);
-        POC_CHECK_NOTHROW(gm.destroyEntity(b));
-        POC_CHECK(gm.getComponent<Health>(a).hp == 1);
+        cr_assert_no_throw(gm.destroyEntity(b), std::exception);
+        cr_assert(gm.getComponent<Health>(a).hp == 1);
     }
 
-    void destroyTwiceDoesNotCrash()
+    Test(edge_cases, destroyTwiceDoesNotCrash,
+        .description = "destroying an entity twice does not crash")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -261,12 +389,13 @@ namespace {
             gm.destroyEntity(a);
         } catch (const RType::EngineException &) {
         }
-        POC_CHECK(!gm.hasEntity(a));
-        POC_CHECK(gm.hasEntity(b));
-        POC_CHECK(gm.getComponent<Health>(b).hp == 5);
+        cr_assert(!gm.hasEntity(a));
+        cr_assert(gm.hasEntity(b));
+        cr_assert(gm.getComponent<Health>(b).hp == 5);
     }
 
-    void entityIdsAreUnique()
+    Test(edge_cases, entityIdsAreUnique,
+        .description = "entity ids stay unique after destructions")
     {
         GameManager gm;
         std::vector<Entity> created;
@@ -283,13 +412,14 @@ namespace {
         }
         for (int i = 0; i < 100; i++) {
             Entity e = gm.createEntity();
-            POC_CHECK(!alive.contains(e));
+            cr_assert(!alive.contains(e));
             alive.insert(e);
         }
-        POC_CHECK(alive.size() == 150);
+        cr_assert(alive.size() == 150);
     }
 
-    void newEntityDoesNotInheritComponents()
+    Test(edge_cases, newEntityDoesNotInheritComponents,
+        .description = "a new entity never inherits old components")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -299,12 +429,13 @@ namespace {
         gm.destroyEntity(a);
         for (int i = 0; i < 10; i++) {
             Entity e = gm.createEntity();
-            POC_CHECK(!gm.hasComponent<Position>(e));
-            POC_CHECK(!gm.hasComponent<Health>(e));
+            cr_assert(!gm.hasComponent<Position>(e));
+            cr_assert(!gm.hasComponent<Health>(e));
         }
     }
 
-    void referencesSurviveInsertions()
+    Test(edge_cases, referencesSurviveInsertions,
+        .description = "references survive 10000 insertions")
     {
         GameManager gm;
         Entity first = gm.createEntity();
@@ -317,14 +448,15 @@ namespace {
             gm.addComponent<Position>(e, static_cast<float>(i), 0.f);
             others.push_back(e);
         }
-        POC_CHECK(&gm.getComponent<Position>(first) == ptr);
-        POC_CHECK(ptr->x == 1.f && ptr->y == 2.f);
+        cr_assert(&gm.getComponent<Position>(first) == ptr);
+        cr_assert(ptr->x == 1.f && ptr->y == 2.f);
         for (std::size_t i = 0; i < others.size(); i++)
-            POC_CHECK(gm.getComponent<Position>(others[i]).x ==
+            cr_assert(gm.getComponent<Position>(others[i]).x ==
                 static_cast<float>(i));
     }
 
-    void referencesSurviveRemovals()
+    Test(edge_cases, referencesSurviveRemovals,
+        .description = "references survive removals")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -339,13 +471,14 @@ namespace {
         for (std::size_t i = 0; i < entities.size(); i += 2)
             gm.destroyEntity(entities[i]);
         for (std::size_t i = 1; i < entities.size(); i += 2) {
-            POC_CHECK(&gm.getComponent<Position>(entities[i]) == ptrs[i]);
-            POC_CHECK(ptrs[i]->x == static_cast<float>(i));
+            cr_assert(&gm.getComponent<Position>(entities[i]) == ptrs[i]);
+            cr_assert(ptrs[i]->x == static_cast<float>(i));
         }
-        POC_CHECK(gm.getArray<Position>().nbComponent() == 2500);
+        cr_assert(gm.getArray<Position>().nbComponent() == 2500);
     }
 
-    void largeIdsGrowSparse()
+    Test(edge_cases, largeIdsGrowSparse,
+        .description = "large entity ids grow the sparse array")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -355,15 +488,16 @@ namespace {
             entities.push_back(gm.createEntity());
         gm.addComponent<Health>(entities.back(), 42);
         for (std::size_t i = 0; i + 1 < entities.size(); i++)
-            POC_CHECK(!gm.hasComponent<Health>(entities[i]));
-        POC_CHECK(gm.getComponent<Health>(entities.back()).hp == 42);
+            cr_assert(!gm.hasComponent<Health>(entities[i]));
+        cr_assert(gm.getComponent<Health>(entities.back()).hp == 42);
         gm.addComponent<Health>(entities.front(), 1);
-        POC_CHECK(gm.getComponent<Health>(entities.front()).hp == 1);
-        POC_CHECK(gm.getComponent<Health>(entities.back()).hp == 42);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 2);
+        cr_assert(gm.getComponent<Health>(entities.front()).hp == 1);
+        cr_assert(gm.getComponent<Health>(entities.back()).hp == 42);
+        cr_assert(gm.getArray<Health>().nbComponent() == 2);
     }
 
-    void denseIterationSeesEveryComponent()
+    Test(edge_cases, denseIterationSeesEveryComponent,
+        .description = "dense iteration sees every live component")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -385,28 +519,29 @@ namespace {
             sum += pack.component.hp;
             count++;
         }
-        POC_CHECK(sum == expected);
-        POC_CHECK(count == gm.getArray<Health>().nbComponent());
-        POC_CHECK(count == 66);
+        cr_assert(sum == expected);
+        cr_assert(count == gm.getArray<Health>().nbComponent());
+        cr_assert(count == 66);
     }
 
-    void getArrayOnUnknownType()
+    Test(edge_cases, getArrayOnUnknownType,
+        .description = "[design] getArray on a type never added")
     {
         GameManager gm;
 
         try {
             auto &array = gm.getArray<NeverAdded>();
-            POC_CHECK(array.nbComponent() == 0);
+            cr_assert(array.nbComponent() == 0);
         } catch (const RType::EngineException &) {
         } catch (const std::exception &e) {
-            throw Failure(__FILE__,
-                __LINE__,
-                "getArray<NeverAdded>() leaked a non engine exception: " +
-                    std::string(e.what()));
+            cr_assert_fail(
+                "getArray<NeverAdded>() leaked a non engine exception: %s",
+                e.what());
         }
     }
 
-    void destructorsRun()
+    Test(edge_cases, destructorsRun,
+        .description = "destructors run on remove, destroy and shutdown")
     {
         Tracked::alive = 0;
         {
@@ -418,30 +553,31 @@ namespace {
             gm.addComponent<Tracked>(a, 1);
             gm.addComponent<Tracked>(b, 2);
             gm.addComponent<Tracked>(c, 3);
-            POC_CHECK(Tracked::alive == 3);
+            cr_assert(Tracked::alive == 3);
             gm.removeComponent<Tracked>(a);
-            POC_CHECK(Tracked::alive == 2);
+            cr_assert(Tracked::alive == 2);
             gm.destroyEntity(b);
-            POC_CHECK(Tracked::alive == 1);
-            POC_CHECK_THROWS(gm.addComponent<Tracked>(c, 9),
+            cr_assert(Tracked::alive == 1);
+            cr_assert_throw(gm.addComponent<Tracked>(c, 9),
                 RType::AlreadyExistingComponent);
-            POC_CHECK(Tracked::alive == 1);
+            cr_assert(Tracked::alive == 1);
         }
-        POC_CHECK(Tracked::alive == 0);
+        cr_assert(Tracked::alive == 0);
     }
 
-    void moveOnlyComponent()
+    Test(edge_cases, moveOnlyComponent, .description = "move-only components")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<MoveOnly>(e, std::make_unique<int>(42));
-        POC_CHECK(gm.getComponent<MoveOnly>(e).ptr != nullptr);
-        POC_CHECK(*gm.getComponent<MoveOnly>(e).ptr == 42);
+        cr_assert(gm.getComponent<MoveOnly>(e).ptr != nullptr);
+        cr_assert(*gm.getComponent<MoveOnly>(e).ptr == 42);
         gm.destroyEntity(e);
     }
 
-    void heapComponentsSurvive()
+    Test(edge_cases, heapComponentsSurvive,
+        .description = "heap-owning components survive insertions and removals")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -459,37 +595,40 @@ namespace {
             gm.removeComponent<Name>(entities[i]);
         for (std::size_t i = 0; i < entities.size(); i++) {
             if (i % 3 == 0)
-                POC_CHECK(!gm.hasComponent<Name>(entities[i]));
+                cr_assert(!gm.hasComponent<Name>(entities[i]));
             else
-                POC_CHECK(
+                cr_assert(
                     gm.getComponent<Name>(entities[i]).value == nameOf(i));
         }
     }
 
-    void emptyTagComponent()
+    Test(edge_cases, emptyTagComponent, .description = "empty tag components")
     {
         GameManager gm;
         Entity a = gm.createEntity();
         Entity b = gm.createEntity();
 
         gm.addComponent<Player>(a);
-        POC_CHECK(gm.hasComponent<Player>(a));
-        POC_CHECK(!gm.hasComponent<Player>(b));
-        POC_CHECK(gm.getArray<Player>().nbComponent() == 1);
+        cr_assert(gm.hasComponent<Player>(a));
+        cr_assert(!gm.hasComponent<Player>(b));
+        cr_assert(gm.getArray<Player>().nbComponent() == 1);
         gm.removeComponent<Player>(a);
-        POC_CHECK(!gm.hasComponent<Player>(a));
+        cr_assert(!gm.hasComponent<Player>(a));
     }
 
-    void addOnDestroyedEntityIsRejected()
+    Test(edge_cases, addOnDestroyedEntityIsRejected,
+        .description =
+            "[design] adding a component to a destroyed entity is rejected")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.destroyEntity(e);
-        POC_CHECK_THROWS(gm.addComponent<Health>(e, 1), RType::EngineException);
+        cr_assert_throw(gm.addComponent<Health>(e, 1), RType::EngineException);
     }
 
-    void randomOperationsMatchModel()
+    Test(edge_cases, randomOperationsMatchModel,
+        .description = "20000 random operations match a reference model")
     {
         GameManager gm;
         std::mt19937 rng(42);
@@ -501,36 +640,36 @@ namespace {
         auto verify = [&]() {
             int sum = 0;
             for (Entity e : alive) {
-                POC_CHECK(
+                cr_assert(
                     gm.hasComponent<Health>(e) == health.contains(indexOf(e)));
-                POC_CHECK(gm.hasComponent<Position>(e) ==
+                cr_assert(gm.hasComponent<Position>(e) ==
                     position.contains(indexOf(e)));
                 if (health.contains(indexOf(e)))
-                    POC_CHECK(
+                    cr_assert(
                         gm.getComponent<Health>(e).hp == health[indexOf(e)]);
                 if (position.contains(indexOf(e)))
-                    POC_CHECK(
+                    cr_assert(
                         gm.getComponent<Position>(e).x == position[indexOf(e)]);
             }
             for (Entity e : dead) {
-                POC_CHECK(!gm.hasComponent<Health>(e));
-                POC_CHECK(!gm.hasComponent<Position>(e));
+                cr_assert(!gm.hasComponent<Health>(e));
+                cr_assert(!gm.hasComponent<Position>(e));
             }
             for (const auto &pack : gm.getArray<Health>().getDense())
                 sum += pack.component.hp;
             for (const auto &[_, hp] : health)
                 sum -= hp;
-            POC_CHECK(sum == 0);
-            POC_CHECK(gm.getArray<Health>().nbComponent() == health.size());
-            POC_CHECK(gm.getArray<Position>().nbComponent() == position.size());
+            cr_assert(sum == 0);
+            cr_assert(gm.getArray<Health>().nbComponent() == health.size());
+            cr_assert(gm.getArray<Position>().nbComponent() == position.size());
         };
 
         for (int i = 0; i < 20000; i++) {
             unsigned op = rng() % 100;
             if (alive.empty() || op < 15) {
                 Entity e = gm.createEntity();
-                POC_CHECK(!gm.hasComponent<Health>(e));
-                POC_CHECK(!gm.hasComponent<Position>(e));
+                cr_assert(!gm.hasComponent<Health>(e));
+                cr_assert(!gm.hasComponent<Position>(e));
                 std::erase(dead, e);
                 alive.push_back(e);
                 continue;
@@ -546,7 +685,7 @@ namespace {
                 position.erase(indexOf(e));
             } else if (op < 45) {
                 if (health.contains(indexOf(e))) {
-                    POC_CHECK_THROWS(gm.addComponent<Health>(e, value),
+                    cr_assert_throw(gm.addComponent<Health>(e, value),
                         RType::AlreadyExistingComponent);
                 } else {
                     gm.addComponent<Health>(e, value);
@@ -557,7 +696,7 @@ namespace {
                     gm.removeComponent<Health>(e);
                     health.erase(indexOf(e));
                 } else {
-                    POC_CHECK_THROWS(
+                    cr_assert_throw(
                         gm.removeComponent<Health>(e), RType::NoSuchComponent);
                 }
             } else if (op < 75) {
@@ -574,8 +713,9 @@ namespace {
                     gm.getComponent<Health>(e).hp += 1;
                     health[indexOf(e)] += 1;
                 } else {
-                    POC_CHECK_THROWS(
-                        gm.getComponent<Health>(e), RType::NoSuchComponent);
+                    cr_assert_throw(
+                        static_cast<void>(gm.getComponent<Health>(e)),
+                        RType::NoSuchComponent);
                 }
             }
             if (i % 1000 == 999)
@@ -585,63 +725,3 @@ namespace {
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList edgeCaseTests()
-    {
-        return {
-            {"addComponent is immediate outside update",
-                addIsImmediateOutsideUpdate},
-            {"addComponent with temporary arguments",
-                addWithTemporaryArguments},
-            {"a failed command does not replay on later operations",
-                failedCommandDoesNotReplay},
-            {"addComponent without arguments value-initializes",
-                addWithoutArgumentsValueInitializes},
-            {"entity 0 behaves like any other entity", firstEntityIdZeroWorks},
-            {"each entity has its own component", eachEntityHasItsOwnComponent},
-            {"types with the same layout do not collide",
-                sameLayoutTypesDoNotCollide},
-            {"adding the same component twice throws", addTwiceThrows},
-            {"getComponent on a missing component throws", getMissingThrows},
-            {"hasComponent is false for a type never added",
-                hasFalseForUnknownType},
-            {"hasComponent works through a const GameManager",
-                hasThroughConstGameManager},
-            {"removeComponent only removes that component",
-                removeOnlyTargetsOneComponent},
-            {"removeComponent on a missing component throws",
-                removeMissingThrows},
-            {"a component can be re-added after removal", reAddAfterRemove},
-            {"destroyEntity removes components of every type",
-                destroyRemovesEveryComponent},
-            {"destroyEntity with only some component types",
-                destroyWithSomeComponentTypesOnly},
-            {"destroyEntity on an entity without components",
-                destroyWithoutAnyComponent},
-            {"destroying an entity twice does not crash",
-                destroyTwiceDoesNotCrash},
-            {"entity ids stay unique after destructions", entityIdsAreUnique},
-            {"a new entity never inherits old components",
-                newEntityDoesNotInheritComponents},
-            {"references survive 10000 insertions",
-                referencesSurviveInsertions},
-            {"references survive removals", referencesSurviveRemovals},
-            {"large entity ids grow the sparse array", largeIdsGrowSparse},
-            {"dense iteration sees every live component",
-                denseIterationSeesEveryComponent},
-            {"[design] getArray on a type never added", getArrayOnUnknownType},
-            {"destructors run on remove, destroy and shutdown", destructorsRun},
-            {"move-only components", moveOnlyComponent},
-            {"heap-owning components survive insertions and removals",
-                heapComponentsSurvive},
-            {"empty tag components", emptyTagComponent},
-            {"[design] adding a component to a destroyed entity is rejected",
-                addOnDestroyedEntityIsRejected},
-            {"20000 random operations match a reference model",
-                randomOperationsMatchModel},
-        };
-    }
-
-} // namespace Poc

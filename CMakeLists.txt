@@ -34,4 +34,7 @@ endif ()
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 add_subdirectory(Engine)
+if (TARGET criterion)
+    add_subdirectory(tests/engine)
+endif ()
 add_subdirectory(Games)

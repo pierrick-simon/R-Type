@@ -2,16 +2,16 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** GmSystems
+** tests_gm_systems
 */
 
 #include <string>
 #include <vector>
 
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 // Expected API: the callback of a system may take the GameManager as first
 // parameter, for per-entity systems and for frame systems.
@@ -20,10 +20,68 @@
 
 namespace {
 
+    struct Enemy {};
+
+    struct Bullet {};
+
+    struct Owned {
+        RType::Entity owner;
+        int value;
+    };
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    struct Lifetime {
+        RType::Entity owner;
+        int ticks;
+    };
+
+    struct Tracked {
+        static inline int alive = 0;
+
+        int value;
+
+        explicit Tracked(int v = 0) :
+            value(v)
+        {
+            alive++;
+        }
+
+        Tracked(const Tracked &other) :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked(Tracked &&other) noexcept :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked &operator=(const Tracked &) = default;
+        Tracked &operator=(Tracked &&) noexcept = default;
+
+        ~Tracked()
+        {
+            alive--;
+        }
+    };
+
     using RType::Entity;
     using RType::GameManager;
     using RType::SystemId;
-    using namespace Poc;
 
     int freeEntityCalls = 0;
     int freeFrameCalls = 0;
@@ -51,7 +109,8 @@ namespace {
         gm.createSystem<Health>(local);
     }
 
-    void receivesTheSameGameManager()
+    Test(gm_systems, receivesTheSameGameManager,
+        .description = "[gm arg] receives the same GameManager")
     {
         GameManager gm;
         bool same = true;
@@ -65,11 +124,12 @@ namespace {
                 same = same && &received == &gm;
             });
         gm.update();
-        POC_CHECK(calls == 5);
-        POC_CHECK(same);
+        cr_assert(calls == 5);
+        cr_assert(same);
     }
 
-    void severalTypesWithGameManager()
+    Test(gm_systems, severalTypesWithGameManager,
+        .description = "[gm arg] several types with the GameManager")
     {
         GameManager gm;
         bool paired = true;
@@ -88,11 +148,12 @@ namespace {
                     paired = false;
             });
         gm.update();
-        POC_CHECK(calls == 10);
-        POC_CHECK(paired);
+        cr_assert(calls == 10);
+        cr_assert(paired);
     }
 
-    void freeFunctionPerEntity()
+    Test(gm_systems, freeFunctionPerEntity,
+        .description = "[gm arg] a free function per entity")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -106,13 +167,14 @@ namespace {
         }
         gm.createSystem<Lifetime>(freeLifetimeSystem);
         gm.update();
-        POC_CHECK(freeEntityCalls == 4);
-        POC_CHECK(freeSeenGm == &gm);
+        cr_assert(freeEntityCalls == 4);
+        cr_assert(freeSeenGm == &gm);
         for (std::size_t i = 0; i < entities.size(); i++)
-            POC_CHECK(gm.hasEntity(entities[i]) == (i % 2 == 1));
+            cr_assert(gm.hasEntity(entities[i]) == (i % 2 == 1));
     }
 
-    void frameSystemLambdaWithGameManager()
+    Test(gm_systems, frameSystemLambdaWithGameManager,
+        .description = "[gm arg] a frame system lambda")
     {
         GameManager gm;
         int calls = 0;
@@ -126,11 +188,12 @@ namespace {
         });
         gm.update();
         gm.update();
-        POC_CHECK(calls == 2);
-        POC_CHECK(same);
+        cr_assert(calls == 2);
+        cr_assert(same);
     }
 
-    void frameSystemFreeFunction()
+    Test(gm_systems, frameSystemFreeFunction,
+        .description = "[gm arg] a frame system free function")
     {
         GameManager gm;
 
@@ -138,11 +201,12 @@ namespace {
         freeSeenGm = nullptr;
         gm.createSystem(freeFrameSystem);
         gm.update();
-        POC_CHECK(freeFrameCalls == 1);
-        POC_CHECK(freeSeenGm == &gm);
+        cr_assert(freeFrameCalls == 1);
+        cr_assert(freeSeenGm == &gm);
     }
 
-    void destroyThroughReceivedGmIsDeferred()
+    Test(gm_systems, destroyThroughReceivedGmIsDeferred,
+        .description = "[gm arg] a destroy through the received gm is deferred")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -155,11 +219,12 @@ namespace {
                 aliveDuringFrame = g.hasEntity(l.owner);
             });
         gm.update();
-        POC_CHECK(aliveDuringFrame);
-        POC_CHECK(!gm.hasEntity(e));
+        cr_assert(aliveDuringFrame);
+        cr_assert(!gm.hasEntity(e));
     }
 
-    void collisionsThroughReceivedGm()
+    Test(gm_systems, collisionsThroughReceivedGm,
+        .description = "[gm arg] collisions through the received gm")
     {
         GameManager gm;
         std::vector<Entity> bullets;
@@ -193,16 +258,17 @@ namespace {
                 });
         });
         gm.update();
-        POC_CHECK(!gm.hasEntity(bullets[0]));
-        POC_CHECK(!gm.hasEntity(bullets[1]));
-        POC_CHECK(gm.hasEntity(bullets[2]));
-        POC_CHECK(gm.getComponent<Health>(enemies[0]).hp == 2);
-        POC_CHECK(gm.getComponent<Health>(enemies[1]).hp == 3);
-        POC_CHECK(gm.getComponent<Health>(enemies[2]).hp == 2);
-        POC_CHECK(gm.getComponent<Health>(enemies[3]).hp == 3);
+        cr_assert(!gm.hasEntity(bullets[0]));
+        cr_assert(!gm.hasEntity(bullets[1]));
+        cr_assert(gm.hasEntity(bullets[2]));
+        cr_assert(gm.getComponent<Health>(enemies[0]).hp == 2);
+        cr_assert(gm.getComponent<Health>(enemies[1]).hp == 3);
+        cr_assert(gm.getComponent<Health>(enemies[2]).hp == 2);
+        cr_assert(gm.getComponent<Health>(enemies[3]).hp == 3);
     }
 
-    void allFormsCoexistInCreationOrder()
+    Test(gm_systems, allFormsCoexistInCreationOrder,
+        .description = "[gm arg] all forms coexist in creation order")
     {
         GameManager gm;
         std::string order;
@@ -214,10 +280,11 @@ namespace {
         gm.createSystem([&order] { order += "C"; });
         gm.createSystem([&order](GameManager &) { order += "D"; });
         gm.update();
-        POC_CHECK(order == "ABCD");
+        cr_assert(order == "ABCD");
     }
 
-    void functionIsKeptByValue()
+    Test(gm_systems, functionIsKeptByValue,
+        .description = "[gm arg] the function is kept by value")
     {
         GameManager gm;
         int calls = 0;
@@ -227,10 +294,11 @@ namespace {
         registerFromHelper(gm, calls);
         gm.update();
         gm.update();
-        POC_CHECK(calls == 6);
+        cr_assert(calls == 6);
     }
 
-    void eachSystemReceivesItsOwnGameManager()
+    Test(gm_systems, eachSystemReceivesItsOwnGameManager,
+        .description = "[gm arg] each system receives its own GameManager")
     {
         GameManager first;
         GameManager second;
@@ -243,11 +311,12 @@ namespace {
             [&seenBySecond](GameManager &g) { seenBySecond = &g; });
         first.update();
         second.update();
-        POC_CHECK(seenByFirst == &first);
-        POC_CHECK(seenBySecond == &second);
+        cr_assert(seenByFirst == &first);
+        cr_assert(seenBySecond == &second);
     }
 
-    void destroyedGmSystemStopsRunning()
+    Test(gm_systems, destroyedGmSystemStopsRunning,
+        .description = "[gm arg] a destroyed gm system stops running")
     {
         GameManager gm;
         int calls = 0;
@@ -255,15 +324,16 @@ namespace {
         gm.addComponent<Health>(gm.createEntity(), 1);
         SystemId id = gm.createSystem<Health>(
             [&calls](GameManager &, Health &) { calls++; });
-        POC_CHECK(gm.hasSystem(id));
+        cr_assert(gm.hasSystem(id));
         gm.update();
         gm.destroySystem(id);
-        POC_CHECK(!gm.hasSystem(id));
+        cr_assert(!gm.hasSystem(id));
         gm.update();
-        POC_CHECK(calls == 1);
+        cr_assert(calls == 1);
     }
 
-    void gmSystemDestroysItself()
+    Test(gm_systems, gmSystemDestroysItself,
+        .description = "[gm arg] a gm system destroys itself")
     {
         GameManager gm;
         int calls = 0;
@@ -275,11 +345,12 @@ namespace {
         });
         gm.update();
         gm.update();
-        POC_CHECK(calls == 1);
-        POC_CHECK(!gm.hasSystem(self));
+        cr_assert(calls == 1);
+        cr_assert(!gm.hasSystem(self));
     }
 
-    void nestedUpdateThroughReceivedGmHasNoEffect()
+    Test(gm_systems, nestedUpdateThroughReceivedGmHasNoEffect,
+        .description = "[gm arg] a nested update through the gm has no effect")
     {
         GameManager gm;
         int calls = 0;
@@ -288,11 +359,12 @@ namespace {
             calls++;
             g.update();
         });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 1);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 1);
     }
 
-    void constComponentWithGm()
+    Test(gm_systems, constComponentWithGm,
+        .description = "[gm arg] const component")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -302,10 +374,11 @@ namespace {
         gm.createSystem<Health>(
             [&seen](GameManager &, const Health &h) { seen = h.hp; });
         gm.update();
-        POC_CHECK(seen == 9);
+        cr_assert(seen == 9);
     }
 
-    void gmFormDoesNotCopyComponents()
+    Test(gm_systems, gmFormDoesNotCopyComponents,
+        .description = "[gm arg] does not copy the components")
     {
         Tracked::alive = 0;
         GameManager gm;
@@ -317,43 +390,8 @@ namespace {
             seenAlive = Tracked::alive;
         });
         gm.update();
-        POC_CHECK(seenAlive == 3);
-        POC_CHECK(Tracked::alive == 3);
+        cr_assert(seenAlive == 3);
+        cr_assert(Tracked::alive == 3);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList gmSystemTests()
-    {
-        return {
-            {"[gm arg] receives the same GameManager",
-                receivesTheSameGameManager},
-            {"[gm arg] several types with the GameManager",
-                severalTypesWithGameManager},
-            {"[gm arg] a free function per entity", freeFunctionPerEntity},
-            {"[gm arg] a frame system lambda",
-                frameSystemLambdaWithGameManager},
-            {"[gm arg] a frame system free function", frameSystemFreeFunction},
-            {"[gm arg] a destroy through the received gm is deferred",
-                destroyThroughReceivedGmIsDeferred},
-            {"[gm arg] collisions through the received gm",
-                collisionsThroughReceivedGm},
-            {"[gm arg] all forms coexist in creation order",
-                allFormsCoexistInCreationOrder},
-            {"[gm arg] the function is kept by value", functionIsKeptByValue},
-            {"[gm arg] each system receives its own GameManager",
-                eachSystemReceivesItsOwnGameManager},
-            {"[gm arg] a destroyed gm system stops running",
-                destroyedGmSystemStopsRunning},
-            {"[gm arg] a gm system destroys itself", gmSystemDestroysItself},
-            {"[gm arg] a nested update through the gm has no effect",
-                nestedUpdateThroughReceivedGmHasNoEffect},
-            {"[gm arg] const component", constComponentWithGm},
-            {"[gm arg] does not copy the components",
-                gmFormDoesNotCopyComponents},
-        };
-    }
-
-} // namespace Poc
