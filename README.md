@@ -104,9 +104,9 @@ downloaded by CMake (see [the table further down](#libraries-downloaded-by-cmake
 |---|---|---|---|
 | **Git** | any | Configuring | CMake clones the libraries with Git on the first configuration. |
 | **CMake** | ≥ 3.25 (tested with 4.4) | Building | Ubuntu 24.04's `cmake` (3.28) is enough. |
-| **C++ compiler** | C++20 | Building | **GCC ≥ 13** on Linux (tested with GCC 13 and 14; Ubuntu 24.04's default `g++` is enough). **MSVC** (Visual Studio 2022, "Desktop development with C++") on Windows. |
+| **C++ compiler** | C++20 | Building | **GCC ≥ 13** on Linux (tested with GCC 13, 14 and 16; the default `g++` of Ubuntu 24.04 and Fedora is enough). **MSVC** (Visual Studio 2022, "Desktop development with C++") on Windows. |
 | **X11 and OpenGL headers** | | Building, Linux only | Needed by raylib to open the window. |
-| **Criterion** | any (tested with 2.4.1) | Tests, Linux only | Without it, the test targets aren't created. |
+| **Criterion** | any (tested with 2.4.1) | Tests, Linux only (not Fedora) | Without it, the test targets aren't created. |
 | **AddressSanitizer** (`libasan8`) | same as GCC | Engine tests, Linux only | Detects memory errors (out-of-bounds access, use-after-free, ...). The engine tests are built with `-fsanitize=address` by default. |
 | **UndefinedBehaviorSanitizer** (`libubsan1`) | same as GCC | Engine tests, Linux only | Detects undefined behavior (signed overflow, null or misaligned pointer, ...). The engine tests are built with `-fsanitize=undefined` by default. Both sanitizers are usually installed with `g++`; turn them off with `-DENGINE_TESTS_SANITIZE=OFF`. |
 | **clang-format / clang-tidy** | 22 | Contributing only | `script/clang.sh` calls `clang-format-22`, `script/lint.sh` calls `clang-tidy` (version 22, like the CI), see [Development](#development). |
@@ -117,6 +117,17 @@ On Ubuntu / Debian, everything needed to build and test is installed with:
 sudo apt install git cmake g++ gcc libasan8 libubsan1 libcriterion-dev \
     libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev
 ```
+
+On Fedora, everything needed to build is installed with:
+
+```sh
+sudo dnf install git cmake gcc-c++ gcc libasan libubsan \
+    mesa-libGL-devel libX11-devel libXrandr-devel libXi-devel libXcursor-devel libXinerama-devel
+```
+
+> [!NOTE]
+> The tests don't work on Fedora: Criterion isn't packaged there, so the
+> test targets aren't created. The game itself builds normally.
 
 ### Libraries downloaded by CMake
 
