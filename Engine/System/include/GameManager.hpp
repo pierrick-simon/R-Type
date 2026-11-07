@@ -320,7 +320,9 @@ namespace RType {
 
         /**
          * @brief Pauses or resumes the game: while it is paused, run()
-         * skips update(), so no system runs at all.
+         * skips update(), so no system runs at all. Resuming restarts every
+         * Clock and the MasterClock, so that the first frame after the pause
+         * does not count the time spent paused.
          */
         void setPaused(bool paused);
 

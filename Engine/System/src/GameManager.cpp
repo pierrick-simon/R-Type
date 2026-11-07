@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include "Clock.hpp"
 #include "GameManager.hpp"
 
 namespace RType {
@@ -116,6 +117,11 @@ namespace RType {
 
     void GameManager::setPaused(bool paused)
     {
+        if (_paused && !paused) {
+            view<Clock>().each([](Entity, Clock &clock) { clock.restart(); });
+            view<MasterClock>().each(
+                [](Entity, MasterClock &clock) { clock.restart(); });
+        }
         _paused = paused;
     }
 
