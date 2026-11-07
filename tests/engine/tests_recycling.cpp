@@ -2,26 +2,64 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** Recycling
+** tests_recycling
 */
 
 #include <algorithm>
+#include <cstddef>
 #include <set>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 namespace {
 
+    struct Player {};
+
+    struct Owned {
+        RType::Entity owner;
+        int value;
+    };
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    struct Lifetime {
+        RType::Entity owner;
+        int ticks;
+    };
+
+    template<typename E>
+    std::size_t indexOf(const E &entity)
+    {
+        if constexpr (std::is_integral_v<E>)
+            return static_cast<std::size_t>(entity);
+        else if constexpr (requires { entity.index(); })
+            return static_cast<std::size_t>(entity.index());
+        else
+            return static_cast<std::size_t>(entity.index);
+    }
+
     using RType::Entity;
     using RType::GameManager;
-    using namespace Poc;
 
-    void destroyedIdIsReused()
+    Test(recycling, destroyedIdIsReused,
+        .description = "a destroyed id is reused")
     {
         GameManager gm;
         gm.createEntity();
@@ -29,13 +67,14 @@ namespace {
         gm.createEntity();
 
         gm.destroyEntity(b);
-        POC_CHECK(!gm.hasEntity(b));
+        cr_assert(!gm.hasEntity(b));
         Entity reused = gm.createEntity();
-        POC_CHECK(indexOf(reused) == indexOf(b));
-        POC_CHECK(gm.hasEntity(reused));
+        cr_assert(indexOf(reused) == indexOf(b));
+        cr_assert(gm.hasEntity(reused));
     }
 
-    void reusedIdsAreDistinct()
+    Test(recycling, reusedIdsAreDistinct,
+        .description = "reused ids are distinct, then fresh ids resume")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -51,13 +90,14 @@ namespace {
         }
         for (std::size_t i = 0; i < destroyed.size(); i++)
             created.insert(indexOf(gm.createEntity()));
-        POC_CHECK(created == destroyed);
+        cr_assert(created == destroyed);
         Entity fresh = gm.createEntity();
-        POC_CHECK(!created.contains(indexOf(fresh)));
-        POC_CHECK(indexOf(fresh) == 10);
+        cr_assert(!created.contains(indexOf(fresh)));
+        cr_assert(indexOf(fresh) == 10);
     }
 
-    void idsStayBoundedUnderChurn()
+    Test(recycling, idsStayBoundedUnderChurn,
+        .description = "ids stay bounded under 100000 create/destroy")
     {
         GameManager gm;
         std::vector<Entity> alive;
@@ -73,14 +113,15 @@ namespace {
                 alive.erase(alive.begin());
             }
         }
-        POC_CHECK(maxIndex <= 10);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 9);
+        cr_assert(maxIndex <= 10);
+        cr_assert(gm.getArray<Health>().nbComponent() == 9);
         for (std::size_t i = 0; i < alive.size(); i++)
-            POC_CHECK(gm.getComponent<Health>(alive[i]).hp ==
+            cr_assert(gm.getComponent<Health>(alive[i]).hp ==
                 100000 - static_cast<int>(alive.size()) + static_cast<int>(i));
     }
 
-    void recycledEntityStartsEmpty()
+    Test(recycling, recycledEntityStartsEmpty,
+        .description = "a recycled entity starts without components")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -92,18 +133,19 @@ namespace {
         gm.addComponent<Health>(other, 7);
         gm.destroyEntity(a);
         Entity b = gm.createEntity();
-        POC_CHECK(indexOf(b) == indexOf(a));
-        POC_CHECK(!gm.hasComponent<Position>(b));
-        POC_CHECK(!gm.hasComponent<Health>(b));
-        POC_CHECK(!gm.hasComponent<Player>(b));
+        cr_assert(indexOf(b) == indexOf(a));
+        cr_assert(!gm.hasComponent<Position>(b));
+        cr_assert(!gm.hasComponent<Health>(b));
+        cr_assert(!gm.hasComponent<Player>(b));
         gm.addComponent<Health>(b, 42);
-        POC_CHECK(gm.getComponent<Health>(b).hp == 42);
-        POC_CHECK(gm.getComponent<Health>(other).hp == 7);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 2);
-        POC_CHECK(gm.getArray<Position>().nbComponent() == 0);
+        cr_assert(gm.getComponent<Health>(b).hp == 42);
+        cr_assert(gm.getComponent<Health>(other).hp == 7);
+        cr_assert(gm.getArray<Health>().nbComponent() == 2);
+        cr_assert(gm.getArray<Position>().nbComponent() == 0);
     }
 
-    void sameIdRecycledManyTimes()
+    Test(recycling, sameIdRecycledManyTimes,
+        .description = "the same id recycled 1000 times")
     {
         GameManager gm;
         Entity current = gm.createEntity();
@@ -113,15 +155,16 @@ namespace {
         for (int i = 1; i <= 1000; i++) {
             gm.destroyEntity(current);
             current = gm.createEntity();
-            POC_CHECK(indexOf(current) == slot);
-            POC_CHECK(!gm.hasComponent<Health>(current));
+            cr_assert(indexOf(current) == slot);
+            cr_assert(!gm.hasComponent<Health>(current));
             gm.addComponent<Health>(current, i);
         }
-        POC_CHECK(gm.getComponent<Health>(current).hp == 1000);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
+        cr_assert(gm.getComponent<Health>(current).hp == 1000);
+        cr_assert(gm.getArray<Health>().nbComponent() == 1);
     }
 
-    void doubleDestroyDoesNotDuplicateId()
+    Test(recycling, doubleDestroyDoesNotDuplicateId,
+        .description = "a double destroy does not hand out the same id twice")
     {
         GameManager gm;
         Entity a = gm.createEntity();
@@ -133,14 +176,16 @@ namespace {
         }
         Entity x = gm.createEntity();
         Entity y = gm.createEntity();
-        POC_CHECK(indexOf(x) != indexOf(y));
+        cr_assert(indexOf(x) != indexOf(y));
         gm.addComponent<Health>(x, 1);
         gm.addComponent<Health>(y, 2);
-        POC_CHECK(gm.getComponent<Health>(x).hp == 1);
-        POC_CHECK(gm.getComponent<Health>(y).hp == 2);
+        cr_assert(gm.getComponent<Health>(x).hp == 1);
+        cr_assert(gm.getComponent<Health>(y).hp == 2);
     }
 
-    void doubleDestroyInOneUpdateDoesNotDuplicateId()
+    Test(recycling, doubleDestroyInOneUpdateDoesNotDuplicateId,
+        .description =
+            "a double destroy in one update does not duplicate the id")
     {
         GameManager gm;
         Entity enemy = gm.createEntity();
@@ -149,14 +194,16 @@ namespace {
             gm.addComponent<Owned>(gm.createEntity(), enemy, i);
         gm.createSystem<Owned>([&gm](Owned &o) { gm.destroyEntity(o.owner); });
         gm.update();
-        POC_CHECK(!gm.hasEntity(enemy));
+        cr_assert(!gm.hasEntity(enemy));
         Entity x = gm.createEntity();
         Entity y = gm.createEntity();
-        POC_CHECK(indexOf(x) == indexOf(enemy));
-        POC_CHECK(indexOf(x) != indexOf(y));
+        cr_assert(indexOf(x) == indexOf(enemy));
+        cr_assert(indexOf(x) != indexOf(y));
     }
 
-    void idDestroyedDuringUpdateIsNotReusedInSameFrame()
+    Test(recycling, idDestroyedDuringUpdateIsNotReusedInSameFrame,
+        .description =
+            "an id destroyed during update is not reused in the same frame")
     {
         GameManager gm;
         Entity victim = gm.createEntity();
@@ -170,14 +217,15 @@ namespace {
             victimAliveDuringFrame = gm.hasEntity(o.owner);
         });
         gm.update();
-        POC_CHECK(indexOf(spawned) != indexOf(victim));
-        POC_CHECK(victimAliveDuringFrame);
-        POC_CHECK(!gm.hasEntity(victim));
-        POC_CHECK(gm.hasEntity(spawned));
-        POC_CHECK(indexOf(gm.createEntity()) == indexOf(victim));
+        cr_assert(indexOf(spawned) != indexOf(victim));
+        cr_assert(victimAliveDuringFrame);
+        cr_assert(!gm.hasEntity(victim));
+        cr_assert(gm.hasEntity(spawned));
+        cr_assert(indexOf(gm.createEntity()) == indexOf(victim));
     }
 
-    void recycledEntityIsVisitedBySystems()
+    Test(recycling, recycledEntityIsVisitedBySystems,
+        .description = "a recycled entity is visited by systems")
     {
         GameManager gm;
         std::vector<int> seen;
@@ -190,10 +238,11 @@ namespace {
         Entity b = gm.createEntity();
         gm.addComponent<Health>(b, 2);
         gm.update();
-        POC_CHECK((seen == std::vector<int> {1, 2}));
+        cr_assert((seen == std::vector<int> {1, 2}));
     }
 
-    void churnWithSystemsMatchesModel()
+    Test(recycling, churnWithSystemsMatchesModel,
+        .description = "500 ticks of churn with systems match a model")
     {
         GameManager gm;
         std::vector<std::pair<Entity, int>> alive;
@@ -203,8 +252,8 @@ namespace {
         for (int tick = 0; tick < 500; tick++) {
             for (int i = 0; i < 3; i++) {
                 Entity e = gm.createEntity();
-                POC_CHECK(!gm.hasComponent<Lifetime>(e));
-                POC_CHECK(!gm.hasComponent<Health>(e));
+                cr_assert(!gm.hasComponent<Lifetime>(e));
+                cr_assert(!gm.hasComponent<Health>(e));
                 int life = 1 + (tick + i) % 7;
                 gm.addComponent<Lifetime>(e, e, life);
                 gm.addComponent<Health>(e, tick);
@@ -222,13 +271,13 @@ namespace {
                     alive, [e](const auto &p) { return p.first == e; });
             }
             for (const auto &[e, born] : alive) {
-                POC_CHECK(gm.hasEntity(e));
-                POC_CHECK(gm.getComponent<Health>(e).hp == born);
-                POC_CHECK(gm.getComponent<Lifetime>(e).owner == e);
+                cr_assert(gm.hasEntity(e));
+                cr_assert(gm.getComponent<Health>(e).hp == born);
+                cr_assert(gm.getComponent<Lifetime>(e).owner == e);
             }
-            POC_CHECK(gm.getArray<Lifetime>().nbComponent() == alive.size());
+            cr_assert(gm.getArray<Lifetime>().nbComponent() == alive.size());
         }
-        POC_CHECK(maxIndex < 30);
+        cr_assert(maxIndex < 30);
     }
 
     struct Recycled {
@@ -247,49 +296,57 @@ namespace {
         }
     };
 
-    void recycledHandleDiffersFromOld()
+    Test(recycling, recycledHandleDiffersFromOld,
+        .description =
+            "[generation] a recycled handle differs from the old one")
     {
         Recycled r;
 
-        POC_CHECK(indexOf(r.fresh) == indexOf(r.stale));
-        POC_CHECK(!(r.fresh == r.stale));
+        cr_assert(indexOf(r.fresh) == indexOf(r.stale));
+        cr_assert(!(r.fresh == r.stale));
     }
 
-    void staleHandleIsNotAlive()
+    Test(recycling, staleHandleIsNotAlive,
+        .description = "[generation] a stale handle is not alive")
     {
         Recycled r;
 
-        POC_CHECK(!r.gm.hasEntity(r.stale));
-        POC_CHECK(r.gm.hasEntity(r.fresh));
+        cr_assert(!r.gm.hasEntity(r.stale));
+        cr_assert(r.gm.hasEntity(r.fresh));
     }
 
-    void staleHandleHasNoComponent()
+    Test(recycling, staleHandleHasNoComponent,
+        .description = "[generation] a stale handle has no component")
     {
         Recycled r;
 
-        POC_CHECK(!r.gm.hasComponent<Health>(r.stale));
-        POC_CHECK(r.gm.hasComponent<Health>(r.fresh));
+        cr_assert(!r.gm.hasComponent<Health>(r.stale));
+        cr_assert(r.gm.hasComponent<Health>(r.fresh));
     }
 
-    void staleHandleCannotReadNewComponent()
+    Test(recycling, staleHandleCannotReadNewComponent,
+        .description =
+            "[generation] a stale handle cannot read the new component")
     {
         Recycled r;
 
-        POC_CHECK_THROWS(
-            r.gm.getComponent<Health>(r.stale), RType::EngineException);
-        POC_CHECK(r.gm.getComponent<Health>(r.fresh).hp == 99);
-    }
-
-    void staleHandleCannotAddComponent()
-    {
-        Recycled r;
-
-        POC_CHECK_THROWS(r.gm.addComponent<Position>(r.stale, 5.f, 5.f),
+        cr_assert_throw(static_cast<void>(r.gm.getComponent<Health>(r.stale)),
             RType::EngineException);
-        POC_CHECK(!r.gm.hasComponent<Position>(r.fresh));
+        cr_assert(r.gm.getComponent<Health>(r.fresh).hp == 99);
     }
 
-    void staleHandleCannotRemoveComponent()
+    Test(recycling, staleHandleCannotAddComponent,
+        .description = "[generation] a stale handle cannot add a component")
+    {
+        Recycled r;
+
+        cr_assert_throw(r.gm.addComponent<Position>(r.stale, 5.f, 5.f),
+            RType::EngineException);
+        cr_assert(!r.gm.hasComponent<Position>(r.fresh));
+    }
+
+    Test(recycling, staleHandleCannotRemoveComponent,
+        .description = "[generation] a stale handle cannot remove a component")
     {
         Recycled r;
 
@@ -297,11 +354,13 @@ namespace {
             r.gm.removeComponent<Health>(r.stale);
         } catch (const RType::EngineException &) {
         }
-        POC_CHECK(r.gm.hasComponent<Health>(r.fresh));
-        POC_CHECK(r.gm.getComponent<Health>(r.fresh).hp == 99);
+        cr_assert(r.gm.hasComponent<Health>(r.fresh));
+        cr_assert(r.gm.getComponent<Health>(r.fresh).hp == 99);
     }
 
-    void staleHandleCannotDestroyNewEntity()
+    Test(recycling, staleHandleCannotDestroyNewEntity,
+        .description =
+            "[generation] a stale handle cannot destroy the new entity")
     {
         Recycled r;
 
@@ -309,11 +368,12 @@ namespace {
             r.gm.destroyEntity(r.stale);
         } catch (const RType::EngineException &) {
         }
-        POC_CHECK(r.gm.hasEntity(r.fresh));
-        POC_CHECK(r.gm.getComponent<Health>(r.fresh).hp == 99);
+        cr_assert(r.gm.hasEntity(r.fresh));
+        cr_assert(r.gm.getComponent<Health>(r.fresh).hp == 99);
     }
 
-    void storedTargetIsDetectedAsDead()
+    Test(recycling, storedTargetIsDetectedAsDead,
+        .description = "[generation] a stored target is detected as dead")
     {
         GameManager gm;
         Entity target = gm.createEntity();
@@ -329,17 +389,18 @@ namespace {
             hits++;
         });
         gm.update();
-        POC_CHECK(hits == 1);
+        cr_assert(hits == 1);
         gm.destroyEntity(target);
         Entity player = gm.createEntity();
         gm.addComponent<Health>(player, 3);
         gm.update();
         gm.update();
-        POC_CHECK(hits == 1);
-        POC_CHECK(gm.getComponent<Health>(player).hp == 3);
+        cr_assert(hits == 1);
+        cr_assert(gm.getComponent<Health>(player).hp == 3);
     }
 
-    void everyOldGenerationIsDead()
+    Test(recycling, everyOldGenerationIsDead,
+        .description = "[generation] every old generation of a slot is dead")
     {
         GameManager gm;
         std::vector<Entity> generations;
@@ -351,13 +412,14 @@ namespace {
             current = gm.createEntity();
         }
         for (const Entity &old : generations) {
-            POC_CHECK(indexOf(old) == indexOf(current));
-            POC_CHECK(!gm.hasEntity(old));
+            cr_assert(indexOf(old) == indexOf(current));
+            cr_assert(!gm.hasEntity(old));
         }
-        POC_CHECK(gm.hasEntity(current));
+        cr_assert(gm.hasEntity(current));
     }
 
-    void highGenerationsStillIndexArrays()
+    Test(recycling, highGenerationsStillIndexArrays,
+        .description = "[generation] high generations still index the arrays")
     {
         GameManager gm;
         Entity keep = gm.createEntity();
@@ -371,19 +433,20 @@ namespace {
         gm.addComponent<Health>(current, 1);
         gm.addComponent<Position>(current, 2.f, 3.f);
         gm.addComponent<Player>(current);
-        POC_CHECK(gm.hasComponent<Health>(current));
-        POC_CHECK(gm.getComponent<Health>(current).hp == 1);
-        POC_CHECK(gm.getComponent<Position>(current).y == 3.f);
-        POC_CHECK(gm.hasComponent<Player>(current));
-        POC_CHECK(gm.getComponent<Health>(keep).hp == 7);
+        cr_assert(gm.hasComponent<Health>(current));
+        cr_assert(gm.getComponent<Health>(current).hp == 1);
+        cr_assert(gm.getComponent<Position>(current).y == 3.f);
+        cr_assert(gm.hasComponent<Player>(current));
+        cr_assert(gm.getComponent<Health>(keep).hp == 7);
         gm.removeComponent<Health>(current);
-        POC_CHECK(!gm.hasComponent<Health>(current));
+        cr_assert(!gm.hasComponent<Health>(current));
         gm.destroyEntity(current);
-        POC_CHECK(gm.getArray<Position>().nbComponent() == 0);
-        POC_CHECK(gm.getArray<Health>().nbComponent() == 1);
+        cr_assert(gm.getArray<Position>().nbComponent() == 0);
+        cr_assert(gm.getArray<Health>().nbComponent() == 1);
     }
 
-    void staleHandleUsedDuringUpdate()
+    Test(recycling, staleHandleUsedDuringUpdate,
+        .description = "[generation] a stale handle used during update")
     {
         GameManager gm;
         Entity target = gm.createEntity();
@@ -401,58 +464,9 @@ namespace {
             gm.update();
         } catch (const RType::EngineException &) {
         }
-        POC_CHECK(gm.hasEntity(player));
-        POC_CHECK(!gm.hasComponent<Damage>(player));
-        POC_CHECK(gm.getComponent<Health>(player).hp == 3);
+        cr_assert(gm.hasEntity(player));
+        cr_assert(!gm.hasComponent<Damage>(player));
+        cr_assert(gm.getComponent<Health>(player).hp == 3);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList recyclingTests()
-    {
-        return {
-            {"a destroyed id is reused", destroyedIdIsReused},
-            {"reused ids are distinct, then fresh ids resume",
-                reusedIdsAreDistinct},
-            {"ids stay bounded under 100000 create/destroy",
-                idsStayBoundedUnderChurn},
-            {"a recycled entity starts without components",
-                recycledEntityStartsEmpty},
-            {"the same id recycled 1000 times", sameIdRecycledManyTimes},
-            {"a double destroy does not hand out the same id twice",
-                doubleDestroyDoesNotDuplicateId},
-            {"a double destroy in one update does not duplicate the id",
-                doubleDestroyInOneUpdateDoesNotDuplicateId},
-            {"an id destroyed during update is not reused in the same frame",
-                idDestroyedDuringUpdateIsNotReusedInSameFrame},
-            {"a recycled entity is visited by systems",
-                recycledEntityIsVisitedBySystems},
-            {"500 ticks of churn with systems match a model",
-                churnWithSystemsMatchesModel},
-            {"[generation] a recycled handle differs from the old one",
-                recycledHandleDiffersFromOld},
-            {"[generation] a stale handle is not alive", staleHandleIsNotAlive},
-            {"[generation] a stale handle has no component",
-                staleHandleHasNoComponent},
-            {"[generation] a stale handle cannot read the new component",
-                staleHandleCannotReadNewComponent},
-            {"[generation] a stale handle cannot add a component",
-                staleHandleCannotAddComponent},
-            {"[generation] a stale handle cannot remove a component",
-                staleHandleCannotRemoveComponent},
-            {"[generation] a stale handle cannot destroy the new entity",
-                staleHandleCannotDestroyNewEntity},
-            {"[generation] a stored target is detected as dead",
-                storedTargetIsDetectedAsDead},
-            {"[generation] every old generation of a slot is dead",
-                everyOldGenerationIsDead},
-            {"[generation] high generations still index the arrays",
-                highGenerationsStillIndexArrays},
-            {"[generation] a stale handle used during update",
-                staleHandleUsedDuringUpdate},
-        };
-    }
-
-} // namespace Poc

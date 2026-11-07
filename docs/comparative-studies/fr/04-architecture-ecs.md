@@ -161,7 +161,7 @@ Un R-Type ajoute et retire beaucoup de composants (balles créées et détruites
 
 **Ce que l'on accepte :**
 
-- **Un temps d'apprentissage**, compensé par le guide, ses pièges documentés et les plus de 200 tests du Poc.
+- **Un temps d'apprentissage**, compensé par le guide, ses pièges documentés et les plus de 200 tests unitaires du moteur.
 - **La logique d'un objet est répartie entre plusieurs systèmes.** L'ordre des systèmes doit être documenté et réfléchi ([guide de création d'un jeu](../../GAME_GUIDE.fr.md#5-lordre-des-systèmes)).
 - **Un moteur à maintenir :** chaque fonctionnalité (vues, systèmes par frame, `getVector()`) est écrite et testée par l'équipe.
 

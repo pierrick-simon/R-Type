@@ -71,7 +71,7 @@ All these types live in the `RType` namespace. Their full documentation (Doxygen
 
 ### The layout
 
-A game lives in its own folder under `Games/`, next to the R-Type and the Poc:
+A game lives in its own folder under `Games/`, next to the R-Type:
 
 ```
 Games/
@@ -670,4 +670,4 @@ What the engine does not do yet, and what to do in the meantime:
 | [Accessibility](ACCESSIBILITY.en.md) | What the engine offers for accessibility, why it helps and who for |
 | [Comparative studies](comparative-studies/en/README.md) | The project's technical choices and their alternatives: language, build, ECS, raylib, networking, protocol, tests… |
 | `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | The Doxygen documentation of each provided component |
-| `Games/Poc/` | The ECS tests: a usage example for every behavior |
+| `tests/engine/` | The ECS unit tests: a usage example for every behavior |
