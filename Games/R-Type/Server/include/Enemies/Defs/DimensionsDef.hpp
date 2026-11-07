@@ -20,6 +20,7 @@ namespace RType {
     // Level pixels left off screen, past the right edge, once the scroll
     // stops: more room for the players in front of the boss.
     constexpr float LEVEL_END_MARGIN = 40.f;
+    constexpr float ENEMY_SPEED_FACTOR = 1.3f;
 
 } // namespace RType
 

@@ -29,10 +29,10 @@ namespace RType::Server {
     {
         const auto &box = FORCE_HITBOXES[std::size_t(level - 1)];
 
-        return {.width = box[2] * SCALE,
-            .height = box[3] * SCALE,
-            .offsetX = box[0] * SCALE,
-            .offsetY = box[1] * SCALE};
+        return {.width = box[2] * PLAYER_SCALE,
+            .height = box[3] * PLAYER_SCALE,
+            .offsetX = box[0] * PLAYER_SCALE,
+            .offsetY = box[1] * PLAYER_SCALE};
     }
 
     std::optional<Entity> findForce(GameManager &gm, Entity player)
@@ -59,7 +59,7 @@ namespace RType::Server {
         gm.addComponent<SpriteSheet2D>(force,
             Size2D(FORCE_MAX_LEVEL, FORCE_FRAMES),
             FORCE_FRAME_MS,
-            SCALE);
+            PLAYER_SCALE);
         gm.addComponent<UpdateClientEntity>(
             force, EntityType::SPRITESHEET, Asset::FORCE, gm, force);
     }

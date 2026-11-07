@@ -166,25 +166,28 @@ namespace RType::Server {
         return std::nullopt;
     }
 
-    bool touchesTerrain(
-        GameManager &gm, const Position2D &pos, const CollisionMask &shape)
+    bool touchesTerrain(GameManager &gm, const Position2D &pos,
+        const CollisionMask &shape, float shapeScale)
     {
         for (auto [_, terrain] : gm.view<Terrain>().getVector()) {
             for (auto [entity, background, bgPos] :
                 gm.view<Background, Position2D>().getVector()) {
                 (void) entity;
                 (void) background;
-                const float originX = (pos.x - bgPos.x) / SCALE;
-                const float originY = (pos.y - bgPos.y) / SCALE;
+                const float originX = pos.x - bgPos.x;
+                const float originY = pos.y - bgPos.y;
 
                 for (int y = 0; y < shape.height; ++y) {
                     for (int x = 0; x < shape.width; ++x) {
                         if (!shape.isSolid(x, y))
                             continue;
-                        const auto levelX =
-                            int(std::floor(originX + float(x) + 0.5f));
-                        const auto levelY =
-                            int(std::floor(originY + float(y) + 0.5f));
+                        // Center of the sprite pixel, in level pixels.
+                        const auto levelX = int(std::floor(
+                            (originX + (float(x) + 0.5f) * shapeScale) /
+                            SCALE));
+                        const auto levelY = int(std::floor(
+                            (originY + (float(y) + 0.5f) * shapeScale) /
+                            SCALE));
 
                         if (terrain.mask.isSolid(levelX, levelY))
                             return true;

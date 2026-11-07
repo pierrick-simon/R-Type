@@ -11,6 +11,7 @@
 #include <optional>
 #include <vector>
 #include "Assets.hpp"
+#include "Config.hpp"
 #include "GameManager.hpp"
 #include "Position2D.hpp"
 
@@ -53,8 +54,10 @@ namespace RType::Server {
 
     std::optional<Platform> platformAt(GameManager &gm, float screenX);
 
-    bool touchesTerrain(
-        GameManager &gm, const Position2D &pos, const CollisionMask &shape);
+    /** @brief Whether a sprite drawn at the given scale overlaps a solid pixel
+     * of the level. */
+    bool touchesTerrain(GameManager &gm, const Position2D &pos,
+        const CollisionMask &shape, float shapeScale = SCALE);
 
     /** @brief Whether a screen rectangle overlaps a solid pixel of the level.
      */

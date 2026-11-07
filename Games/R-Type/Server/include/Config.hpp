@@ -24,9 +24,13 @@ namespace RType::Server {
     inline constexpr float LEVEL_END_X =
         WINDOW_WIDTH - (BACKGROUND_WIDTH - LEVEL_END_MARGIN) * SCALE;
 
+    // The ships, their Force and their shots are drawn smaller than the level.
+    inline constexpr float PLAYER_SCALE = 3.f;
+    inline constexpr float SHOT_SCALE = 3.f;
+
     inline constexpr int PLAYER_FRAMES = 5;
-    inline constexpr float PLAYER_WIDTH = 166.f / PLAYER_FRAMES * SCALE;
-    inline constexpr float PLAYER_HEIGHT = 17.f * SCALE;
+    inline constexpr float PLAYER_WIDTH = 166.f / PLAYER_FRAMES * PLAYER_SCALE;
+    inline constexpr float PLAYER_HEIGHT = 17.f * PLAYER_SCALE;
     inline constexpr int PLAYER_HP = 1;
     inline constexpr int PLAYER_LIVES = 3;
     inline constexpr float RESPAWN_INVINCIBILITY = 3.f;
@@ -51,19 +55,19 @@ namespace RType::Server {
     inline constexpr float TILT_HARD = 300.f;
 
     inline constexpr int BULLET_FRAMES = 3;
-    inline constexpr float BULLET_WIDTH = 54.f / BULLET_FRAMES * SCALE;
-    inline constexpr float BULLET_HEIGHT = 20.f * SCALE;
+    inline constexpr float BULLET_WIDTH = 54.f / BULLET_FRAMES * SHOT_SCALE;
+    inline constexpr float BULLET_HEIGHT = 20.f * SHOT_SCALE;
     inline constexpr float BULLET_SPEED = 1500.f;
     inline constexpr unsigned int BULLET_FRAME_MS = 60;
     inline constexpr float SHOOT_COOLDOWN = 0.2f;
 
-    inline constexpr float PLAYER_NOSE_Y = 10.f * SCALE;
+    inline constexpr float PLAYER_NOSE_Y = 10.f * PLAYER_SCALE;
 
     inline constexpr float LIFE_ICON_SCALE = 2.f;
     inline constexpr float LIFE_ICON_WIDTH =
-        PLAYER_WIDTH / SCALE * LIFE_ICON_SCALE;
+        PLAYER_WIDTH / PLAYER_SCALE * LIFE_ICON_SCALE;
     inline constexpr float LIFE_ICON_HEIGHT =
-        PLAYER_HEIGHT / SCALE * LIFE_ICON_SCALE;
+        PLAYER_HEIGHT / PLAYER_SCALE * LIFE_ICON_SCALE;
     inline constexpr float HUD_MARGIN = 20.f;
     inline constexpr float HUD_SPACING = 8.f;
 
@@ -93,15 +97,15 @@ namespace RType::Server {
         }};
 
     inline constexpr int CHARGE_FRAMES = 8;
-    inline constexpr float CHARGE_SIZE = 32.f * SCALE;
-    inline constexpr float CHARGE_OVERLAP = 4.f * SCALE;
+    inline constexpr float CHARGE_SIZE = 32.f * PLAYER_SCALE;
+    inline constexpr float CHARGE_OVERLAP = 4.f * PLAYER_SCALE;
     inline constexpr unsigned int CHARGE_FRAME_MS = 60;
     inline constexpr float CHARGE_LEVEL_TIME = 0.35f;
     inline constexpr int CHARGE_MAX_LEVEL = 5;
 
     inline constexpr int CHARGED_SHOT_FRAMES = 2;
-    inline constexpr float CHARGED_SHOT_CELL_WIDTH = 80.f * SCALE;
-    inline constexpr float CHARGED_SHOT_CELL_HEIGHT = 16.f * SCALE;
+    inline constexpr float CHARGED_SHOT_CELL_WIDTH = 80.f * SHOT_SCALE;
+    inline constexpr float CHARGED_SHOT_CELL_HEIGHT = 16.f * SHOT_SCALE;
     inline constexpr float CHARGED_SHOT_SPEED = 1500.f;
     inline constexpr unsigned int CHARGED_SHOT_FRAME_MS = 60;
 
@@ -129,10 +133,10 @@ namespace RType::Server {
 
     inline constexpr int FORCE_FRAMES = 6;
     inline constexpr int FORCE_MAX_LEVEL = 2;
-    inline constexpr float FORCE_WIDTH = 32.f * SCALE;
-    inline constexpr float FORCE_HEIGHT = 24.f * SCALE;
+    inline constexpr float FORCE_WIDTH = 32.f * PLAYER_SCALE;
+    inline constexpr float FORCE_HEIGHT = 24.f * PLAYER_SCALE;
     inline constexpr unsigned int FORCE_FRAME_MS = 80;
-    inline constexpr float FORCE_OVERLAP = 6.f * SCALE;
+    inline constexpr float FORCE_OVERLAP = 6.f * PLAYER_SCALE;
     inline constexpr int FORCE_CONTACT_DAMAGE = 1;
     inline constexpr float FORCE_CONTACT_COOLDOWN = 0.15f;
 
@@ -144,7 +148,7 @@ namespace RType::Server {
         }};
 
     // The lasers are drawn smaller than the rest of the game.
-    inline constexpr float LASER_SCALE = 2.5f;
+    inline constexpr float LASER_SCALE = 2.f;
     inline constexpr float LASER_COOLDOWN = 0.25f;
     inline constexpr float LASER_SPEED = 1500.f;
 

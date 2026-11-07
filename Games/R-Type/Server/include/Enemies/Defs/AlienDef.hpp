@@ -31,8 +31,7 @@ namespace RType {
         float takeOffTime;
     };
 
-    inline constexpr AlienDef ALIEN_DEF = {
-        .hoverX = 1450.f,
+    inline constexpr AlienDef ALIEN_DEF = {.hoverX = 1450.f,
         .minY = 100.f,
         .alignTolerance = 12.f,
         .chargeTime = 0.8f,
@@ -41,7 +40,7 @@ namespace RType {
         .beamDamage = 1,
         .shotsBeforeLanding = 2,
         .maxShots = 10,
-        .landSpeed = 320.f,
+        .landSpeed = 320.f * ENEMY_SPEED_FACTOR,
         .landedTime = 2.f,
         .takeOffTime = 0.4f};
 

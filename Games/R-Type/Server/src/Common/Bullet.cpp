@@ -32,7 +32,7 @@ namespace RType::Server {
         gm.addComponent<Position2D>(bullet, x, y);
         gm.addComponent<Velocity2D>(bullet, BULLET_SPEED, 0.f);
         gm.addComponent<SpriteSheet2D>(
-            bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SCALE);
+            bullet, Size2D(1, BULLET_FRAMES), BULLET_FRAME_MS, SHOT_SCALE);
         gm.addComponent<PlayOnce>(bullet);
         gm.addComponent<SoundInfo>(bullet, SoundInfo::PLAY);
         gm.addComponent<UpdateClientEntity>(bullet,
@@ -47,8 +47,8 @@ namespace RType::Server {
         GameManager &gm, Entity owner, const Position2D &shooter, int level)
     {
         const ChargedShotLevel &info = CHARGED_SHOT_LEVELS[level - 1];
-        const float width = info.width * SCALE;
-        const float height = info.height * SCALE;
+        const float width = info.width * SHOT_SCALE;
+        const float height = info.height * SHOT_SCALE;
 
         const Hitbox hitbox {.width = width * 0.75f,
             .height = height * 0.8f,
@@ -72,7 +72,7 @@ namespace RType::Server {
             Size2D(CHARGE_MAX_LEVEL, CHARGED_SHOT_FRAMES),
             std::size_t(level - 1) * CHARGED_SHOT_FRAMES,
             CHARGED_SHOT_FRAME_MS,
-            SCALE);
+            SHOT_SCALE);
         gm.addComponent<UpdateClientEntity>(shot,
             EntityType::SPRITESHEET,
             Asset::PLAYER_CHARGED_SHOT,
@@ -94,7 +94,7 @@ namespace RType::Server {
         gm.addComponent<Position2D>(
             effect, chargeEffectPosition(gm.getComponent<Position2D>(player)));
         gm.addComponent<SpriteSheet2D>(
-            effect, Size2D(1, CHARGE_FRAMES), CHARGE_FRAME_MS, SCALE);
+            effect, Size2D(1, CHARGE_FRAMES), CHARGE_FRAME_MS, PLAYER_SCALE);
         gm.addComponent<UpdateClientEntity>(
             effect, EntityType::SPRITESHEET, Asset::PLAYER_CHARGE, gm, effect);
     }
