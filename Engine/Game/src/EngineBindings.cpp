@@ -114,17 +114,6 @@ namespace RType::Game {
             lua, "Origin2D", "x", &Origin2D::x, "y", &Origin2D::y);
         bindComponent<Size2D>(
             lua, "Size2D", "height", &Size2D::height, "width", &Size2D::width);
-        bindComponent<Velocity2D>(
-            lua, "Velocity2D", "x", &Velocity2D::x, "y", &Velocity2D::y);
-        bindComponent<Friction2D>(lua, "Friction2D", "f", &Friction2D::f);
-        bindComponent<GravityField2D>(lua,
-            "GravityField2D",
-            "x",
-            &GravityField2D::x,
-            "y",
-            &GravityField2D::y,
-            "g",
-            &GravityField2D::g);
         bindComponent<Clock>(lua,
             "Clock",
             "speed",
@@ -229,6 +218,38 @@ namespace RType::Game {
             &Sound::setVolume,
             "setPitch",
             &Sound::setPitch);
+
+        // engine-physics
+        bindComponent<Velocity2D>(
+            lua, "Velocity2D", "x", &Velocity2D::x, "y", &Velocity2D::y);
+        bindComponent<Friction2D>(lua, "Friction2D", "f", &Friction2D::f);
+        bindComponent<GravityField2D>(lua,
+            "GravityField2D",
+            "x",
+            &GravityField2D::x,
+            "y",
+            &GravityField2D::y,
+            "g",
+            &GravityField2D::g);
+        bindComponent<Velocity3D>(lua,
+            "Velocity3D",
+            "x",
+            &Velocity3D::x,
+            "y",
+            &Velocity3D::y,
+            "z",
+            &Velocity3D::z);
+        bindComponent<Friction3D>(lua, "Friction3D", "f", &Friction3D::f);
+        bindComponent<GravityField3D>(lua,
+            "GravityField3D",
+            "x",
+            &GravityField3D::x,
+            "y",
+            &GravityField3D::y,
+            "z",
+            &GravityField3D::z,
+            "g",
+            &GravityField3D::g);
     }
 
 } // namespace RType::Game
