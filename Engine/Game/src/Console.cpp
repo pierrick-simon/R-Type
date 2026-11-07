@@ -102,7 +102,7 @@ namespace RType::Game {
 
     void Console::createEntity(std::istream &)
     {
-        Entity entity = call("createEntity").get<Entity>();
+        Entity entity = this->call("createEntity").get<Entity>();
 
         std::cout << "#" << entity.index() << " (" << entity.generation() << ")"
                   << std::endl;
@@ -115,7 +115,7 @@ namespace RType::Game {
 
         if (index == 0 && generation == 0)
             throw std::runtime_error("cannot destroy the window");
-        call("destroyEntity", Entity(index, generation));
+        this->call("destroyEntity", Entity(index, generation));
     }
 
     void Console::addComponent(std::istream &args)
@@ -128,7 +128,7 @@ namespace RType::Game {
         args >> std::ws;
         std::getline(args, fields);
         if (fields.empty()) {
-            call("addComponent", Entity(index, generation), name);
+            this->call("addComponent", Entity(index, generation), name);
             return;
         }
         sol::protected_function_result table =
@@ -138,7 +138,7 @@ namespace RType::Game {
         if (table.get_type() != sol::type::table)
             throw std::runtime_error(
                 "fields must be a table, such as {x = 10}");
-        call("addComponent",
+        this->call("addComponent",
             Entity(index, generation),
             name,
             table.get<sol::table>());
@@ -150,13 +150,13 @@ namespace RType::Game {
         std::size_t generation = readNumber(args);
         std::string name = readWord(args);
 
-        call("removeComponent", Entity(index, generation), name);
+        this->call("removeComponent", Entity(index, generation), name);
     }
 
     void Console::enableSystem(std::istream &args)
     {
         std::string name = readWord(args);
-        SystemId id = call("addSystem", name).get<SystemId>();
+        SystemId id = this->call("addSystem", name).get<SystemId>();
 
         std::cout << "system " << id << std::endl;
     }
@@ -165,12 +165,12 @@ namespace RType::Game {
     {
         SystemId id = readNumber(args);
 
-        call("destroySystem", id);
+        this->call("destroySystem", id);
     }
 
     void Console::exitGame(std::istream &)
     {
-        call("stop");
+        this->call("stop");
         _open = false;
     }
 

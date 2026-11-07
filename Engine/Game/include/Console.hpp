@@ -51,7 +51,7 @@ namespace RType::Game {
         typedef void (Console::*CommandFunction)(std::istream &args);
 
         struct Command {
-            CommandFunction function;
+            CommandFunction function = nullptr;
             std::string usage;
         };
 
