@@ -37,10 +37,10 @@ namespace RType::Client {
 
         text.fontSize = 40;
         text.str = "Connexion";
+        text.assetId = Asset::FONT;
         gm.addComponent<ConnectingText>(e);
         gm.addComponent<Clock>(e);
         gm.addComponent<Text2D>(e, text);
-        gm.addComponent<Font>(e, gm.getAssetsMap().at(Asset::FONT));
         gm.addComponent<Position2D>(
             e, 1920.f / 2.f - 230.f, 1080.f / 2.f - 30.f);
     }
@@ -55,8 +55,8 @@ namespace RType::Client {
         text.str = str;
         text.color = color;
         text.spacing = 1.f;
+        text.assetId = Asset::FONT;
         gm.addComponent<Text2D>(e, text);
-        gm.addComponent<Font>(e, gm.getAssetsMap().at(Asset::FONT));
         gm.addComponent<Position2D>(e, x, y);
         gm.addComponent<TextAnchor>(e, anchor);
         return e;
@@ -69,6 +69,11 @@ namespace RType::Client {
         const Entity e = gm.createEntity();
         const float scale = width / BUTTON_SPRITE_WIDTH;
         const float height = BUTTON_HEIGHT * scale;
+        SpriteSheet2D sheet {};
+        sheet.recNb = Size2D {1, 3};
+        sheet.scale = scale;
+        sheet.animation = false;
+        sheet.assetId = Asset::MENU_BUTTON;
 
         gm.addComponent<Button>(e,
             Button {{x, y, width, height},
@@ -78,9 +83,7 @@ namespace RType::Client {
                 false,
                 false});
         gm.addComponent<Position2D>(e, x, y);
-        gm.addComponent<SpriteSheet2D>(
-            e, Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, scale, false);
-        gm.addComponent<Texture2D>(e, gm.getAssetsMap().at(Asset::MENU_BUTTON));
+        gm.addComponent<SpriteSheet2D>(e, sheet);
         const Entity text =
             addText(gm, x + width / 2.f, y + height / 2.f, label, LABEL_SIZE);
         gm.addComponent<ButtonLabel>(text, ButtonLabel {e});

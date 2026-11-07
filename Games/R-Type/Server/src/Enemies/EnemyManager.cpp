@@ -173,10 +173,8 @@ namespace RType {
 
     bool levelCleared(GameManager &gm)
     {
-        for (auto [_, director] : gm.view<EnemyDirector>().getVector())
-            if (director.levelCleared)
-                return true;
-        return false;
+        return std::ranges::any_of(gm.view<EnemyDirector>().getVector(),
+            [](const auto &entry) { return std::get<1>(entry).levelCleared; });
     }
 
     Entity createEnemyDirector(GameManager &gm)

@@ -174,10 +174,9 @@ namespace RType::Client {
             callback(gm);
     }
 
-    void systemButtonVisuals(GameManager &gm)
+    void systemButtonVisuals(GameManager &gm, Assets &assets)
     {
         std::vector<Entity> orphans;
-
         gm.view<Button, SpriteSheet2D>().each(
             [](Entity, Button &button, SpriteSheet2D &sheet) {
                 if (button.disabled)
@@ -189,24 +188,28 @@ namespace RType::Client {
                 sheet.color = button.error ? raylib::Color(255, 110, 110, 255)
                                            : raylib::Color::White();
             });
-        gm.view<ButtonLabel, Text2D, Font>().each(
-            [&](Entity e, ButtonLabel &label, Text2D &text, Font &font) {
-                if (!gm.hasComponent<Button>(label.owner)) {
-                    orphans.push_back(e);
-                    return;
-                }
-                const Button &button = gm.getComponent<Button>(label.owner);
-                const float maxWidth =
-                    button.rect.width - 2.f * BUTTON_TEXT_PADDING;
-                float width = 0.f;
-
-                text.str = button.label;
-                text.fontSize = LABEL_SIZE;
-                width =
-                    font.MeasureText(text.str, text.fontSize, text.spacing).x;
-                if (width > maxWidth && width > 0.f)
-                    text.fontSize = LABEL_SIZE * maxWidth / width;
-            });
+        for (auto [e, label, text] :
+            gm.view<ButtonLabel, Text2D>().getVector()) {
+            if (!gm.hasComponent<Button>(label.owner)) {
+                orphans.push_back(e);
+                continue;
+            }
+            if (!text.assetId)
+                continue;
+            const Button &button = gm.getComponent<Button>(label.owner);
+            const float maxWidth =
+                button.rect.width - 2.f * BUTTON_TEXT_PADDING;
+            float width = 0.f;
+            auto assetFont = assets.get<Font>(text.assetId.value());
+            if (!assetFont)
+                continue;
+            auto &font = assetFont.value().get();
+            text.str = button.label;
+            text.fontSize = LABEL_SIZE;
+            width = font.MeasureText(text.str, text.fontSize, text.spacing).x;
+            if (width > maxWidth && width > 0.f)
+                text.fontSize = LABEL_SIZE * maxWidth / width;
+        }
         for (const Entity e : orphans)
             gm.destroyEntity(e);
     }
@@ -246,9 +249,7 @@ namespace RType::Client {
         const Entity e = gm.createEntity();
 
         gm.addComponent<MenuBackground>(e);
-        gm.addComponent<Sprite2D>(e, 1.f);
-        gm.addComponent<Texture2D>(
-            e, gm.getAssetsMap().at(Asset::MENU_BACKGROUND));
+        gm.addComponent<Sprite2D>(e, Asset::MENU_BACKGROUND);
         gm.addComponent<Position2D>(e, 0.f, 0.f);
     }
 

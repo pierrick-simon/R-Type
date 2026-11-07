@@ -8,14 +8,15 @@
 #ifndef ASSETS_HPP_
 #define ASSETS_HPP_
 
-#include <string>
-#include <unordered_map>
+#include "AssetManager.hpp"
+#include "Decoder.hpp"
+#include "Font.hpp"
+#include "Texture2D.hpp"
 
 namespace RType {
 
     using AssetId = int;
-
-    using AssetList = std::unordered_map<AssetId, std::string>;
+    using Assets = RType::AssetManager<Font, Texture2D, Decoder>;
 
 } // namespace RType
 
@@ -63,7 +64,6 @@ namespace RType::Asset {
     inline constexpr AssetId MENU_PLAYER_BACK = 302;
 
     [[nodiscard]] AssetList makeAssetList();
-
 } // namespace RType::Asset
 
 #endif

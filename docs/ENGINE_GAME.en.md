@@ -1,379 +1,199 @@
-# Writing a game without a `main`: `engine-game`
+# Running a game: `game`
 
 > 🌐 **Language:** [Français](ENGINE_GAME.fr.md) · English
 
-`engine-game` is the library that provides the `main` instead of the game. The game only writes its init functions and its systems, then puts them in a single variable, `RType::Game`. The engine does the rest: it creates the `GameManager`, the window, the keyboard and the clock, calls the game's functions in order, then runs the loop.
+`game` is the engine's executable. A game has no C++ and is not compiled: it is a folder that holds two things:
+
+- **a `config.conf` file**: the window, the frame rate, the scripts folder and the engine modules to load;
+- **Lua scripts**: they create the entities, give them components, register the systems and decide when the game stops.
+
+The engine does the rest: it creates the `GameManager`, loads the modules, runs every script, then runs the loop.
 
 - **Audience:** anyone making a game with the engine.
+- **To write the scripts**, see [the Lua scripting guide](LUA_GUIDE.en.md).
 - **For the ECS in detail** (entities, components, systems, views), see [the ECS user guide](ECS_GUIDE.en.md).
-- **For the provided components** (images, animations, text, sound), see [the game making guide](GAME_GUIDE.en.md).
 
 > [!TIP]
-> Every example in this guide was compiled and run against the current engine. The error messages in [section 8](#8-errors-and-how-to-fix-them) were reproduced with `g++-14`.
+> Every example in this guide was run against the current engine, and every error message in [section 8](#8-errors-and-how-to-fix-them) was reproduced.
 
 ---
 
 ## Contents
 
-1. [What the engine's `main` does](#1-what-the-engines-main-does)
-2. [`GameInfo`: what the game provides](#2-gameinfo-what-the-game-provides)
-3. [Setting up the game](#3-setting-up-the-game)
-4. [A complete game in one file](#4-a-complete-game-in-one-file)
-5. [Writing the inits](#5-writing-the-inits)
+1. [What the engine does at start](#1-what-the-engine-does-at-start)
+2. [The `config.conf` file](#2-the-configconf-file)
+3. [The modules](#3-the-modules)
+4. [Setting up the game](#4-setting-up-the-game)
+5. [A complete game](#5-a-complete-game)
 6. [Debug mode](#6-debug-mode)
 7. [Do / don't](#7-do--dont)
 8. [Errors and how to fix them](#8-errors-and-how-to-fix-them)
 
 ---
 
-## 1. What the engine's `main` does
+## 1. What the engine does at start
 
-The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp). In order, it:
+The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) and calls `RType::Game::Runner::run()`. In order, it:
 
-1. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
-2. creates three entities, each with **a single** engine component:
-   - a `Window` with the size and title given by `RType::Game`;
-   - a `KeyboardManager`;
-   - a `MasterClock`;
-3. calls every function in `RType::Game.inits`, **in list order**;
-4. runs `gm.run(RType::Game.windowFPS, RType::Game.runningCondition)`: the loop goes on as long as `runningCondition()` returns `true`;
-5. if an `RType::EngineException` comes up, prints its message and exits with code `84`.
+1. reads the `config.conf` file, which must exist (see [section 2](#2-the-configconf-file));
+2. creates the `GameManager` (in debug mode if the engine is built with `__DEBUG__`, see [section 6](#6-debug-mode));
+3. loads the modules listed in `modules`, plus `Clock`, which is always loaded (see [section 3](#3-the-modules));
+4. loads every `.lua` file of the scripts folder (`srcDirectory`) and its subfolders, **in alphabetical order of their path**, and calls the `start(gm)` function of each one (see [the Lua guide](LUA_GUIDE.en.md));
+5. runs the loop, at `windowFPS` frames per second, **until a script calls `gm:stop()`** (see [the Lua guide](LUA_GUIDE.en.md#stopping-the-game));
+6. if an `RType::EngineException` comes up, from the engine or from a script, prints its message and exits with code `84`.
 
-The `main` **creates the components but registers no system**. The game registers, in its inits, the engine systems it needs (clock, keyboard, window clearing…), see [section 5](#registering-the-engine-systems).
+- **Only a script stops the game.** Closing the window is not enough: a game that does not check `gm:windowShouldClose()` to call `gm:stop()` keeps running after a click on the close button.
+- **Everything is looked for relative to the directory the game is started from**: `config.conf`, the scripts folder, and the paths the scripts give (images, fonts, sounds…).
 
 ---
 
-## 2. `GameInfo`: what the game provides
+## 2. The `config.conf` file
 
-The [`Game.hpp`](../Engine/Game/include/Game.hpp) header declares the struct and the variable:
+```
+# window
+windowFPS = 60
+windowWidth = 1280
+windowHeight = 720
+windowName = Bounce
 
-```cpp
-namespace RType {
-
-    struct GameInfo {
-        std::list<std::function<void(RType::GameManager &)>> inits = {};
-        std::function<bool()> runningCondition;
-        int windowFPS = 60;
-        std::size_t windowWidth = 800;
-        std::size_t windowHeight = 600;
-        std::string windowName = "My Game";
-    };
-
-    extern GameInfo Game;
-
-}
+srcDirectory = scripts
+modules = Window, Keyboard, Mouse, Audio
 ```
 
-| Field | Role | Default |
+| Key | Role | Default |
 |---|---|---|
-| `inits` | Functions called once at startup, in order | empty |
-| `runningCondition` | Called before each frame: the loop goes on as long as it returns `true` | **none, must be provided** |
 | `windowFPS` | Frames per second of the loop | `60` |
-| `windowWidth`, `windowHeight` | Window size, in pixels | `800` × `600` |
-| `windowName` | Window title | `"My Game"` |
+| `windowWidth`, `windowHeight` | Window size, in pixels, used by the `Window` module | `800` × `600` |
+| `windowName` | Window title, used by the `Window` module | `My Game` |
+| `srcDirectory` | The folder of the Lua scripts, relative to the directory the game is started from | `.` (the start directory itself) |
+| `modules` | The engine modules to load, separated by commas (see [section 3](#3-the-modules)) | none (only `Clock`) |
 
-The game **defines** `RType::Game` in **a single** one of its `.cpp` files, with C++20 designated initializers. Fields left out keep their default value:
+- **The file is required**, even empty: without it, the game stops at start.
+- **Every key is optional.** A key left out keeps its default. If a key appears twice, the last one wins.
+- **One line per setting**, as `key = value`. The spaces around the key, the `=` and the value are ignored. Keys are case sensitive.
+- **Empty lines and lines starting with `#` are ignored.**
+- **`windowFPS`, `windowWidth` and `windowHeight`** are whole numbers greater than 0.
+- **An invalid line stops the game** before anything runs, with the file and the line (see [section 8](#8-errors-and-how-to-fix-them)).
 
-```cpp
-RType::GameInfo RType::Game = {
-    .inits = {createWorld, createSystems},
-    .runningCondition = [] { return !WindowShouldClose(); },
-    .windowName = "My game",
-};
-```
-
-Fields must be written **in the struct's order**: `inits`, `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`. You can skip some, not swap them.
+For engine developers: the file fills the `RType::GameConfig` variable, of type `GameInfo`, declared in [`Game.hpp`](../Engine/Game/include/Game.hpp) and read by [`ConfigBuilder`](../Engine/Game/include/ConfigBuilder.hpp). Adding a key is explained in [the engine extension guide](ENGINE_EXTENDING.en.md#6-summary).
 
 ---
 
-## 3. Setting up the game
+## 3. The modules
+
+A module is an engine feature the game turns on by its name. Each one creates its entity and registers its system, **before** the scripts: the scripts' systems therefore always run after them.
+
+| Module | What it creates | Needs |
+|---|---|---|
+| `Window` | an entity with a `Window` (size and title from `config.conf`), and the system that clears and refreshes it each frame; scripts know whether it should close with `gm:windowShouldClose()` | |
+| `Keyboard` | an entity with a `KeyboardManager`, and the system that reads the keys; scripts read it with `gm:keyboard()` | `Window` |
+| `Mouse` | an entity with a `MouseManager`, and the system that reads the mouse; scripts read it with `gm:mouse()` | `Window` |
+| `Audio` | an entity with the point that hears the sounds, and the system that plays the `Sound`s | |
+| `Clock` | an entity with the `MasterClock`, and the system that moves it forward; scripts read its time with `gm:elapsed()` | always loaded |
+
+- **`Clock` is always loaded**, even if `modules` does not list it: the engine's movement and animation systems rely on it.
+- **A module is loaded only once**, even if it is listed twice.
+- **The order is kept**: the game's modules first, in its order, then `Clock`.
+- **A missing dependency stops the game** before anything runs, for instance `Keyboard` without `Window` (see [section 8](#8-errors-and-how-to-fix-them)).
+
+---
+
+## 4. Setting up the game
 
 ### The folder
 
 ```
 Games/
+├── game                     # the engine's executable
 └── MyGame/
-    ├── CMakeLists.txt
-    ├── include/
-    │   └── MyGame.hpp     # components and function declarations
-    └── src/
-        ├── Ball.cpp       # functions that create the entities
-        ├── Systems.cpp    # the systems
-        └── Game.cpp       # only the definition of RType::Game
+    ├── config.conf          # srcDirectory = scripts
+    ├── scripts/
+    │   └── game.lua         # the scripts, loaded in alphabetical order
+    └── sprites/
+        └── ship.png
 ```
 
-No `Main.cpp`: `engine-game` provides it.
+No `CMakeLists.txt`, no `.cpp`: the game is not compiled.
 
-### The `CMakeLists.txt`
-
-```cmake
-cmake_minimum_required(VERSION 3.25...4.0)
-project(my_game CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_executable(my_game
-        src/Ball.cpp
-        src/Systems.cpp
-        src/Game.cpp
-)
-target_include_directories(my_game PRIVATE include)
-target_link_libraries(my_game PRIVATE engine-game)
-```
-
-**`engine-game` is enough**: it brings `engine-system` and `engine-graphical`, with their include directories. If the game is a single file with no `include/` folder, the `target_include_directories` line is not needed.
-
-Then add the folder to [`Games/CMakeLists.txt`](../Games/CMakeLists.txt):
-
-```cmake
-add_subdirectory(MyGame)
-```
-
-and the binary's name to the [`.gitignore`](../.gitignore), next to `r-type_client` and `r-type_server`.
-
-### Building and running
+### Building the engine
 
 ```sh
 cmake -S . -B build
-cmake --build build --target my_game -j
-./Games/my_game
+cmake --build build --target game -j
 ```
 
-The binary is placed directly in `Games/`.
+The executable is placed in `Games/`. It is built once, for every game: changing a script or `config.conf` needs no recompiling.
 
-### Several files
+### Running the game
 
-Functions are declared in the header and defined in their own files. `Game.cpp` only holds the definition of `RType::Game`:
-
-```cpp
-// include/Bounce.hpp
-#include "GameManager.hpp"
-
-namespace Bounce {
-
-    struct Ball {
-        float radius = 20.f;
-    };
-
-    void createBall(RType::GameManager &gm);
-    void createSystems(RType::GameManager &gm);
-
-} // namespace Bounce
+```sh
+cd Games/MyGame && ../game
 ```
 
-```cpp
-// src/Game.cpp
-#include "Bounce.hpp"
-#include "Game.hpp"
-#include "Window.hpp"
-
-RType::GameInfo RType::Game = {
-    .inits = {Bounce::createBall, Bounce::createSystems},
-    .runningCondition = [] { return !WindowShouldClose(); },
-    .windowWidth = 1280,
-    .windowHeight = 720,
-    .windowName = "Bounce",
-};
-```
+The game must be **started from its folder**, the one that holds `config.conf`.
 
 ---
 
-## 4. A complete game in one file
+## 5. A complete game
 
-A ball bouncing off the window's edges. `Space` reverses its direction, `Escape` or the close button quit the game.
+A ship crossing the window and bouncing off its edges. `Escape` or the close button quit the game.
 
-```cpp
-#include <algorithm>
-#include <cmath>
-
-#include "Clock.hpp"
-#include "Game.hpp"
-#include "GameManager.hpp"
-#include "KeyboardManager.hpp"
-#include "Position2D.hpp"
-#include "Velocity2D.hpp"
-#include "Window.hpp"
-
-namespace {
-
-    constexpr float WIDTH = 800.f;
-    constexpr float HEIGHT = 600.f;
-
-    struct Ball {
-        float radius = 20.f;
-    };
-
-    void createBall(RType::GameManager &gm)
-    {
-        RType::Entity ball = gm.createEntity();
-
-        gm.addComponent<Ball>(ball);
-        gm.addComponent<RType::Position2D>(ball, RType::Position2D {400.f, 300.f});
-        gm.addComponent<RType::Velocity2D>(ball, RType::Velocity2D {250.f, 180.f});
-    }
-
-    void bounce(RType::GameManager &gm)
-    {
-        using namespace RType;
-
-        for (auto [_, b, pos, vel] : gm.view<Ball, Position2D, Velocity2D>().getVector()) {
-            if (pos.x < b.radius)
-                vel.x = std::abs(vel.x);
-            if (pos.x > WIDTH - b.radius)
-                vel.x = -std::abs(vel.x);
-            if (pos.y < b.radius)
-                vel.y = std::abs(vel.y);
-            if (pos.y > HEIGHT - b.radius)
-                vel.y = -std::abs(vel.y);
-        }
-    }
-
-    void reverseOnSpace(RType::GameManager &gm)
-    {
-        using namespace RType;
-
-        for (auto [_, k] : gm.view<KeyboardManager>().getVector()) {
-            if (std::ranges::find(k.keyPressed, Key::Value::Space) == k.keyPressed.end())
-                continue;
-            for (auto [_, b, vel] : gm.view<Ball, Velocity2D>().getVector()) {
-                vel.x = -vel.x;
-                vel.y = -vel.y;
-            }
-        }
-    }
-
-    void draw(RType::GameManager &gm)
-    {
-        using namespace RType;
-
-        for (auto [_, b, pos] : gm.view<Ball, Position2D>().getVector())
-            DrawCircleV({pos.x, pos.y}, b.radius, RED);
-    }
-
-    void createSystems(RType::GameManager &gm)
-    {
-        using namespace RType;
-
-        gm.createSystem<MasterClock>(MasterClock::systemMasterClock);
-        gm.createSystem<KeyboardManager>(KeyboardManager::systemKeyboardManager);
-        gm.createSystem<>(reverseOnSpace);
-        gm.createSystem<>(bounce);
-        gm.createSystem<MasterClock>(Velocity2D::systemMasterVelocity2D);
-        gm.createSystem<Window>(Window::systemClearWindow);
-        gm.createSystem<>(draw);
-    }
-
-} // namespace
-
-RType::GameInfo RType::Game = {
-    .inits = {createBall, createSystems},
-    .runningCondition = [] { return !WindowShouldClose(); },
-    .windowName = "Bounce",
-};
+```
+# config.conf
+windowName = Bounce
+srcDirectory = scripts
+modules = Window
 ```
 
-- **`createBall`** creates the game's entities, **`createSystems`** registers every system, once.
-- **`bounce`, `reverseOnSpace` and `draw`** only take the `GameManager`: registered with `gm.createSystem<>(...)`, they are called once per frame and find their entities through views.
+```lua
+-- scripts/game.lua
+local WIDTH, HEIGHT = 800, 600
 
----
+local function bounce(gm, e, pos, vel)
+    if pos.x < 0 or pos.x > WIDTH - 32 then vel.x = -vel.x end
+    if pos.y < 0 or pos.y > HEIGHT - 32 then vel.y = -vel.y end
+end
 
-## 5. Writing the inits
+local function quit(gm)
+    if gm:windowShouldClose() then gm:stop() end
+end
 
-### An init is called only once
+function start(gm)
+    local ship = gm:createEntity()
+    gm:addComponent(ship, 'Position2D', {x = 100, y = 100})
+    gm:addComponent(ship, 'Velocity2D', {x = 250, y = 180})
+    gm:addComponent(ship, 'Texture2D', {path = 'sprites/ship.png'})
+    gm:addComponent(ship, 'Sprite2D', {scale = 2})
 
-Each function in `inits` is called **once**, at startup. It is used to create entities and register systems. What must happen **every frame** (movement, game logic, drawing) goes into a system:
-
-```cpp
-// bounce is called only once: the ball never bounces
-.inits = {createBall, bounce},
-
-// bounce becomes a system: it is called every frame
-.inits = {createBall, [](RType::GameManager &gm) { gm.createSystem<>(bounce); }},
+    gm:createSystem(quit)
+    gm:createSystem({'Position2D', 'Velocity2D'}, bounce)
+    gm:addSystem('MasterVelocity2D')
+    gm:addSystem('DrawSprite2D')
+end
 ```
 
-### Registering the engine systems
+- **`config.conf`** only turns on the window: the default size, 800 × 600, is fine. The `Window` module already clears the window each frame.
+- **`start`** runs once: it creates the ship, then registers four systems, which run each frame in this order. `quit` and `bounce` are the game's own: `quit` stops the game with `gm:stop()` when the window should close; `MasterVelocity2D` (movement) and `DrawSprite2D` (drawing) come from the engine.
 
-The `main` creates the `Window`, the `KeyboardManager` and the `MasterClock`, but does not register their systems. Without them, the clock stays at zero, the keyboard stays empty and the window is not refreshed. A game init must therefore register them:
-
-```cpp
-gm.createSystem<RType::MasterClock>(RType::MasterClock::systemMasterClock);
-gm.createSystem<RType::KeyboardManager>(RType::KeyboardManager::systemKeyboardManager);
-gm.createSystem<RType::Window>(RType::Window::systemClearWindow);
-```
-
-Systems run **in the order they are created**, so the order of the inits matters. The recommended order:
-
-1. the clock and the keyboard;
-2. the game logic;
-3. physics (`Velocity2D::systemMasterVelocity2D`);
-4. `Window::systemClearWindow`, then drawing.
-
-### Reading the window, the keyboard and the clock
-
-These three components are **each on their own entity**. A view asking for several of them at once therefore finds no entity. Fetch them with one view each:
-
-```cpp
-void updateGame(RType::GameManager &gm)
-{
-    using namespace RType;
-
-    auto keyboards = gm.view<KeyboardManager>().getVector();
-    auto clocks = gm.view<MasterClock>().getVector();
-
-    if (keyboards.empty() || clocks.empty())
-        return;
-    auto &k = std::get<1>(keyboards.front());
-    auto &c = std::get<1>(clocks.front());
-    float dt = float(c.getElapsed().count()) / MILLI_IN_SEC;
-    // ...
-}
-```
-
-### A function that takes other parameters
-
-Inits all have the signature `void(RType::GameManager &)`. For a function that takes other parameters, wrap it in a lambda that fixes them:
-
-```cpp
-void createEnemy(RType::GameManager &gm, float x, float y);
-
-RType::GameInfo RType::Game = {
-    .inits = {
-        createSystems,
-        [](RType::GameManager &gm) { createEnemy(gm, 100.f, 50.f); },
-        [](RType::GameManager &gm) { createEnemy(gm, 300.f, 50.f); },
-    },
-    .runningCondition = [] { return !WindowShouldClose(); },
-};
-```
-
-### Stopping the game
-
-`runningCondition` is called before each frame. `[] { return !WindowShouldClose(); }` stops the game when the window is closed or `Escape` is pressed. It can also read some global game state, for instance a boolean set to `true` by a system when the game is over.
+Everything a script can do is in [the Lua scripting guide](LUA_GUIDE.en.md).
 
 ---
 
 ## 6. Debug mode
 
-When the engine is built with the `__DEBUG__` macro, the `main` creates the `GameManager` in debug mode: every operation is written to `std::clog`.
+When the engine is built with the `__DEBUG__` macro, it creates the `GameManager` in debug mode: every operation is written to `std::clog`.
 
 ```sh
 cmake -S . -B build -DCMAKE_CXX_FLAGS="-D__DEBUG__"
-cmake --build build --target my_game -j
+cmake --build build --target game -j
 ```
 
 ```
 [GameManager] debug mode enabled
 [GameManager] createEntity -> entity 0
-[GameManager] addComponent<RType::Window> on entity 0
-[GameManager] createEntity -> entity 1
-[GameManager] addComponent<RType::KeyboardManager> on entity 1
-[GameManager] createEntity -> entity 2
-[GameManager] addComponent<RType::MasterClock> on entity 2
+[GameManager] addComponent<RType::MasterClock> on entity 0
 [GameManager] createSystem with ( RType::MasterClock ) -> system 0
 ```
-
-The macro must apply to `engine-game`, which holds the `main`: a `target_compile_definitions` on the game's target is not enough.
 
 ---
 
@@ -381,108 +201,68 @@ The macro must apply to `engine-game`, which holds the `main`: a `target_compile
 
 ### Do
 
-- **Define `RType::Game` in a single `.cpp`**, ideally a `Game.cpp` that holds only that.
-- **Always provide `runningCondition`**.
-- **Link only `engine-game`** in the game's `CMakeLists.txt`.
-- **Register the clock, the keyboard and `Window::systemClearWindow`** in an init.
-- **Put per-frame logic in systems**, registered once in an init.
-- **Fetch the window, the keyboard and the clock with one view each**.
-- **Write `GameInfo`'s fields in the struct's order**.
+- **List `Window` in `modules`** as soon as the game draws something, reads the keyboard or the mouse, or calls `gm:windowShouldClose()`.
+- **Have a system that calls `gm:stop()`** when `gm:windowShouldClose()` returns `true`: without it, the window does not close.
+- **Start the game from its folder**, the one that holds `config.conf`.
+- **Write the scripts' paths relative to that folder.**
 
 ### Don't
 
-- **Don't write a `main`** in the game: it would silently replace the engine's.
-- **Don't define `RType::Game` in a header**, nor in two `.cpp` files.
-- **Don't create a `Window` or a `MasterClock`** in an init: the engine already creates them.
-- **Don't put a function meant to run every frame in `inits`**.
-- **Don't throw anything other than an `EngineException`** from an init or a system: the `main` does not catch it and the program aborts.
-- **Don't read `RType::Game` from another global variable's constructor**: the initialization order of globals across files is not defined.
+- **Don't list `Clock` in `modules`**: it is always loaded.
+- **Don't start the game from another folder**: the engine finds neither `config.conf` nor the scripts there.
 
 ---
 
 ## 8. Errors and how to fix them
 
-### `undefined reference to 'RType::Game'`
+Each error stops the game with exit code `84`, before anything runs.
+
+### `Engine Error: Config error: ...`
 
 ```
-Main.cpp:22: undefined reference to `RType::Game'
+Engine Error: Config error: config.conf:2: unknown key 'fps'
+Engine Error: Config error: config.conf:1: windowWidth expects a number greater than 0, got 'abc'
+Engine Error: Config error: config.conf:4: expected 'key = value'
+Engine Error: Config error: config.conf: cannot be opened
 ```
 
-**Cause:** the game does not define `RType::Game`.
-**Fix:** add the definition in one of the game's `.cpp` files (see [section 2](#2-gameinfo-what-the-game-provides)), and check that this file is listed in `add_executable`.
+**Cause:** a line of `config.conf` has a key that does not exist, an invalid value, or no `=`, and the message gives the line. Or the file is not in the directory the game is started from.
+**Fix:** correct the line, with the keys and values of [section 2](#2-the-configconf-file). Or start the game from its folder, or create `config.conf` there, even empty.
 
-### `multiple definition of 'RType::Game'`
-
-```
-multiple definition of `RType::Game'; first defined here
-```
-
-**Cause:** `RType::Game` is defined in two `.cpp` files, or in a header included by several `.cpp` files.
-**Fix:** keep a single definition, in a single `.cpp`. The engine's `Game.hpp` header takes care of the declaration.
-
-### `designator order for field ... does not match declaration order`
+### `Engine Error: No such module: ...`
 
 ```
-error: designator order for field 'RType::GameInfo::windowFPS' does not match declaration order in 'RType::GameInfo'
+Engine Error: No such module: Windw
 ```
 
-**Cause:** `GameInfo`'s fields are not written in the struct's order.
-**Fix:** put them back in the order `inits`, `runningCondition`, `windowFPS`, `windowWidth`, `windowHeight`, `windowName`.
+**Cause:** a name in `modules` is not one of the modules of [section 3](#3-the-modules), often because of a typo.
+**Fix:** correct the name. The module names are case sensitive.
 
-### `undefined reference to 'main'`
-
-**Cause:** the game is not linked to `engine-game`.
-**Fix:** `target_link_libraries(my_game PRIVATE engine-game)`.
-
-### `Window.hpp: No such file or directory` (or `KeyboardManager.hpp`, `Clock.hpp`…)
-
-**Cause:** the game is linked only to `engine-system`, or to no engine library at all.
-**Fix:** link `engine-game`, which brings the includes of `engine-system` and `engine-graphical`.
-
-### `terminate called after throwing an instance of 'std::bad_function_call'`
+### `Engine Error: Module ... requires module ...`
 
 ```
-terminate called after throwing an instance of 'std::bad_function_call'
-  what():  bad_function_call
+Engine Error: Module Keyboard requires module Window
 ```
 
-**Cause:** `runningCondition` is not provided: the loop calls an empty `std::function`.
-**Fix:** define `.runningCondition`, for instance `[] { return !WindowShouldClose(); }`.
+**Cause:** a module is listed without the module it needs.
+**Fix:** add the missing module to `modules`.
 
-### `terminate called after throwing an instance of '...'`
+### `Engine Error: Script error: ...`
 
-**Cause:** an init or a system threw an exception that is not an `RType::EngineException` (`std::runtime_error`, `std::out_of_range`…). The `main` only catches `EngineException`s.
-**Fix:** catch the exception in the game, or throw an `RType::EngineException` instead.
+**Cause:** a script has a mistake, or calls the engine with wrong arguments. The message gives the file and the line.
+**Fix:** see [the errors of the Lua guide](LUA_GUIDE.en.md#9-errors-and-how-to-fix-them).
 
-### `Engine Error: Window can be created only once` (exit code `84`)
+### Nothing happens: no script is run
 
-**Cause:** an init creates a `Window`, while the `main` already created one.
-**Fix:** remove that creation. Size and title are set with `windowWidth`, `windowHeight` and `windowName`.
+**Cause:** `srcDirectory` does not point to the scripts folder. The engine finds no script, and runs an empty loop without error.
+**Fix:** check `srcDirectory` in `config.conf`, written relative to the directory the game is started from.
 
-### The game ignores `RType::Game`
+### The window does not open
 
-**Symptom:** the game builds and starts, but no window opens and the inits are not called.
-**Cause:** the game has a `main`. The linker uses it instead of `engine-game`'s, without any error.
-**Fix:** remove the game's `main`.
+**Cause:** `Window` is not listed in `modules`.
+**Fix:** add `Window` to `modules`.
 
-### Nothing moves
+### The window does not close
 
-**Possible causes:**
-
-- **The clock system is not registered**: `getElapsed()` stays at zero, so every velocity moves things by nothing. Register `MasterClock::systemMasterClock`.
-- **The movement system is not registered**: register `Velocity2D::systemMasterVelocity2D`.
-- **The logic is in `inits` instead of a system**: it is called only once. Register it with `gm.createSystem<>(...)`.
-- **A view asks for several engine components at once**, for instance `view<KeyboardManager, MasterClock>()`: they are on different entities, the view is empty and the system does nothing. Use one view per component ([section 5](#reading-the-window-the-keyboard-and-the-clock)).
-
-### The keyboard does not respond
-
-**Possible causes:**
-
-- `KeyboardManager::systemKeyboardManager` is not registered.
-- `Window::systemClearWindow` is not registered: raylib only reads keyboard and window events at the end of each draw.
-- The system reading the keyboard is registered **before** `systemKeyboardManager`: it reads the previous frame's keys.
-
-### The window stays black or frozen
-
-**Cause:** `Window::systemClearWindow` is not registered, or the drawing systems are registered without it.
-**Fix:** register `Window::systemClearWindow`, then the drawing systems after it.
+**Cause:** no script calls `gm:stop()`: the close button and `Escape` do nothing but make `gm:windowShouldClose()` true.
+**Fix:** add the `quit` system of [the complete game](#5-a-complete-game).

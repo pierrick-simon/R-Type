@@ -91,6 +91,7 @@ namespace RType {
         float fireTimer = 0.f;
         int stage = 0;
         int explosions = 0;
+        float hurtTimer = 0.f;
     };
 
     struct Enemy {

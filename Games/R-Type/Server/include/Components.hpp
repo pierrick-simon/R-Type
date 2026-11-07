@@ -33,7 +33,7 @@ namespace RType::Server {
     };
 
     struct LifeIcon {
-        Entity owner;
+        Entity owner {0};
         int index = 0;
     };
 
@@ -72,7 +72,7 @@ namespace RType::Server {
     };
 
     struct Force {
-        Entity owner;
+        Entity owner {0};
         int level = 1;
         LaserType laser = LaserType::Reflect;
     };

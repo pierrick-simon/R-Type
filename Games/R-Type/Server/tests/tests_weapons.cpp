@@ -76,11 +76,11 @@ namespace {
         const Entity terrain = gm.createEntity();
         const Entity background = gm.createEntity();
 
-        mask.solid.resize(std::size_t(width * height));
+        mask.solid.resize(std::size_t(width) * std::size_t(height));
         for (int y = 0; y < height; ++y)
             for (int x = 0; x < width; ++x)
-                mask.solid[std::size_t(y * width + x)] =
-                    y < 10 || (x >= 200 && x < 210);
+                mask.solid[std::size_t(y) * std::size_t(width) +
+                    std::size_t(x)] = y < 10 || (x >= 200 && x < 210);
         gm.addComponent<Terrain>(terrain, Terrain {std::move(mask), {}});
         gm.addComponent<Background>(background);
         gm.addComponent<Position2D>(background, 0.f, 0.f);

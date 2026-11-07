@@ -67,7 +67,7 @@ namespace RType {
     }};
 
     inline constexpr SheetInfo BOSS_SHEET = {
-        Asset::ENEMY_BOSS, 32, 155, 204, 120, 0, 0, 8, LEVEL_SCALE};
+        Asset::ENEMY_BOSS, 64, 155, 204, 120, 0, 0, 16, LEVEL_SCALE};
     inline constexpr SheetInfo BOSS_BULLET_SHEET = {
         Asset::BOSS_BULLET, 9, 16, 16, 60, 10, 10};
     inline constexpr SheetInfo BOSS_EXPLOSION_SHEET = {
@@ -75,6 +75,11 @@ namespace RType {
 
     inline constexpr int BOSS_STAGES = 8;
     inline constexpr int BOSS_IDLE_FRAMES = 4;
+    // Boss.png repeats every frame brightened under the normal ones.
+    inline constexpr std::size_t BOSS_FLASH_OFFSET =
+        std::size_t(BOSS_STAGES) * std::size_t(BOSS_IDLE_FRAMES);
+    inline constexpr float BOSS_HURT_FLASH = 0.15f;
+    inline constexpr float BOSS_HURT_BLINK = 0.05f;
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
         Asset::ENEMY_EXPLOSION, 6, 32, 31, 67, 0, 0};

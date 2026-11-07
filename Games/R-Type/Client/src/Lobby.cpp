@@ -74,11 +74,10 @@ namespace RType::Client {
                 Size2D {1, 2}, LOBBY_ROW_TILE_OTHER, 0, 1.f, false);
 
             sheet.color.a = 0;
+            sheet.assetId = Asset::MENU_PLAYER_BACK;
             gm.addComponent<LobbyItem>(back);
             gm.addComponent<LobbyRow>(back, LobbyRow {row});
             gm.addComponent<SpriteSheet2D>(back, sheet);
-            gm.addComponent<Texture2D>(
-                back, gm.getAssetsMap().at(Asset::MENU_PLAYER_BACK));
             gm.addComponent<Position2D>(
                 back, rowX(), y - LOBBY_ROW_HEIGHT / 2.f);
             addLobbyText(gm,
@@ -169,59 +168,63 @@ namespace RType::Client {
                 });
         }
 
-        void updateTexts(
-            GameManager &gm, const LobbyState &state, const bool isHost)
+        void updateTexts(GameManager &gm, Assets &assets,
+            const LobbyState &state, const bool isHost)
         {
             constexpr float NAME_MAX_WIDTH = 360.f;
             const int total = static_cast<int>(state.players.size());
             std::vector<float> nameWidth(LOBBY_MAX_ROWS, 0.f);
 
-            gm.view<LobbyText, Text2D, Font>().each(
-                [&](Entity, LobbyText &id, Text2D &text, Font &font) {
-                    const bool used = id.row < state.players.size();
-                    const LobbyPlayerInfo *p =
-                        used ? &state.players[id.row] : nullptr;
+            for (auto [_, id, text] :
+                gm.view<LobbyText, Text2D>().getVector()) {
+                if (!text.assetId)
+                    continue;
+                auto assetFont = assets.get<Font>(text.assetId.value());
+                if (!assetFont)
+                    continue;
+                auto &font = assetFont.value().get();
+                const bool used = id.row < state.players.size();
+                const LobbyPlayerInfo *p =
+                    used ? &state.players[id.row] : nullptr;
 
-                    switch (id.id) {
-                        case LobbyTextId::LobbyName:
-                            text.str = state.lobbyName;
-                            break;
-                        case LobbyTextId::Subtitle:
-                            text.str = "Server " + _clInfos._ip + "   " +
-                                std::to_string(total) +
-                                (total > 1 ? " players" : " player");
-                            break;
-                        case LobbyTextId::Status:
-                            text.str = statusLine(state, isHost, text.color);
-                            break;
-                        case LobbyTextId::RowName: {
-                            float width = 0.f;
+                switch (id.id) {
+                    case LobbyTextId::LobbyName:
+                        text.str = state.lobbyName;
+                        break;
+                    case LobbyTextId::Subtitle:
+                        text.str = "Server " + _clInfos._ip + "   " +
+                            std::to_string(total) +
+                            (total > 1 ? " players" : " player");
+                        break;
+                    case LobbyTextId::Status:
+                        text.str = statusLine(state, isHost, text.color);
+                        break;
+                    case LobbyTextId::RowName: {
+                        float width = 0.f;
 
-                            text.str = p ? p->name : "";
-                            text.fontSize = LOBBY_NAME_SIZE;
-                            width =
-                                font.MeasureText(
+                        text.str = p ? p->name : "";
+                        text.fontSize = LOBBY_NAME_SIZE;
+                        width = font.MeasureText(
                                         text.str, text.fontSize, text.spacing)
                                     .x;
-                            if (width > NAME_MAX_WIDTH) {
-                                text.fontSize *= NAME_MAX_WIDTH / width;
-                                width = NAME_MAX_WIDTH;
-                            }
-                            if (id.row < nameWidth.size())
-                                nameWidth[id.row] = width;
-                            break;
+                        if (width > NAME_MAX_WIDTH) {
+                            text.fontSize *= NAME_MAX_WIDTH / width;
+                            width = NAME_MAX_WIDTH;
                         }
-                        case LobbyTextId::RowHost:
-                            text.str = p && p->id == state.hostId ? "HOST" : "";
-                            break;
-                        case LobbyTextId::RowStatus:
-                            text.str =
-                                p ? (p->ready ? "READY" : "NOT READY") : "";
-                            text.color =
-                                p && p->ready ? COLOR_READY : COLOR_NOT_READY;
-                            break;
+                        if (id.row < nameWidth.size())
+                            nameWidth[id.row] = width;
+                        break;
                     }
-                });
+                    case LobbyTextId::RowHost:
+                        text.str = p && p->id == state.hostId ? "HOST" : "";
+                        break;
+                    case LobbyTextId::RowStatus:
+                        text.str = p ? (p->ready ? "READY" : "NOT READY") : "";
+                        text.color =
+                            p && p->ready ? COLOR_READY : COLOR_NOT_READY;
+                        break;
+                }
+            }
             gm.view<LobbyText, Position2D>().each(
                 [&](Entity, LobbyText &id, Position2D &pos) {
                     if (id.id == LobbyTextId::RowHost &&
@@ -306,7 +309,7 @@ namespace RType::Client {
         createMenu(gm);
     }
 
-    void systemLobby(GameManager &gm)
+    void systemLobby(GameManager &gm, Assets &assets)
     {
         bool show = false;
         bool hide = false;
@@ -353,7 +356,7 @@ namespace RType::Client {
                 }
                 updateButtons(gm, state, lobby, isHost);
                 updateRows(gm, state, c.getMyId());
-                updateTexts(gm, state, isHost);
+                updateTexts(gm, assets, state, isHost);
             });
         if (show)
             createLobby(gm);

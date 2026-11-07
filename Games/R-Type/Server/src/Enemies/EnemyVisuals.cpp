@@ -58,9 +58,13 @@ namespace RType {
         const bool flash =
             boss.state == BossState::Dying && int(boss.timer / 0.08f) % 2 != 0;
 
+        const bool hurt = boss.hurtTimer > 0.f &&
+            int(boss.hurtTimer / BOSS_HURT_BLINK) % 2 == 0;
+
         // The row is how far the belly is open, the columns an idle loop.
         sheet.currentTile = std::size_t(boss.stage * BOSS_IDLE_FRAMES) +
-            sheet.currentTile % BOSS_IDLE_FRAMES;
+            sheet.currentTile % BOSS_IDLE_FRAMES +
+            (hurt ? BOSS_FLASH_OFFSET : 0);
         sheet.color =
             flash ? raylib::Color {255, 90, 90, 255} : raylib::Color::White();
     }

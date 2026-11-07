@@ -20,7 +20,6 @@
 #include "Menu.hpp"
 #include "Sprite2D.hpp"
 #include "Text2D.hpp"
-#include "Texture2D.hpp"
 
 namespace RType::Client {
 
@@ -108,9 +107,7 @@ namespace RType::Client {
         const Entity background = gm.createEntity();
 
         gm.addComponent<GameOverItem>(background);
-        gm.addComponent<Sprite2D>(background, 1.f);
-        gm.addComponent<Texture2D>(
-            background, gm.getAssetsMap().at(Asset::MENU_BACKGROUND));
+        gm.addComponent<Sprite2D>(background, Asset::MENU_BACKGROUND);
         gm.addComponent<Position2D>(background, 0.f, 0.f);
         gm.addComponent<GameOverItem>(addText(gm,
             center,

@@ -7,6 +7,7 @@
 
 #include "GameState.hpp"
 
+#include <algorithm>
 #include <vector>
 
 #include "Common/Background.hpp"
@@ -35,10 +36,8 @@ namespace RType::Server {
 
         bool levelRunning(GameManager &gm)
         {
-            for (auto [_, director] : gm.view<EnemyDirector>().getVector())
-                if (!director.paused)
-                    return true;
-            return false;
+            return std::ranges::any_of(gm.view<EnemyDirector>().getVector(),
+                [](const auto &entry) { return !std::get<1>(entry).paused; });
         }
     } // namespace
 

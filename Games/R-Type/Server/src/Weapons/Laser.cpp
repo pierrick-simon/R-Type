@@ -25,7 +25,7 @@
 namespace RType::Server {
 
     struct LaserShot {
-        AssetId asset;
+        AssetId asset = 0;
         Position2D pos;
         Velocity2D velocity;
         Hitbox hitbox;
