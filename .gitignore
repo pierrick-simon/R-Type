@@ -30,3 +30,6 @@ game
 skills-lock.json
 CLAUDE.md
 AGENTS.md
+
+# Logs
+log/

@@ -9,6 +9,7 @@
 #define GAMEMANAGER_HPP_
 
 #include <chrono>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <thread>
@@ -364,18 +365,30 @@ namespace RType {
 
         bool _updating = false;
         bool _debug = false;
+        mutable std::ofstream _logFile;
 
         /**
-         * @brief Writes one line on std::clog, only in debug mode.
+         * @brief Opens log/{timestamp}.log, creating the log directory if
+         * needed.
+         */
+        void openLogFile();
+
+        /**
+         * @brief Writes one line in the log file, only in debug mode.
+         * Falls back to std::clog if the file could not be opened.
          */
         template<typename... Args>
         void log(const Args &...args) const
         {
             if (!_debug)
                 return;
-            std::clog << "[GameManager] ";
-            (std::clog << ... << args);
-            std::clog << std::endl;
+            std::ostream &out = _logFile.is_open()
+                ? static_cast<std::ostream &>(_logFile)
+                : std::clog;
+
+            out << "[GameManager] ";
+            (out << ... << args);
+            out << std::endl;
         }
 
         /**
