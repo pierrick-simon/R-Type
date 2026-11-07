@@ -52,7 +52,8 @@ namespace RType {
             throw;
         }
         _updating = false;
-        log("update: applying ", _cq.size(), " queued command(s)");
+        if (_cq.size())
+            log("update: applying ", _cq.size(), " queued command(s)");
         flush();
     }
 
@@ -113,6 +114,16 @@ namespace RType {
         return _updating;
     }
 
+    void GameManager::setPaused(bool paused)
+    {
+        _paused = paused;
+    }
+
+    bool GameManager::isPaused() const
+    {
+        return _paused;
+    }
+
     void GameManager::flush()
     {
         std::exception_ptr error = nullptr;
@@ -149,7 +160,8 @@ namespace RType {
         auto next = clock::now();
         log("run at ", fps, " fps");
         while (keepRunning()) {
-            update();
+            if (!_paused)
+                update();
             next += step;
             if (next < clock::now())
                 next = clock::now();
