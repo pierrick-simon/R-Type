@@ -60,10 +60,12 @@ namespace RType {
 
     void UDPClient::sendNow(uint8_t op, const std::vector<uint8_t> &msg)
     {
-        _sendBuffer = serializeHeader(Header {op, 0, _seq++, _myId}, msg);
-        _socket.async_send_to(asio::buffer(_sendBuffer),
+        auto buffer = std::make_shared<std::vector<uint8_t>>(
+            serializeHeader(Header {op, 0, _seq++, _myId}, msg));
+
+        _socket.async_send_to(asio::buffer(*buffer),
             _serverEndpoint,
-            [](std::error_code, std::size_t) {});
+            [buffer](std::error_code, std::size_t) {});
         _lagometer.packetSent();
     }
 
