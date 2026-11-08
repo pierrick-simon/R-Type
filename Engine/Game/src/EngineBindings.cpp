@@ -8,6 +8,8 @@
 #include "AngularVelocity2D.hpp"
 #include "AngularVelocity3D.hpp"
 #include "Camera3D.hpp"
+#include "CameraAngle.hpp"
+#include "CameraControl.hpp"
 #include "Clock.hpp"
 #include "ComponentBinding.hpp"
 #include "Draw3D.hpp"
@@ -96,6 +98,11 @@ namespace RType::Game {
                 makeSystem(AngularVelocity3D::systemAngularVelocity3D)},
             {"MasterAngularVelocity3D",
                 makeSystem(AngularVelocity3D::systemMasterAngularVelocity3D)},
+            {"CameraAngleInput",
+                makeSystem(CameraAngle::systemCameraAngleInput)},
+            {"CameraAngle", makeSystem(CameraAngle::systemCameraAngle)},
+            {"CameraMouseControl",
+                makeSystem(CameraMouseControl::systemCameraMouseControl)},
     };
 
     template<>
@@ -282,6 +289,28 @@ namespace RType::Game {
             &AngularVelocity3D::y,
             "z",
             &AngularVelocity3D::z);
+        bindComponent<CameraAngleInput>(lua,
+            "CameraAngleInput",
+            "yaw",
+            &CameraAngleInput::yaw,
+            "pitch",
+            &CameraAngleInput::pitch);
+        bindComponent<CameraAngle>(lua,
+            "CameraAngle",
+            "yaw",
+            &CameraAngle::yaw,
+            "pitch",
+            &CameraAngle::pitch,
+            "minPitch",
+            &CameraAngle::minPitch,
+            "maxPitch",
+            &CameraAngle::maxPitch);
+        bindComponent<CameraMouseControl>(lua,
+            "CameraMouseControl",
+            "sensitivity",
+            &CameraMouseControl::sensitivity,
+            "invertY",
+            &CameraMouseControl::invertY);
     }
 
 } // namespace RType::Game
