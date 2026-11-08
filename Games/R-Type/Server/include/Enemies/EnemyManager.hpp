@@ -45,13 +45,15 @@ namespace RType {
         float victoryTimer = 0.f;
         bool levelCleared = false;
         bool paused = false;
+        // Players at launch: the boss's health is multiplied by it.
+        int players = 1;
 
         void addWave(
             EnemyType type, float y, int count, float interval, float start);
     };
 
     Entity spawnEnemy(GameManager &gm, EnemyType type, float x, float y,
-        const EnemyHooks &hooks = {});
+        const EnemyHooks &hooks = {}, int healthFactor = 1);
 
     Entity fireEnemyBullet(GameManager &gm, float x, float y, float vx,
         float vy, int damage, const EnemyHooks &hooks = {},
@@ -66,7 +68,9 @@ namespace RType {
 
     [[nodiscard]] bool levelCleared(GameManager &gm);
 
-    Entity createEnemyDirector(GameManager &gm);
+    Entity createEnemyDirector(GameManager &gm, int players = 1);
+
+    void setDirectorPlayers(GameManager &gm, int players);
 
 } // namespace RType
 

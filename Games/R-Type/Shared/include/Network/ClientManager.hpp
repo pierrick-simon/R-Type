@@ -85,6 +85,11 @@ namespace RType {
             return _udp->getMyId();
         }
 
+        [[nodiscard]] const Lagometer::Info &getLagometerInfo() const
+        {
+            return _udp->getLagometerInfo();
+        }
+
     private:
         /**
          * @brief Add the manage function to the udp Client.

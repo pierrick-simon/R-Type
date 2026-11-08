@@ -335,7 +335,7 @@ namespace RType::Client {
     void createLobbyListPage(GameManager &gm)
     {
         const float buttonsY =
-            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2 - BUTTON_GAP;
+            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2;
         const Entity title = addText(gm,
             static_cast<float>(WINDOW_WIDTH) / 2.f,
             LOBBY_LIST_TITLE_Y,
@@ -358,14 +358,10 @@ namespace RType::Client {
 
         gm.addComponent<LobbyListItem>(frame);
         gm.addComponent<LobbyListFrame>(frame);
-        gm.addComponent<Texture2D>(
-            frame, gm.getAssetsMap().at(Asset::MENU_LIST_FRAME));
         const Entity rows = gm.createEntity();
 
         gm.addComponent<LobbyListItem>(rows);
         gm.addComponent<LobbyListRowSprite>(rows);
-        gm.addComponent<Texture2D>(
-            rows, gm.getAssetsMap().at(Asset::MENU_LOBBY_ROW));
         scroll = 0;
         gm.addComponent<LobbyListItem>(title);
         gm.addComponent<LobbyListItem>(create);
@@ -459,38 +455,46 @@ namespace RType::Client {
             switchToLobby(gm, target->first, target->second);
     }
 
-    void systemDrawLobbyList(GameManager &gm)
+    void systemDrawLobbyList(GameManager &gm, Assets &assets)
     {
         const LobbyListState *state = nullptr;
         const LobbyListClient *client = nullptr;
-        const Font *font = nullptr;
+        auto assetFont = assets.get<Font>(Asset::FONT);
+        if (!assetFont)
+            return;
+        auto &font = assetFont.value().get();
 
         gm.view<LobbyListState, LobbyListClient>().each(
             [&](Entity, LobbyListState &s, LobbyListClient &l) {
                 state = &s;
                 client = &l;
             });
-        gm.view<LobbyListItem, Font>().each(
-            [&font](Entity, LobbyListItem &, Font &f) { font = &f; });
-        if (state == nullptr || font == nullptr)
+        // Only while the list page is open (the font is always loaded now).
+        if (state == nullptr || client == nullptr ||
+            gm.view<LobbyListItem>().getVector().empty())
             return;
         const Texture2D *rowSprite = nullptr;
+        const Texture2D *frameSprite = nullptr;
         Vector2 mouse {-1.f, -1.f};
 
-        gm.view<LobbyListRowSprite, Texture2D>().each(
-            [&rowSprite](Entity, LobbyListRowSprite &, Texture2D &t) {
-                rowSprite = &t;
-            });
+        if (!gm.view<LobbyListRowSprite>().getVector().empty()) {
+            if (auto t = assets.get<Texture2D>(Asset::MENU_LOBBY_ROW))
+                rowSprite = &t->get();
+        }
+        if (!gm.view<LobbyListFrame>().getVector().empty()) {
+            if (auto t = assets.get<Texture2D>(Asset::MENU_LIST_FRAME))
+                frameSprite = &t->get();
+        }
         gm.view<MouseManager>().each([&mouse](Entity, MouseManager &m) {
             mouse = {m.getPos().x, m.getPos().y};
         });
         const float size = LOBBY_LIST_TEXT_SIZE;
         auto text =
             [&](const std::string &str, float tx, float ty, Color color) {
-                ::DrawTextEx(*font, str.c_str(), {tx, ty}, size, 1.f, color);
+                ::DrawTextEx(font, str.c_str(), {tx, ty}, size, 1.f, color);
             };
         auto width = [&](const std::string &str) {
-            return ::MeasureTextEx(*font, str.c_str(), size, 1.f).x;
+            return ::MeasureTextEx(font, str.c_str(), size, 1.f).x;
         };
 
 
@@ -541,7 +545,7 @@ namespace RType::Client {
                 ? size * LOBBY_LIST_NAME_MAX_WIDTH / nameWidth
                 : size;
 
-            ::DrawTextEx(*font,
+            ::DrawTextEx(font,
                 name.c_str(),
                 {rect.x + 30.f,
                     rect.y + (LOBBY_LIST_ROW_HEIGHT - nameSize) / 2.f},
@@ -555,10 +559,8 @@ namespace RType::Client {
                 lobby.started ? Color {255, 170, 60, 255}
                               : Color {90, 230, 120, 255});
         }
-        gm.view<LobbyListFrame, Texture2D>().each(
-            [](Entity, LobbyListFrame &, Texture2D &frame) {
-                ::DrawTexture(frame, 0, 0, WHITE);
-            });
+        if (frameSprite != nullptr)
+            ::DrawTexture(*frameSprite, 0, 0, WHITE);
         if (!client->popupOpen)
             return;
         const Rectangle panel {

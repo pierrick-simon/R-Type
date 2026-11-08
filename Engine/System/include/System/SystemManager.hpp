@@ -31,6 +31,7 @@ namespace RType {
     struct SystemEntry {
         SystemId id;
         std::unique_ptr<ISystem> system;
+        int layer;
     };
 
     /**
@@ -55,17 +56,20 @@ namespace RType {
          * @brief Creates and registers a new system.
          * @tparam Components The component types the system operates on.
          * @param func Callback applied to each entity that has all the
+         * @param layer The Layer of the system 0 by default
          * Components. It is moved from.
          * @return Id identifying the created system, usable with
          * destroySystem.
          */
         template<typename... Components>
-        SystemId createSystem(std::function<void(Components &...)> &func)
+        SystemId createSystem(
+            std::function<void(Components &...)> &func, int layer = 0)
         {
             SystemId id = _nextId++;
 
             _systems.push_back(
-                {id, std::make_unique<System<Components...>>(func)});
+                {id, std::make_unique<System<Components...>>(func), layer});
+            sortSystemsByLayer();
             return id;
         }
 
@@ -84,6 +88,17 @@ namespace RType {
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
     private:
+        /**
+         * @brief Sorts systems by layer in ascending order.
+         *
+         * Uses std::list::sort, which is stable: systems that share the same
+         * layer keep their original registration order. Elements are relinked,
+         * not moved or copied, so the move-only unique_ptr is not a problem.
+         *
+         * @param systems The list to sort in place.
+         */
+        void sortSystemsByLayer();
+
         SystemList _systems;
         SystemId _nextId = 0;
     };

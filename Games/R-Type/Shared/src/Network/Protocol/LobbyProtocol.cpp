@@ -130,7 +130,8 @@ namespace RType {
         std::vector<uint8_t> out(4);
         const std::size_t count = std::min<std::size_t>(s.players.size(), 255);
 
-        out[0] = s.gameOver ? 2 : (s.started ? 1 : 0);
+        // 0 lobby, 1 playing, 2 game over, 3 victory
+        out[0] = s.victory ? 3 : (s.gameOver ? 2 : (s.started ? 1 : 0));
         put16(&out[1], s.hostId);
         out[3] = static_cast<uint8_t>(count);
         for (std::size_t i = 0; i < count; i++) {
@@ -165,7 +166,8 @@ namespace RType {
 
         s.received = true;
         s.started = payload[0] != 0;
-        s.gameOver = payload[0] == 2;
+        s.gameOver = payload[0] >= 2;
+        s.victory = payload[0] == 3;
         s.hostId = get16(&payload[1]);
         for (std::size_t i = 0; i < count; i++) {
             if (payload.size() < at + 4)

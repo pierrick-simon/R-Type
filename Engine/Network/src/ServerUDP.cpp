@@ -94,10 +94,17 @@ namespace RType {
                             std::vector<uint8_t>(
                                 _recvBuffer.begin() + Header::SIZE,
                                 _recvBuffer.begin() + long(bytesRecvd)));
+                        recievedFromClient(header.value().senderId);
                     }
                 }
                 startReceive();
             });
+    }
+
+    void UDPServer::recievedFromClient(uint32_t id)
+    {
+        if (_clients.count(id))
+            _clients.at(id).lagometer.packetRecieved();
     }
 
     void UDPServer::sendToClient(
@@ -109,10 +116,12 @@ namespace RType {
                                 client.seq++,
                                 _serverId},
                 payload));
-
+        if (op == Opcode::HEALTH)
+            client.lagometer.start();
         _socket.async_send_to(asio::buffer(*buffer),
             client.endpoint,
-            [buffer](std::error_code, std::size_t) {});
+            [this](std::error_code, std::size_t) {});
+        client.lagometer.packetSent();
     }
 
     void UDPServer::sendToClient(
@@ -172,8 +181,17 @@ namespace RType {
         _clients.erase(header.senderId);
     }
 
-    void UDPServer::manageHealth(const Header &, const std::vector<uint8_t> &)
+    void UDPServer::manageHealth(const Header &h, const std::vector<uint8_t> &)
     {
+        uint32_t id = h.senderId;
+        if (_clients.count(id)) {
+            auto &l = _clients.at(id).lagometer;
+            l.stop();
+            LagometerPayload info = {l.getRecieved(), l.getSent() + 1};
+            this->sendToClient(
+                id, Opcode::STAT, Lagometer::serializeLagometer(info));
+            l.reset();
+        }
     }
 
     void UDPServer::manageLogin(

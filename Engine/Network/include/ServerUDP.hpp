@@ -11,6 +11,7 @@
     #include <memory>
 
     #include "Exceptions.hpp"
+    #include "Lagometer.hpp"
     #include "Network.hpp"
 
 namespace RType {
@@ -22,6 +23,7 @@ namespace RType {
         std::pair<Header, std::vector<uint8_t>> lastMsgReceived;
         std::chrono::steady_clock::time_point lastSeen =
             std::chrono::steady_clock::now();
+        Lagometer lagometer;
     };
 
     class UDPServer {
@@ -58,6 +60,7 @@ namespace RType {
         std::function<void(const Header &)> onClientRemoved;
 
     private:
+        void recievedFromClient(uint32_t id);
         void startReceive();
         void manageCommand(
             const Header &header, const std::vector<uint8_t> &payload);
@@ -80,7 +83,7 @@ namespace RType {
 
         void manageLogin(
             const Header &header, const std::vector<uint8_t> &payload);
-        static void manageHealth(
+        void manageHealth(
             const Header &header, const std::vector<uint8_t> &payload);
 
         static void handleSigint(int);

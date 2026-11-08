@@ -7,12 +7,14 @@
 
 #include "GameState.hpp"
 
+#include <algorithm>
 #include <vector>
 
 #include "Common/Background.hpp"
 #include "Components.hpp"
 #include "Config.hpp"
 #include "Enemies/EnemyManager.hpp"
+#include "LobbyProtocol.hpp"
 #include "Player/Destroy.hpp"
 #include "Player/Player.hpp"
 
@@ -31,40 +33,85 @@ namespace RType::Server {
     }
 
     namespace {
-        thread_local bool gameOver = false;
+        enum class EndScreen { None, GameOver, Victory };
+
+        thread_local EndScreen endScreen = EndScreen::None;
+        thread_local float fadeLeft = 0.f;
 
         bool levelRunning(GameManager &gm)
         {
+            return std::ranges::any_of(gm.view<EnemyDirector>().getVector(),
+                [](const auto &entry) { return !std::get<1>(entry).paused; });
+        }
+
+        void pauseLevel(GameManager &gm)
+        {
             for (auto [_, director] : gm.view<EnemyDirector>().getVector())
-                if (!director.paused)
-                    return true;
-            return false;
+                director.paused = true;
+        }
+
+        void clearLevel(GameManager &gm)
+        {
+            std::vector<Entity> backgrounds;
+
+            clearEnemies(gm);
+            pauseLevel(gm);
+            // The clients draw the menu background in its place.
+            for (auto [background, tag] : gm.view<Background>().getVector())
+                backgrounds.push_back(background);
+            for (const Entity background : backgrounds)
+                destroyNetworked(gm, background);
+        }
+
+        /** @brief The survivors leave the screen to the scores. */
+        void hideSurvivors(GameManager &gm)
+        {
+            for (auto [entity, player, sheet] :
+                gm.view<Player, SpriteSheet2D>().getVector()) {
+                player.dying = true;
+                player.deathTimer = 0.f;
+                player.charging = false;
+                sheet.color.a = 0;
+                gm.getComponent<Velocity2D>(entity) = {};
+                if (gm.hasComponent<Invincible>(entity))
+                    gm.removeComponent<Invincible>(entity);
+            }
         }
     } // namespace
 
-    bool isGameOverScreen()
+    bool isEndScreen()
     {
-        return gameOver;
+        return endScreen != EndScreen::None;
+    }
+
+    bool isVictoryScreen()
+    {
+        return endScreen == EndScreen::Victory;
+    }
+
+    bool isEndScreenReady()
+    {
+        return isEndScreen() && fadeLeft <= 0.f;
     }
 
     void showGameOver(GameManager &gm)
     {
-        std::vector<Entity> backgrounds;
-
-        gameOver = true;
-        clearEnemies(gm);
-        for (auto [_, director] : gm.view<EnemyDirector>().getVector())
-            director.paused = true;
-        // The clients draw the menu background in its place.
-        for (auto [background, tag] : gm.view<Background>().getVector())
-            backgrounds.push_back(background);
-        for (const Entity background : backgrounds)
-            destroyNetworked(gm, background);
+        endScreen = EndScreen::GameOver;
+        fadeLeft = 0.f;
+        clearLevel(gm);
     }
 
-    void closeGameOver()
+    void showVictory(GameManager &gm)
     {
-        gameOver = false;
+        endScreen = EndScreen::Victory;
+        fadeLeft = VICTORY_FADE_SECONDS;
+        pauseLevel(gm);
+    }
+
+    void closeEndScreen()
+    {
+        endScreen = EndScreen::None;
+        fadeLeft = 0.f;
     }
 
     void resetPlayers(GameManager &gm)
@@ -79,7 +126,7 @@ namespace RType::Server {
 
     void restartGame(GameManager &gm)
     {
-        closeGameOver();
+        closeEndScreen();
         resetPlayers(gm);
         resetEnemies(gm);
         if (gm.view<Background>().getVector().empty())
@@ -88,14 +135,23 @@ namespace RType::Server {
             resetBackground(gm);
     }
 
-    void systemGameState(GameManager &gm)
+    void systemGameState(GameManager &gm, const MasterClock &clock)
     {
-        if (gameOver || !levelRunning(gm))
+        // The level stays on screen while the clients fade it to black.
+        if (fadeLeft > 0.f) {
+            fadeLeft -= elapsedSeconds(clock);
+            if (fadeLeft <= 0.f) {
+                clearLevel(gm);
+                hideSurvivors(gm);
+            }
+            return;
+        }
+        if (isEndScreen() || !levelRunning(gm))
             return;
         if (isGameOver(gm))
             showGameOver(gm);
         else if (levelCleared(gm))
-            restartGame(gm);
+            showVictory(gm);
     }
 
 } // namespace RType::Server

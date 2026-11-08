@@ -65,13 +65,15 @@ namespace RType::Server {
 
         gm.addComponent<Position2D>(explosion,
             Position2D {position.x +
-                    (PLAYER_WIDTH - PLAYER_EXPLOSION_WIDTH * SCALE) / 2.f,
+                    (PLAYER_WIDTH - PLAYER_EXPLOSION_WIDTH * PLAYER_SCALE) /
+                        2.f,
                 position.y +
-                    (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * SCALE) / 2.f});
+                    (PLAYER_HEIGHT - PLAYER_EXPLOSION_HEIGHT * PLAYER_SCALE) /
+                        2.f});
         gm.addComponent<SpriteSheet2D>(explosion,
             Size2D(1, PLAYER_EXPLOSION_FRAMES),
             PLAYER_EXPLOSION_FRAME_MS,
-            SCALE);
+            PLAYER_SCALE);
         gm.addComponent<PlayOnce>(explosion);
         gm.addComponent<PlayerExplosion>(
             explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
@@ -249,7 +251,7 @@ namespace RType::Server {
                 const CollisionMask *shape =
                     spriteMask(gm, update.asset, sheet.currentTile);
 
-                if (shape && touchesTerrain(gm, pos, *shape))
+                if (shape && touchesTerrain(gm, pos, *shape, PLAYER_SCALE))
                     health.hp = 0;
             });
     }
@@ -319,7 +321,7 @@ namespace RType::Server {
         std::unordered_set<uint32_t> connected;
         std::unordered_set<std::size_t> taken;
 
-        if (!isGameStarted() || isGameOverScreen())
+        if (!isGameStarted() || isEndScreen())
             return;
         for (auto [_, player] : gm.view<Player>().getVector())
             taken.insert(player.slot);
@@ -338,6 +340,7 @@ namespace RType::Server {
             gm.addComponent<Player>(entity, state);
             spawnLifeIcons(gm, entity, state);
             spawnPlayerScore(gm, entity, state);
+            spawnNameTag(gm, entity, state);
             gm.addComponent<Scorer>(entity);
             gm.addComponent<EnemyTarget>(entity);
             gm.addComponent<Health>(entity, Health {PLAYER_HP, PLAYER_HP});
@@ -351,7 +354,7 @@ namespace RType::Server {
                 Size2D(1, PLAYER_FRAMES),
                 FRAME_NEUTRAL,
                 PLAYER_FRAME_MS,
-                SCALE,
+                PLAYER_SCALE,
                 false);
             gm.addComponent<UpdateClientEntity>(entity,
                 EntityType::SPRITESHEET,

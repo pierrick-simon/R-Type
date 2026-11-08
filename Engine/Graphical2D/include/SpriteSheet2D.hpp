@@ -9,6 +9,7 @@
 #define SPRITESHEET2D_HPP_
 
 #include <optional>
+#include "AssetManager.hpp"
 #include "Clock.hpp"
 #include "GameManager.hpp"
 #include "Origin2D.hpp"
@@ -41,6 +42,8 @@ namespace RType {
             frameDuration(frameDuration),
             scale(scale),
             animation(animation) {};
+        SpriteSheet2D(int assetId) :
+            assetId(assetId) {};
 
         Size2D recNb = {1, 1};
         std::size_t currentTile = 0;
@@ -53,6 +56,7 @@ namespace RType {
         float rotation = 0;
         bool flip = false;
         raylib::Color color = raylib::Color::White();
+        std::optional<int> assetId = std::nullopt;
 
         /**
          * @brief System drawing a sprite sheet.
@@ -68,6 +72,23 @@ namespace RType {
          */
         static void systemDrawSpriteSheet2D(SpriteSheet2D &sprite,
             const Texture2D &texture, const Position2D &pos);
+
+        template<Unloadable... Ts>
+            requires OneOf<Texture2D, Ts...>
+        static void systemDrawManagerSpriteSheet2D(
+            GameManager &gm, AssetManager<Ts...> &assetManager)
+        {
+            for (auto [_, s, p] :
+                gm.view<SpriteSheet2D, Position2D>().getVector()) {
+                if (!s.assetId)
+                    continue;
+                auto texture =
+                    assetManager.template get<Texture2D>(s.assetId.value());
+                if (!texture)
+                    continue;
+                systemDrawSpriteSheet2D(s, texture->get(), p);
+            }
+        }
 
         /**
          * @brief System animating a sprite sheet.

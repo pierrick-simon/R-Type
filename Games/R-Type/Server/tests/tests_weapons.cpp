@@ -76,11 +76,11 @@ namespace {
         const Entity terrain = gm.createEntity();
         const Entity background = gm.createEntity();
 
-        mask.solid.resize(std::size_t(width * height));
+        mask.solid.resize(std::size_t(width) * std::size_t(height));
         for (int y = 0; y < height; ++y)
             for (int x = 0; x < width; ++x)
-                mask.solid[std::size_t(y * width + x)] =
-                    y < 10 || (x >= 200 && x < 210);
+                mask.solid[std::size_t(y) * std::size_t(width) +
+                    std::size_t(x)] = y < 10 || (x >= 200 && x < 210);
         gm.addComponent<Terrain>(terrain, Terrain {std::move(mask), {}});
         gm.addComponent<Background>(background);
         gm.addComponent<Position2D>(background, 0.f, 0.f);
@@ -307,4 +307,15 @@ Test(weapons, reflect_beam_stops_on_the_first_enemy)
     for (auto [_, reflect, velocity] :
         gm.view<ReflectShot, Velocity2D>().getVector())
         cr_assert_neq(velocity.y, 0.f);
+}
+
+Test(weapons, terrain_collision_follows_the_sprite_scale)
+{
+    GameManager gm;
+    CollisionMask shape {10, 10, std::vector<bool>(100, true)};
+    const Position2D pos {900.f - 10.f * PLAYER_SCALE - 1.f, 500.f};
+
+    addTerrain(gm);
+    cr_assert_not(touchesTerrain(gm, pos, shape, PLAYER_SCALE));
+    cr_assert(touchesTerrain(gm, pos, shape, SCALE));
 }

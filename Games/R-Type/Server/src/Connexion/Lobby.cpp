@@ -53,7 +53,8 @@ namespace RType::Server {
                 clients.end(),
                 [](const auto &a, const auto &b) { return a.first < b.first; });
             state.started = gameStarted;
-            state.gameOver = isGameOverScreen();
+            state.gameOver = isEndScreen();
+            state.victory = isVictoryScreen();
             state.lobbyName = lobbyName;
             state.hostId = clients.empty() ? 0 : clients.front().first;
             for (const auto &[id, entity] : clients) {
@@ -73,12 +74,12 @@ namespace RType::Server {
             return state;
         }
 
-        void startGame(GameManager &gm)
+        void startGame(GameManager &gm, int players)
         {
             std::cout << "[Lobby] Game started by the host" << std::endl;
             gameStarted = true;
             createBackground(gm);
-            createEnemyDirector(gm);
+            createEnemyDirector(gm, players);
             spawnTeamScore(gm);
             // The ships of a previous game wait, dead, in the lobby.
             resetPlayers(gm);
@@ -89,7 +90,7 @@ namespace RType::Server {
         void resetLevel(GameManager &gm)
         {
             gameStarted = false;
-            closeGameOver();
+            closeEndScreen();
             resetEnemies(gm);
             // Only gone at the end of the frame: stops the game state first.
             for (auto [_, director] : gm.view<EnemyDirector>().getVector())
@@ -119,10 +120,10 @@ namespace RType::Server {
                 member.restartRequested = false;
                 member.returnRequested = false;
                 if (start && host && !gameStarted && state.allReady())
-                    startGame(gm);
+                    startGame(gm, int(server.getClients().size()));
                 member.replayVote =
-                    isGameOverScreen() && (member.replayVote || restart);
-                if (host && back && isGameOverScreen()) {
+                    isEndScreen() && (member.replayVote || restart);
+                if (host && back && isEndScreen()) {
                     std::cout << "[Lobby] The host goes back to the lobby"
                               << std::endl;
                     resetLevel(gm);
@@ -135,7 +136,7 @@ namespace RType::Server {
         {
             std::size_t votes = 0;
 
-            if (!isGameOverScreen() || server.getClients().empty())
+            if (!isEndScreen() || server.getClients().empty())
                 return;
             for (const auto &[id, entity] : server.getClients())
                 if (gm.hasComponent<LobbyMember>(entity) &&
@@ -146,6 +147,7 @@ namespace RType::Server {
             std::cout << "[Lobby] Every player wants to play again"
                       << std::endl;
             restartGame(gm);
+            setDirectorPlayers(gm, int(server.getClients().size()));
             for (const auto &[id, entity] : server.getClients())
                 if (gm.hasComponent<LobbyMember>(entity))
                     gm.getComponent<LobbyMember>(entity).replayVote = false;
@@ -219,7 +221,8 @@ namespace RType::Server {
         handleReplayVotes(gm, *server);
         state = buildState(gm, *server);
         state.started = gameStarted;
-        state.gameOver = isGameOverScreen();
+        state.gameOver = isEndScreen();
+        state.victory = isVictoryScreen();
         flushLobbyInputs(gm);
         broadcastState(*server, state);
     }

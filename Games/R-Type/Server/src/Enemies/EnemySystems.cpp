@@ -154,6 +154,13 @@ namespace RType {
                 !bossExposed(gm.getComponent<Boss>(enemy));
         }
 
+        void hurt(GameManager &gm, Entity enemy, Health &health, int damage)
+        {
+            health.hp -= damage;
+            if (gm.hasComponent<Boss>(enemy))
+                gm.getComponent<Boss>(enemy).hurtTimer = BOSS_HURT_FLASH;
+        }
+
         void awardScore(GameManager &gm, EnemyDirector &director,
             const std::optional<Entity> &scorer, int points)
         {
@@ -217,7 +224,7 @@ namespace RType {
                                 !overlap(contactRect, rectOf(ep, eb)))
                                 return;
                             contact.timer = contact.cooldown;
-                            health.hp -= contact.damage;
+                            hurt(gm, enemy, health, contact.damage);
                             if (health.hp > 0)
                                 return;
                             awardScore(
@@ -619,8 +626,8 @@ namespace RType {
             const float aim = std::atan2(targetY - y, targetX - x);
 
             for (int i = 0; i < BOSS_DEF.burst; ++i) {
-                const float angle =
-                    aim + BOSS_DEF.spread * float(i - BOSS_DEF.burst / 2);
+                const int offset = i - BOSS_DEF.burst / 2;
+                const float angle = aim + BOSS_DEF.spread * float(offset);
 
                 fireEnemyBullet(gm,
                     x,
@@ -640,7 +647,7 @@ namespace RType {
                 boss.timer >=
                     float(boss.explosions) * BOSS_DEF.explosionInterval) {
                 // R2 low-discrepancy sequence: blasts spread over the body.
-                const float n = float(++boss.explosions);
+                const auto n = float(++boss.explosions);
                 const float u = std::fmod(n * 0.7548777f, 1.f);
                 const float v = std::fmod(n * 0.5698403f, 1.f);
 
@@ -666,6 +673,7 @@ namespace RType {
         const float stagesTime = BOSS_DEF.stageTime * float(BOSS_STAGES - 1);
 
         boss.timer += delta;
+        boss.hurtTimer = std::max(0.f, boss.hurtTimer - delta);
         velocity = {0.f, 0.f};
         switch (boss.state) {
             case BossState::Enter:
@@ -723,8 +731,12 @@ namespace RType {
         }
         if (Server::levelEnded(gm)) {
             if (!director.bossSpawned)
-                spawnEnemy(
-                    gm, EnemyType::Boss, SCREEN_WIDTH, BOSS_DEF.y, hooks);
+                spawnEnemy(gm,
+                    EnemyType::Boss,
+                    SCREEN_WIDTH,
+                    BOSS_DEF.y,
+                    hooks,
+                    director.players);
             director.bossSpawned = true;
             return;
         }
@@ -795,7 +807,7 @@ namespace RType {
                                 return;
                             }
                             const int hp = health.hp;
-                            health.hp -= shot.damage;
+                            hurt(gm, enemy, health, shot.damage);
                             shot.damage -= hp;
                             consumed = !shot.piercing || shot.damage <= 0;
                             if (health.hp > 0)

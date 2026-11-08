@@ -21,6 +21,7 @@ set(SRCS
     src/Login.cpp
     src/Settings.cpp
     src/GameOver.cpp
+    src/Metric.cpp
 )
 
 add_executable(r-type_client ${MAIN} ${SRCS})

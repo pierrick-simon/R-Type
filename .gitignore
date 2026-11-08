@@ -26,6 +26,7 @@ r-type_server
 client_tests_run_bin
 server_tests_run_bin
 r-type_poc
+game
 
 # AI agents
 .agents/

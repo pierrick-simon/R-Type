@@ -109,12 +109,27 @@ namespace RType::Client {
     bool isValidIp(const std::string &ip);
 
     void systemButtons(GameManager &gm);
-    void systemButtonVisuals(GameManager &gm);
+    void systemButtonVisuals(GameManager &gm, Assets &assets);
     void systemTextAnchor(Text2D &text, Font &font, const TextAnchor &anchor);
     void systemMenuBackground(GameManager &gm);
     void systemConnecting(GameManager &gm);
     void systemServerLost(GameManager &gm);
     void systemTextFields(GameManager &gm);
+
+    template<Unloadable... Ts>
+        requires OneOf<Font, Ts...>
+    static void systemTextAnchorManager(
+        GameManager &gm, AssetManager<Ts...> &assetManager)
+    {
+        for (auto [_, s, t] : gm.view<Text2D, TextAnchor>().getVector()) {
+            if (!s.assetId)
+                continue;
+            auto font = assetManager.template get<Font>(s.assetId.value());
+            if (!font)
+                continue;
+            systemTextAnchor(s, font->get(), t);
+        }
+    }
 
 } // namespace RType::Client
 

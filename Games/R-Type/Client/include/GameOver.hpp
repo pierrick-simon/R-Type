@@ -18,6 +18,10 @@ namespace RType::Client {
     inline constexpr float GAME_OVER_STATUS_Y = 810.f;
     inline constexpr float GAME_OVER_STATUS_SIZE = 30.f;
     inline constexpr float GAME_OVER_BUTTONS_Y = 850.f;
+    // After the fade to black, the screen stays black while the server clears
+    // the level, then the scores fade in.
+    inline constexpr float VICTORY_HOLD_SECONDS = 0.5f;
+    inline constexpr float VICTORY_FADE_IN_SECONDS = 0.5f;
 
     struct GameOverItem {};
 
@@ -27,9 +31,13 @@ namespace RType::Client {
 
     struct GameOverStatus {};
 
+    /** @brief "GAME OVER" or "VICTORY", from the lobby state. */
+    struct GameOverTitle {};
+
     void createGameOver(GameManager &gm);
     void destroyGameOver(GameManager &gm);
     void systemGameOver(GameManager &gm);
+    void systemDrawFade(LobbyClient &lobby);
 
 } // namespace RType::Client
 

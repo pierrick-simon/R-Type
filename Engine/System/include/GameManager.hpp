@@ -242,6 +242,7 @@ namespace RType {
          * @tparam Components The component types the system operates on.
          * Their order does not matter: the smallest array is iterated over.
          * @param func Callback applied to each matching entity.
+         * @param layer The Layer of the system 0 by default
          * @return Id identifying the created system, usable with
          * destroySystem.
          * @warning Must not be called during update(): the new system
@@ -249,9 +250,10 @@ namespace RType {
          */
         template<typename... Components>
         SystemId createSystem(
-            std::type_identity_t<std::function<void(Components &...)>> func)
+            std::type_identity_t<std::function<void(Components &...)>> func,
+            int layer = 0)
         {
-            SystemId id = _sm.createSystem<Components...>(func);
+            SystemId id = _sm.createSystem<Components...>(func, layer);
 
             if (_debug)
                 log("createSystem with ( ",
@@ -310,6 +312,12 @@ namespace RType {
         [[nodiscard]] bool hasSystem(SystemId id) const;
 
         /**
+         * @brief Checks whether the systems are currently running.
+         * @return true during update(), false otherwise.
+         */
+        [[nodiscard]] bool isUpdating() const;
+
+        /**
          * @brief Creates a view over the entities that have all the given
          * component types. Never throws: if one of the types has never
          * been added, the view is empty.
@@ -322,14 +330,19 @@ namespace RType {
             return View<Components...>(_cm);
         }
 
-        std::unordered_map<int, std::string> &getAssetsMap()
+        /**
+         * @brief Counts the entities that have a component of the given
+         * type. Never throws.
+         * @tparam Component The component type to count.
+         * @return The number of such entities, 0 if no Component has ever
+         * been added.
+         */
+        template<typename Component>
+        [[nodiscard]] std::size_t countComponents()
         {
-            return _assetsMap;
-        }
-
-        void setAssetsMap(std::unordered_map<int, std::string> &map)
-        {
-            _assetsMap = map;
+            if (!_cm.isComponent<Component>())
+                return 0;
+            return _cm.getComponentArray<Component>().nbComponent();
         }
 
         void run(int fps, const std::function<bool()> &keepRunning);
@@ -339,7 +352,6 @@ namespace RType {
         EntityManager _em;
         SystemManager _sm;
         CommandQueue _cq;
-        std::unordered_map<int, std::string> _assetsMap;
 
         bool _updating = false;
         bool _debug = false;

@@ -92,9 +92,10 @@ namespace RType::Client {
                     false,
                     volumeButtonDisabled(step)});
             gm.addComponent<Position2D>(e, x, y);
-            gm.addComponent<SpriteSheet2D>(
-                e, Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, 1.f, false);
-            gm.addComponent<Texture2D>(e, gm.getAssetsMap().at(asset));
+            SpriteSheet2D sheet(Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, 1.f, false);
+
+            sheet.assetId = asset;
+            gm.addComponent<SpriteSheet2D>(e, sheet);
             gm.addComponent<VolumeButton>(e, VolumeButton {step});
             gm.addComponent<SettingsItem>(e);
             return e;

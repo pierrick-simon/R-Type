@@ -4,6 +4,7 @@
 #include <memory>
 #include <miniaudio.h>
 #include <string>
+#include "Decoder.hpp"
 #include "Listener.hpp"
 #include "Position2D.hpp"
 #include "SoundInfo.hpp"
@@ -40,7 +41,7 @@ namespace RType {
          * @throw EngineException If the sound cannot be loaded.
          */
         Sound(Listener &l, const std::string &path, SoundInfo info = {});
-
+        Sound(Listener &l, Decoder &decoder, SoundInfo info = {});
         /**
          * @brief System applying the SoundInfo settings and handling the
          *        playback state of the sound.

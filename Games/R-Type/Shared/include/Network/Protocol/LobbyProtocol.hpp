@@ -21,6 +21,8 @@
 namespace RType {
 
     inline constexpr std::size_t LOBBY_NAME_MAX = 16;
+    /** @brief Fade to black of the level before the victory screen. */
+    inline constexpr float VICTORY_FADE_SECONDS = 1.5f;
 
     struct LobbyMember {
         std::string name;
@@ -41,7 +43,8 @@ namespace RType {
     struct LobbyState {
         bool received = false;
         bool started = false;
-        bool gameOver = false;
+        bool gameOver = false; // an end screen: game over or victory
+        bool victory = false;
         uint16_t hostId = 0;
         std::vector<LobbyPlayerInfo> players;
         std::string lobbyName;

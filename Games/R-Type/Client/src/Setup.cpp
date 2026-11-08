@@ -7,8 +7,12 @@
 
 #include "Setup.hpp"
 #include <algorithm>
+#include <limits>
+#include "AssetManager.hpp"
+#include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
+#include "Decoder.hpp"
 #include "FinishingSound.hpp"
 #include "Friction2D.hpp"
 #include "GameOver.hpp"
@@ -19,6 +23,7 @@
 #include "LobbyListPage.hpp"
 #include "Login.hpp"
 #include "Menu.hpp"
+#include "Metric.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
 #include "Sound.hpp"
@@ -54,11 +59,19 @@ namespace RType::Client {
         auto w = gm.createEntity();
         gm.addComponent<Window>(w, int(GAME_WIDTH), int(GAME_HEIGHT), "R-type");
         ::SetExitKey(KEY_NULL);
-        gm.createSystem<Window>([](Window &win) {
-            win.setTargetFps();
-            win.beginDrawing();
-            ::BeginMode2D(fitGameToWindow());
-        });
+        gm.createSystem<Window>(
+            [](Window &win) {
+                win.setTargetFps();
+                win.beginDrawing();
+                ::BeginMode2D(fitGameToWindow());
+            },
+            std::numeric_limits<int>::min());
+        gm.createSystem<Window>(
+            [](Window &win) {
+                ::EndMode2D();
+                win.endDrawing();
+            },
+            std::numeric_limits<int>::max());
         return w;
     }
 
@@ -91,10 +104,38 @@ namespace RType::Client {
         return mc;
     }
 
+    Entity createMetric(GameManager &gm)
+    {
+        Entity m = gm.createEntity();
+        gm.addComponent<Metric>(m, Asset::FONT, true);
+        gm.createSystem<MasterClock>(Metric::systemUpdateMetric);
+        gm.createSystem<ClientManager>(Metric::systemUpdateMetricLagometer);
+        gm.createSystem<KeyboardManager>([&gm](const KeyboardManager &k) {
+            bool press = false;
+            for (auto key : k.keyPressed)
+                if (key == Key::Value::F5) {
+                    press = true;
+                    break;
+                }
+            if (!press)
+                return;
+            for (auto [_, m] : gm.view<Metric>().getVector())
+                m.activate();
+        });
+        return m;
+    }
+
+    Entity createAssetManager(GameManager &gm)
+    {
+        auto am = gm.createEntity();
+        gm.addComponent<Assets>(am, gm, Asset::makeAssetList());
+        return am;
+    }
+
     void createSystems(GameManager &gm)
     {
         gm.createSystem<>(systemConnecting);
-        gm.createSystem<>(systemLobby);
+        gm.createSystem<Assets>(systemLobby);
         gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemLogin);
@@ -102,25 +143,29 @@ namespace RType::Client {
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
         gm.createSystem<>(systemTextFields);
-        gm.createSystem<>(systemButtonVisuals);
+        gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
-        gm.createSystem<Text2D, Font, TextAnchor>(systemTextAnchor);
-        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
-        gm.createSystem<Sprite2D, Texture2D, Position2D>(
-            Sprite2D::systemDrawSprite2D);
-        gm.createSystem<>(systemDrawLobbyList);
+        gm.createSystem<Assets>(
+            systemTextAnchorManager<Font, Texture2D, Decoder>);
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
+                Friction2D::systemFriction2D(f, v, c);
+        });
+        gm.createSystem<Assets>(
+            Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(systemDrawLobbyList);
         gm.createSystem<>(systemDrawLoginPopup);
         gm.createSystem<>(systemDrawSettings);
-        gm.createSystem<SpriteSheet2D, Texture2D, Position2D>(
-            SpriteSheet2D::systemDrawSpriteSheet2D);
-        gm.createSystem<Text2D, Font, Position2D>(Text2D::systemDrawText2D);
+        gm.createSystem<Assets>(SpriteSheet2D::
+                systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(
+            Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
         gm.createSystem<>(systemSettings);
         gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
-        gm.createSystem<Window>([](Window &win) {
-            ::EndMode2D();
-            win.endDrawing();
-        });
+        // Over everything, right before the end of the drawing.
+        gm.createSystem<LobbyClient>(
+            systemDrawFade, std::numeric_limits<int>::max() - 1);
     }
 
     Entity createSound(GameManager &gm)

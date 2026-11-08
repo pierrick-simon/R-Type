@@ -10,7 +10,9 @@
 
 #include <chrono>
 #include <cstddef>
+#include <optional>
 
+#include "Assets.hpp"
 #include "GameManager.hpp"
 
 namespace RType::Client {
@@ -27,7 +29,6 @@ namespace RType::Client {
 
     inline constexpr float LOBBY_TITLE_Y = 100.f;
     inline constexpr float LOBBY_TITLE_SIZE = 64.f;
-    /** @brief Name of the lobby, under the "LOBBY" title. */
     inline constexpr float LOBBY_NAME_Y = 162.f;
     inline constexpr float LOBBY_NAME_SIZE_TITLE = 34.f;
     inline constexpr float LOBBY_SUBTITLE_Y = 207.f;
@@ -65,7 +66,7 @@ namespace RType::Client {
         std::size_t row = 0;
     };
 
-    enum class GameOverChoice { None, Restart, Return };
+    enum class GameOverChoice { None, Restart, Return, Leave };
 
     struct LobbyClient {
         bool ready = false;
@@ -77,6 +78,7 @@ namespace RType::Client {
         std::chrono::steady_clock::time_point lastInfo {};
         std::chrono::steady_clock::time_point lastStart {};
         std::chrono::steady_clock::time_point lastChoice {};
+        std::optional<std::chrono::steady_clock::time_point> fadeStart;
     };
 
     void createLobby(GameManager &gm);
@@ -86,7 +88,7 @@ namespace RType::Client {
     void returnToMenu(GameManager &gm);
     /** @brief Master server lost: back to the server IP page, logged out. */
     void returnToServerPage(GameManager &gm);
-    void systemLobby(GameManager &gm);
+    void systemLobby(GameManager &gm, Assets &assets);
 
 } // namespace RType::Client
 

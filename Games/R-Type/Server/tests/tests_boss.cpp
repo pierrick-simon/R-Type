@@ -9,6 +9,8 @@
 
 #include "Common/Background.hpp"
 #include "Enemies/EnemySystems.hpp"
+#include "Enemies/EnemyVisuals.hpp"
+#include "SpriteSheet2D.hpp"
 
 using namespace RType;
 
@@ -87,6 +89,22 @@ Test(boss, spawns_once_at_level_end)
     cr_assert_eq(bossCount(gm), 1);
 }
 
+Test(boss, health_scales_with_the_players)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+
+    director.players = 3;
+    addBackgrounds(gm, Server::LEVEL_END_X);
+    systemEnemyDirector(gm, director, clock, {});
+    for (auto [_, boss, health] : gm.view<Boss, Health>().getVector()) {
+        cr_assert_eq(health.hp, enemyDef(EnemyType::Boss).hp * 3);
+        cr_assert_eq(health.maxHp, health.hp);
+    }
+    cr_assert_eq(bossCount(gm), 1);
+}
+
 Test(boss, closed_belly_absorbs_shots)
 {
     GameManager gm;
@@ -146,4 +164,39 @@ Test(boss, contact_kills_player_not_boss)
     systemEnemyCombat(gm, director, {});
     cr_assert_eq(gm.getComponent<Health>(player).hp, 0);
     cr_assert(gm.getComponent<Health>(boss).hp > 0);
+}
+
+Test(boss, flashes_white_when_hurt)
+{
+    GameManager gm;
+    EnemyDirector director;
+    const Entity boss = spawnBoss(gm);
+    auto &state = gm.getComponent<Boss>(boss);
+
+    shootBoss(gm, boss, 1);
+    systemEnemyCombat(gm, director, {});
+    cr_assert_float_eq(state.hurtTimer, 0.f, 0.001f);
+    state.state = BossState::Open;
+    shootBoss(gm, boss, 1);
+    systemEnemyCombat(gm, director, {});
+    cr_assert_float_eq(state.hurtTimer, BOSS_HURT_FLASH, 0.001f);
+}
+
+Test(boss, hurt_flash_blinks_on_the_white_frames)
+{
+    Boss boss;
+    SpriteSheet2D sheet(
+        {BOSS_SHEET.rows, BOSS_SHEET.frames / BOSS_SHEET.rows}, 120, 1.f);
+
+    boss.stage = 2;
+    boss.hurtTimer = BOSS_HURT_FLASH - 0.01f;
+    systemBossAnimation(boss, sheet);
+    cr_assert_eq(sheet.currentTile,
+        BOSS_FLASH_OFFSET + std::size_t(2 * BOSS_IDLE_FRAMES));
+    boss.hurtTimer = BOSS_HURT_BLINK + 0.01f;
+    systemBossAnimation(boss, sheet);
+    cr_assert_eq(sheet.currentTile, std::size_t(2 * BOSS_IDLE_FRAMES));
+    boss.hurtTimer = 0.f;
+    systemBossAnimation(boss, sheet);
+    cr_assert_eq(sheet.currentTile, std::size_t(2 * BOSS_IDLE_FRAMES));
 }

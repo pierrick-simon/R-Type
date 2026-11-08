@@ -11,6 +11,7 @@
 #include <functional>
 #include <raylib-cpp.hpp>
 
+#include "Assets.hpp"
 #include "Components.hpp"
 #include "Config.hpp"
 #include "Exceptions.hpp"
@@ -20,14 +21,16 @@ namespace RType::Server {
     namespace {
         constexpr int PLATFORM_TOLERANCE = 8;
 
-        const std::string &assetPath(GameManager &gm, AssetId id)
+        std::string assetPath(AssetId id)
         {
-            const auto &assets = gm.getAssetsMap();
-            const auto it = assets.find(id);
+            const auto &assets = Asset::makeAssetList();
+            const auto it = std::find_if(assets.begin(),
+                assets.end(),
+                [id](const AssetEntry &e) { return e.id == id; });
 
             if (it == assets.end())
                 throw EngineException("No such asset: " + std::to_string(id));
-            return it->second;
+            return it->path;
         }
 
         CollisionMask makeMask(const raylib::Image &image, int left, int width,
@@ -91,7 +94,7 @@ namespace RType::Server {
     Entity createTerrain(GameManager &gm)
     {
         try {
-            const raylib::Image image(assetPath(gm, Asset::LEVEL1_MASK));
+            const raylib::Image image(assetPath(Asset::LEVEL1_MASK));
             CollisionMask mask =
                 makeMask(image, 0, image.width, [](raylib::Color c) {
                     return c.r != 0 || c.g != 0 || c.b != 0;
@@ -110,7 +113,7 @@ namespace RType::Server {
     Entity createSpriteMasks(GameManager &gm, AssetId asset, int tiles)
     {
         try {
-            const raylib::Image image(assetPath(gm, asset));
+            const raylib::Image image(assetPath(asset));
             const float tileWidth = float(image.width) / float(tiles);
             SpriteMasks masks {asset, {}};
             const Entity entity = gm.createEntity();
@@ -163,25 +166,28 @@ namespace RType::Server {
         return std::nullopt;
     }
 
-    bool touchesTerrain(
-        GameManager &gm, const Position2D &pos, const CollisionMask &shape)
+    bool touchesTerrain(GameManager &gm, const Position2D &pos,
+        const CollisionMask &shape, float shapeScale)
     {
         for (auto [_, terrain] : gm.view<Terrain>().getVector()) {
             for (auto [entity, background, bgPos] :
                 gm.view<Background, Position2D>().getVector()) {
                 (void) entity;
                 (void) background;
-                const float originX = (pos.x - bgPos.x) / SCALE;
-                const float originY = (pos.y - bgPos.y) / SCALE;
+                const float originX = pos.x - bgPos.x;
+                const float originY = pos.y - bgPos.y;
 
                 for (int y = 0; y < shape.height; ++y) {
                     for (int x = 0; x < shape.width; ++x) {
                         if (!shape.isSolid(x, y))
                             continue;
-                        const auto levelX =
-                            int(std::floor(originX + float(x) + 0.5f));
-                        const auto levelY =
-                            int(std::floor(originY + float(y) + 0.5f));
+                        // Center of the sprite pixel, in level pixels.
+                        const auto levelX = int(std::floor(
+                            (originX + (float(x) + 0.5f) * shapeScale) /
+                            SCALE));
+                        const auto levelY = int(std::floor(
+                            (originY + (float(y) + 0.5f) * shapeScale) /
+                            SCALE));
 
                         if (terrain.mask.isSolid(levelX, levelY))
                             return true;
