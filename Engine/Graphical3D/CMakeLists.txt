@@ -13,6 +13,8 @@ add_library(engine-graphical3D SHARED
     src/ModelAnimation3D.cpp
     src/SpriteSheet3D.cpp
     src/Draw3D.cpp
+    src/CameraAngle.cpp
+    src/CameraControl.cpp
 )
 
 target_include_directories(engine-graphical3D PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
