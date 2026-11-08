@@ -147,6 +147,7 @@ gm:countComponents('Position2D')            -- nombre d'entités qui en ont un
 | `ModelAnimation3D` | `path` (**obligatoire**) | les animations d'un modèle 3D |
 | `Sprite3D` | `scale` (1) | dessine le `Model3D` de l'entité |
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, en ms), `animation` (true), `scale` (1) | joue une animation du `Model3D` |
+| `Camera3D` | `targetX` (0), `targetY` (0.4), `targetZ` (0), `upX` (0), `upY` (1), `upZ` (0), `fovy` (45), `projection` (`CameraProjection.PERSPECTIVE`), `updateMode` (`CameraMode.CUSTOM`) | la caméra 3D, placée à la `Position3D` de l'entité et tournée vers le point visé (voir [la caméra](#la-caméra)) |
 | `Sound` | `path` (**obligatoire**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (très grande), méthodes `setVolume(v)` et `setPitch(p)` | un son, chargé depuis `path` (voir [les sons](#les-sons)) |
 
 Les cinq composants marqués **obligatoire** sont construits à partir d'un fichier, puis reçoivent les autres champs de la table : `gm:addComponent(e, 'Texture2D', {path = 'sprites/ship.png'})`.
@@ -214,12 +215,14 @@ end
 | `DrawSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `Position3D` | les dessine en 3D, animés |
 | `MasterAnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D` | les anime, avec l'horloge du jeu |
 | `AnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D`, `Clock` | les anime, avec leur propre horloge |
+| `UpdateCamera` | `Camera3D`, `Position3D` | place la caméra à la `Position3D` de son entité |
+| `Draw3D` | `Camera3D` | dessine les `Sprite3D` et `SpriteSheet3D` tels que la caméra les voit |
 | `Sound2D` | `Sound`, `Position2D` | place les sons `stereo` à la position de leur entité |
 | `KeyboardManagerClear` | le clavier | vide les touches lues pendant la frame |
 
 Les systèmes `Master…` utilisent l'horloge du jeu, que le moteur fait toujours tourner : c'est le choix le plus simple. Les autres utilisent une `Clock` donnée à chaque entité, pour ralentir ou accélérer certaines entités seulement (avec son `speed`), et ont aussi besoin du système `Clock`.
 
-Les systèmes de la fenêtre, du clavier, de la souris, du son et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. `Draw3D`, `UpdateCamera` et `UpdateKeybind` ne sont pas non plus dans ce tableau : ils agissent sur des composants que les scripts ne créent pas.
+Les systèmes de la fenêtre, du clavier, de la souris, du son et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. `UpdateKeybind` n'est pas non plus dans ce tableau : il agit sur un composant que les scripts ne créent pas.
 
 ### L'ordre des systèmes
 
@@ -392,6 +395,35 @@ end
 - Un son `stereo = true` est placé dans l'espace : avec le système `Sound2D`, il suit la `Position2D` de son entité, et son volume baisse avec la distance selon `attenuation` (`Attenuation.NONE`, `INVERSE`, `LINEAR` ou `EXPONENTIAL`), entre `minDistance` et `maxDistance`.
 - Le point qui entend les sons appartient au module : un script ne peut pas en créer d'autre.
 
+### La caméra
+
+Un jeu en 3D dessine à travers une `Camera3D`. La caméra se tient à la `Position3D` de son entité et regarde son point visé (`targetX`, `targetY`, `targetZ`) :
+
+```lua
+local camera
+
+local function move(gm)
+    local pos = gm:getComponent(camera, 'Position3D')
+    pos.x = pos.x + 0.01            -- la caméra glisse vers la droite
+end
+
+function start(gm)
+    camera = gm:createEntity()
+    gm:addComponent(camera, 'Position3D', {x = 0, y = 2, z = 6})
+    gm:addComponent(camera, 'Camera3D', {targetY = 0, fovy = 60})
+
+    gm:createSystem(move)
+    gm:addSystem('UpdateCamera')
+    gm:addSystem('Draw3D')
+end
+```
+
+- `UpdateCamera` place la caméra à sa `Position3D` à chaque frame, et `Draw3D` dessine les `Sprite3D` et `SpriteSheet3D` tels que la caméra les voit.
+- `upX`, `upY`, `upZ` donnent la direction du haut de la caméra, et `fovy` son champ de vision vertical, en degrés.
+- `projection` vaut `CameraProjection.PERSPECTIVE` ou `CameraProjection.ORTHOGRAPHIC`.
+- `updateMode` vaut `CameraMode.CUSTOM` par défaut : la caméra ne bouge qu'avec sa `Position3D` et son point visé. `FREE`, `ORBITAL`, `FIRST_PERSON` et `THIRD_PERSON` sont les modes de caméra de raylib.
+- Un jeu n'a qu'une caméra : une deuxième `Camera3D` arrête le jeu avec `Camera can be created only once`.
+
 ---
 
 ## 5. Les vues : parcourir des entités n'importe où
@@ -525,6 +557,7 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier depuis lequel le jeu est lancé |
 | `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y` ou `mouse.wheel` | ne faire que les lire |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
+| `Camera can be created only once` | une deuxième `Camera3D` | garder une seule caméra et la déplacer avec sa `Position3D` |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | un champ du mauvais type | donner une valeur du bon type |
 | `Invalid arguments for Texture2D: missing 'path'` | un composant construit à partir d'un fichier, sans `path` | donner `{path = '...'}` |

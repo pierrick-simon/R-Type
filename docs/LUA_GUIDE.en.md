@@ -147,6 +147,7 @@ gm:countComponents('Position2D')            -- number of entities that have one
 | `ModelAnimation3D` | `path` (**required**) | the animations of a 3D model |
 | `Sprite3D` | `scale` (1) | draws the entity's `Model3D` |
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, in ms), `animation` (true), `scale` (1) | plays an animation of the `Model3D` |
+| `Camera3D` | `targetX` (0), `targetY` (0.4), `targetZ` (0), `upX` (0), `upY` (1), `upZ` (0), `fovy` (45), `projection` (`CameraProjection.PERSPECTIVE`), `updateMode` (`CameraMode.CUSTOM`) | the 3D camera, placed at the entity's `Position3D` and looking at the target point (see [the camera](#the-camera)) |
 | `Sound` | `path` (**required**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (very large), methods `setVolume(v)` and `setPitch(p)` | a sound, loaded from `path` (see [sounds](#sounds)) |
 
 The five components marked **required** are built from a file, then given the table's other fields: `gm:addComponent(e, 'Texture2D', {path = 'sprites/ship.png'})`.
@@ -214,12 +215,14 @@ end
 | `DrawSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `Position3D` | draws them in 3D, animated |
 | `MasterAnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D` | animates them, with the game's clock |
 | `AnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D`, `Clock` | animates them, with their own clock |
+| `UpdateCamera` | `Camera3D`, `Position3D` | moves the camera to its entity's `Position3D` |
+| `Draw3D` | `Camera3D` | draws the `Sprite3D` and `SpriteSheet3D` as the camera sees them |
 | `Sound2D` | `Sound`, `Position2D` | puts the `stereo` sounds at their entity's position |
 | `KeyboardManagerClear` | the keyboard | empties the keys read this frame |
 
 The `Master…` systems use the game's clock, which the engine always runs: they are the simplest choice. The others use a `Clock` given to each entity, to slow down or speed up some entities only (with its `speed`), and need the `Clock` system too.
 
-The systems of the window, the keyboard, the mouse, the sound and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. `Draw3D`, `UpdateCamera` and `UpdateKeybind` are not in this table either: they act on components that scripts do not create.
+The systems of the window, the keyboard, the mouse, the sound and the game's clock are registered by the [modules](ENGINE_GAME.en.md#3-the-modules), once: they are not in this table, so that no script makes them run twice per frame. `UpdateKeybind` is not in this table either: it acts on a component that scripts do not create.
 
 ### The order of the systems
 
@@ -392,6 +395,35 @@ end
 - A `stereo = true` sound is placed in space: with the `Sound2D` system, it follows its entity's `Position2D`, and its volume drops with the distance according to `attenuation` (`Attenuation.NONE`, `INVERSE`, `LINEAR` or `EXPONENTIAL`), between `minDistance` and `maxDistance`.
 - The point that hears the sounds belongs to the module: a script cannot create another one.
 
+### The camera
+
+A 3D game draws through a `Camera3D`. The camera stands at its entity's `Position3D` and looks at its target point (`targetX`, `targetY`, `targetZ`):
+
+```lua
+local camera
+
+local function move(gm)
+    local pos = gm:getComponent(camera, 'Position3D')
+    pos.x = pos.x + 0.01            -- the camera slides to the right
+end
+
+function start(gm)
+    camera = gm:createEntity()
+    gm:addComponent(camera, 'Position3D', {x = 0, y = 2, z = 6})
+    gm:addComponent(camera, 'Camera3D', {targetY = 0, fovy = 60})
+
+    gm:createSystem(move)
+    gm:addSystem('UpdateCamera')
+    gm:addSystem('Draw3D')
+end
+```
+
+- `UpdateCamera` moves the camera to its `Position3D` each frame, and `Draw3D` draws the `Sprite3D` and `SpriteSheet3D` as the camera sees them.
+- `upX`, `upY`, `upZ` give the camera's up direction, and `fovy` its vertical field of view, in degrees.
+- `projection` is `CameraProjection.PERSPECTIVE` or `CameraProjection.ORTHOGRAPHIC`.
+- `updateMode` is `CameraMode.CUSTOM` by default: the camera moves only with its `Position3D` and its target. `FREE`, `ORBITAL`, `FIRST_PERSON` and `THIRD_PERSON` are raylib's camera modes.
+- A game has only one camera: a second `Camera3D` stops the game with `Camera can be created only once`.
+
 ---
 
 ## 5. Views: looping over entities anywhere
@@ -525,6 +557,7 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder the game is started from |
 | `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y` or `mouse.wheel` | only read them |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |
+| `Camera can be created only once` | a second `Camera3D` | keep one camera and move it with its `Position3D` |
 | `Invalid arguments for Position2D: no field 'z'` | the table gives a field the component does not have | remove or rename the field |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | a field of the wrong type | give a value of the right type |
 | `Invalid arguments for Texture2D: missing 'path'` | a component built from a file without `path` | give `{path = '...'}` |
