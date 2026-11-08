@@ -71,7 +71,7 @@ namespace RType {
                 .pattern = PatternType::AlienBeam},
             {.name = "Boss",
                 .sheet = &BOSS_SHEET,
-                .hp = 100,
+                .hp = 45,
                 .scoreValue = 5000,
                 .speed = BOSS_DEF.enterSpeed,
                 .pattern = PatternType::Boss},

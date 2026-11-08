@@ -67,7 +67,17 @@ namespace RType {
     inline constexpr SheetInfo BOSS_SHEET = {
         Asset::ENEMY_BOSS, 64, 155, 204, 120, 0, 0, 16, LEVEL_SCALE};
     inline constexpr SheetInfo BOSS_BULLET_SHEET = {
-        Asset::BOSS_BULLET, 9, 16, 16, 60, 10, 10};
+        Asset::BOSS_BULLET, 4, 22, 20, 70, 14, 14};
+    inline constexpr SheetInfo BOSS_TAIL_LARGE_SHEET = {
+        Asset::BOSS_TAIL_LARGE, 1, 16, 15, 100, 12, 11, 1, LEVEL_SCALE};
+    inline constexpr SheetInfo BOSS_TAIL_MEDIUM_SHEET = {
+        Asset::BOSS_TAIL_MEDIUM, 1, 14, 13, 100, 10, 9, 1, LEVEL_SCALE};
+    inline constexpr SheetInfo BOSS_TAIL_SMALL_SHEET = {
+        Asset::BOSS_TAIL_SMALL, 1, 12, 11, 100, 8, 7, 1, LEVEL_SCALE};
+    inline constexpr SheetInfo BOSS_TAIL_TIP_SHEET = {
+        Asset::BOSS_TAIL_TIP, 9, 16, 16, 100, 12, 12, 1, LEVEL_SCALE};
+    inline constexpr int BOSS_TAIL_TIP_DOWN = 0;
+    inline constexpr int BOSS_TAIL_TIP_UP = 8;
     inline constexpr SheetInfo BOSS_EXPLOSION_SHEET = {
         Asset::BOSS_EXPLOSION, 8, 64, 64, 80, 0, 0};
 

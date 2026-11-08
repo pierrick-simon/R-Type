@@ -55,6 +55,10 @@ namespace RType::Asset {
     inline constexpr AssetId LASER_MUZZLE = 128;
     inline constexpr AssetId LIFE_ICON_1 = 129;
     inline constexpr AssetId LIFE_ICON_5 = 133;
+    inline constexpr AssetId BOSS_TAIL_LARGE = 134;
+    inline constexpr AssetId BOSS_TAIL_MEDIUM = 135;
+    inline constexpr AssetId BOSS_TAIL_SMALL = 136;
+    inline constexpr AssetId BOSS_TAIL_TIP = 137;
 
     inline constexpr AssetId EXPLOSION_SOUND = 1000;
     inline constexpr AssetId GUNSHOT_SOUND = 1001;

@@ -7,6 +7,9 @@
 
 #include <criterion/criterion.h>
 
+#include <cmath>
+#include <thread>
+
 #include "Common/Background.hpp"
 #include "Common/Music.hpp"
 #include "Common/Terrain.hpp"
@@ -62,6 +65,33 @@ namespace {
     float scrollTo(float levelX)
     {
         return SCREEN_WIDTH + SPAWN_MARGIN - levelX * LEVEL_SCALE;
+    }
+
+    Entity addTarget(GameManager &gm, float x, float y)
+    {
+        const Entity player = gm.createEntity();
+
+        gm.addComponent<EnemyTarget>(player);
+        gm.addComponent<Health>(player, Health {1, 1});
+        gm.addComponent<Position2D>(player, x, y);
+        gm.addComponent<Hitbox>(player, Hitbox {20.f, 20.f});
+        return player;
+    }
+
+    template<typename Component>
+    int countOf(GameManager &gm)
+    {
+        int count = 0;
+
+        for (auto [_, c] : gm.view<Component>().getVector())
+            ++count;
+        return count;
+    }
+
+    void tick(MasterClock &clock)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        MasterClock::systemMasterClock(clock);
     }
 
     int bossCount(GameManager &gm)
@@ -283,8 +313,8 @@ Test(scout, zigzags)
     GameManager gm;
     const Entity scout = spawnEnemy(gm, EnemyType::Scout, 1000.f, 500.f);
 
-    cr_assert(gm.getComponent<MovementPattern>(scout).type ==
-        PatternType::ZigZag);
+    cr_assert(
+        gm.getComponent<MovementPattern>(scout).type == PatternType::ZigZag);
 }
 
 Test(enemy, hurt_flash_shows_the_white_frames)
@@ -325,4 +355,194 @@ Test(music, follows_the_level_scroll)
         tracks.push_back(music.track);
     cr_assert_eq(tracks.size(), std::size_t(1));
     cr_assert_eq(tracks[0], Asset::BOSS_MUSIC);
+}
+
+Test(boss, open_belly_fires_a_line_of_homing_rings)
+{
+    GameManager gm;
+    MasterClock clock;
+    const Entity boss = spawnBoss(gm);
+    const Entity player = addTarget(gm, 300.f, 500.f);
+    auto &state = gm.getComponent<Boss>(boss);
+
+    state.state = BossState::Open;
+    state.fireTimer = BOSS_DEF.fireCooldown;
+    systemBoss(gm,
+        boss,
+        state,
+        gm.getComponent<Velocity2D>(boss),
+        gm.getComponent<Position2D>(boss),
+        clock,
+        {});
+    cr_assert_eq(state.lineShots, BOSS_LINE.length - 1);
+    cr_assert_eq(countOf<Homing>(gm), 1);
+    for (auto [_, homing, shot] : gm.view<Homing, Projectile>().getVector()) {
+        cr_assert(homing.target == player);
+        cr_assert_not(shot.fromPlayer);
+    }
+}
+
+Test(boss, homing_ring_turns_slightly_toward_its_target)
+{
+    GameManager gm;
+    MasterClock clock;
+    const Entity player = addTarget(gm, 600.f, 100.f);
+    const Entity ring = gm.createEntity();
+
+    gm.addComponent<Homing>(
+        ring, Homing {player, BOSS_LINE.turnRate, BOSS_LINE.homingTime});
+    gm.addComponent<Velocity2D>(ring, Velocity2D {-300.f, 0.f});
+    gm.addComponent<Position2D>(ring, 1000.f, 500.f);
+    gm.addComponent<Hitbox>(ring, Hitbox {10.f, 10.f});
+    tick(clock);
+    systemHoming(gm, clock);
+    const auto &velocity = gm.getComponent<Velocity2D>(ring);
+    const float elapsed = float(clock.getElapsed().count()) / 1000.f;
+    const float turned = std::atan2(-velocity.y, -velocity.x);
+
+    cr_assert_lt(velocity.y, 0.f);
+    cr_assert_float_eq(std::hypot(velocity.x, velocity.y), 300.f, 0.01f);
+    cr_assert_leq(turned, BOSS_LINE.turnRate * elapsed + 0.001f);
+}
+
+Test(boss, tail_hangs_from_the_boss_and_kills_on_contact)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+    const Entity boss = spawnBoss(gm);
+    auto &state = gm.getComponent<Boss>(boss);
+    const auto &bossPos = gm.getComponent<Position2D>(boss);
+
+    state.tailGrowth = float(BOSS_TAIL_SEGMENTS);
+    systemBoss(gm,
+        boss,
+        state,
+        gm.getComponent<Velocity2D>(boss),
+        gm.getComponent<Position2D>(boss),
+        clock,
+        {});
+    systemBossTail(gm, clock, {});
+    cr_assert_eq(countOf<BossTail>(gm), BOSS_TAIL_SEGMENTS);
+    for (auto [_, tail, pos, box] :
+        gm.view<BossTail, Position2D, Hitbox>().getVector()) {
+        if (tail.index != 0)
+            continue;
+        const float size = float(BOSS_TAIL_LARGE_SHEET.cellW) * LEVEL_SCALE;
+
+        cr_assert_float_eq(pos.x + size / 2.f,
+            bossPos.x + BOSS_TAIL.anchorX * LEVEL_SCALE,
+            0.01f);
+        const Entity player =
+            addTarget(gm, pos.x + box.offsetX + 5.f, pos.y + box.offsetY + 5.f);
+
+        systemEnemyCombat(gm, director, {});
+        cr_assert_eq(gm.getComponent<Health>(player).hp, 0);
+    }
+}
+
+Test(boss, tail_blocks_player_shots_and_dies_with_the_boss)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+    const Entity boss = spawnBoss(gm);
+    auto &state = gm.getComponent<Boss>(boss);
+
+    state.tailGrowth = float(BOSS_TAIL_SEGMENTS);
+    systemBoss(gm,
+        boss,
+        state,
+        gm.getComponent<Velocity2D>(boss),
+        gm.getComponent<Position2D>(boss),
+        clock,
+        {});
+    systemBossTail(gm, clock, {});
+    for (auto [_, tail, pos, box] :
+        gm.view<BossTail, Position2D, Hitbox>().getVector()) {
+        if (tail.index != BOSS_TAIL_SEGMENTS - 1)
+            continue;
+        const Entity shot = gm.createEntity();
+
+        gm.addComponent<Projectile>(shot, Projectile {1, true});
+        gm.addComponent<Position2D>(
+            shot, pos.x + box.offsetX, pos.y + box.offsetY);
+        gm.addComponent<Hitbox>(shot, Hitbox {10.f, 10.f});
+        systemEnemyCombat(gm, director, {});
+        cr_assert_not(gm.hasComponent<Projectile>(shot));
+    }
+    state.state = BossState::Dying;
+    systemBossTail(gm, clock, {});
+    cr_assert_eq(countOf<BossTail>(gm), 0);
+}
+
+Test(boss, tail_tip_points_along_the_tail)
+{
+    BossTail tail;
+    SpriteSheet2D sheet(
+        {1, BOSS_TAIL_TIP_SHEET.frames}, BOSS_TAIL_TIP_SHEET.frameMs, 1.f);
+
+    tail.index = BOSS_TAIL_SEGMENTS - 1;
+    tail.angle = pi;
+    systemBossTailAnimation(tail, sheet);
+    cr_assert_eq(sheet.currentTile, std::size_t(4));
+    tail.angle = pi / 2.f;
+    systemBossTailAnimation(tail, sheet);
+    cr_assert_eq(sheet.currentTile, std::size_t(BOSS_TAIL_TIP_DOWN));
+    tail.angle = 3.f * pi / 2.f;
+    systemBossTailAnimation(tail, sheet);
+    cr_assert_eq(sheet.currentTile, std::size_t(BOSS_TAIL_TIP_UP));
+}
+
+Test(boss, enters_without_its_tail_then_grows_it_ball_by_ball)
+{
+    GameManager gm;
+    MasterClock clock;
+    const Entity boss = spawnBoss(gm);
+    auto &state = gm.getComponent<Boss>(boss);
+    auto &pos = gm.getComponent<Position2D>(boss);
+    auto &velocity = gm.getComponent<Velocity2D>(boss);
+
+    pos.x = SCREEN_WIDTH;
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert(state.state == BossState::Enter);
+    cr_assert_eq(countOf<BossTail>(gm), 0);
+    pos.x = BOSS_DEF.x;
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert(state.state == BossState::GrowTail);
+    state.tailGrowth = 2.5f;
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert_eq(countOf<BossTail>(gm), 2);
+    for (auto [_, tail] : gm.view<BossTail>().getVector())
+        cr_assert_geq(tail.index, BOSS_TAIL_SEGMENTS - 2);
+    state.tailGrowth = float(BOSS_TAIL_SEGMENTS);
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert_eq(countOf<BossTail>(gm), BOSS_TAIL_SEGMENTS);
+    cr_assert(state.state == BossState::Opening);
+}
+
+Test(boss, line_pause_runs_while_the_belly_is_closed)
+{
+    GameManager gm;
+    MasterClock clock;
+    const Entity boss = spawnBoss(gm);
+    auto &state = gm.getComponent<Boss>(boss);
+    auto &pos = gm.getComponent<Position2D>(boss);
+    auto &velocity = gm.getComponent<Velocity2D>(boss);
+
+    addTarget(gm, 300.f, 500.f);
+    state.state = BossState::GrowTail;
+    state.tailGrowth = float(BOSS_TAIL_SEGMENTS);
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert_float_eq(state.fireTimer, BOSS_DEF.fireCooldown, 0.001f);
+    state.state = BossState::Closed;
+    state.fireTimer = 0.f;
+    tick(clock);
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert_gt(state.fireTimer, 0.f);
+    state.state = BossState::Open;
+    state.timer = 0.f;
+    state.fireTimer = BOSS_DEF.fireCooldown;
+    systemBoss(gm, boss, state, velocity, pos, clock, {});
+    cr_assert_eq(countOf<Homing>(gm), 1);
 }
