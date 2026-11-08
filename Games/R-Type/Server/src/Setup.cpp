@@ -10,6 +10,7 @@
 #include "Common/Animation.hpp"
 #include "Common/Background.hpp"
 #include "Common/Bullet.hpp"
+#include "Common/Music.hpp"
 #include "Config.hpp"
 #include "Connexion/Lobby.hpp"
 #include "Enemies/EnemyManager.hpp"
@@ -101,6 +102,7 @@ namespace RType::Server {
         gm.createSystem<MasterClock>(systemMasterPlayerHandle);
         gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<>(backgroundScroll);
+        gm.createSystem<>(musicSystem);
         gm.createSystem<Player, Position2D, Velocity2D>(playerClamp);
         gm.createSystem<Player, Velocity2D, SpriteSheet2D>(playerAnimation);
         gm.createSystem<>(playerTerrainCollision);

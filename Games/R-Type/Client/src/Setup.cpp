@@ -153,6 +153,7 @@ namespace RType::Client {
         gm.createSystem<>(systemTextFields);
         gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
+        gm.createSystem<Assets>(systemMenuMusic);
         gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Assets>(
             systemTextAnchorManager<Font, Texture2D, Decoder>);

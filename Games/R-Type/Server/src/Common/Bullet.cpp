@@ -73,11 +73,13 @@ namespace RType::Server {
             std::size_t(level - 1) * CHARGED_SHOT_FRAMES,
             CHARGED_SHOT_FRAME_MS,
             SHOT_SCALE);
+        gm.addComponent<SoundInfo>(shot, SoundInfo::PLAY);
         gm.addComponent<UpdateClientEntity>(shot,
             EntityType::SPRITESHEET,
             Asset::PLAYER_CHARGED_SHOT,
             gm,
-            shot);
+            shot,
+            Asset::GUNSHOT_SOUND);
     }
 
     Position2D chargeEffectPosition(const Position2D &player)
@@ -89,14 +91,22 @@ namespace RType::Server {
     void spawnChargeEffect(GameManager &gm, Entity player)
     {
         auto effect = gm.createEntity();
+        SoundInfo sound;
 
+        sound.state = SoundInfo::PLAY;
+        sound.loop = true;
         gm.addComponent<ChargeEffect>(effect, ChargeEffect {player});
+        gm.addComponent<SoundInfo>(effect, sound);
         gm.addComponent<Position2D>(
             effect, chargeEffectPosition(gm.getComponent<Position2D>(player)));
         gm.addComponent<SpriteSheet2D>(
             effect, Size2D(1, CHARGE_FRAMES), CHARGE_FRAME_MS, PLAYER_SCALE);
-        gm.addComponent<UpdateClientEntity>(
-            effect, EntityType::SPRITESHEET, Asset::PLAYER_CHARGE, gm, effect);
+        gm.addComponent<UpdateClientEntity>(effect,
+            EntityType::SPRITESHEET,
+            Asset::PLAYER_CHARGE,
+            gm,
+            effect,
+            Asset::CHARGED_SHOT_SOUND);
     }
 
     void bulletSystem(GameManager &gm)

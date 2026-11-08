@@ -27,15 +27,25 @@ namespace RType {
     }
 
     Sound::Sound(Listener &l, Decoder &decoder, SoundInfo info) :
-        SoundInfo(info), _sound(new ma_sound())
+        SoundInfo(info),
+        _pcm(decoder.getPcm()),
+        _ref(new ma_audio_buffer_ref()),
+        _sound(new ma_sound())
     {
-        if (ma_sound_init_from_data_source(&l.getEngine(),
-                &decoder.getDecoder(),
-                0,
-                nullptr,
-                _sound.get()) != MA_SUCCESS) {
+        ma_result r = ma_audio_buffer_ref_init(ma_format_f32,
+            decoder.getChannels(),
+            _pcm->data(),
+            decoder.getFrameCount(),
+            _ref.get());
+        if (r != MA_SUCCESS)
+            throw EngineException("Failed to create audio buffer ref");
+        _ref->sampleRate = decoder.getSampleRate();
+
+        r = ma_sound_init_from_data_source(
+            &l.getEngine(), _ref.get(), 0, nullptr, _sound.get());
+        if (r != MA_SUCCESS)
             throw EngineException("Failed to initialise sound from decoder");
-        }
+
         systemSound(*this);
     }
 
