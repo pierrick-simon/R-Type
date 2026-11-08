@@ -9,9 +9,9 @@
     #define LOBBYPROTOCOL_HPP_
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <cstddef>
 #include <string>
 #include <vector>
 
