@@ -2,18 +2,21 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** ViewVectors
+** tests_view_vectors
 */
 
+#include <algorithm>
+#include <cstddef>
+#include <memory>
 #include <tuple>
 #include <type_traits>
 #include <vector>
 
+#include <criterion/criterion.h>
 #include "ComponentManager.hpp"
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 #include "View.hpp"
 
 // Expected API: a view can be turned into a vector holding, for each
@@ -24,12 +27,112 @@
 
 namespace {
 
+    struct Enemy {};
+
+    struct Bullet {};
+
+    struct Owned {
+        RType::Entity owner;
+        int value;
+    };
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    struct MoveOnly {
+        std::unique_ptr<int> ptr;
+    };
+
+    struct Tracked {
+        static inline int alive = 0;
+
+        int value;
+
+        explicit Tracked(int v = 0) :
+            value(v)
+        {
+            alive++;
+        }
+
+        Tracked(const Tracked &other) :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked(Tracked &&other) noexcept :
+            value(other.value)
+        {
+            alive++;
+        }
+
+        Tracked &operator=(const Tracked &) = default;
+        Tracked &operator=(Tracked &&) noexcept = default;
+
+        ~Tracked()
+        {
+            alive--;
+        }
+    };
+
+    class EntitySet {
+    public:
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
+        {
+            return std::find(_entities.begin(), _entities.end(), entity) !=
+                _entities.end();
+        }
+
+        void insert(const RType::Entity &entity)
+        {
+            if (!contains(entity))
+                _entities.push_back(entity);
+        }
+
+        void clear()
+        {
+            _entities.clear();
+        }
+
+        [[nodiscard]] std::size_t size() const
+        {
+            return _entities.size();
+        }
+
+        [[nodiscard]] auto begin() const
+        {
+            return _entities.begin();
+        }
+
+        [[nodiscard]] auto end() const
+        {
+            return _entities.end();
+        }
+
+    private:
+        std::vector<RType::Entity> _entities;
+    };
+
     using RType::ComponentManager;
     using RType::Entity;
     using RType::EntityManager;
     using RType::GameManager;
     using RType::View;
-    using namespace Poc;
 
     static_assert(
         std::is_same_v<decltype(std::declval<View<Health> &>().getVector()),
@@ -42,33 +145,39 @@ namespace {
             std::vector<std::tuple<Entity, Damage &, Health &>>>,
         "getVector must keep the order of the view's types");
 
-    void emptyOnNeverAddedType()
+    Test(view_vectors, emptyOnNeverAddedType,
+        .description = "[view vector] empty on a never added type")
     {
         GameManager gm;
 
-        POC_CHECK_NOTHROW((void) gm.view<Health>().getVector());
-        POC_CHECK(gm.view<Health>().getVector().empty());
+        cr_assert_no_throw(
+            (void) gm.view<Health>().getVector(), std::exception);
+        cr_assert(gm.view<Health>().getVector().empty());
     }
 
-    void emptyWhenOneTypeIsMissing()
+    Test(view_vectors, emptyWhenOneTypeIsMissing,
+        .description = "[view vector] empty when one type is missing")
     {
         GameManager gm;
 
         gm.addComponent<Health>(gm.createEntity(), 1);
-        POC_CHECK_NOTHROW((void) (gm.view<Health, Damage>().getVector()));
-        POC_CHECK((gm.view<Health, Damage>().getVector().empty()));
+        cr_assert_no_throw(
+            (void) (gm.view<Health, Damage>().getVector()), std::exception);
+        cr_assert((gm.view<Health, Damage>().getVector().empty()));
     }
 
-    void emptyWhenNoEntityHasAllTypes()
+    Test(view_vectors, emptyWhenNoEntityHasAllTypes,
+        .description = "[view vector] empty when no entity has all the types")
     {
         GameManager gm;
 
         gm.addComponent<Health>(gm.createEntity(), 1);
         gm.addComponent<Damage>(gm.createEntity(), 1);
-        POC_CHECK((gm.view<Health, Damage>().getVector().empty()));
+        cr_assert((gm.view<Health, Damage>().getVector().empty()));
     }
 
-    void holdsOnlyEntitiesWithAllTypes()
+    Test(view_vectors, holdsOnlyEntitiesWithAllTypes,
+        .description = "[view vector] holds only entities with all the types")
     {
         GameManager gm;
         EntitySet expected;
@@ -84,15 +193,16 @@ namespace {
                 expected.insert(e);
         }
         auto v = gm.view<Health, Damage>().getVector();
-        POC_CHECK(v.size() == expected.size());
+        cr_assert(v.size() == expected.size());
         for (auto &t : v)
             seen.insert(std::get<0>(t));
-        POC_CHECK(seen.size() == expected.size());
+        cr_assert(seen.size() == expected.size());
         for (Entity e : expected)
-            POC_CHECK(seen.contains(e));
+            cr_assert(seen.contains(e));
     }
 
-    void componentsMatchTheirEntity()
+    Test(view_vectors, componentsMatchTheirEntity,
+        .description = "[view vector] components match their entity")
     {
         GameManager gm;
         bool paired = true;
@@ -106,10 +216,11 @@ namespace {
         for (auto &[e, o, h] : gm.view<Owned, Health>().getVector())
             if (!(o.owner == e) || h.hp != o.value)
                 paired = false;
-        POC_CHECK(paired);
+        cr_assert(paired);
     }
 
-    void holdsReferencesNotCopies()
+    Test(view_vectors, holdsReferencesNotCopies,
+        .description = "[view vector] holds references, not copies")
     {
         GameManager gm;
         bool sameAddress = true;
@@ -119,10 +230,11 @@ namespace {
         for (auto &[e, h] : gm.view<Health>().getVector())
             if (&h != &gm.getComponent<Health>(e))
                 sameAddress = false;
-        POC_CHECK(sameAddress);
+        cr_assert(sameAddress);
     }
 
-    void writesThroughTheVector()
+    Test(view_vectors, writesThroughTheVector,
+        .description = "[view vector] writes through the vector")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -136,22 +248,24 @@ namespace {
         for (auto &[e, h, d] : gm.view<Health, Damage>().getVector())
             h.hp += d.value * 10;
         for (int i = 0; i < 5; i++)
-            POC_CHECK(gm.getComponent<Health>(entities[i]).hp == i + 10);
+            cr_assert(gm.getComponent<Health>(entities[i]).hp == i + 10);
     }
 
-    void writesThroughStdGet()
+    Test(view_vectors, writesThroughStdGet,
+        .description = "[view vector] writes through std::get")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<Health>(e, 1);
         auto v = gm.view<Health>().getVector();
-        POC_CHECK(v.size() == 1);
+        cr_assert(v.size() == 1);
         std::get<1>(v[0]).hp = 42;
-        POC_CHECK(gm.getComponent<Health>(e).hp == 42);
+        cr_assert(gm.getComponent<Health>(e).hp == 42);
     }
 
-    void sameEntitiesAsEach()
+    Test(view_vectors, sameEntitiesAsEach,
+        .description = "[view vector] same entities as each")
     {
         GameManager gm;
         EntitySet fromEach;
@@ -169,12 +283,14 @@ namespace {
                 Entity e, Position &, Velocity &) { fromEach.insert(e); });
         for (auto &[e, p, v] : gm.view<Position, Velocity>().getVector())
             fromVector.insert(e);
-        POC_CHECK(fromVector.size() == fromEach.size());
+        cr_assert(fromVector.size() == fromEach.size());
         for (Entity e : fromEach)
-            POC_CHECK(fromVector.contains(e));
+            cr_assert(fromVector.contains(e));
     }
 
-    void typeOrderDoesNotChangeTheEntities()
+    Test(view_vectors, typeOrderDoesNotChangeTheEntities,
+        .description =
+            "[view vector] the type order does not change the entities")
     {
         GameManager gm;
         EntitySet first;
@@ -190,13 +306,14 @@ namespace {
             first.insert(e);
         for (auto &[e, d, h] : gm.view<Damage, Health>().getVector())
             second.insert(e);
-        POC_CHECK(first.size() == 10);
-        POC_CHECK(second.size() == first.size());
+        cr_assert(first.size() == 10);
+        cr_assert(second.size() == first.size());
         for (Entity e : first)
-            POC_CHECK(second.contains(e));
+            cr_assert(second.contains(e));
     }
 
-    void worksWithEmptyTags()
+    Test(view_vectors, worksWithEmptyTags,
+        .description = "[view vector] works with empty tags")
     {
         GameManager gm;
         int count = 0;
@@ -209,10 +326,12 @@ namespace {
         }
         for (auto &[e, tag, h] : gm.view<Enemy, Health>().getVector())
             count += h.hp % 2 == 0 ? 1 : 0;
-        POC_CHECK(count == 3);
+        cr_assert(count == 3);
     }
 
-    void worksOnAViewBuiltFromAComponentManager()
+    Test(view_vectors, worksOnAViewBuiltFromAComponentManager,
+        .description =
+            "[view vector] works on a view built from a ComponentManager")
     {
         ComponentManager cm;
         EntityManager em;
@@ -220,10 +339,11 @@ namespace {
         for (int i = 0; i < 4; i++)
             cm.addComponent<Health>(em.createEntity(), i);
         View<Health> view(cm);
-        POC_CHECK(view.getVector().size() == 4);
+        cr_assert(view.getVector().size() == 4);
     }
 
-    void eachCallGivesAFreshVector()
+    Test(view_vectors, eachCallGivesAFreshVector,
+        .description = "[view vector] each call gives a fresh vector")
     {
         GameManager gm;
 
@@ -232,11 +352,12 @@ namespace {
         auto first = view.getVector();
         gm.addComponent<Health>(gm.createEntity(), 2);
         auto second = view.getVector();
-        POC_CHECK(first.size() == 1);
-        POC_CHECK(second.size() == 2);
+        cr_assert(first.size() == 1);
+        cr_assert(second.size() == 2);
     }
 
-    void isASnapshot()
+    Test(
+        view_vectors, isASnapshot, .description = "[view vector] is a snapshot")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -244,11 +365,12 @@ namespace {
         gm.addComponent<Health>(e, 1);
         auto v = gm.view<Health>().getVector();
         gm.addComponent<Health>(gm.createEntity(), 2);
-        POC_CHECK(v.size() == 1);
-        POC_CHECK(std::get<0>(v[0]) == e);
+        cr_assert(v.size() == 1);
+        cr_assert(std::get<0>(v[0]) == e);
     }
 
-    void referencesSurviveOtherRemovals()
+    Test(view_vectors, referencesSurviveOtherRemovals,
+        .description = "[view vector] references survive other removals")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -271,10 +393,11 @@ namespace {
                 h.hp != static_cast<int>(e.index()))
                 intact = false;
         }
-        POC_CHECK(intact);
+        cr_assert(intact);
     }
 
-    void doesNotCopyTheComponents()
+    Test(view_vectors, doesNotCopyTheComponents,
+        .description = "[view vector] does not copy the components")
     {
         Tracked::alive = 0;
         GameManager gm;
@@ -282,22 +405,24 @@ namespace {
         for (int i = 0; i < 3; i++)
             gm.addComponent<Tracked>(gm.createEntity(), i);
         auto v = gm.view<Tracked>().getVector();
-        POC_CHECK(v.size() == 3);
-        POC_CHECK(Tracked::alive == 3);
+        cr_assert(v.size() == 3);
+        cr_assert(Tracked::alive == 3);
     }
 
-    void moveOnlyComponents()
+    Test(view_vectors, moveOnlyComponents,
+        .description = "[view vector] move-only components")
     {
         GameManager gm;
         Entity e = gm.createEntity();
 
         gm.addComponent<MoveOnly>(e, std::make_unique<int>(7));
         auto v = gm.view<MoveOnly>().getVector();
-        POC_CHECK(v.size() == 1);
-        POC_CHECK(*std::get<1>(v[0]).ptr == 7);
+        cr_assert(v.size() == 1);
+        cr_assert(*std::get<1>(v[0]).ptr == 7);
     }
 
-    void destroyFromTheVectorDuringUpdate()
+    Test(view_vectors, destroyFromTheVectorDuringUpdate,
+        .description = "[view vector] destroy from the vector during update")
     {
         GameManager gm;
         std::vector<Entity> bullets;
@@ -315,12 +440,13 @@ namespace {
             }
         });
         gm.update();
-        POC_CHECK(aliveDuringFrame);
+        cr_assert(aliveDuringFrame);
         for (Entity e : bullets)
-            POC_CHECK(!gm.hasEntity(e));
+            cr_assert(!gm.hasEntity(e));
     }
 
-    void destroyFromTheVectorOutsideUpdate()
+    Test(view_vectors, destroyFromTheVectorOutsideUpdate,
+        .description = "[view vector] destroy from the vector outside update")
     {
         GameManager gm;
         std::vector<Entity> entities;
@@ -334,11 +460,12 @@ namespace {
             if (h.hp % 2 == 0)
                 gm.destroyEntity(e);
         for (int i = 0; i < 6; i++)
-            POC_CHECK(gm.hasEntity(entities[i]) == (i % 2 == 1));
-        POC_CHECK(gm.view<Health>().getVector().size() == 3);
+            cr_assert(gm.hasEntity(entities[i]) == (i % 2 == 1));
+        cr_assert(gm.view<Health>().getVector().size() == 3);
     }
 
-    void collisionsWithVectors()
+    Test(view_vectors, collisionsWithVectors,
+        .description = "[view vector] bullets against enemies with vectors")
     {
         GameManager gm;
         std::vector<Entity> bullets;
@@ -372,16 +499,17 @@ namespace {
             }
         });
         gm.update();
-        POC_CHECK(!gm.hasEntity(bullets[0]));
-        POC_CHECK(!gm.hasEntity(bullets[1]));
-        POC_CHECK(gm.hasEntity(bullets[2]));
-        POC_CHECK(gm.getComponent<Health>(enemies[0]).hp == 2);
-        POC_CHECK(gm.getComponent<Health>(enemies[1]).hp == 3);
-        POC_CHECK(gm.getComponent<Health>(enemies[2]).hp == 2);
-        POC_CHECK(gm.getComponent<Health>(enemies[3]).hp == 3);
+        cr_assert(!gm.hasEntity(bullets[0]));
+        cr_assert(!gm.hasEntity(bullets[1]));
+        cr_assert(gm.hasEntity(bullets[2]));
+        cr_assert(gm.getComponent<Health>(enemies[0]).hp == 2);
+        cr_assert(gm.getComponent<Health>(enemies[1]).hp == 3);
+        cr_assert(gm.getComponent<Health>(enemies[2]).hp == 2);
+        cr_assert(gm.getComponent<Health>(enemies[3]).hp == 3);
     }
 
-    void manyEntities()
+    Test(view_vectors, manyEntities,
+        .description = "[view vector] many entities")
     {
         GameManager gm;
         int sum = 0;
@@ -395,53 +523,8 @@ namespace {
         auto v = gm.view<Health, Damage>().getVector();
         for (auto &[e, h, d] : v)
             sum += h.hp + d.value;
-        POC_CHECK(v.size() == 500);
-        POC_CHECK(sum == 1500);
+        cr_assert(v.size() == 500);
+        cr_assert(sum == 1500);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList viewVectorTests()
-    {
-        return {
-            {"[view vector] empty on a never added type",
-                emptyOnNeverAddedType},
-            {"[view vector] empty when one type is missing",
-                emptyWhenOneTypeIsMissing},
-            {"[view vector] empty when no entity has all the types",
-                emptyWhenNoEntityHasAllTypes},
-            {"[view vector] holds only entities with all the types",
-                holdsOnlyEntitiesWithAllTypes},
-            {"[view vector] components match their entity",
-                componentsMatchTheirEntity},
-            {"[view vector] holds references, not copies",
-                holdsReferencesNotCopies},
-            {"[view vector] writes through the vector", writesThroughTheVector},
-            {"[view vector] writes through std::get", writesThroughStdGet},
-            {"[view vector] same entities as each", sameEntitiesAsEach},
-            {"[view vector] the type order does not change the entities",
-                typeOrderDoesNotChangeTheEntities},
-            {"[view vector] works with empty tags", worksWithEmptyTags},
-            {"[view vector] works on a view built from a ComponentManager",
-                worksOnAViewBuiltFromAComponentManager},
-            {"[view vector] each call gives a fresh vector",
-                eachCallGivesAFreshVector},
-            {"[view vector] is a snapshot", isASnapshot},
-            {"[view vector] references survive other removals",
-                referencesSurviveOtherRemovals},
-            {"[view vector] does not copy the components",
-                doesNotCopyTheComponents},
-            {"[view vector] move-only components", moveOnlyComponents},
-            {"[view vector] destroy from the vector during update",
-                destroyFromTheVectorDuringUpdate},
-            {"[view vector] destroy from the vector outside update",
-                destroyFromTheVectorOutsideUpdate},
-            {"[view vector] bullets against enemies with vectors",
-                collisionsWithVectors},
-            {"[view vector] many entities", manyEntities},
-        };
-    }
-
-} // namespace Poc

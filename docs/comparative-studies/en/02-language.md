@@ -68,7 +68,7 @@ The Chromium security team (a browser written in C++) states that "*around 70% o
 
 ### C++ versions
 
-According to the 2025 JetBrains survey of 1,800 C++ developers, the most used standards are **C++20 (43%)** and **C++23 (34%)**, with C++26 at 7% ([JetBrains, *The State of C++ 2025*](https://lp.jetbrains.com/the-state-of-cpp-2025/)). These are the values of the report's table: its text quotes figures shifted by one row. The project compiles as **C++20** (`CMAKE_CXX_STANDARD 20`), a complete standard well supported by GCC, Clang and MSVC. The Poc switches to C++23 with GCC 14, only for `std::stacktrace` in its error reports.
+According to the 2025 JetBrains survey of 1,800 C++ developers, the most used standards are **C++20 (43%)** and **C++23 (34%)**, with C++26 at 7% ([JetBrains, *The State of C++ 2025*](https://lp.jetbrains.com/the-state-of-cpp-2025/)). These are the values of the report's table: its text quotes figures shifted by one row. The project compiles as **C++20** (`CMAKE_CXX_STANDARD 20`), a complete standard well supported by GCC, Clang and MSVC.
 
 ---
 
@@ -157,7 +157,7 @@ According to the 2025 JetBrains survey of 1,800 C++ developers, the most used st
 - **RAII everywhere:** resources (window, textures, sounds) are freed by destructors, and the raylib window is held by a `std::unique_ptr`.
 - **Handles rather than pointers:** an `Entity` is an *(index, generation)* pair. A stale handle is detected by `hasEntity` instead of referring to another entity ([design notes](../../ECS_DESIGN.en.md#entity-and-entitymanager)).
 - **Stable references:** components never change address as long as they exist ([study 07](07-component-storage.md)).
-- **Sanitizers:** the Poc is built by default with AddressSanitizer and UndefinedBehaviorSanitizer (`POC_SANITIZE`), which detect invalid memory accesses and undefined behavior at runtime.
+- **Sanitizers:** the engine tests are built by default with AddressSanitizer and UndefinedBehaviorSanitizer (`ENGINE_TESTS_SANITIZE`), which detect invalid memory accesses and undefined behavior at runtime.
 - **Static analysis:** `clang-tidy` runs in continuous integration (cpp-linter action), and locally with `script/lint.sh`.
 
 **What we accept:** longer compile times and sometimes obscure template errors. To limit them, the public API (`GameManager`) stays simple and its type errors are documented.

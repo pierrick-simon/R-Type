@@ -5,6 +5,12 @@
 ** GameManager
 */
 
+#include <ctime>
+#include <filesystem>
+#include <iomanip>
+#include <sstream>
+
+#include "Clock.hpp"
 #include "GameManager.hpp"
 
 namespace RType {
@@ -12,7 +18,22 @@ namespace RType {
     GameManager::GameManager(bool debug) :
         _cm(), _em(), _sm(), _debug(debug)
     {
+        if (_debug)
+            openLogFile();
         log("debug mode enabled");
+    }
+
+    void GameManager::openLogFile()
+    {
+        std::time_t now = std::time(nullptr);
+        std::ostringstream name;
+        std::error_code error;
+
+        std::filesystem::create_directories("log", error);
+        name << "log/"
+             << std::put_time(std::localtime(&now), "%Y-%m-%d_%H-%M-%S")
+             << ".log";
+        _logFile.open(name.str(), std::ios::app);
     }
 
     void GameManager::update()
@@ -32,7 +53,8 @@ namespace RType {
             throw;
         }
         _updating = false;
-        log("update: applying ", _cq.size(), " queued command(s)");
+        if (!_cq.empty())
+            log("update: applying ", _cq.size(), " queued command(s)");
         flush();
     }
 
@@ -93,6 +115,21 @@ namespace RType {
         return _updating;
     }
 
+    void GameManager::setPaused(bool paused)
+    {
+        if (_paused && !paused) {
+            view<Clock>().each([](Entity, Clock &clock) { clock.restart(); });
+            view<MasterClock>().each(
+                [](Entity, MasterClock &clock) { clock.restart(); });
+        }
+        _paused = paused;
+    }
+
+    bool GameManager::isPaused() const
+    {
+        return _paused;
+    }
+
     void GameManager::flush()
     {
         std::exception_ptr error = nullptr;
@@ -129,7 +166,8 @@ namespace RType {
         auto next = clock::now();
         log("run at ", fps, " fps");
         while (keepRunning()) {
-            update();
+            if (!_paused)
+                update();
             next += step;
             if (next < clock::now())
                 next = clock::now();

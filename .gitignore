@@ -25,7 +25,7 @@ r-type_client
 r-type_server
 client_tests_run_bin
 server_tests_run_bin
-r-type_poc
+engine_tests_run_bin
 game
 
 # AI agents
@@ -33,3 +33,6 @@ game
 skills-lock.json
 CLAUDE.md
 AGENTS.md
+
+# Logs
+log/

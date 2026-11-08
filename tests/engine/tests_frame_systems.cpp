@@ -2,17 +2,19 @@
 ** EPITECH PROJECT, 2026
 ** R-Type
 ** File description:
-** FrameSystems
+** tests_frame_systems
 */
 
+#include <algorithm>
+#include <cstddef>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-#include "Components.hpp"
-#include "EntityUtils.hpp"
+#include <criterion/criterion.h>
+
+#include "Entity.hpp"
 #include "GameManager.hpp"
-#include "Test.hpp"
 
 // Expected API (step 7): a system created without any component type is
 // called once per update(), with no argument.
@@ -20,22 +22,79 @@
 
 namespace {
 
+    struct Enemy {};
+
+    struct Bullet {};
+
+    struct Position {
+        float x;
+        float y;
+    };
+
+    struct Health {
+        int hp;
+    };
+
+    struct Damage {
+        int value;
+    };
+
+    class EntitySet {
+    public:
+        [[nodiscard]] bool contains(const RType::Entity &entity) const
+        {
+            return std::find(_entities.begin(), _entities.end(), entity) !=
+                _entities.end();
+        }
+
+        void insert(const RType::Entity &entity)
+        {
+            if (!contains(entity))
+                _entities.push_back(entity);
+        }
+
+        void clear()
+        {
+            _entities.clear();
+        }
+
+        [[nodiscard]] std::size_t size() const
+        {
+            return _entities.size();
+        }
+
+        [[nodiscard]] auto begin() const
+        {
+            return _entities.begin();
+        }
+
+        [[nodiscard]] auto end() const
+        {
+            return _entities.end();
+        }
+
+    private:
+        std::vector<RType::Entity> _entities;
+    };
+
     using RType::Entity;
     using RType::GameManager;
     using RType::SystemId;
-    using namespace Poc;
 
-    void runsOnceWithoutAnyEntity()
+    Test(frame_systems, runsOnceWithoutAnyEntity,
+        .description = "[frame system] runs once without any entity")
     {
         GameManager gm;
         int calls = 0;
 
         gm.createSystem<>([&calls] { calls++; });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 1);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 1);
     }
 
-    void runsOncePerUpdateWhateverTheEntityCount()
+    Test(frame_systems, runsOncePerUpdateWhateverTheEntityCount,
+        .description =
+            "[frame system] runs once per update whatever the entity count")
     {
         GameManager gm;
         int calls = 0;
@@ -45,20 +104,23 @@ namespace {
         gm.createSystem<>([&calls] { calls++; });
         for (int i = 0; i < 10; i++)
             gm.update();
-        POC_CHECK(calls == 10);
+        cr_assert(calls == 10);
     }
 
-    void callableWithoutAngleBrackets()
+    Test(frame_systems, callableWithoutAngleBrackets,
+        .description = "[frame system] callable without angle brackets")
     {
         GameManager gm;
         int calls = 0;
 
         gm.createSystem([&calls] { calls++; });
         gm.update();
-        POC_CHECK(calls == 1);
+        cr_assert(calls == 1);
     }
 
-    void runsInCreationOrderWithOtherSystems()
+    Test(frame_systems, runsInCreationOrderWithOtherSystems,
+        .description =
+            "[frame system] runs in creation order with other systems")
     {
         GameManager gm;
         std::string order;
@@ -68,10 +130,11 @@ namespace {
         gm.createSystem<>([&order] { order += "F"; });
         gm.createSystem<Health>([&order](Health &) { order += "B"; });
         gm.update();
-        POC_CHECK(order == "AFB");
+        cr_assert(order == "AFB");
     }
 
-    void seesChangesOfEarlierSystems()
+    Test(frame_systems, seesChangesOfEarlierSystems,
+        .description = "[frame system] sees the changes of earlier systems")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -82,10 +145,11 @@ namespace {
         gm.createSystem<>(
             [&gm, &seen, e] { seen = gm.getComponent<Health>(e).hp; });
         gm.update();
-        POC_CHECK(seen == 42);
+        cr_assert(seen == 42);
     }
 
-    void destroyInsideIsDeferred()
+    Test(frame_systems, destroyInsideIsDeferred,
+        .description = "[frame system] a destroy inside is deferred")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -99,11 +163,12 @@ namespace {
             aliveDuringFrame = gm.hasEntity(e);
         });
         gm.update();
-        POC_CHECK(aliveDuringFrame);
-        POC_CHECK(!gm.hasEntity(e));
+        cr_assert(aliveDuringFrame);
+        cr_assert(!gm.hasEntity(e));
     }
 
-    void addInsideIsDeferred()
+    Test(frame_systems, addInsideIsDeferred,
+        .description = "[frame system] an add inside is deferred")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -118,25 +183,27 @@ namespace {
             visibleDuringFrame = gm.hasComponent<Health>(e);
         });
         gm.update();
-        POC_CHECK(!visibleDuringFrame);
-        POC_CHECK(gm.getComponent<Health>(e).hp == 5);
+        cr_assert(!visibleDuringFrame);
+        cr_assert(gm.getComponent<Health>(e).hp == 5);
     }
 
-    void destroyedFrameSystemStopsRunning()
+    Test(frame_systems, destroyedFrameSystemStopsRunning,
+        .description = "[frame system] a destroyed frame system stops running")
     {
         GameManager gm;
         int calls = 0;
 
         SystemId id = gm.createSystem<>([&calls] { calls++; });
-        POC_CHECK(gm.hasSystem(id));
+        cr_assert(gm.hasSystem(id));
         gm.update();
         gm.destroySystem(id);
-        POC_CHECK(!gm.hasSystem(id));
+        cr_assert(!gm.hasSystem(id));
         gm.update();
-        POC_CHECK(calls == 1);
+        cr_assert(calls == 1);
     }
 
-    void frameSystemDestroysItself()
+    Test(frame_systems, frameSystemDestroysItself,
+        .description = "[frame system] a frame system destroys itself")
     {
         GameManager gm;
         int calls = 0;
@@ -148,11 +215,12 @@ namespace {
         });
         gm.update();
         gm.update();
-        POC_CHECK(calls == 1);
-        POC_CHECK(!gm.hasSystem(self));
+        cr_assert(calls == 1);
+        cr_assert(!gm.hasSystem(self));
     }
 
-    void stateCapturedPersistsAcrossFrames()
+    Test(frame_systems, stateCapturedPersistsAcrossFrames,
+        .description = "[frame system] captured state persists across frames")
     {
         GameManager gm;
         int frame = 0;
@@ -161,10 +229,11 @@ namespace {
         gm.createSystem<>([&frame, &seen] { seen.push_back(++frame); });
         for (int i = 0; i < 3; i++)
             gm.update();
-        POC_CHECK((seen == std::vector<int> {1, 2, 3}));
+        cr_assert((seen == std::vector<int> {1, 2, 3}));
     }
 
-    void nestedUpdateHasNoEffect()
+    Test(frame_systems, nestedUpdateHasNoEffect,
+        .description = "[frame system] a nested update has no effect")
     {
         GameManager gm;
         int calls = 0;
@@ -173,11 +242,13 @@ namespace {
             calls++;
             gm.update();
         });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 1);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 1);
     }
 
-    void throwingFrameSystemDoesNotLockQueue()
+    Test(frame_systems, throwingFrameSystemDoesNotLockQueue,
+        .description =
+            "[frame system] a throwing frame system does not lock the queue")
     {
         GameManager gm;
         Entity e = gm.createEntity();
@@ -190,13 +261,14 @@ namespace {
             gm.addComponent<Health>(e, 3);
             throw std::runtime_error("frame system failure");
         });
-        POC_CHECK_THROWS(gm.update(), std::runtime_error);
-        POC_CHECK(gm.hasComponent<Health>(e));
+        cr_assert_throw(gm.update(), std::runtime_error);
+        cr_assert(gm.hasComponent<Health>(e));
         gm.addComponent<Position>(e, 1.f, 1.f);
-        POC_CHECK(gm.hasComponent<Position>(e));
+        cr_assert(gm.hasComponent<Position>(e));
     }
 
-    void collisionsWithViews()
+    Test(frame_systems, collisionsWithViews,
+        .description = "[frame system] bullets against enemies with views")
     {
         GameManager gm;
         EntitySet bullets;
@@ -232,18 +304,20 @@ namespace {
                 });
         });
         gm.update();
-        POC_CHECK(hits == 3);
+        cr_assert(hits == 3);
         for (Entity b : bullets)
-            POC_CHECK(!gm.hasEntity(b));
+            cr_assert(!gm.hasEntity(b));
         int damaged = 0;
         for (Entity e : enemies)
             damaged += gm.getComponent<Health>(e).hp == 2 ? 1 : 0;
-        POC_CHECK(damaged == 3);
+        cr_assert(damaged == 3);
         gm.update();
-        POC_CHECK(hits == 3);
+        cr_assert(hits == 3);
     }
 
-    void viewOnNeverAddedTypeInsideFrameSystem()
+    Test(frame_systems, viewOnNeverAddedTypeInsideFrameSystem,
+        .description =
+            "[frame system] a view on a never added type inside a frame system")
     {
         GameManager gm;
         int calls = 0;
@@ -251,46 +325,8 @@ namespace {
         gm.createSystem<>([&gm, &calls] {
             gm.view<Bullet>().each([&calls](Entity, Bullet &) { calls++; });
         });
-        POC_CHECK_NOTHROW(gm.update());
-        POC_CHECK(calls == 0);
+        cr_assert_no_throw(gm.update(), std::exception);
+        cr_assert(calls == 0);
     }
 
 } // namespace
-
-namespace Poc {
-
-    TestList frameSystemTests()
-    {
-        return {
-            {"[frame system] runs once without any entity",
-                runsOnceWithoutAnyEntity},
-            {"[frame system] runs once per update whatever the entity count",
-                runsOncePerUpdateWhateverTheEntityCount},
-            {"[frame system] callable without angle brackets",
-                callableWithoutAngleBrackets},
-            {"[frame system] runs in creation order with other systems",
-                runsInCreationOrderWithOtherSystems},
-            {"[frame system] sees the changes of earlier systems",
-                seesChangesOfEarlierSystems},
-            {"[frame system] a destroy inside is deferred",
-                destroyInsideIsDeferred},
-            {"[frame system] an add inside is deferred", addInsideIsDeferred},
-            {"[frame system] a destroyed frame system stops running",
-                destroyedFrameSystemStopsRunning},
-            {"[frame system] a frame system destroys itself",
-                frameSystemDestroysItself},
-            {"[frame system] captured state persists across frames",
-                stateCapturedPersistsAcrossFrames},
-            {"[frame system] a nested update has no effect",
-                nestedUpdateHasNoEffect},
-            {"[frame system] a throwing frame system does not lock the queue",
-                throwingFrameSystemDoesNotLockQueue},
-            {"[frame system] bullets against enemies with views",
-                collisionsWithViews},
-            {"[frame system] a view on a never added type inside a frame "
-             "system",
-                viewOnNeverAddedTypeInsideFrameSystem},
-        };
-    }
-
-} // namespace Poc

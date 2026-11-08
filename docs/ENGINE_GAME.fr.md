@@ -11,6 +11,11 @@ Le moteur s'occupe du reste : il crée le `GameManager`, charge les modules, lan
 
 - **Public visé :** toute personne qui crée un jeu avec le moteur.
 - **Pour écrire les scripts**, consultez [le guide du scripting Lua](LUA_GUIDE.fr.md).
+- **Pour les écrire plus vite dans VS Code**, installez l'extension **R-Type lua engine epitech**, publiée par Ariel Amriou (identifiant d'éditeur `ariel-amriou`) :
+
+  ```sh
+  code --install-extension ariel-amriou.r-type-lua-engine-epitech
+  ```
 - **Pour l'ECS en détail** (entités, composants, systèmes, vues), consultez [le guide d'utilisation de l'ECS](ECS_GUIDE.fr.md).
 
 > [!TIP]

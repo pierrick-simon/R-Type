@@ -11,7 +11,7 @@ This guide explains how to **use** the engine's ECS (`Engine/System`) day to day
 The whole API goes through a single class: **`RType::GameManager`**. The internal classes (`EntityManager`, `ComponentManager`, `SystemManager`) are implementation details: game code must never use them directly.
 
 > [!TIP]
-> Every rule in this guide is covered by a test in the Poc project (`Games/Poc`). If you are unsure about a behavior, run the `r-type_poc` binary or read the matching test.
+> Every rule in this guide is covered by an engine unit test (`tests/engine`). If you are unsure about a behavior, run `cmake --build build --target engine_tests_run` or read the matching test.
 
 ---
 
