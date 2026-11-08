@@ -249,24 +249,42 @@ namespace RType::Client {
         text.origin.y = size.y * anchor.y;
     }
 
+    namespace {
+
+        std::optional<AssetId> menuTrack(GameManager &gm)
+        {
+            std::optional<AssetId> track = Asset::MENU_MUSIC;
+
+            gm.view<LobbyState, LobbyClient>().each(
+                [&track](Entity, LobbyState &state, LobbyClient &l) {
+                    if (l.inGame && !l.gameOverShown)
+                        track = std::nullopt;
+                    else if (l.inGame)
+                        track = state.victory ? Asset::VICTORY_MUSIC
+                                              : Asset::GAME_OVER_MUSIC;
+                });
+            return track;
+        }
+
+    } // namespace
+
     void systemMenuMusic(GameManager &gm, Assets &assets)
     {
-        bool wanted = true;
-        std::vector<Entity> playing;
+        const std::optional<AssetId> track = menuTrack(gm);
+        std::vector<Entity> stale;
+        bool playing = false;
 
-        gm.view<LobbyClient>().each([&wanted](Entity, LobbyClient &l) {
-            wanted = wanted && (!l.inGame || l.gameOverShown);
+        gm.view<MenuMusic>().each([&](Entity e, MenuMusic &music) {
+            if (track && music.track == *track)
+                playing = true;
+            else
+                stale.push_back(e);
         });
-        gm.view<MenuMusic>().each(
-            [&playing](Entity e, MenuMusic &) { playing.push_back(e); });
-        if (!wanted) {
-            for (const Entity e : playing)
-                gm.destroyEntity(e);
+        for (const Entity e : stale)
+            gm.destroyEntity(e);
+        if (!track || playing)
             return;
-        }
-        if (!playing.empty())
-            return;
-        auto decoder = assets.get<Decoder>(Asset::MENU_MUSIC);
+        auto decoder = assets.get<Decoder>(*track);
 
         if (!decoder)
             return;
@@ -275,8 +293,8 @@ namespace RType::Client {
             SoundInfo info;
 
             info.state = SoundInfo::PLAY;
-            info.loop = true;
-            gm.addComponent<MenuMusic>(music);
+            info.loop = *track == Asset::MENU_MUSIC;
+            gm.addComponent<MenuMusic>(music, MenuMusic {*track});
             gm.addComponent<Sound>(music, listener, decoder->get(), info);
         }
     }

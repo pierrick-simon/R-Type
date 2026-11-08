@@ -51,7 +51,9 @@ namespace RType::Client {
         AssetId asset;
     };
 
-    struct MenuMusic {};
+    struct MenuMusic {
+        AssetId track = 0;
+    };
 
     struct TextAnchor {
         float x = 0.5f;

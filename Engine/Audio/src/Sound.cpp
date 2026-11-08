@@ -39,6 +39,7 @@ namespace RType {
             _ref.get());
         if (r != MA_SUCCESS)
             throw EngineException("Failed to create audio buffer ref");
+        _ref->sampleRate = decoder.getSampleRate();
 
         r = ma_sound_init_from_data_source(
             &l.getEngine(), _ref.get(), 0, nullptr, _sound.get());

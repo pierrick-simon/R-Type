@@ -108,6 +108,10 @@ namespace RType::Asset {
             {FIRST_LEVEL_MUSIC, "R-Type/Sound/Music/Stage1.mp3", Decoder::TYPE},
             {BOSS_MUSIC, "R-Type/Sound/Music/Boss1.mp3", Decoder::TYPE},
             {MENU_MUSIC, "R-Type/Sound/Music/LobbyTheme.mp3", Decoder::TYPE},
+            {GAME_OVER_MUSIC, "R-Type/Sound/Music/GameOver.mp3", Decoder::TYPE},
+            {VICTORY_MUSIC,
+                "R-Type/Sound/Music/VictoryTheme.mp3",
+                Decoder::TYPE},
 
             {FONT, "R-Type/sprites/Fonts/r-type.otf", Font::TYPE},
 
