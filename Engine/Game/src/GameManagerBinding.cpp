@@ -7,6 +7,7 @@
 
 #include <string>
 
+#include "AudioBinding.hpp"
 #include "ComponentBinding.hpp"
 #include "GameManager.hpp"
 #include "GameManagerBinding.hpp"
@@ -41,6 +42,7 @@ namespace RType::Game {
         InputBinding::registerFunctions(lua);
         TimeBinding::registerFunctions(lua);
         WindowBinding::registerFunctions(lua);
+        AudioBinding::registerFunctions(lua);
     }
 
 } // namespace RType::Game

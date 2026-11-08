@@ -21,6 +21,7 @@ add_executable(game
     src/InputBinding.cpp
     src/TimeBinding.cpp
     src/WindowBinding.cpp
+    src/AudioBinding.cpp
     src/EngineBindings.cpp
 )
 
