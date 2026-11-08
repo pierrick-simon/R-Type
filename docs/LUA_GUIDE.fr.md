@@ -6,13 +6,13 @@ Avec le moteur, le contenu d'un jeu s'écrit en Lua : les scripts créent les en
 
 - **Public visé :** toute personne qui écrit les scripts d'un jeu, et, dans la [section 10](#10-pour-les-développeurs-du-moteur--exposer-un-composant-ou-un-système), les développeurs du moteur qui rendent un nouveau composant ou système utilisable depuis Lua.
 - **Pour mettre en place le jeu** (`config.conf`, modules, dossier, lancement), consultez [le guide pour lancer un jeu](ENGINE_GAME.fr.md).
-- **Pour écrire les scripts plus vite**, une extension VS Code pour le Lua du moteur est disponible. Installez-la avec :
+- **Pour écrire les scripts plus vite**, une extension VS Code pour le Lua du moteur est disponible : **R-Type lua engine epitech**, publiée par Ariel Amriou (identifiant d'éditeur `ariel-amriou`). Installez-la avec :
 
   ```sh
   code --install-extension ariel-amriou.r-type-lua-engine-epitech
   ```
 
-  ou cherchez-la dans la Marketplace de VS Code (vue Extensions, `Ctrl+Shift+X`).
+  ou cherchez « R-Type lua engine epitech » dans la Marketplace de VS Code (vue Extensions, `Ctrl+Shift+X`).
 
 > [!TIP]
 > Tous les exemples de ce guide ont été lancés avec le moteur actuel, et tous les messages d'erreur de la [section 9](#9-les-erreurs-et-comment-les-régler) ont été reproduits.

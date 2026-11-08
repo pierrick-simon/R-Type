@@ -18,6 +18,9 @@ set(SRCS
     src/MenuSystems.cpp
     src/Lobby.cpp
     src/LobbyListPage.cpp
+    src/Login.cpp
+    src/Settings.cpp
+    src/GameOver.cpp
     src/Metric.cpp
 )
 

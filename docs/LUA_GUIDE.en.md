@@ -6,13 +6,13 @@ With the engine, a game's content is written in Lua: the scripts create the enti
 
 - **Audience:** anyone writing a game's scripts, and, in [section 10](#10-for-engine-developers-exposing-a-component-or-a-system), engine developers who make a new component or system usable from Lua.
 - **To set up the game** (`config.conf`, modules, folder, starting it), see [the guide to running a game](ENGINE_GAME.en.md).
-- **To write the scripts faster**, a VS Code extension for the engine's Lua is available. Install it with:
+- **To write the scripts faster**, a VS Code extension for the engine's Lua is available: **R-Type lua engine epitech**, published by Ariel Amriou (publisher ID `ariel-amriou`). Install it with:
 
   ```sh
   code --install-extension ariel-amriou.r-type-lua-engine-epitech
   ```
 
-  or search for it in the VS Code Marketplace (Extensions view, `Ctrl+Shift+X`).
+  or search for "R-Type lua engine epitech" in the VS Code Marketplace (Extensions view, `Ctrl+Shift+X`).
 
 > [!TIP]
 > Every example in this guide was run against the current engine, and every error message in [section 9](#9-errors-and-how-to-fix-them) was reproduced.

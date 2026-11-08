@@ -5,6 +5,7 @@
 ** MenuSystems
 */
 
+#include <optional>
 #include <vector>
 
 #include "Assets.hpp"
@@ -15,6 +16,7 @@
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
+#include "Settings.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -30,6 +32,8 @@ namespace RType::Client {
                 return _clInfos._ip;
             if (field == Field::LobbyName)
                 return _clInfos._lobbyName;
+            if (field == Field::Password)
+                return _clInfos._password;
             return _clInfos._username;
         }
 
@@ -39,7 +43,9 @@ namespace RType::Client {
                 return "127.0.0.1";
             if (field == Field::LobbyName)
                 return _clInfos._lobbyNameDefault;
-            return "Player";
+            if (field == Field::Password)
+                return "";
+            return "Player1";
         }
 
         std::size_t fieldMaxLength(const Field field)
@@ -48,6 +54,8 @@ namespace RType::Client {
                 return IP_MAX_LENGTH;
             if (field == Field::LobbyName)
                 return LOBBY_NAME_MAX_LENGTH;
+            if (field == Field::Password)
+                return PASSWORD_MAX_LENGTH;
             return USERNAME_MAX_LENGTH;
         }
 
@@ -62,7 +70,10 @@ namespace RType::Client {
                     (key >= 'A' && key <= 'Z') || (key >= '0' && key <= '9') ||
                     extra.find(static_cast<char>(key)) != std::string::npos;
             }
-            return key >= 32 && key <= 125;
+            if (field == Field::Password)
+                return key > ' ' && key <= '~';
+            return (key >= 'a' && key <= 'z') || (key >= 'A' && key <= 'Z') ||
+                (key >= '0' && key <= '9') || key == '_';
         }
 
         bool contains(const Rectangle &rect, const Vector2 &point)
@@ -126,7 +137,11 @@ namespace RType::Client {
                 f.elapsed += clock.getElapsed();
                 const bool blink =
                     activeField == f.id && (f.elapsed.count() / 400) % 2 == 0;
-                button.label = fieldValue(f.id) + (blink ? "_" : "");
+                const std::string &value = fieldValue(f.id);
+                button.label =
+                    (f.id == Field::Password ? std::string(value.size(), '*')
+                                             : value) +
+                    (blink ? "_" : "");
                 button.error = f.id == Field::Ip && ipInvalid;
             });
     }
@@ -134,12 +149,18 @@ namespace RType::Client {
     void systemServerLost(GameManager &gm)
     {
         bool lost = false;
+        bool masterLost = false;
 
-        gm.view<ClientManager>().each([&](Entity, ClientManager &c) {
-            if (c.isTimedOut())
-                lost = true;
+        gm.view<ClientManager>().each([&](Entity e, ClientManager &c) {
+            if (!c.isTimedOut())
+                return;
+            lost = true;
+            if (gm.hasComponent<LobbyListClient>(e))
+                masterLost = true;
         });
-        if (lost)
+        if (masterLost)
+            returnToServerPage(gm);
+        else if (lost)
             returnToMenu(gm);
     }
 
@@ -178,10 +199,13 @@ namespace RType::Client {
     {
         std::vector<Entity> orphans;
         gm.view<Button, SpriteSheet2D>().each(
-            [](Entity, Button &button, SpriteSheet2D &sheet) {
+            [&gm](Entity e, Button &button, SpriteSheet2D &sheet) {
+                const bool editing = gm.hasComponent<TextField>(e) &&
+                    gm.getComponent<TextField>(e).id == activeField;
+
                 if (button.disabled)
                     sheet.currentTile = BUTTON_TILE_DISABLED;
-                else if (button.hovered)
+                else if (button.hovered || editing || button.selected)
                     sheet.currentTile = BUTTON_TILE_HOVERED;
                 else
                     sheet.currentTile = BUTTON_TILE_NORMAL;
@@ -225,31 +249,43 @@ namespace RType::Client {
 
     void systemMenuBackground(GameManager &gm)
     {
-        bool hidden = false;
+        bool inGame = false;
+        bool lobbyPage = false;
         std::vector<Entity> backgrounds;
+        std::optional<AssetId> wanted = Asset::MENU_BACKGROUND;
 
-        gm.view<LobbyClient>().each([&hidden](Entity, LobbyClient &l) {
-            hidden = hidden || l.inGame || l.shown;
+        gm.view<LobbyClient>().each([&](Entity, LobbyClient &l) {
+            inGame = inGame || l.inGame;
+            lobbyPage = lobbyPage || l.shown;
         });
-        gm.view<LobbyListClient>().each([&hidden](Entity, LobbyListClient &l) {
-            hidden = hidden || l.shown;
-        });
-        if (!gm.view<ConnectingText>().getVector().empty())
-            hidden = true;
+        gm.view<LobbyListClient>().each(
+            [&lobbyPage](Entity, LobbyListClient &l) {
+                lobbyPage = lobbyPage || l.shown;
+            });
+        if (inGame)
+            wanted = std::nullopt;
+        else if (lobbyPage)
+            wanted = Asset::MENU_BACK_SIDE;
+        else if (!gm.view<ConnectingText>().getVector().empty() ||
+            !gm.view<SettingsItem>().getVector().empty())
+            wanted = Asset::MENU_BACK;
+        bool upToDate = false;
+
         gm.view<MenuBackground>().each(
-            [&backgrounds](
-                Entity e, MenuBackground &) { backgrounds.push_back(e); });
-        if (hidden) {
-            for (const Entity e : backgrounds)
-                gm.destroyEntity(e);
-            return;
-        }
-        if (!backgrounds.empty())
+            [&](Entity e, MenuBackground &background) {
+                if (wanted && background.asset == *wanted && !upToDate)
+                    upToDate = true;
+                else
+                    backgrounds.push_back(e);
+            });
+        for (const Entity e : backgrounds)
+            gm.destroyEntity(e);
+        if (!wanted || upToDate)
             return;
         const Entity e = gm.createEntity();
 
-        gm.addComponent<MenuBackground>(e);
-        gm.addComponent<Sprite2D>(e, Asset::MENU_BACKGROUND);
+        gm.addComponent<MenuBackground>(e, MenuBackground {*wanted});
+        gm.addComponent<Sprite2D>(e, *wanted);
         gm.addComponent<Position2D>(e, 0.f, 0.f);
     }
 

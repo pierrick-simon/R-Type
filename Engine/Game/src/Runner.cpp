@@ -7,8 +7,10 @@
 
 #include <iostream>
 #include <sol/sol.hpp>
+#include <thread>
 
 #include "ConfigBuilder.hpp"
+#include "Console.hpp"
 #include "Exceptions.hpp"
 #include "Game.hpp"
 #include "GameManagerBinding.hpp"
@@ -40,7 +42,17 @@ namespace RType::Game {
             Modules::create(gm, modules);
             for (auto &path : Scripts::findPaths(GameConfig.srcDir))
                 Scripts::load(lua, path, gm);
+#if defined(__DEBUG__)
+            Console console(lua, gm);
+
+            std::thread(Console::listen).detach();
+            gm.run(GameConfig.windowFPS, [&console] {
+                console.run();
+                return running;
+            });
+#else
             gm.run(GameConfig.windowFPS, [] { return running; });
+#endif
         } catch (const EngineException &e) {
             std::cout << e.what() << std::endl;
             return 84;

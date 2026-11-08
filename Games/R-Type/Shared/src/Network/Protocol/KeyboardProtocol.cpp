@@ -6,6 +6,7 @@
 */
 
 #include "KeyboardProtocol.hpp"
+#include "KeyBindings.hpp"
 
 namespace RType {
 
@@ -63,10 +64,18 @@ namespace RType {
         gm.view<KeyboardManager>().each([&c](Entity e, KeyboardManager &km) {
             auto &pressed = km.keyPressed;
             auto &released = km.keyReleased;
+            auto send = [&c](uint8_t op, Key::Value value) {
+                if (auto key = KeyBindings::translate(value))
+                    c.send(op, {toByte(*key)});
+            };
             for (auto &value : pressed)
-                c.send(OpcodeRType::KEY_PRESSED, {toByte(value)});
+                send(OpcodeRType::KEY_PRESSED, value);
             for (auto &value : released)
-                c.send(OpcodeRType::KEY_RELEASED, {toByte(value)});
+                send(OpcodeRType::KEY_RELEASED, value);
+            for (auto &value : pressed)
+                if (std::ranges::find(km.keyDown, value) == km.keyDown.end() &&
+                    std::ranges::find(released, value) == released.end())
+                    send(OpcodeRType::KEY_RELEASED, value);
         });
     }
 

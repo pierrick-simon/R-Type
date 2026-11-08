@@ -11,6 +11,7 @@
 #include <array>
 #include <cstddef>
 #include "Assets.hpp"
+#include "Enemies/Defs/DimensionsDef.hpp"
 
 namespace RType {
 
@@ -23,6 +24,7 @@ namespace RType {
         int hitboxW = 0;
         int hitboxH = 0;
         int rows = 1;
+        float scale = SPRITE_SCALE;
     };
 
     inline constexpr SheetInfo SCOUT_SHEET = {
@@ -63,6 +65,21 @@ namespace RType {
         {0.f, 21.f},
         {1.f, 21.f},
     }};
+
+    inline constexpr SheetInfo BOSS_SHEET = {
+        Asset::ENEMY_BOSS, 64, 155, 204, 120, 0, 0, 16, LEVEL_SCALE};
+    inline constexpr SheetInfo BOSS_BULLET_SHEET = {
+        Asset::BOSS_BULLET, 9, 16, 16, 60, 10, 10};
+    inline constexpr SheetInfo BOSS_EXPLOSION_SHEET = {
+        Asset::BOSS_EXPLOSION, 8, 64, 64, 80, 0, 0};
+
+    inline constexpr int BOSS_STAGES = 8;
+    inline constexpr int BOSS_IDLE_FRAMES = 4;
+    // Boss.png repeats every frame brightened under the normal ones.
+    inline constexpr std::size_t BOSS_FLASH_OFFSET =
+        std::size_t(BOSS_STAGES) * std::size_t(BOSS_IDLE_FRAMES);
+    inline constexpr float BOSS_HURT_FLASH = 0.15f;
+    inline constexpr float BOSS_HURT_BLINK = 0.05f;
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
         Asset::ENEMY_EXPLOSION, 6, 32, 31, 67, 0, 0};

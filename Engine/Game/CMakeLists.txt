@@ -23,6 +23,7 @@ add_executable(game
     src/WindowBinding.cpp
     src/AudioBinding.cpp
     src/EngineBindings.cpp
+    src/Console.cpp
 )
 
 target_include_directories(game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

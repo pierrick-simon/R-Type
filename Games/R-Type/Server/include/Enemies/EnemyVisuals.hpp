@@ -12,7 +12,10 @@
 
 namespace RType {
 
+    struct SpriteSheet2D;
+
     EnemyHooks makeEnemyVisualHooks();
+    void systemBossAnimation(const Boss &boss, SpriteSheet2D &sheet);
     void registerEnemyVisualSystems(GameManager &gm);
 
 } // namespace RType

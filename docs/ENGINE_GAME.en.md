@@ -11,6 +11,11 @@ The engine does the rest: it creates the `GameManager`, loads the modules, runs 
 
 - **Audience:** anyone making a game with the engine.
 - **To write the scripts**, see [the Lua scripting guide](LUA_GUIDE.en.md).
+- **To write them faster in VS Code**, install the **R-Type lua engine epitech** extension, published by Ariel Amriou (publisher ID `ariel-amriou`):
+
+  ```sh
+  code --install-extension ariel-amriou.r-type-lua-engine-epitech
+  ```
 - **For the ECS in detail** (entities, components, systems, views), see [the ECS user guide](ECS_GUIDE.en.md).
 
 > [!TIP]

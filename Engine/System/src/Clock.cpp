@@ -22,6 +22,11 @@ namespace RType {
         c._clock = now;
     }
 
+    void Clock::restart()
+    {
+        _clock = std::chrono::steady_clock::now();
+    }
+
     MasterClock::MasterClock()
     {
         static bool onlyOne = true;
