@@ -63,7 +63,8 @@ namespace RType {
     }
 
     Entity spawnEnemy(GameManager &gm, EnemyType type, float x, float y,
-        const EnemyHooks &hooks, int healthFactor)
+        const EnemyHooks &hooks, int healthFactor,
+        const std::optional<MovementPattern> &motion)
     {
         const EnemyDef &def = enemyDef(type);
         const int hp = def.hp * healthFactor;
@@ -98,7 +99,7 @@ namespace RType {
         else if (def.pattern == PatternType::Boss)
             gm.addComponent<Boss>(entity);
         else
-            gm.addComponent<MovementPattern>(entity, pattern);
+            gm.addComponent<MovementPattern>(entity, motion.value_or(pattern));
         gm.addComponent<Hitbox>(entity, hitbox);
         if (def.fireCooldown > 0.f) {
             Weapon weapon;
@@ -166,6 +167,7 @@ namespace RType {
             director.next = 0;
             director.score = 0;
             director.bossSpawned = false;
+            director.scoutTimer = 0.f;
             director.victoryTimer = 0.f;
             director.levelCleared = false;
             director.paused = false;
@@ -185,12 +187,9 @@ namespace RType {
 
         director.players = std::max(players, 1);
 
-        director.addWave(EnemyType::Scout, 300.f, 5, 0.5f, 2.f);
         director.addWave(EnemyType::Walker, 0.f, 1, 0.f, 4.f);
-        director.addWave(EnemyType::Scout, 800.f, 5, 0.5f, 6.f);
         director.addWave(EnemyType::Alien, 350.f, 1, 0.f, 8.f);
         director.addWave(EnemyType::Gunner, 540.f, 2, 1.5f, 10.f);
-        director.addWave(EnemyType::Scout, 540.f, 8, 0.4f, 15.f);
         gm.addComponent<EnemyDirector>(entity, std::move(director));
         return entity;
     }

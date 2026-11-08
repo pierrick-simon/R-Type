@@ -25,6 +25,7 @@ set(GAME_SRCS
         src/Common/Animation.cpp
         src/Common/Background.cpp
         src/Common/Bullet.cpp
+        src/Common/Music.cpp
         src/Common/Terrain.cpp
         src/Connexion/Instance.cpp
         src/Connexion/InstanceLink.cpp

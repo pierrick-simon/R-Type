@@ -19,8 +19,10 @@ namespace RType {
 
     SpriteSheet2D makeSheet(const SheetInfo &info)
     {
+        const int rows = info.flashFrames ? info.rows * 2 : info.rows;
+
         return SpriteSheet2D(
-            {info.rows, info.frames / info.rows}, info.frameMs, info.scale);
+            {rows, info.frames / info.rows}, info.frameMs, info.scale);
     }
 
     void systemWalkerAnimation(const Walker &walker, SpriteSheet2D &sheet)
@@ -62,12 +64,15 @@ namespace RType {
     void systemEnemyHurtBlink(GameManager &gm)
     {
         gm.view<Enemy, Health, SpriteSheet2D>().each(
-            [&gm](Entity e, Enemy &, Health &health, SpriteSheet2D &sheet) {
-                if (gm.hasComponent<Boss>(e))
+            [](Entity, Enemy &enemy, Health &health, SpriteSheet2D &sheet) {
+                const SheetInfo &info = *enemyDef(enemy.type).sheet;
+
+                if (!info.flashFrames)
                     return;
-                sheet.color = isHurtBlinking(health)
-                    ? raylib::Color {90, 90, 255, 255}
-                    : raylib::Color::White();
+                const auto frames = std::size_t(info.frames);
+
+                sheet.currentTile = sheet.currentTile % frames +
+                    (isHurtBlinking(health) ? frames : 0);
             });
     }
 

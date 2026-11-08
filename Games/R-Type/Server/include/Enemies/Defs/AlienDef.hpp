@@ -52,7 +52,6 @@ namespace RType {
         return alien.grounded ? ALIEN_TILE_LANDED : ALIEN_TILE_FLY;
     }
 
-    /** @brief Screen position of the alien's gun tip. */
     [[nodiscard]] inline std::pair<float, float> alienMuzzle(
         const Alien &alien, const Position2D &pos)
     {

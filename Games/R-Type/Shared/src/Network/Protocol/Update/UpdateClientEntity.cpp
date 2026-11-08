@@ -35,7 +35,7 @@ namespace RType {
     }
 
     UpdateClientEntity::UpdateClientEntity(EntityType type, int asset,
-        GameManager &gm, Entity entity, std::optional<Sound> sound) :
+        GameManager &gm, Entity entity, const std::optional<Sound> &sound) :
         _type(type), _sound(sound), asset(asset)
     {
         static std::atomic<uint32_t> id = 0;
@@ -55,6 +55,8 @@ namespace RType {
             case EntityType::SOUND:
                 gm.addComponent<UpdateSound>(entity);
         }
+        if (sound && type != EntityType::SOUND)
+            gm.addComponent<UpdateSound>(entity);
     };
 
     void UpdateClientEntity::systemUpdateEntityPos(
@@ -121,14 +123,14 @@ namespace RType {
             auto text = gm.getComponent<Text2D>(entity);
             TextProtocol::sendText({id}, server, _id, text.str);
         }
-        if (_sound && _type != SOUND && !_sound->set) {
-            gm.addComponent<UpdateSound>(entity);
+        if (_sound && _type != SOUND &&
+            std::ranges::find(_sound->sent, id) == _sound->sent.end()) {
             ProtocolEntity pe = {};
             pe.assetId = _sound->asset;
             pe.id = _id;
             pe.type = SOUND;
             CreateProtocol::sendCreate({id}, server, pe);
-            _sound->set = true;
+            _sound->sent.push_back(id);
             return;
         }
         _links.push_back(id);

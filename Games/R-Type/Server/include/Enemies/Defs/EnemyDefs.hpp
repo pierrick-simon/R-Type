@@ -14,6 +14,7 @@
     #include "DimensionsDef.hpp"
     #include "Enemies/EnemyComponents.hpp"
     #include "Enemies/EnemySheets.hpp"
+    #include "ScoutDef.hpp"
     #include "WalkerDef.hpp"
 
 namespace RType {
@@ -40,8 +41,8 @@ namespace RType {
                 .scoreValue = 100,
                 .speed = 260.f * ENEMY_SPEED_FACTOR,
                 .amplitude = 120.f,
-                .period = 2.f,
-                .pattern = PatternType::SineWave},
+                .period = 0.5f,
+                .pattern = PatternType::ZigZag},
             {.name = "RobotGunner",
                 .sheet = &GUNNER_SHEET,
                 .hp = 3,
