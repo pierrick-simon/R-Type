@@ -8,6 +8,8 @@
 #ifndef RUNNER_HPP_
 #define RUNNER_HPP_
 
+#include "GameManager.hpp"
+
 namespace RType::Game {
 
     /**
@@ -30,6 +32,14 @@ namespace RType::Game {
          * it is true. Set to false by gm:stop().
          */
         static bool running;
+
+    private:
+        /**
+         * @brief Destroys the entities that hold a Texture2D, a Model3D or
+         * a Font while the window still exists: raylib needs it to free them,
+         * and the GameManager destroys its components in no given order.
+         */
+        static void unloadGraphics(GameManager &gm);
     };
 
 } // namespace RType::Game
