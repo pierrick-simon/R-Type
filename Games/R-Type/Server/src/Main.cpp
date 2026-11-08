@@ -19,7 +19,7 @@ int main()
         auto &server = gm.getComponent<RType::ServerManager>(master);
 
         gm.run(60, [&] { return server.isRunning(); });
-    } catch (const RType::EngineException &e) {
+    } catch (const std::exception &e) {
         std::cout << e.what() << std::endl;
     }
     return 0;
