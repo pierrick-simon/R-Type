@@ -5,8 +5,6 @@
 ** LobbyListPage
 */
 
-#include "LobbyListPage.hpp"
-
 #include <algorithm>
 #include <optional>
 #include <set>
@@ -16,9 +14,12 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "KeyboardManager.hpp"
+#include "LobbyListPage.hpp"
+#include "Login.hpp"
 #include "MasterProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
+#include "Texture2D.hpp"
 
 namespace RType::Client {
 
@@ -180,20 +181,19 @@ namespace RType::Client {
             });
         }
 
-        void leaveServer(GameManager &gm)
+        void backToMenu(GameManager &gm)
         {
-            std::vector<Entity> toDestroy;
-
-            gm.view<ClientManager>().each(
-                [&toDestroy](
-                    Entity e, ClientManager &) { toDestroy.push_back(e); });
-            gm.view<LobbyListItem>().each(
-                [&toDestroy](
-                    Entity e, LobbyListItem &) { toDestroy.push_back(e); });
-            for (const Entity e : toDestroy)
-                gm.destroyEntity(e);
+            destroyTagged<LobbyListItem>(gm);
+            gm.view<LobbyListClient>().each([](Entity, LobbyListClient &l) {
+                l.shown = false;
+                l.wanted = false;
+                l.popupOpen = false;
+                l.createRequested = false;
+                l.joinPort = 0;
+                l.selectedPort = 0;
+            });
             activeField = Field::None;
-            createServerPage(gm);
+            createMenu(gm);
         }
 
         void switchToLobby(GameManager &gm, Entity master, uint16_t port)
@@ -320,12 +320,22 @@ namespace RType::Client {
         gm.addComponent<LobbyListClient>(c);
         gm.addComponent<LobbyPortInfo>(c);
         gm.addComponent<LobbyListState>(c);
+        gm.addComponent<LoginClient>(c);
+        gm.addComponent<AccountResult>(c);
+    }
+
+    void openLobbyList(GameManager &gm)
+    {
+        destroyTagged<MenuItem>(gm);
+        activeField = Field::None;
+        gm.view<LobbyListClient>().each(
+            [](Entity, LobbyListClient &l) { l.wanted = true; });
     }
 
     void createLobbyListPage(GameManager &gm)
     {
         const float buttonsY =
-            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2 - BUTTON_GAP;
+            static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2;
         const Entity title = addText(gm,
             static_cast<float>(WINDOW_WIDTH) / 2.f,
             LOBBY_LIST_TITLE_Y,
@@ -341,9 +351,17 @@ namespace RType::Client {
         const Entity leave = addButton(gm,
             static_cast<float>(WINDOW_WIDTH) - BUTTON_WIDTH - BUTTON_GAP * 2,
             buttonsY,
-            "Leave Server",
-            leaveServer);
+            "Back",
+            backToMenu);
 
+        const Entity frame = gm.createEntity();
+
+        gm.addComponent<LobbyListItem>(frame);
+        gm.addComponent<LobbyListFrame>(frame);
+        const Entity rows = gm.createEntity();
+
+        gm.addComponent<LobbyListItem>(rows);
+        gm.addComponent<LobbyListRowSprite>(rows);
         scroll = 0;
         gm.addComponent<LobbyListItem>(title);
         gm.addComponent<LobbyListItem>(create);
@@ -383,7 +401,10 @@ namespace RType::Client {
                 if (info.refused) {
                     info.refused = false;
                     l.joinPort = 0;
+                    l.createRequested = false;
                 }
+                if (!l.wanted)
+                    return;
                 if (!l.shown) {
                     l.shown = true;
                     show = true;
@@ -448,8 +469,25 @@ namespace RType::Client {
                 state = &s;
                 client = &l;
             });
-        if (state == nullptr)
+        // Only while the list page is open (the font is always loaded now).
+        if (state == nullptr || client == nullptr ||
+            gm.view<LobbyListItem>().getVector().empty())
             return;
+        const Texture2D *rowSprite = nullptr;
+        const Texture2D *frameSprite = nullptr;
+        Vector2 mouse {-1.f, -1.f};
+
+        if (!gm.view<LobbyListRowSprite>().getVector().empty()) {
+            if (auto t = assets.get<Texture2D>(Asset::MENU_LOBBY_ROW))
+                rowSprite = &t->get();
+        }
+        if (!gm.view<LobbyListFrame>().getVector().empty()) {
+            if (auto t = assets.get<Texture2D>(Asset::MENU_LIST_FRAME))
+                frameSprite = &t->get();
+        }
+        gm.view<MouseManager>().each([&mouse](Entity, MouseManager &m) {
+            mouse = {m.getPos().x, m.getPos().y};
+        });
         const float size = LOBBY_LIST_TEXT_SIZE;
         auto text =
             [&](const std::string &str, float tx, float ty, Color color) {
@@ -484,12 +522,23 @@ namespace RType::Client {
             if (rect.y + rect.height < 0.f ||
                 rect.y > static_cast<float>(WINDOW_HEIGTH))
                 continue;
-            ::DrawRectangleRec(rect,
-                selected ? Color {60, 110, 200, 240} : Color {35, 42, 75, 230});
-            ::DrawRectangleLinesEx(rect,
-                selected ? 5.f : 3.f,
-                selected ? Color {255, 210, 80, 255}
-                         : Color {200, 200, 220, 255});
+            if (rowSprite != nullptr) {
+                const bool hovered = !client->popupOpen &&
+                    mouse.y >= LOBBY_LIST_VISIBLE_TOP &&
+                    mouse.y <= LOBBY_LIST_VISIBLE_BOTTOM &&
+                    ::CheckCollisionPointRec(mouse, rect);
+                const std::size_t tile = selected ? LOBBY_ROW_TILE_SELECTED
+                    : hovered                     ? LOBBY_ROW_TILE_HOVERED
+                                                  : LOBBY_ROW_TILE_NORMAL;
+
+                ::DrawTextureRec(*rowSprite,
+                    {static_cast<float>(tile) * LOBBY_LIST_ROW_WIDTH,
+                        0.f,
+                        LOBBY_LIST_ROW_WIDTH,
+                        LOBBY_LIST_ROW_HEIGHT},
+                    {rect.x, rect.y},
+                    WHITE);
+            }
             const float nameWidth = width(name);
             const float nameSize = nameWidth > LOBBY_LIST_NAME_MAX_WIDTH
                 ? size * LOBBY_LIST_NAME_MAX_WIDTH / nameWidth
@@ -509,16 +558,8 @@ namespace RType::Client {
                 lobby.started ? Color {255, 170, 60, 255}
                               : Color {90, 230, 120, 255});
         }
-        ::DrawRectangleRec(
-            Rectangle {
-                0, 0, static_cast<float>(WINDOW_WIDTH), LOBBY_LIST_VISIBLE_TOP},
-            Color {60, 60, 100, 255});
-        ::DrawRectangleRec(
-            Rectangle {0,
-                LOBBY_LIST_VISIBLE_BOTTOM,
-                static_cast<float>(WINDOW_WIDTH),
-                static_cast<float>(WINDOW_HEIGTH) - LOBBY_LIST_VISIBLE_BOTTOM},
-            Color {60, 60, 100, 255});
+        if (frameSprite != nullptr)
+            ::DrawTexture(*frameSprite, 0, 0, WHITE);
         if (!client->popupOpen)
             return;
         const Rectangle panel {

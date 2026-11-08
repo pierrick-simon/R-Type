@@ -10,9 +10,11 @@
 
 #include <optional>
 #include <vector>
+#include "FinishingSound.hpp"
 #include "GameManager.hpp"
 #include "Network.hpp"
 #include "ServerManager.hpp"
+#include "Sound.hpp"
 
 namespace RType {
 

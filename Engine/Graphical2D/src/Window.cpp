@@ -17,6 +17,7 @@ namespace RType {
         if (!onlyOne)
             throw EngineException("Window can be created only once");
         try {
+            SetTraceLogLevel(LOG_NONE);
             _window = std::make_unique<raylib::Window>();
             _window->Init(width, height, name, LOG_WARNING);
         } catch (raylib::RaylibException &e) {

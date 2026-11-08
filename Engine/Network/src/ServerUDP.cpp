@@ -68,6 +68,8 @@ namespace RType {
 
         for (auto it = _clients.begin(); it != _clients.end();) {
             if (now - it->second.lastSeen > std::chrono::seconds(TIMEOUT)) {
+                std::cout << "Timeout from client " << it->second.id << "..."
+                          << std::endl;
                 lost.push_back(it->second.id);
                 it = _clients.erase(it);
             } else
@@ -78,6 +80,7 @@ namespace RType {
                 onClientRemoved(Header {Opcode::LOGOUT, 0, 0, id});
         }
         broadcastNow(Opcode::HEALTH, {});
+        std::cout << "[Debug] Health check from server to client" << std::endl;
     }
 
     void UDPServer::startReceive()
@@ -107,20 +110,17 @@ namespace RType {
     void UDPServer::sendToClient(
         Client &client, uint8_t op, const std::vector<uint8_t> &payload)
     {
-        client.sendBuffer =
+        auto buffer = std::make_shared<std::vector<uint8_t>>(
             serializeHeader(Header {op,
                                 static_cast<uint16_t>(payload.size()),
                                 client.seq++,
                                 _serverId},
-                payload);
+                payload));
         if (op == Opcode::HEALTH)
             client.lagometer.start();
-        _socket.async_send_to(asio::buffer(client.sendBuffer),
+        _socket.async_send_to(asio::buffer(*buffer),
             client.endpoint,
             [this](std::error_code, std::size_t) {});
-        client.msgSentHistory.push_back("[" +
-            std::to_string(static_cast<int>(op)) + "] " +
-            std::string(payload.begin(), payload.end()));
         client.lagometer.packetSent();
     }
 

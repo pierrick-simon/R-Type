@@ -87,18 +87,14 @@ namespace RType {
             if (!update._update || update.create.empty())
                 continue;
             checkConnectedClient(server, update);
-            // A client id is pushed every frame while the entity waits for
-            // its update tick: without this, the client received the same
-            // CREATE several times and kept ghost copies of the entity
-            // (never moved nor destroyed).
-            std::sort(update.create.begin(), update.create.end());
-            update.create.erase(
-                std::unique(update.create.begin(), update.create.end()),
-                update.create.end());
+            removeCommon(update.create, update._inits);
+            std::ranges::sort(update.create);
+            const auto duplicates = std::ranges::unique(update.create);
+            update.create.erase(duplicates.begin(), duplicates.end());
             if (gm.hasComponent<Position2D>(entity)) {
                 auto tmp = gm.getComponent<Position2D>(entity);
-                pe.posX = uint32_t(tmp.x);
-                pe.posY = uint32_t(tmp.y);
+                pe.posX = uint32_t(int32_t(tmp.x));
+                pe.posY = uint32_t(int32_t(tmp.y));
             }
             pe.assetId = update.asset;
             pe.id = update.getId();
@@ -131,9 +127,6 @@ namespace RType {
             pe.assetId = _sound->asset;
             pe.id = _id;
             pe.type = SOUND;
-            // Sent to this client: `create` is already empty here, so the
-            // client never got the sound, never acknowledged it again and
-            // was never linked (no more move/destroy for this entity).
             CreateProtocol::sendCreate({id}, server, pe);
             _sound->set = true;
             return;
@@ -191,8 +184,10 @@ namespace RType {
     {
         try {
             auto &update = gm.getComponent<UpdateClientEntity>(e);
-            DestroyProtocol::sendDestroy(
-                update.getLinks(), server, update.getId());
+            std::vector<uint32_t> ids = update.getLinks();
+
+            ids.insert(ids.end(), update._inits.begin(), update._inits.end());
+            DestroyProtocol::sendDestroy(ids, server, update.getId());
             gm.destroyEntity(e);
         } catch (NoSuchEntity &e) {
         }

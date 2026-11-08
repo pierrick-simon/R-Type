@@ -6,21 +6,27 @@
 */
 
 #include "Setup.hpp"
+#include <algorithm>
+#include <limits>
 #include "AssetManager.hpp"
 #include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Decoder.hpp"
+#include "FinishingSound.hpp"
 #include "Friction2D.hpp"
+#include "GameOver.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
 #include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
+#include "Login.hpp"
 #include "Menu.hpp"
 #include "Metric.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Settings.hpp"
 #include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
@@ -29,18 +35,42 @@
 #include "Window.hpp"
 
 namespace RType::Client {
+    namespace {
+        constexpr float GAME_WIDTH = 1920.f;
+        constexpr float GAME_HEIGHT = 1080.f;
+
+        ::Camera2D fitGameToWindow()
+        {
+            const auto width = float(::GetScreenWidth());
+            const auto height = float(::GetScreenHeight());
+            const float zoom =
+                std::min(width / GAME_WIDTH, height / GAME_HEIGHT);
+            const ::Vector2 offset = {(width - GAME_WIDTH * zoom) / 2.f,
+                (height - GAME_HEIGHT * zoom) / 2.f};
+
+            ::SetMouseOffset(int(-offset.x), int(-offset.y));
+            ::SetMouseScale(1.f / zoom, 1.f / zoom);
+            return {offset, {0.f, 0.f}, 0.f, zoom};
+        }
+    } // namespace
+
     Entity createWindow(GameManager &gm)
     {
         auto w = gm.createEntity();
-        gm.addComponent<Window>(w, 1920, 1080, "R-type");
+        gm.addComponent<Window>(w, int(GAME_WIDTH), int(GAME_HEIGHT), "R-type");
         ::SetExitKey(KEY_NULL);
         gm.createSystem<Window>(
             [](Window &win) {
                 win.setTargetFps();
                 win.beginDrawing();
+                ::BeginMode2D(fitGameToWindow());
             },
             std::numeric_limits<int>::min());
-        gm.createSystem<Window>([](Window &win) { win.endDrawing(); },
+        gm.createSystem<Window>(
+            [](Window &win) {
+                ::EndMode2D();
+                win.endDrawing();
+            },
             std::numeric_limits<int>::max());
         return w;
     }
@@ -106,27 +136,36 @@ namespace RType::Client {
     {
         gm.createSystem<>(systemConnecting);
         gm.createSystem<Assets>(systemLobby);
+        gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
+        gm.createSystem<>(systemLogin);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
         gm.createSystem<>(systemTextFields);
         gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
-        gm.createSystem<Assets>(systemDrawLobbyList);
+        gm.createSystem<Assets>(
+            systemTextAnchorManager<Font, Texture2D, Decoder>);
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
                 Friction2D::systemFriction2D(f, v, c);
         });
         gm.createSystem<Assets>(
-            systemTextAnchorManager<Font, Texture2D, Decoder>);
-        gm.createSystem<Assets>(
             Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(systemDrawLobbyList);
+        gm.createSystem<>(systemDrawLoginPopup);
+        gm.createSystem<>(systemDrawSettings);
         gm.createSystem<Assets>(SpriteSheet2D::
                 systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(
             Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
+        gm.createSystem<>(systemSettings);
+        gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
+        // Over everything, right before the end of the drawing.
+        gm.createSystem<LobbyClient>(
+            systemDrawFade, std::numeric_limits<int>::max() - 1);
     }
 
     Entity createSound(GameManager &gm)

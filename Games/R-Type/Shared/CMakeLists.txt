@@ -15,6 +15,7 @@ set(SRCS_NETWORK
     src/Network/ServerManager.cpp
     src/Network/ClientManager.cpp
     src/Network/Protocol/KeyboardProtocol.cpp
+    src/Network/Protocol/KeyBindings.cpp
     src/Network/Protocol/MouseProtocol.cpp
     src/Network/Protocol/CreateProtocol.cpp
     src/Network/Protocol/CreatedProtocol.cpp
@@ -23,6 +24,7 @@ set(SRCS_NETWORK
     src/Network/Protocol/DestroyProtocol.cpp
     src/Network/Protocol/LobbyProtocol.cpp
     src/Network/Protocol/MasterProtocol.cpp
+    src/Network/Protocol/AccountProtocol.cpp
     src/Network/Protocol/Update/SetProtocol.cpp
     src/Network/Protocol/Update/UpdateClientEntity.cpp
     src/Network/Protocol/Update/UpdatePosition2D.cpp

@@ -38,6 +38,17 @@ namespace RType::Client {
 
     struct LobbyListItem {};
 
+    struct LobbyListFrame {};
+
+    /** @brief Sprite sheet of the rows (MENU_LOBBY_ROW: normal, hovered,
+     *         selected), drawn by systemDrawLobbyList inside the visible
+     *         area, not by the SpriteSheet2D system. */
+    struct LobbyListRowSprite {};
+
+    inline constexpr std::size_t LOBBY_ROW_TILE_NORMAL = 0;
+    inline constexpr std::size_t LOBBY_ROW_TILE_HOVERED = 1;
+    inline constexpr std::size_t LOBBY_ROW_TILE_SELECTED = 2;
+
     struct CreateLobbyButton {};
 
     struct JoinLobbyButton {};
@@ -48,6 +59,7 @@ namespace RType::Client {
 
     struct LobbyListClient {
         bool shown = false;
+        bool wanted = false;
         bool createRequested = false;
         std::string createName;
         bool popupOpen = false;
@@ -60,6 +72,7 @@ namespace RType::Client {
 
     void connectToMaster(GameManager &gm, const std::string &host, int port);
 
+    void openLobbyList(GameManager &gm);
     void createLobbyListPage(GameManager &gm);
     void destroyLobbyListPage(GameManager &gm);
     void systemLobbyListPage(GameManager &gm);

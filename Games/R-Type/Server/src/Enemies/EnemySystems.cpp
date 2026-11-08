@@ -6,9 +6,10 @@
 */
 
 #include "Enemies/EnemySystems.hpp"
+#include "Common/Background.hpp"
+#include "Common/Terrain.hpp"
 #include "Config.hpp"
-#include "Destroy.hpp"
-#include "Terrain.hpp"
+#include "Player/Destroy.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -16,6 +17,9 @@
 #include <optional>
 
 namespace RType {
+
+    static_assert(LEVEL_SCALE == Server::SCALE,
+        "the boss is placed on the level's wall, both must match");
 
     namespace {
 
@@ -144,14 +148,90 @@ namespace RType {
             return found;
         }
 
+        bool bossShielded(GameManager &gm, Entity enemy)
+        {
+            return gm.hasComponent<Boss>(enemy) &&
+                !bossExposed(gm.getComponent<Boss>(enemy));
+        }
+
+        void hurt(GameManager &gm, Entity enemy, Health &health, int damage)
+        {
+            health.hp -= damage;
+            if (gm.hasComponent<Boss>(enemy))
+                gm.getComponent<Boss>(enemy).hurtTimer = BOSS_HURT_FLASH;
+        }
+
+        void awardScore(GameManager &gm, EnemyDirector &director,
+            const std::optional<Entity> &scorer, int points)
+        {
+            director.score += points;
+            if (scorer && gm.hasComponent<Scorer>(*scorer))
+                gm.getComponent<Scorer>(*scorer).score += points;
+        }
+
         void killEnemy(GameManager &gm, const EnemyHooks &hooks, Entity enemy,
             const Position2D &pos, const Hitbox &box)
         {
+            if (gm.hasComponent<Boss>(enemy)) {
+                // Explodes for a while before vanishing, see systemBoss.
+                auto &boss = gm.getComponent<Boss>(enemy);
+
+                boss.state = BossState::Dying;
+                boss.timer = 0.f;
+                return;
+            }
+            const float centerX = pos.x + box.offsetX + box.width / 2.f;
+            const float centerY = pos.y + box.offsetY + box.height / 2.f;
+
             if (hooks.onEnemyDeath)
-                hooks.onEnemyDeath(gm,
-                    pos.x + box.offsetX + box.width / 2.f,
-                    pos.y + box.offsetY + box.height / 2.f);
+                hooks.onEnemyDeath(gm, centerX, centerY);
+            if (hooks.onEnemyLoot)
+                hooks.onEnemyLoot(gm, centerX, centerY);
             destroyNetworked(gm, enemy);
+        }
+
+        bool blockedByShield(GameManager &gm, const Rect &shot)
+        {
+            bool blocked = false;
+
+            gm.view<ShotBlocker, Position2D, Hitbox>().each(
+                [&](Entity, ShotBlocker &, Position2D &pos, Hitbox &box) {
+                    blocked = blocked || overlap(shot, rectOf(pos, box));
+                });
+            return blocked;
+        }
+
+        void contactDamage(
+            GameManager &gm, EnemyDirector &director, const EnemyHooks &hooks)
+        {
+            gm.view<ContactDamage, Position2D, Hitbox>().each(
+                [&](Entity,
+                    ContactDamage &contact,
+                    Position2D &cp,
+                    Hitbox &cb) {
+                    if (contact.timer > 0.f)
+                        return;
+                    const Rect contactRect = rectOf(cp, cb);
+
+                    gm.view<Enemy, Health, Position2D, Hitbox>().each(
+                        [&](Entity enemy,
+                            Enemy &info,
+                            Health &health,
+                            Position2D &ep,
+                            Hitbox &eb) {
+                            if (contact.timer > 0.f || health.hp <= 0 ||
+                                bossShielded(gm, enemy) ||
+                                !overlap(contactRect, rectOf(ep, eb)))
+                                return;
+                            contact.timer = contact.cooldown;
+                            hurt(gm, enemy, health, contact.damage);
+                            if (health.hp > 0)
+                                return;
+                            awardScore(
+                                gm, director, contact.owner, info.scoreValue);
+                            killEnemy(gm, hooks, enemy, ep, eb);
+                        });
+                });
         }
 
         void fireToward(GameManager &gm, Weapon &weapon, float x, float y,
@@ -526,12 +606,143 @@ namespace RType {
         }
     }
 
+    namespace {
+
+        void setBossState(Boss &boss, BossState state)
+        {
+            boss.state = state;
+            boss.timer = 0.f;
+        }
+
+        void bossVolley(
+            GameManager &gm, const Position2D &pos, const EnemyHooks &hooks)
+        {
+            const auto [x, y] = bossMuzzle(pos);
+            float targetX = 0.f;
+            float targetY = 0.f;
+
+            if (!findClosestTarget(gm, y, targetX, targetY))
+                return;
+            const float aim = std::atan2(targetY - y, targetX - x);
+
+            for (int i = 0; i < BOSS_DEF.burst; ++i) {
+                const int offset = i - BOSS_DEF.burst / 2;
+                const float angle = aim + BOSS_DEF.spread * float(offset);
+
+                fireEnemyBullet(gm,
+                    x,
+                    y,
+                    std::cos(angle) * BOSS_DEF.bulletSpeed,
+                    std::sin(angle) * BOSS_DEF.bulletSpeed,
+                    BOSS_DEF.bulletDamage,
+                    hooks,
+                    BOSS_BULLET_SHEET);
+            }
+        }
+
+        void bossDying(GameManager &gm, Entity entity, Boss &boss,
+            const Position2D &pos, const EnemyHooks &hooks)
+        {
+            while (boss.timer < BOSS_DEF.deathTime &&
+                boss.timer >=
+                    float(boss.explosions) * BOSS_DEF.explosionInterval) {
+                // R2 low-discrepancy sequence: blasts spread over the body.
+                const auto n = float(++boss.explosions);
+                const float u = std::fmod(n * 0.7548777f, 1.f);
+                const float v = std::fmod(n * 0.5698403f, 1.f);
+
+                if (hooks.onBossExplosion)
+                    hooks.onBossExplosion(gm,
+                        pos.x + BOSS_WIDTH * (0.2f + 0.7f * u),
+                        pos.y + BOSS_HEIGHT * (0.1f + 0.8f * v));
+            }
+            if (boss.timer < BOSS_DEF.deathTime)
+                return;
+            for (auto [_, director] : gm.view<EnemyDirector>().getVector())
+                director.victoryTimer = BOSS_DEF.victoryDelay;
+            destroyNetworked(gm, entity);
+        }
+
+    } // namespace
+
+    void systemBoss(GameManager &gm, Entity entity, Boss &boss,
+        Velocity2D &velocity, Position2D &pos, const MasterClock &clock,
+        const EnemyHooks &hooks)
+    {
+        const float delta = elapsedSeconds(clock);
+        const float stagesTime = BOSS_DEF.stageTime * float(BOSS_STAGES - 1);
+
+        boss.timer += delta;
+        boss.hurtTimer = std::max(0.f, boss.hurtTimer - delta);
+        velocity = {0.f, 0.f};
+        switch (boss.state) {
+            case BossState::Enter:
+                velocity.x = -BOSS_DEF.enterSpeed;
+                if (pos.x <= BOSS_DEF.x) {
+                    pos.x = BOSS_DEF.x;
+                    velocity.x = 0.f;
+                    setBossState(boss, BossState::Closed);
+                }
+                break;
+            case BossState::Closed:
+                if (boss.timer >= BOSS_DEF.closedTime)
+                    setBossState(boss, BossState::Opening);
+                break;
+            case BossState::Opening:
+                boss.stage = std::min(
+                    BOSS_STAGES - 1, int(boss.timer / BOSS_DEF.stageTime));
+                if (boss.timer >= stagesTime) {
+                    boss.fireTimer = 0.f;
+                    setBossState(boss, BossState::Open);
+                }
+                break;
+            case BossState::Open:
+                boss.fireTimer += delta;
+                if (boss.fireTimer >= BOSS_DEF.fireCooldown) {
+                    boss.fireTimer = 0.f;
+                    bossVolley(gm, pos, hooks);
+                }
+                if (boss.timer >= BOSS_DEF.openTime)
+                    setBossState(boss, BossState::Closing);
+                break;
+            case BossState::Closing:
+                boss.stage = std::max(
+                    0, BOSS_STAGES - 1 - int(boss.timer / BOSS_DEF.stageTime));
+                if (boss.timer >= stagesTime)
+                    setBossState(boss, BossState::Closed);
+                break;
+            case BossState::Dying:
+                bossDying(gm, entity, boss, pos, hooks);
+                break;
+        }
+    }
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks)
     {
+        const float delta = elapsedSeconds(clock);
+
+        if (director.paused)
+            return;
+        if (director.victoryTimer > 0.f) {
+            director.victoryTimer -= delta;
+            if (director.victoryTimer <= 0.f)
+                director.levelCleared = true;
+        }
+        if (Server::levelEnded(gm)) {
+            if (!director.bossSpawned)
+                spawnEnemy(gm,
+                    EnemyType::Boss,
+                    SCREEN_WIDTH,
+                    BOSS_DEF.y,
+                    hooks,
+                    director.players);
+            director.bossSpawned = true;
+            return;
+        }
         if (director.timeline.empty())
             return;
-        director.elapsed += elapsedSeconds(clock);
+        director.elapsed += delta;
         while (director.next < director.timeline.size() &&
             director.timeline[director.next].time <= director.elapsed) {
             const SpawnEvent &event = director.timeline[director.next++];
@@ -568,6 +779,9 @@ namespace RType {
             if (life.remaining <= 0.f)
                 destroyNetworked(gm, e);
         });
+        gm.view<ContactDamage>().each([&](Entity, ContactDamage &contact) {
+            contact.timer = std::max(0.f, contact.timer - delta);
+        });
     }
 
     void systemEnemyCombat(
@@ -588,21 +802,31 @@ namespace RType {
                             if (consumed || health.hp <= 0 ||
                                 !overlap(bulletRect, rectOf(ep, eb)))
                                 return;
-                            consumed = true;
-                            health.hp -= shot.damage;
+                            if (bossShielded(gm, enemy)) {
+                                consumed = true;
+                                return;
+                            }
+                            const int hp = health.hp;
+                            hurt(gm, enemy, health, shot.damage);
+                            shot.damage -= hp;
+                            consumed = !shot.piercing || shot.damage <= 0;
                             if (health.hp > 0)
                                 return;
-                            director.score += info.scoreValue;
+                            awardScore(
+                                gm, director, shot.owner, info.scoreValue);
                             killEnemy(gm, hooks, enemy, ep, eb);
                         });
+                } else if (blockedByShield(gm, bulletRect)) {
+                    consumed = true;
                 } else {
                     gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
-                        [&](Entity,
+                        [&](Entity target,
                             EnemyTarget &,
                             Health &health,
                             Position2D &tp,
                             Hitbox &tb) {
                             if (consumed || health.hp <= 0 ||
+                                gm.hasComponent<Invincible>(target) ||
                                 !overlap(bulletRect, rectOf(tp, tb)))
                                 return;
                             consumed = true;
@@ -623,19 +847,23 @@ namespace RType {
             const Rect enemyRect = rectOf(ep, eb);
 
             gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
-                [&](Entity,
+                [&](Entity target,
                     EnemyTarget &,
                     Health &targetHealth,
                     Position2D &tp,
                     Hitbox &tb) {
                     if (health.hp <= 0 || targetHealth.hp <= 0 ||
+                        gm.hasComponent<Invincible>(target) ||
                         !overlap(enemyRect, rectOf(tp, tb)))
                         return;
                     targetHealth.hp = 0;
+                    if (gm.hasComponent<Boss>(enemy))
+                        return;
                     health.hp = 0;
                     killEnemy(gm, hooks, enemy, ep, eb);
                 });
         });
+        contactDamage(gm, director, hooks);
     }
 
     void registerEnemySystems(GameManager &gm, EnemyHooks hooks)
@@ -683,6 +911,12 @@ namespace RType {
                     Velocity2D &v,
                     Position2D &p,
                     Hitbox &b) { systemAlien(g, e, a, v, p, b, c, *h); });
+        });
+        gm.createSystem<MasterClock>([h](GameManager &g, MasterClock &c) {
+            g.view<Boss, Velocity2D, Position2D>().each(
+                [&g, &c, &h](Entity e, Boss &b, Velocity2D &v, Position2D &p) {
+                    systemBoss(g, e, b, v, p, c, *h);
+                });
         });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<EnemyDirector>().each([&g, &c](Entity, EnemyDirector &d) {

@@ -18,12 +18,15 @@ namespace RType {
     struct EnemyHooks {
         std::function<void(GameManager &, Entity, const EnemyDef &)>
             onEnemySpawn;
-        std::function<void(GameManager &, Entity)> onBulletSpawn;
+        std::function<void(GameManager &, Entity, const SheetInfo &)>
+            onBulletSpawn;
         std::function<void(GameManager &, float x, float y)> onEnemyDeath;
         std::function<void(GameManager &, Entity alien, float duration)>
             onAlienCharge;
         std::function<void(GameManager &, Entity beam, bool facingLeft)>
             onBeamSpawn;
+        std::function<void(GameManager &, float x, float y)> onBossExplosion;
+        std::function<void(GameManager &, float x, float y)> onEnemyLoot;
     };
 
     struct SpawnEvent {
@@ -38,23 +41,36 @@ namespace RType {
         float elapsed = 0.f;
         float restartDelay = 4.f;
         int score = 0;
+        bool bossSpawned = false;
+        float victoryTimer = 0.f;
+        bool levelCleared = false;
+        bool paused = false;
+        // Players at launch: the boss's health is multiplied by it.
+        int players = 1;
 
         void addWave(
             EnemyType type, float y, int count, float interval, float start);
     };
 
     Entity spawnEnemy(GameManager &gm, EnemyType type, float x, float y,
-        const EnemyHooks &hooks = {});
+        const EnemyHooks &hooks = {}, int healthFactor = 1);
 
     Entity fireEnemyBullet(GameManager &gm, float x, float y, float vx,
-        float vy, int damage, const EnemyHooks &hooks = {});
+        float vy, int damage, const EnemyHooks &hooks = {},
+        const SheetInfo &sheet = ENEMY_BULLET_SHEET);
 
     Entity fireAlienBeam(GameManager &gm, float x, float y, bool facingLeft,
         const EnemyHooks &hooks = {});
 
+    void clearEnemies(GameManager &gm);
+
     void resetEnemies(GameManager &gm);
 
-    Entity createEnemyDirector(GameManager &gm);
+    [[nodiscard]] bool levelCleared(GameManager &gm);
+
+    Entity createEnemyDirector(GameManager &gm, int players = 1);
+
+    void setDirectorPlayers(GameManager &gm, int players);
 
 } // namespace RType
 
