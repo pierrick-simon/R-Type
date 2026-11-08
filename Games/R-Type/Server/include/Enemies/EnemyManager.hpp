@@ -9,6 +9,8 @@
     #define ENEMYMANAGER_HPP_
     #include <cstddef>
     #include <functional>
+    #include <optional>
+    #include <random>
     #include <vector>
     #include "Defs/EnemyDefs.hpp"
     #include "GameManager.hpp"
@@ -46,13 +48,16 @@ namespace RType {
         bool levelCleared = false;
         bool paused = false;
         int players = 1;
+        float scoutTimer = 0.f;
+        std::mt19937 rng {std::random_device {}()};
 
         void addWave(
             EnemyType type, float y, int count, float interval, float start);
     };
 
     Entity spawnEnemy(GameManager &gm, EnemyType type, float x, float y,
-        const EnemyHooks &hooks = {}, int healthFactor = 1);
+        const EnemyHooks &hooks = {}, int healthFactor = 1,
+        const std::optional<MovementPattern> &motion = std::nullopt);
 
     Entity fireEnemyBullet(GameManager &gm, float x, float y, float vx,
         float vy, int damage, const EnemyHooks &hooks = {},

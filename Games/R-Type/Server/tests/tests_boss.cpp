@@ -8,6 +8,7 @@
 #include <criterion/criterion.h>
 
 #include "Common/Background.hpp"
+#include "Common/Terrain.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Enemies/EnemyVisuals.hpp"
 #include "SpriteSheet2D.hpp"
@@ -46,6 +47,20 @@ namespace {
             pos.y + box.offsetY + box.height / 2.f);
         gm.addComponent<Hitbox>(shot, Hitbox {10.f, 10.f});
         return shot;
+    }
+
+    int scoutCount(GameManager &gm)
+    {
+        int count = 0;
+
+        for (auto [_, enemy] : gm.view<Enemy>().getVector())
+            count += enemy.type == EnemyType::Scout ? 1 : 0;
+        return count;
+    }
+
+    float scrollTo(float levelX)
+    {
+        return SCREEN_WIDTH + SPAWN_MARGIN - levelX * LEVEL_SCALE;
     }
 
     int bossCount(GameManager &gm)
@@ -199,4 +214,72 @@ Test(boss, hurt_flash_blinks_on_the_white_frames)
     boss.hurtTimer = 0.f;
     systemBossAnimation(boss, sheet);
     cr_assert_eq(sheet.currentTile, std::size_t(2 * BOSS_IDLE_FRAMES));
+}
+
+Test(scout, spawns_groups_only_in_open_zones)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+
+    addBackgrounds(gm, scrollTo(1000.f));
+    systemEnemyDirector(gm, director, clock, {});
+    cr_assert_geq(scoutCount(gm), SCOUT_DEF.minGroup);
+    cr_assert_leq(scoutCount(gm), SCOUT_DEF.maxGroup);
+    systemEnemyDirector(gm, director, clock, {});
+    cr_assert_leq(scoutCount(gm), SCOUT_DEF.maxGroup);
+
+    GameManager middle;
+    EnemyDirector other;
+
+    addBackgrounds(middle, scrollTo(2400.f));
+    systemEnemyDirector(middle, other, clock, {});
+    cr_assert_eq(scoutCount(middle), 0);
+}
+
+Test(scout, never_spawns_into_walls)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+    Server::Terrain terrain;
+
+    terrain.mask = {.width = Server::BACKGROUND_WIDTH,
+        .height = 240,
+        .solid = std::vector<bool>(
+            std::size_t(Server::BACKGROUND_WIDTH) * 240, true)};
+    gm.addComponent<Server::Terrain>(gm.createEntity(), std::move(terrain));
+    addBackgrounds(gm, scrollTo(1000.f));
+    systemEnemyDirector(gm, director, clock, {});
+    cr_assert_eq(scoutCount(gm), 0);
+}
+
+Test(scout, group_members_move_differently)
+{
+    GameManager gm;
+    MasterClock clock;
+    EnemyDirector director;
+    std::vector<MovementPattern> motions;
+
+    addBackgrounds(gm, scrollTo(1000.f));
+    systemEnemyDirector(gm, director, clock, {});
+    for (auto [_, enemy, motion] :
+        gm.view<Enemy, MovementPattern>().getVector()) {
+        cr_assert(motion.type == PatternType::ZigZag);
+        for (const auto &other : motions)
+            cr_assert(motion.amplitude != other.amplitude ||
+                motion.period != other.period ||
+                motion.horizontalVelocity != other.horizontalVelocity);
+        motions.push_back(motion);
+    }
+    cr_assert_geq(motions.size(), std::size_t(SCOUT_DEF.minGroup));
+}
+
+Test(scout, zigzags)
+{
+    GameManager gm;
+    const Entity scout = spawnEnemy(gm, EnemyType::Scout, 1000.f, 500.f);
+
+    cr_assert(gm.getComponent<MovementPattern>(scout).type ==
+        PatternType::ZigZag);
 }
