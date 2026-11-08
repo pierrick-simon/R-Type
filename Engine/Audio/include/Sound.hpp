@@ -117,6 +117,8 @@ namespace RType {
             void operator()(ma_sound *s) const;
         };
 
+        Decoder::Pcm _pcm;
+        std::unique_ptr<ma_audio_buffer_ref> _ref;
         std::unique_ptr<ma_sound, SoundDeleter> _sound;
     };
 } // namespace RType
