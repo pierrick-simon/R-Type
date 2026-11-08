@@ -285,3 +285,22 @@ Test(scout, zigzags)
     cr_assert(gm.getComponent<MovementPattern>(scout).type ==
         PatternType::ZigZag);
 }
+
+Test(enemy, hurt_flash_shows_the_white_frames)
+{
+    GameManager gm;
+    const Entity scout = gm.createEntity();
+
+    gm.addComponent<Enemy>(scout, Enemy {EnemyType::Scout, 0});
+    gm.addComponent<Health>(scout, Health {1, 1, ENEMY_HURT_FLASH - 0.01f});
+    gm.addComponent<SpriteSheet2D>(scout, makeSheet(SCOUT_SHEET));
+    auto &sheet = gm.getComponent<SpriteSheet2D>(scout);
+
+    cr_assert_eq(sheet.recNb.height, 2);
+    sheet.currentTile = 3;
+    systemEnemyHurtBlink(gm);
+    cr_assert_eq(sheet.currentTile, std::size_t(SCOUT_SHEET.frames + 3));
+    gm.getComponent<Health>(scout).hurtTimer = 0.f;
+    systemEnemyHurtBlink(gm);
+    cr_assert_eq(sheet.currentTile, std::size_t(3));
+}

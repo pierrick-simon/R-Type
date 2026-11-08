@@ -20,7 +20,6 @@ namespace RType {
         float landingDistance;
     };
 
-
     inline constexpr WalkerDef WALKER_DEF = {.stepHeight = 45.f,
         .crouchTime = 0.25f,
         .turnDelay = 0.3f,

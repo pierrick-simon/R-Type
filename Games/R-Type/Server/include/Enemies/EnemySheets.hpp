@@ -25,15 +25,16 @@ namespace RType {
         int hitboxH = 0;
         int rows = 1;
         float scale = SPRITE_SCALE;
+        bool flashFrames = false;
     };
 
     inline constexpr SheetInfo SCOUT_SHEET = {
-        Asset::ENEMY_SCOUT, 8, 21, 24, 70, 21, 14};
+        Asset::ENEMY_SCOUT, 8, 21, 24, 70, 21, 14, 1, SPRITE_SCALE, true};
     inline constexpr SheetInfo GUNNER_SHEET = {
-        Asset::ENEMY_ROBOT, 3, 33, 34, 150, 33, 25};
+        Asset::ENEMY_ROBOT, 3, 33, 34, 150, 33, 25, 1, SPRITE_SCALE, true};
 
     inline constexpr SheetInfo WALKER_SHEET = {
-        Asset::ENEMY_WALKER, 12, 33, 33, 120, 26, 30, 2};
+        Asset::ENEMY_WALKER, 12, 33, 33, 120, 26, 30, 2, SPRITE_SCALE, true};
 
     struct WalkerFrames {
         std::array<std::size_t, 4> walk;
@@ -47,7 +48,7 @@ namespace RType {
     }};
 
     inline constexpr SheetInfo ALIEN_SHEET = {
-        Asset::ENEMY_ALIEN, 3, 56, 56, 100, 34, 46};
+        Asset::ENEMY_ALIEN, 3, 56, 56, 100, 34, 46, 1, SPRITE_SCALE, true};
     inline constexpr SheetInfo ALIEN_BEAM_SHEET = {
         Asset::ALIEN_BEAM, 2, 64, 16, 60, 40, 10};
     inline constexpr SheetInfo ALIEN_CHARGE_SHEET = {

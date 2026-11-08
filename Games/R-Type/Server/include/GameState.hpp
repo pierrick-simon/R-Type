@@ -13,7 +13,6 @@
 
 namespace RType::Server {
 
-
     [[nodiscard]] bool isGameOver(GameManager &gm);
 
     [[nodiscard]] bool isEndScreen();
