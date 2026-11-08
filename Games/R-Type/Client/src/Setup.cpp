@@ -36,8 +36,6 @@ namespace RType::Client {
         constexpr float GAME_WIDTH = 1920.f;
         constexpr float GAME_HEIGHT = 1080.f;
 
-        // The window manager may shrink the window (dock, top bar): the game
-        // is scaled down to fit it, and the mouse scaled back up.
         ::Camera2D fitGameToWindow()
         {
             const auto width = float(::GetScreenWidth());
@@ -157,7 +155,6 @@ namespace RType::Client {
         gm.createSystem<Assets>(
             Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
         gm.createSystem<Sound>(Sound::systemSound);
-        // Over everything, right before the end of the drawing.
         gm.createSystem<LobbyClient>(
             systemDrawFade, std::numeric_limits<int>::max() - 1);
     }

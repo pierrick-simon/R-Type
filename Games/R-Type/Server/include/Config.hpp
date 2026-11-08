@@ -24,7 +24,6 @@ namespace RType::Server {
     inline constexpr float LEVEL_END_X =
         WINDOW_WIDTH - (BACKGROUND_WIDTH - LEVEL_END_MARGIN) * SCALE;
 
-    // The ships, their Force and their shots are drawn smaller than the level.
     inline constexpr float PLAYER_SCALE = 3.f;
     inline constexpr float SHOT_SCALE = 3.f;
 
@@ -79,14 +78,14 @@ namespace RType::Server {
     inline constexpr float SCORE_Y =
         WINDOW_HEIGHT - HUD_MARGIN - SCORE_FONT_SIZE;
     inline constexpr float SCORE_PLAYERS_X = 400.f;
-    // The game font is monospaced: a character is as wide as the font size.
+
     inline constexpr float GAME_OVER_SCORE_SIZE = 64.f;
     inline constexpr float GAME_OVER_SCORE_Y = 450.f;
     inline constexpr float GAME_OVER_PLAYER_SIZE = 36.f;
     inline constexpr float GAME_OVER_PLAYERS_Y = 540.f;
     inline constexpr float GAME_OVER_PLAYER_SPACING = 46.f;
     inline constexpr float SCORE_SPACING = 300.f;
-    // Main color of each player sheet.
+
     inline constexpr std::array<std::array<unsigned char, 3>, PLAYER_COLORS>
         PLAYER_SCORE_COLORS = {{
             {82, 115, 255},
@@ -140,14 +139,12 @@ namespace RType::Server {
     inline constexpr int FORCE_CONTACT_DAMAGE = 1;
     inline constexpr float FORCE_CONTACT_COOLDOWN = 0.15f;
 
-    // Visible part of the Force inside its 32x24 cell, per level.
     inline constexpr std::array<std::array<float, 4>, FORCE_MAX_LEVEL>
         FORCE_HITBOXES = {{
             {6.f, 4.f, 20.f, 16.f},
             {2.f, 3.f, 27.f, 18.f},
         }};
 
-    // The lasers are drawn smaller than the rest of the game.
     inline constexpr float LASER_SCALE = 2.f;
     inline constexpr float LASER_COOLDOWN = 0.25f;
     inline constexpr float LASER_SPEED = 1500.f;
@@ -157,12 +154,10 @@ namespace RType::Server {
     inline constexpr float MUZZLE_HEIGHT = 18.f * LASER_SCALE;
     inline constexpr unsigned int MUZZLE_FRAME_MS = 40;
 
-    // ReflectLaser.png: one 16x18 cell per piece.
     inline constexpr int REFLECT_FRAMES = 7;
     inline constexpr std::size_t REFLECT_STRAIGHT = 0;
-    inline constexpr std::size_t REFLECT_UP = 1; // "/", also going down-left
-    inline constexpr std::size_t REFLECT_DOWN =
-        2; // backslash, also going up-left
+    inline constexpr std::size_t REFLECT_UP = 1;
+    inline constexpr std::size_t REFLECT_DOWN = 2;
     inline constexpr std::size_t REFLECT_TIP_TOP = 3;
     inline constexpr std::size_t REFLECT_TIP_BOTTOM = 4;
     inline constexpr std::size_t REFLECT_TIP_LEFT = 5;
@@ -173,7 +168,6 @@ namespace RType::Server {
     inline constexpr float REFLECT_TIP_TIME = 0.06f;
     inline constexpr int REFLECT_DAMAGE = 1;
 
-    // HelixLaser.png: one row of 8 frames of 64x32.
     inline constexpr int HELIX_FRAMES = 8;
     inline constexpr float HELIX_WIDTH = 64.f * LASER_SCALE;
     inline constexpr float HELIX_HEIGHT = 32.f * LASER_SCALE;
@@ -187,7 +181,6 @@ namespace RType::Server {
     inline constexpr unsigned int RING_FRAME_MS = 50;
     inline constexpr float RING_SPREAD = 20.f * LASER_SCALE;
     inline constexpr int RING_DAMAGE = 2;
-    // Width and height of the ring drawn in each frame of RingLaser.png.
     inline constexpr std::array<std::array<float, 2>, RING_FRAMES> RING_SIZES =
         {{
             {24.f, 22.f},

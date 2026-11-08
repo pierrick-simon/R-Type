@@ -71,7 +71,6 @@ namespace RType::Client {
                 .count();
         }
 
-        /** @brief Opacity of the black screen of the victory, 0 without. */
         float fadeAlpha(const LobbyClient &lobby)
         {
             if (!lobby.fadeStart)
@@ -96,7 +95,6 @@ namespace RType::Client {
                 });
         }
 
-        /** @brief Sends the choice until the server takes it into account. */
         void sendChoice(ClientManager &c, LobbyClient &lobby, bool voted)
         {
             const auto now = std::chrono::steady_clock::now();

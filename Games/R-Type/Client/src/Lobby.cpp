@@ -328,7 +328,6 @@ namespace RType::Client {
                 }
                 if (!state.received)
                     return;
-                // The host left the game over screen for the lobby.
                 if (lobby.inGame && !state.started) {
                     lobby.inGame = false;
                     lobby.startRequested = false;

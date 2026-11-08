@@ -45,7 +45,6 @@ namespace RType {
         float victoryTimer = 0.f;
         bool levelCleared = false;
         bool paused = false;
-        // Players at launch: the boss's health is multiplied by it.
         int players = 1;
 
         void addWave(

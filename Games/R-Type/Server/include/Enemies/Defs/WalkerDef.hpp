@@ -20,12 +20,7 @@ namespace RType {
         float landingDistance;
     };
 
-    /**
-     * @brief Walker tuning, in screen pixels. A gap of at most stepHeight
-     * between two platforms is walked over; a lower one is jumped down to,
-     * landing landingDistance widths past the edge; a higher one makes the
-     * walker turn back.
-     */
+
     inline constexpr WalkerDef WALKER_DEF = {.stepHeight = 45.f,
         .crouchTime = 0.25f,
         .turnDelay = 0.3f,

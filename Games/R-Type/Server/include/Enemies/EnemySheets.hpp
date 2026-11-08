@@ -35,14 +35,12 @@ namespace RType {
     inline constexpr SheetInfo WALKER_SHEET = {
         Asset::ENEMY_WALKER, 12, 33, 33, 120, 26, 30, 2};
 
-    /** @brief Tiles of WALKER_SHEET for one facing direction. */
     struct WalkerFrames {
         std::array<std::size_t, 4> walk;
         std::size_t crouch;
         std::array<std::size_t, 2> jump;
     };
 
-    /** @brief Index 0: facing left, 1: facing right. */
     inline constexpr std::array<WalkerFrames, 2> WALKER_FRAMES = {{
         {{6, 0, 1, 0}, 2, {7, 8}},
         {{11, 5, 4, 5}, 3, {9, 10}},
@@ -59,7 +57,6 @@ namespace RType {
     inline constexpr std::size_t ALIEN_TILE_LEGS = 1;
     inline constexpr std::size_t ALIEN_TILE_FLY = 2;
 
-    /** @brief Gun tip of each ALIEN_SHEET tile facing left, in pixels. */
     inline constexpr std::array<std::array<float, 2>, 3> ALIEN_MUZZLES = {{
         {0.f, 32.f},
         {0.f, 21.f},
@@ -75,7 +72,6 @@ namespace RType {
 
     inline constexpr int BOSS_STAGES = 8;
     inline constexpr int BOSS_IDLE_FRAMES = 4;
-    // Boss.png repeats every frame brightened under the normal ones.
     inline constexpr std::size_t BOSS_FLASH_OFFSET =
         std::size_t(BOSS_STAGES) * std::size_t(BOSS_IDLE_FRAMES);
     inline constexpr float BOSS_HURT_FLASH = 0.15f;
