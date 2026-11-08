@@ -10,6 +10,7 @@
 #include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
+#include "Leaderboard.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
@@ -186,6 +187,12 @@ namespace RType::Client {
             MENU_FIRST_Y + step * 4.f,
             "Change Server",
             returnToServerPage);
+        // Bottom left, opposite to the "Back" buttons of the other pages.
+        addMenuButton(gm,
+            BUTTON_GAP * 2,
+            1080.f - BUTTON_HEIGHT * 2 - BUTTON_GAP,
+            "Leaderboard",
+            openLeaderboard);
     }
 
     void connectToServer(

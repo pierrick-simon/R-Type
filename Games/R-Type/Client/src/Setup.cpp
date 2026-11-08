@@ -5,10 +5,9 @@
 ** Setup
 */
 
+#include "Setup.hpp"
 #include <algorithm>
 #include <limits>
-
-#include "Setup.hpp"
 #include "AssetManager.hpp"
 #include "Assets.hpp"
 #include "ClientManager.hpp"
@@ -19,6 +18,7 @@
 #include "GameOver.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "Leaderboard.hpp"
 #include "Keybind.hpp"
 #include "Listener.hpp"
 #include "Lobby.hpp"
@@ -94,6 +94,7 @@ namespace RType::Client {
             KeyboardManager::systemKeyboardManager);
         gm.addComponent<MouseManager>(c);
         gm.createSystem<MouseManager>(MouseManager::systemMouseManager);
+        // Remapping of the player's keys, right after the raw input is read.
         gm.addComponent<Keybind>(c);
         gm.createSystem<Keybind>(systemKeybind);
         gm.createSystem<Keybind, MouseManager, KeyboardManager>(
@@ -145,6 +146,7 @@ namespace RType::Client {
         gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemLogin);
+        gm.createSystem<>(systemLeaderboard);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
@@ -169,6 +171,7 @@ namespace RType::Client {
         gm.createSystem<>(systemSettings);
         gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
+        // Over everything, right before the end of the drawing.
         gm.createSystem<LobbyClient>(
             systemDrawFade, std::numeric_limits<int>::max() - 1);
     }

@@ -20,6 +20,7 @@ set(SRCS
     src/LobbyListPage.cpp
     src/Login.cpp
     src/Settings.cpp
+    src/Leaderboard.cpp
     src/GameOver.cpp
     src/Metric.cpp
     src/KeyBindings.cpp

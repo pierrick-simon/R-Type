@@ -80,7 +80,6 @@ namespace RType {
                 onClientRemoved(Header {Opcode::LOGOUT, 0, 0, id});
         }
         broadcastNow(Opcode::HEALTH, {});
-        std::cout << "[Debug] Health check from server to client" << std::endl;
     }
 
     void UDPServer::startReceive()

@@ -117,7 +117,6 @@ namespace RType {
         const Header &header, const std::vector<uint8_t> &payload)
     {
         _lagometer.start();
-        std::cout << "[Debug] Health check from server to client" << std::endl;
         sendNow(Opcode::HEALTH, {});
     }
 

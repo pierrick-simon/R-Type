@@ -88,23 +88,23 @@ Table of Contents
       7.3.  LOBBY_LIST (42) ......................................... 17
       7.4.  JOIN_LOBBY (43) ......................................... 17
       7.5.  Returning to the Master ................................. 18
-   8.  Master-Instance Link (TCP) ................................... 18
-      8.1.  Connection .............................................. 18
-      8.2.  Framing ................................................. 18
-      8.3.  LINK_HELLO (1), Instance to Master ...................... 18
+      7.6.  LEADERBOARD_REQUEST (46) and LEADERBOARD (47) ........... 18
+   8.  Master-Instance Link (TCP) ................................... 19
+      8.1.  Connection .............................................. 19
+      8.2.  Framing ................................................. 19
+      8.3.  LINK_HELLO (1), Instance to Master ...................... 19
       8.4.  LINK_STATUS (2), Instance to Master ..................... 19
-      8.5.  LINK_STOP (3), Master to Instance ....................... 19
-      8.6.  LINK_SCORE (4), Instance to Master ...................... 19
-      8.7.  End of the Link ......................................... 19
-   9.  Example Exchanges ............................................ 19
-      9.1.  From Launch to a Running Game ........................... 20
-      9.2.  Lifetime of One Entity for One Client ................... 21
-   10.  Constants ................................................... 21
-   11.  Error Handling .............................................. 21
-   12.  Security Considerations ..................................... 22
-   13.  References .................................................. 23
-   Author's Address ................................................. 23
-
+      8.5.  LINK_STOP (3), Master to Instance ....................... 20
+      8.6.  LINK_SCORE (4), Instance to Master ...................... 20
+      8.7.  End of the Link ......................................... 20
+   9.  Example Exchanges ............................................ 20
+      9.1.  From Launch to a Running Game ........................... 21
+      9.2.  Lifetime of One Entity for One Client ................... 22
+   10.  Constants ................................................... 22
+   11.  Error Handling .............................................. 22
+   12.  Security Considerations ..................................... 23
+   13.  References .................................................. 24
+   Author's Address ................................................. 24
 
 
 
@@ -319,10 +319,10 @@ RFC 4242              R-Type Network Protocol              November 2026
      the information.
 
    - Requests sent again until their effect is observed (LOGIN,
-     ACCOUNT_REQUEST, CREATE_LOBBY, JOIN_LOBBY, LOBBY_START,
-     LOBBY_RESTART, LOBBY_RETURN). Their handlers are written so that
-     receiving the same request several times has the same effect as
-     receiving it once.
+     ACCOUNT_REQUEST, LEADERBOARD_REQUEST, CREATE_LOBBY, JOIN_LOBBY,
+     LOBBY_START, LOBBY_RESTART, LOBBY_RETURN). Their handlers are
+     written so that receiving the same request several times has the
+     same effect as receiving it once.
 
    - Replication messages (CREATE, SET, TEXT, MOVE, DESTROY). Their
      reliability rules are described in Section 6.3.
@@ -438,16 +438,20 @@ RFC 4242              R-Type Network Protocol              November 2026
     43    JOIN_LOBBY             C->S        master    7.4
     44    ACCOUNT_REQUEST        C->S        master    7.1
     45    ACCOUNT_RESULT         S->C        master    7.1
+    46    LEADERBOARD_REQUEST    C->S        master    7.6
+    47    LEADERBOARD            S->C        master    7.6
 
-   Values 5 to 9 are reserved for the session layer. Values 24 to 26 and
-   29 are unassigned. All other values are unassigned and MUST be
-   ignored.
+
 
 
 R-Type Group                   Informational                    [Page 8]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
+
+   Values 5 to 9 are reserved for the session layer. Values 24 to 26 and
+   29 are unassigned. All other values are unassigned and MUST be
+   ignored.
 
 6.  Game Instance Protocol
 
@@ -494,16 +498,17 @@ RFC 4242              R-Type Network Protocol              November 2026
 
    MOUSE_BUTTON_PRESSED (12) and MOUSE_BUTTON_RELEASED (13):
 
-   Offset  Size  Field
-   ------  ----  ---------------------------------------------
-   0       1     Button (u8): Left = 0, Right = 1, Middle = 2,
-                 Side = 3, Extra = 4, Forward = 5, Back = 6
 
 
 R-Type Group                   Informational                    [Page 9]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Button (u8): Left = 0, Right = 1, Middle = 2,
+                 Side = 3, Extra = 4, Forward = 5, Back = 6
 
    While the game is not running, the instance discards the inputs of
    the clients that have no ship, so that keys pressed in the lobby have
@@ -550,16 +555,16 @@ RFC 4242              R-Type Network Protocol              November 2026
 
    This acknowledgement tells the server that the entity exists on the
    client. The server then sends the whole state of the entity to that
-   client only: one SET per property, a TEXT for a text entity, and, if
-   the entity carries a sound that was not sent yet, the CREATE of type
-   SOUND. Once the state is sent, the client is added to the list of
-   clients receiving the changes of the entity.
-
 
 R-Type Group                   Informational                   [Page 10]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
+
+   client only: one SET per property, a TEXT for a text entity, and, if
+   the entity carries a sound that was not sent yet, the CREATE of type
+   SOUND. Once the state is sent, the client is added to the list of
+   clients receiving the changes of the entity.
 
 6.2.3.  DESTROY (27)
 
@@ -596,11 +601,6 @@ RFC 4242              R-Type Network Protocol              November 2026
    0       4     Network ID (u32)
    4       1     Property (u8), see the table below
    5       n     Value, encoded as given for the property
-
-
-
-
-
 
 
 
@@ -961,6 +961,54 @@ RFC 4242              R-Type Network Protocol              November 2026
    the login page. Master and instance sessions are independent: the
    master does not know in which lobby a client is.
 
+7.6.  LEADERBOARD_REQUEST (46) and LEADERBOARD (47)
+
+   LEADERBOARD_REQUEST, Client to Server, has an empty payload. The
+   client sends it when the player opens the leaderboard page, and again
+   every 500 ms until it receives LEADERBOARD. It is accepted whether
+   the client is logged in or not.
+
+   LEADERBOARD, Server to Client:
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Count (u8), at most 5
+   1       ...   Count times:
+                   4  Rank (u32), 1 for the best
+                   1  Username Length (u8)
+                   n  Username
+                   4  Best Score (u32)
+   ...     1     Has Own Entry (u8): 1 if the client is logged
+                 in, else 0
+   ...     ...   If Has Own Entry is 1, one more entry (rank,
+                 username, best score) for the account of the
+                 client
+
+   The master answers every request with the current state of its
+   accounts (Section 7.1):
+
+   - the top contains the accounts with the highest best scores, highest
+     first; accounts with equal scores are ordered by username. Accounts
+     that never scored are listed too, with a score of 0, when there are
+     fewer than 5 better ones;
+
+   - the rank of an account is 1 plus the number of accounts with a
+     strictly higher best score, so that equal scores share a rank (1,
+     2, 2, 4, ...). The rank in the top and the rank of the own entry
+     are computed the same way;
+
+   - the own entry is sent even when the account is already in the top,
+     so that the client can always show it.
+
+   A client MUST ignore a LEADERBOARD whose size does not match its
+   fields. With usernames of at most 16 bytes, the largest LEADERBOARD
+   is 152 bytes of payload.
+
+R-Type Group                   Informational                   [Page 18]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
 8.  Master-Instance Link (TCP)
 
 8.1.  Connection
@@ -1001,14 +1049,6 @@ RFC 4242              R-Type Network Protocol              November 2026
    does not list the instance and never stops it. Its reception restarts
    the "empty lobby" timer of Section 8.5.
 
-
-
-
-R-Type Group                   Informational                   [Page 18]
-
-RFC 4242              R-Type Network Protocol              November 2026
-
-
 8.4.  LINK_STATUS (2), Instance to Master
 
    Offset  Size  Field
@@ -1018,6 +1058,12 @@ RFC 4242              R-Type Network Protocol              November 2026
 
    Sent at the first frame and every time one of the two values changes.
    The master uses it for the lobby list and for the JOIN_LOBBY check.
+
+
+R-Type Group                   Informational                   [Page 19]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
 
 8.5.  LINK_STOP (3), Master to Instance
 
@@ -1060,7 +1106,17 @@ RFC 4242              R-Type Network Protocol              November 2026
 
 
 
-R-Type Group                   Informational                   [Page 19]
+
+
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                   [Page 20]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
@@ -1116,7 +1172,7 @@ RFC 4242              R-Type Network Protocol              November 2026
 
 
 
-R-Type Group                   Informational                   [Page 20]
+R-Type Group                   Informational                   [Page 21]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
@@ -1157,6 +1213,7 @@ RFC 4242              R-Type Network Protocol              November 2026
    Empty lobby timeout        30 s      master
    Players per lobby          5         master (JOIN_LOBBY)
    Lobbies listed             40        master (LOBBY_LIST)
+   Leaderboard size           5         master (LEADERBOARD)
    Name length                16        player and lobby names
    Username length            3 to 16   accounts
    Password length            4 to 32   accounts
@@ -1171,8 +1228,7 @@ RFC 4242              R-Type Network Protocol              November 2026
      are silently ignored. No error message exists in the protocol.
 
 
-
-R-Type Group                   Informational                   [Page 21]
+R-Type Group                   Informational                   [Page 22]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
@@ -1228,7 +1284,7 @@ RFC 4242              R-Type Network Protocol              November 2026
      account from being logged in from several clients at once.
 
 
-R-Type Group                   Informational                   [Page 22]
+R-Type Group                   Informational                   [Page 23]
 
 RFC 4242              R-Type Network Protocol              November 2026
 
@@ -1284,4 +1340,4 @@ Author's Address
 
 
 
-R-Type Group                   Informational                   [Page 23]
+R-Type Group                   Informational                   [Page 24]

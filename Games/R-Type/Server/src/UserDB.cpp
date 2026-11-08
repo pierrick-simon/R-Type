@@ -7,6 +7,7 @@
 
 #include "UserDB.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <filesystem>
@@ -242,8 +243,73 @@ namespace RType::Server {
         return true;
     }
 
+    namespace {
+
+        long clampScore(long score)
+        {
+            return std::clamp<long>(score, 0, UINT32_MAX);
+        }
+
+    } // namespace
+
+    std::vector<LeaderboardEntry> UserDB::top(std::size_t count) const
+    {
+        using Ref = std::unordered_map<std::string, User>::const_iterator;
+        std::vector<Ref> users;
+
+        for (auto it = _users.begin(); it != _users.end(); ++it)
+            users.push_back(it);
+        count = std::min(count, users.size());
+        // Only the first `count` need to be in order: partial_sort.
+        std::partial_sort(users.begin(),
+            users.begin() + long(count),
+            users.end(),
+            [](const Ref &a, const Ref &b) {
+                if (a->second.highestScore != b->second.highestScore)
+                    return a->second.highestScore > b->second.highestScore;
+                return a->first < b->first;
+            });
+        std::vector<LeaderboardEntry> result;
+
+        for (std::size_t i = 0; i < count; i++) {
+            const long score = users[i]->second.highestScore;
+            // Same score as the previous line: same rank.
+            const uint32_t rank =
+                i > 0 && users[i - 1]->second.highestScore == score
+                ? result.back().rank
+                : static_cast<uint32_t>(i + 1);
+
+            result.push_back({rank,
+                users[i]->first,
+                static_cast<uint32_t>(clampScore(score))});
+        }
+        return result;
+    }
+
+    std::optional<LeaderboardEntry> UserDB::entryOf(
+        const std::string &username) const
+    {
+        const auto it = _users.find(username);
+
+        if (it == _users.end())
+            return std::nullopt;
+        const long score = it->second.highestScore;
+        // Rank = 1 + number of accounts with a strictly better score.
+        const auto better = std::count_if(_users.begin(),
+            _users.end(),
+            [score](const auto &user) {
+                return user.second.highestScore > score;
+            });
+
+        return LeaderboardEntry {static_cast<uint32_t>(better + 1),
+            username,
+            static_cast<uint32_t>(clampScore(score))};
+    }
+
     void UserDB::save() const
     {
+        // Written next to the file, then renamed: a crash while writing
+        // cannot leave a half-written database.
         const std::string tmp = _path + ".tmp";
         {
             std::ofstream file(tmp, std::ios::trunc);
@@ -333,6 +399,15 @@ namespace RType::Server {
                     [&](Entity, DefaulClient &client, AccountRequest &request) {
                         if (request.pending)
                             handleRequest(server, db, client.getId(), request);
+                        if (!request.leaderboardPending)
+                            return;
+                        request.leaderboardPending = false;
+                        AccountProtocol::sendLeaderboard(server,
+                            client.getId(),
+                            db.top(LEADERBOARD_SIZE),
+                            request.loggedUser.empty()
+                                ? std::nullopt
+                                : db.entryOf(request.loggedUser));
                     });
             });
     }

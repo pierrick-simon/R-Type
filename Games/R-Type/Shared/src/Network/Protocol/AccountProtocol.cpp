@@ -99,4 +99,105 @@ namespace RType {
             });
     }
 
+    namespace {
+
+        void putEntry(std::vector<uint8_t> &out, const LeaderboardEntry &e)
+        {
+            const std::string name = e.name.substr(0, ACCOUNT_USERNAME_MAX);
+            const std::size_t at = out.size();
+
+            out.resize(at + 4);
+            put32(out.data() + at, e.rank);
+            out.push_back(static_cast<uint8_t>(name.size()));
+            out.insert(out.end(), name.begin(), name.end());
+            out.resize(out.size() + 4);
+            put32(out.data() + out.size() - 4, e.score);
+        }
+
+        /** @brief Read one entry at @p pos and move @p pos after it. */
+        std::optional<LeaderboardEntry> getEntry(
+            const std::vector<uint8_t> &p, std::size_t &pos)
+        {
+            if (pos + 5 > p.size())
+                return std::nullopt;
+            LeaderboardEntry e;
+            e.rank = get32(p.data() + pos);
+            const std::size_t length = p[pos + 4];
+
+            pos += 5;
+            if (pos + length + 4 > p.size())
+                return std::nullopt;
+            e.name = std::string(p.begin() + long(pos),
+                p.begin() + long(pos + length));
+            pos += length;
+            e.score = get32(p.data() + pos);
+            pos += 4;
+            return e;
+        }
+
+    } // namespace
+
+    void AccountProtocol::sendLeaderboardRequest(ClientManager &c)
+    {
+        c.send(OpcodeRType::LEADERBOARD_REQUEST, {});
+    }
+
+    void AccountProtocol::manageLeaderboardRequest(
+        const Header &header, const std::vector<uint8_t> &payload, Context &ctx)
+    {
+        if (!ctx.gm || !payload.empty())
+            return;
+        auto it = ctx.clients.find(header.senderId);
+        if (it == ctx.clients.end())
+            return;
+        auto &gm = ctx.gm->get();
+        if (gm.hasComponent<AccountRequest>(it->second))
+            gm.getComponent<AccountRequest>(it->second).leaderboardPending =
+                true;
+    }
+
+    void AccountProtocol::sendLeaderboard(ServerManager &s, uint32_t clientId,
+        const std::vector<LeaderboardEntry> &top,
+        const std::optional<LeaderboardEntry> &you)
+    {
+        std::vector<uint8_t> out;
+        const std::size_t count = std::min(top.size(), LEADERBOARD_SIZE);
+
+        out.push_back(static_cast<uint8_t>(count));
+        for (std::size_t i = 0; i < count; i++)
+            putEntry(out, top[i]);
+        out.push_back(you ? 1 : 0);
+        if (you)
+            putEntry(out, *you);
+        s.sendToClient(clientId, OpcodeRType::LEADERBOARD, out);
+    }
+
+    void AccountProtocol::manageLeaderboard(
+        const Header &, const std::vector<uint8_t> &payload, Context &ctx)
+    {
+        if (!ctx.gm || payload.empty() || payload[0] > LEADERBOARD_SIZE)
+            return;
+        LeaderboardState state;
+        std::size_t pos = 1;
+
+        for (std::size_t i = 0; i < payload[0]; i++) {
+            auto entry = getEntry(payload, pos);
+            if (!entry)
+                return;
+            state.top.push_back(*entry);
+        }
+        if (pos >= payload.size())
+            return;
+        if (payload[pos++] != 0) {
+            state.you = getEntry(payload, pos);
+            if (!state.you)
+                return;
+        }
+        if (pos != payload.size())
+            return;
+        state.received = true;
+        ctx.gm->get().view<LeaderboardState>().each(
+            [&state](Entity, LeaderboardState &s) { s = state; });
+    }
+
 } // namespace RType

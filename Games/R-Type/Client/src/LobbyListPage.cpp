@@ -14,6 +14,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "KeyboardManager.hpp"
+#include "Leaderboard.hpp"
 #include "LobbyListPage.hpp"
 #include "Login.hpp"
 #include "MasterProtocol.hpp"
@@ -322,6 +323,8 @@ namespace RType::Client {
         gm.addComponent<LobbyListState>(c);
         gm.addComponent<LoginClient>(c);
         gm.addComponent<AccountResult>(c);
+        gm.addComponent<LeaderboardClient>(c);
+        gm.addComponent<LeaderboardState>(c);
     }
 
     void openLobbyList(GameManager &gm)
