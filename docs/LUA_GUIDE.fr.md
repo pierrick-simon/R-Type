@@ -136,6 +136,8 @@ gm:countComponents('Position2D')            -- nombre d'entités qui en ont un
 | `Size2D` | `width` (0), `height` (0) | taille en pixels |
 | `Friction2D` | `f` (0) | ralentit une `Velocity2D` |
 | `GravityField2D` | `x` (0), `y` (1), `g` (9.80665) | attire une `Velocity2D` dans une direction |
+| `Rotation2D` | `angle` (0) | orientation, en radians |
+| `AngularVelocity2D` | `w` (0) | fait tourner une `Rotation2D`, en radians par seconde |
 | `Clock` | `speed` (1), méthode `elapsed()` | l'horloge propre à une entité |
 | `Texture2D` | `path` (**obligatoire**) | une image, chargée depuis `path` |
 | `Sprite2D` | `scale` (1), `rotation` (0), `flip` (false) | dessine la `Texture2D` de l'entité |
@@ -143,10 +145,19 @@ gm:countComponents('Position2D')            -- nombre d'entités qui en ont un
 | `Font` | `path` (**obligatoire**) | une police, chargée depuis `path` |
 | `Text2D` | `str` ("Hello World"), `fontSize` (10), `rotation` (0), `spacing` (0) | dessine un texte avec la `Font` de l'entité |
 | `Position3D` | `x` (0), `y` (0), `z` (0) | position dans l'espace 3D |
+| `Velocity3D` | `x` (0), `y` (0), `z` (0) | vitesse en unités par seconde |
+| `Friction3D` | `f` (0) | ralentit une `Velocity3D` |
+| `GravityField3D` | `x` (0), `y` (-1), `z` (0), `g` (9.80665) | attire une `Velocity3D` dans une direction |
+| `Rotation3D` | `x` (0), `y` (0), `z` (0), `w` (1) | orientation, sous forme de quaternion |
+| `AngularVelocity3D` | `x` (0), `y` (0), `z` (0) | fait tourner une `Rotation3D` autour de chaque axe, en radians par seconde |
 | `Model3D` | `path` (**obligatoire**) | un modèle 3D, chargé depuis `path` |
 | `ModelAnimation3D` | `path` (**obligatoire**) | les animations d'un modèle 3D |
 | `Sprite3D` | `scale` (1) | dessine le `Model3D` de l'entité |
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, en ms), `animation` (true), `scale` (1) | joue une animation du `Model3D` |
+| `Camera3D` | `targetX` (0), `targetY` (0.4), `targetZ` (0), `upX` (0), `upY` (1), `upZ` (0), `fovy` (45), `projection` (`CameraProjection.PERSPECTIVE`), `updateMode` (`CameraMode.CUSTOM`) | la caméra 3D, placée à la `Position3D` de l'entité et tournée vers le point visé (voir [la caméra](#la-caméra)) |
+| `CameraAngle` | `yaw` (0), `pitch` (0), `minPitch` (-89°), `maxPitch` (89°), en radians | oriente la `Camera3D` depuis sa `Position3D` selon ces angles |
+| `CameraAngleInput` | `yaw` (0), `pitch` (0), en radians | le virage à ajouter au `CameraAngle` pendant cette frame |
+| `CameraMouseControl` | `sensitivity` (0.0025), `invertY` (false) | transforme le mouvement de la souris en `CameraAngleInput` |
 | `Sound` | `path` (**obligatoire**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (très grande), méthodes `setVolume(v)` et `setPitch(p)` | un son, chargé depuis `path` (voir [les sons](#les-sons)) |
 
 Les cinq composants marqués **obligatoire** sont construits à partir d'un fichier, puis reçoivent les autres champs de la table : `gm:addComponent(e, 'Texture2D', {path = 'sprites/ship.png'})`.
@@ -204,6 +215,16 @@ end
 | `Friction2D` | `Friction2D`, `Velocity2D`, `Clock` | les ralentit, avec leur propre horloge |
 | `MasterGravityField2D` | `Velocity2D`, `GravityField2D` | applique la gravité, avec l'horloge du jeu |
 | `GravityField2D` | `GravityField2D`, `Velocity2D`, `Clock` | applique la gravité, avec leur propre horloge |
+| `MasterAngularVelocity2D` | `Rotation2D`, `AngularVelocity2D` | les fait tourner, avec l'horloge du jeu |
+| `AngularVelocity2D` | `AngularVelocity2D`, `Rotation2D`, `Clock` | les fait tourner, avec leur propre horloge |
+| `MasterVelocity3D` | `Position3D`, `Velocity3D` | les déplace, avec l'horloge du jeu |
+| `Velocity3D` | `Velocity3D`, `Position3D`, `Clock` | les déplace, avec leur propre horloge |
+| `MasterFriction3D` | `Velocity3D`, `Friction3D` | les ralentit, avec l'horloge du jeu |
+| `Friction3D` | `Friction3D`, `Velocity3D`, `Clock` | les ralentit, avec leur propre horloge |
+| `MasterGravityField3D` | `Velocity3D`, `GravityField3D` | applique la gravité, avec l'horloge du jeu |
+| `GravityField3D` | `GravityField3D`, `Velocity3D`, `Clock` | applique la gravité, avec leur propre horloge |
+| `MasterAngularVelocity3D` | `Rotation3D`, `AngularVelocity3D` | les fait tourner, avec l'horloge du jeu |
+| `AngularVelocity3D` | `AngularVelocity3D`, `Rotation3D`, `Clock` | les fait tourner, avec leur propre horloge |
 | `Clock` | `Clock` | fait avancer leur propre horloge |
 | `DrawSprite2D` | `Sprite2D`, `Texture2D`, `Position2D` | les dessine |
 | `DrawSpriteSheet2D` | `SpriteSheet2D`, `Texture2D`, `Position2D` | dessine leur case actuelle |
@@ -214,12 +235,17 @@ end
 | `DrawSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `Position3D` | les dessine en 3D, animés |
 | `MasterAnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D` | les anime, avec l'horloge du jeu |
 | `AnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D`, `Clock` | les anime, avec leur propre horloge |
+| `UpdateCamera` | `Camera3D`, `Position3D` | place la caméra à la `Position3D` de son entité |
+| `Draw3D` | `Camera3D` | dessine les `Sprite3D` et `SpriteSheet3D` tels que la caméra les voit |
+| `CameraMouseControl` | la souris | ajoute le mouvement de la souris au `CameraAngleInput` des entités qui ont un `CameraMouseControl` |
+| `CameraAngleInput` | `CameraAngle`, `CameraAngleInput` | ajoute l'entrée à l'angle, puis vide l'entrée |
+| `CameraAngle` | `Camera3D`, `Position3D`, `CameraAngle` | oriente la caméra selon son angle |
 | `Sound2D` | `Sound`, `Position2D` | place les sons `stereo` à la position de leur entité |
 | `KeyboardManagerClear` | le clavier | vide les touches lues pendant la frame |
 
 Les systèmes `Master…` utilisent l'horloge du jeu, que le moteur fait toujours tourner : c'est le choix le plus simple. Les autres utilisent une `Clock` donnée à chaque entité, pour ralentir ou accélérer certaines entités seulement (avec son `speed`), et ont aussi besoin du système `Clock`.
 
-Les systèmes de la fenêtre, du clavier, de la souris, du son et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. `Draw3D`, `UpdateCamera` et `UpdateKeybind` ne sont pas non plus dans ce tableau : ils agissent sur des composants que les scripts ne créent pas.
+Les systèmes de la fenêtre, du clavier, de la souris, du son et de l'horloge du jeu sont enregistrés par les [modules](ENGINE_GAME.fr.md#3-les-modules), une seule fois : ils ne sont pas dans ce tableau, pour qu'aucun script ne les fasse tourner deux fois par frame. `UpdateKeybind` n'est pas non plus dans ce tableau : il agit sur un composant que les scripts ne créent pas.
 
 ### L'ordre des systèmes
 
@@ -258,7 +284,7 @@ end
 
 ```lua
 local function quit(gm)
-    if gm:windowShouldClose() then
+    if gm:shouldClose() then
         gm:stop()                     -- la croix ou Échap quittent le jeu
     end
 end
@@ -270,8 +296,36 @@ end
 
 - Les systèmes qui suivent dans la même frame tournent encore, et les changements de la frame sont appliqués.
 - Appeler `gm:stop()` plusieurs fois ne fait rien de plus.
-- `gm:windowShouldClose()` renvoie `true` quand le bouton de fermeture de la fenêtre ou `Échap` a été pressé. Il a besoin du module `Window`.
+- `gm:shouldClose()` renvoie `true` quand le bouton de fermeture de la fenêtre ou `Échap` a été pressé. Il a besoin du module `Window`.
 - Un jeu qui veut quitter avec une autre touche lit le clavier ([plus bas](#lire-le-clavier-et-la-souris)) et appelle `gm:stop()` de la même façon.
+
+### Régler la fenêtre
+
+La fenêtre du module `Window` a trois réglages, qu'un script lit et change avec des fonctions `gm:` :
+
+```lua
+local function fullScreen(gm)
+    if gm:keyboard():isPressed(Key.F11) then
+        gm:setFullScreen(not gm:fullScreen())   -- F11 passe en plein écran et en sort
+    end
+end
+
+function start(gm)
+    gm:setHideCursor(true)
+    gm:setFps(30)
+    gm:createSystem(fullScreen)
+end
+```
+
+| Lire | Changer | Réglage | Par défaut |
+|---|---|---|---|
+| `gm:fps()` | `gm:setFps(n)` | les images par seconde de la fenêtre | `60` |
+| `gm:fullScreen()` | `gm:setFullScreen(b)` | si la fenêtre est en plein écran | `false` |
+| `gm:hideCursor()` | `gm:setHideCursor(b)` | si le curseur de la souris est caché et gardé dans la fenêtre | `false` |
+
+- Un changement est appliqué au début de la frame suivante : celui fait dans `start` est là dès la première frame.
+- `gm:setFps` peut ralentir le jeu, pas l'accélérer : la boucle ne va jamais plus vite que `windowFPS` de [`config.conf`](ENGINE_GAME.fr.md#2-le-fichier-configconf).
+- Ces fonctions ont besoin du module `Window`.
 
 ### Lire le clavier et la souris
 
@@ -300,7 +354,7 @@ end
 | `kb:isDown(touche)` / `mouse:isDown(bouton)` | la touche ou le bouton est **tenu** |
 | `kb:isReleased(touche)` / `mouse:isReleased(bouton)` | la touche ou le bouton a été relâché **pendant cette frame** |
 
-- `mouse.x` et `mouse.y` donnent la position du curseur dans la fenêtre, et `mouse.wheel` le mouvement de la molette. Ils sont en lecture seule.
+- `mouse.x` et `mouse.y` donnent la position du curseur dans la fenêtre, `mouse.deltaX` et `mouse.deltaY` de combien il a bougé depuis la frame précédente, et `mouse.wheel` le mouvement de la molette. Ils sont en lecture seule.
 - Les touches sont dans la table `Key` : les lettres (`Key.A` à `Key.Z`), les chiffres (`Key.Num0` à `Key.Num9`), les flèches (`Key.Left`, `Key.Right`, `Key.Up`, `Key.Down`), `Key.Space`, `Key.Enter`, `Key.Escape`, `Key.Tab`, `Key.Backspace`, `Key.LShift`, `Key.LControl`, `Key.LAlt`, le pavé numérique (`Key.Numpad0` à `Key.Numpad9`) et les touches de fonction (`Key.F1` à `Key.F15`).
 - Les boutons sont dans la table `MouseButton` : `Left`, `Right`, `Middle`, `Side`, `Extra`, `Forward`, `Back`.
 - Le clavier et la souris appartiennent à leur module : un script ne peut pas en créer d'autres.
@@ -362,7 +416,59 @@ end
 - `loop = true` rejoue le son en boucle, par exemple pour une musique.
 - `sound:setVolume(v)` règle le volume (`1` par défaut) et `sound:setPitch(p)` la hauteur (`1` par défaut).
 - Un son `stereo = true` est placé dans l'espace : avec le système `Sound2D`, il suit la `Position2D` de son entité, et son volume baisse avec la distance selon `attenuation` (`Attenuation.NONE`, `INVERSE`, `LINEAR` ou `EXPONENTIAL`), entre `minDistance` et `maxDistance`.
-- Le point qui entend les sons appartient au module : un script ne peut pas en créer d'autre.
+- Le point qui entend les sons appartient au module : un script ne peut pas en créer d'autre. Il est en (0, 0), et `gm:setListenerPosition(x, y)` le déplace, par exemple pour suivre le joueur.
+
+### La caméra
+
+Un jeu en 3D dessine à travers une `Camera3D`. La caméra se tient à la `Position3D` de son entité et regarde son point visé (`targetX`, `targetY`, `targetZ`) :
+
+```lua
+local camera
+
+local function move(gm)
+    local pos = gm:getComponent(camera, 'Position3D')
+    pos.x = pos.x + 0.01            -- la caméra glisse vers la droite
+end
+
+function start(gm)
+    camera = gm:createEntity()
+    gm:addComponent(camera, 'Position3D', {x = 0, y = 2, z = 6})
+    gm:addComponent(camera, 'Camera3D', {targetY = 0, fovy = 60})
+
+    gm:createSystem(move)
+    gm:addSystem('UpdateCamera')
+    gm:addSystem('Draw3D')
+end
+```
+
+- `UpdateCamera` place la caméra à sa `Position3D` à chaque frame, et `Draw3D` dessine les `Sprite3D` et `SpriteSheet3D` tels que la caméra les voit.
+- `upX`, `upY`, `upZ` donnent la direction du haut de la caméra, et `fovy` son champ de vision vertical, en degrés.
+- `projection` vaut `CameraProjection.PERSPECTIVE` ou `CameraProjection.ORTHOGRAPHIC`.
+- `updateMode` vaut `CameraMode.CUSTOM` par défaut : la caméra ne bouge qu'avec sa `Position3D` et son point visé. `FREE`, `ORBITAL`, `FIRST_PERSON` et `THIRD_PERSON` sont les modes de caméra de raylib.
+- Un jeu n'a qu'une caméra : une deuxième `Camera3D` arrête le jeu avec `Camera can be created only once`.
+
+Pour tourner la caméra avec la souris, comme dans un jeu à la première personne, on lui donne un `CameraAngle`, un `CameraAngleInput` et un `CameraMouseControl`. Il faut le module `Mouse` :
+
+```lua
+function start(gm)
+    local camera = gm:createEntity()
+    gm:addComponent(camera, 'Position3D', {y = 2, z = 6})
+    gm:addComponent(camera, 'Camera3D')
+    gm:addComponent(camera, 'CameraAngle')
+    gm:addComponent(camera, 'CameraAngleInput')
+    gm:addComponent(camera, 'CameraMouseControl', {sensitivity = 0.003})
+
+    gm:setHideCursor(true)              -- le curseur reste dans la fenêtre
+    gm:addSystem('CameraMouseControl')  -- souris -> CameraAngleInput
+    gm:addSystem('CameraAngleInput')    -- CameraAngleInput -> CameraAngle
+    gm:addSystem('UpdateCamera')
+    gm:addSystem('CameraAngle')         -- CameraAngle -> là où regarde la caméra
+    gm:addSystem('Draw3D')
+end
+```
+
+- `CameraAngle` remplace les champs du point visé : la caméra regarde depuis sa `Position3D` selon `yaw` (gauche et droite) et `pitch` (haut et bas), et `pitch` reste entre `minPitch` et `maxPitch`.
+- Un script peut tourner la caméra sans la souris en ajoutant à `CameraAngleInput`, par exemple avec les flèches.
 
 ---
 
@@ -439,7 +545,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:windowShouldClose() then gm:stop() end
+    if gm:shouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -465,7 +571,7 @@ end
 ### À faire
 
 - **Définir `start` dans chaque script.**
-- **Avoir un système qui appelle `gm:stop()`** quand `gm:windowShouldClose()` renvoie `true` ([arrêter le jeu](#arrêter-le-jeu)).
+- **Avoir un système qui appelle `gm:stop()`** quand `gm:shouldClose()` renvoie `true` ([arrêter le jeu](#arrêter-le-jeu)).
 - **Créer les entités et les systèmes dans `start`**, et mettre ce qui tourne à chaque frame dans des systèmes.
 - **Donner à un système la liste des composants sur lesquels il travaille**, plutôt que boucler avec une vue dans un système appelé une fois par frame : le moteur choisit alors les entités pour vous.
 - **Préférer les systèmes `Master…` du moteur**, sauf si certaines entités ont besoin de leur propre horloge.
@@ -491,12 +597,14 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `scripts/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
 | `Unknown component: Postion2D` | le nom n'est pas un des [composants](#les-composants) | corriger le nom (la casse compte) |
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
-| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()` ou `gm:windowShouldClose()` sans le module correspondant | ajouter `Keyboard`, `Mouse` ou `Window` aux `modules` de `config.conf` |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()`, ou une fonction de la fenêtre comme `gm:shouldClose()`, sans le module correspondant | ajouter `Keyboard`, `Mouse` ou `Window` aux `modules` de `config.conf` |
+| `gm:setListenerPosition needs the Audio module` | `gm:setListenerPosition()` sans le module `Audio` | ajouter `Audio` aux `modules` de `config.conf` |
 | `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
 | `Sound needs the Audio module` | un `Sound` sans le module `Audio` | ajouter `Audio` aux `modules` de `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier depuis lequel le jeu est lancé |
-| `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y` ou `mouse.wheel` | ne faire que les lire |
+| `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y`, `mouse.deltaX`, `mouse.deltaY` ou `mouse.wheel` | ne faire que les lire |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
+| `Camera can be created only once` | une deuxième `Camera3D` | garder une seule caméra et la déplacer avec sa `Position3D` |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |
 | `Invalid arguments for Position2D: field 'x' expects a number, got a string` | un champ du mauvais type | donner une valeur du bon type |
 | `Invalid arguments for Texture2D: missing 'path'` | un composant construit à partir d'un fichier, sans `path` | donner `{path = '...'}` |
@@ -541,7 +649,11 @@ Les cas particuliers (champs imbriqués, méthodes, enums, composants construits
 | `gm:destroyEntity(e)` | détruit une entité et ses composants |
 | `gm:hasEntity(e)` | si l'entité existe |
 | `gm:stop()` | arrête le jeu après la frame en cours |
-| `gm:windowShouldClose()` | si le bouton de fermeture ou `Échap` a été pressé |
+| `gm:shouldClose()` | si le bouton de fermeture ou `Échap` a été pressé |
+| `gm:fps()`, `gm:setFps(n)` | lit ou change les images par seconde de la fenêtre |
+| `gm:fullScreen()`, `gm:setFullScreen(b)` | lit ou change si la fenêtre est en plein écran |
+| `gm:hideCursor()`, `gm:setHideCursor(b)` | lit ou change si le curseur est caché et gardé dans la fenêtre |
+| `gm:setListenerPosition(x, y)` | déplace le point qui entend les sons |
 | `gm:addComponent(e, nom [, champs])` | ajoute un composant, construit à partir de la table |
 | `gm:getComponent(e, nom)` | le vrai composant |
 | `gm:hasComponent(e, nom)` | si l'entité a le composant |
@@ -553,6 +665,6 @@ Les cas particuliers (champs imbriqués, méthodes, enums, composants construits
 | `gm:destroySystem(id)` | arrête un système, avec l'id que renvoie `createSystem` ou `addSystem` |
 | `gm:hasSystem(id)` | si le système existe |
 | `gm:keyboard()` | le clavier : `isPressed`, `isDown`, `isReleased` avec une valeur de `Key` |
-| `gm:mouse()` | la souris : `isPressed`, `isDown`, `isReleased` avec une valeur de `MouseButton`, et `x`, `y`, `wheel` |
+| `gm:mouse()` | la souris : `isPressed`, `isDown`, `isReleased` avec une valeur de `MouseButton`, et `x`, `y`, `deltaX`, `deltaY`, `wheel` |
 | `gm:elapsed()` | les millisecondes de la frame précédente, selon l'horloge du jeu |
 | `for e, composants... in gm:view({noms}) do` | parcourt les entités qui ont les composants |

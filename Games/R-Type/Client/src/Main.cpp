@@ -35,7 +35,8 @@ int main()
         RType::Client::loadSettings();
         RType::Client::loadSavedServer();
         RType::Client::createServerPage(gm);
-        while (!WindowShouldClose() && !RType::Client::quitRequested)
+        while (!RType::Client::shouldWindowClose(gm, w) &&
+            !RType::Client::quitRequested)
             gm.update();
         if (gm.hasComponent<RType::Assets>(am)) {
             auto &assets = gm.getComponent<RType::Assets>(am);

@@ -19,6 +19,7 @@
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
+#include "Window.hpp"
 
 namespace RType::Client {
 

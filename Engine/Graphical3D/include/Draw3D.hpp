@@ -25,27 +25,20 @@ namespace RType {
          * @brief System running the 3D drawing pass.
          * @param gm Game manager giving access to the entities and
          * components.
-         * @param window Window the scene is rendered to.
          */
-        static void systemDraw3D(GameManager &gm, Window &window);
+        static void systemDraw3D(GameManager &gm);
 
         template<Unloadable... Ts>
             requires OneOf<Model3D, Ts...>
         static void systemDrawManager3D(
             GameManager &gm, AssetManager<Ts...> &assetManager)
         {
-            for (auto [_, w] : gm.view<Window>().getVector()) {
-                w.setTargetFps();
-                w.beginDrawing();
-                for (auto [_, camera] : gm.view<Camera3D>().getVector()) {
-                    camera.BeginMode();
-                    Sprite3D::systemDrawManagerSprite3D<Ts...>(
-                        gm, assetManager);
-                    SpriteSheet3D::systemDrawManagerSpriteSheet3D<Ts...>(
-                        gm, assetManager);
-                    camera.EndMode();
-                }
-                w.endDrawing();
+            for (auto [_, camera] : gm.view<Camera3D>().getVector()) {
+                camera.BeginMode();
+                Sprite3D::systemDrawManagerSprite3D<Ts...>(gm, assetManager);
+                SpriteSheet3D::systemDrawManagerSpriteSheet3D<Ts...>(
+                    gm, assetManager);
+                camera.EndMode();
             }
         }
     };

@@ -11,6 +11,7 @@
 #include <raylib-cpp.hpp>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 #include "Position2D.hpp"
 
 namespace RType {
@@ -97,6 +98,17 @@ namespace RType {
         }
 
         /**
+         * @brief Get the mouse movement since the previous frame.
+         *
+         * @return The cursor displacement in pixels (x right, y down).
+         *         Also works while the cursor is disabled (DisableCursor()).
+         */
+        Position2D getDelta() const
+        {
+            return _delta;
+        }
+
+        /**
          * @brief Get the mouse wheel movement.
          *
          * @return The wheel movement of the last frame (positive = up).
@@ -109,6 +121,7 @@ namespace RType {
     private:
         std::unordered_set<int> _held;
         Position2D _pos;
+        Position2D _delta;
         float _wheel = 0.f;
     };
 

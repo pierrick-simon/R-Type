@@ -26,7 +26,15 @@ namespace RType::Game {
                         info.windowWidth,
                         info.windowHeight,
                         info.windowName);
-                    gm.createSystem<Window>(Window::systemClearWindow);
+                    gm.createSystem<Window>(
+                        [](Window &win) {
+                            win.setTargetFps();
+                            win.beginDrawing();
+                        },
+                        std::numeric_limits<int>::min());
+                    gm.createSystem<Window>(
+                        [](Window &win) { win.endDrawing(); },
+                        std::numeric_limits<int>::max());
                 }}},
         {"Keyboard",
             {{"Window"},
