@@ -17,6 +17,7 @@
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
+#include "Window.hpp"
 
 namespace RType::Client {
 
@@ -178,18 +179,22 @@ namespace RType::Client {
 
     struct FullscreenButton {};
 
-    std::string windowModeLabel()
+    std::string windowModeLabel(bool fullScreen)
     {
-        return ::IsWindowFullscreen() ? "Fullscreen" : "Windowed";
+        return fullScreen ? "Fullscreen" : "Windowed";
     }
 
     void changeFullScreen(GameManager &gm)
     {
-        ::ToggleFullscreen();
-        gm.view<FullscreenButton, Button>().each(
-            [](Entity, FullscreenButton &, Button &button) {
-                button.label = windowModeLabel();
-            });
+        bool fullScreen = false;
+        for (auto [_, w] : gm.view<Window>().getVector()) {
+            w.fullScreen = !w.fullScreen;
+            fullScreen = w.fullScreen;
+        }
+        for (auto [_, fb, b] :
+            gm.view<FullscreenButton, Button>().getVector()) {
+            b.label = windowModeLabel(fullScreen);
+        }
     }
 
     void createMenu(GameManager &gm)
@@ -201,7 +206,7 @@ namespace RType::Client {
         addMenuButton(gm, firstX, firstY, "Start Game", openServerPage);
         const float modeY = firstY + step + WINDOW_MODE_TITLE_SPACE;
         const Entity modeButton = addMenuButton(
-            gm, firstX, modeY, windowModeLabel(), changeFullScreen);
+            gm, firstX, modeY, windowModeLabel(false), changeFullScreen);
         const Entity modeText = addText(gm,
             firstX + BUTTON_WIDTH / 2.f,
             modeY - BUTTON_GAP / 2.f,

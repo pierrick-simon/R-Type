@@ -13,10 +13,10 @@ namespace RType::Game {
 
     void WindowBinding::registerFunctions(sol::state &lua)
     {
-        lua["GameManager"]["windowShouldClose"] = [](GameManager &gm) {
+        lua["GameManager"]["shouldClose"] = [](GameManager &gm) {
             GameManagerBinding::findModuleComponent<Window>(
-                gm, "gm:windowShouldClose", "Window");
-            return WindowShouldClose();
+                gm, "gm:shouldClose", "Window")
+                .shouldClose();
         };
     }
 

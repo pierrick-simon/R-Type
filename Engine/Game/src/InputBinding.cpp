@@ -155,7 +155,13 @@ namespace RType::Game {
             sol::readonly_property(
                 [](const MouseManager &m) { return m.getPos().y; }),
             "wheel",
-            sol::readonly_property(&MouseManager::getWheel));
+            sol::readonly_property(&MouseManager::getWheel)),
+            "deltaX", sol::readonly_property([](const MouseManager &m) {
+                return m.getDelta().x;
+            }),
+            "deltaY", sol::readonly_property([](const MouseManager &m) {
+                return m.getDelta().y;
+            });
         lua["GameManager"]["mouse"] = [](GameManager &gm) -> MouseManager & {
             return GameManagerBinding::findModuleComponent<MouseManager>(
                 gm, "gm:mouse", "Mouse");

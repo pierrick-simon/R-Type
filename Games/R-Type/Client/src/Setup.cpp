@@ -133,4 +133,13 @@ namespace RType::Client {
         return s;
     }
 
+    bool shouldWindowClose(GameManager &gm, Entity w)
+    {
+        if (gm.hasComponent<Window>(w)) {
+            auto &window = gm.getComponent<Window>(w);
+            return window.shouldClose();
+        }
+        return true;
+    }
+
 } // namespace RType::Client

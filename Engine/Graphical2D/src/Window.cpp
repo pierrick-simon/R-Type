@@ -25,21 +25,23 @@ namespace RType {
         onlyOne = false;
     }
 
-    void Window::systemClearWindow(const Window &w)
+    void Window::systemClearWindow(Window &w)
     {
-        static int fps = w._window->GetFPS();
-
-        if (fps != w.fps) {
-            fps = w.fps;
-            w._window->SetTargetFPS(w.fps);
-        }
-        w._window->BeginDrawing();
-        w._window->ClearBackground(w.clearScreenColor);
-        w._window->EndDrawing();
+        w.setTargetFps();
+        w.beginDrawing();
+        w.endDrawing();
     }
 
     void Window::beginDrawing()
     {
+        if (_window->IsFullscreen() != fullScreen)
+            _window->ToggleFullscreen();
+        if (IsCursorHidden() != this->hideCursor) {
+            if (this->hideCursor)
+                DisableCursor();
+            else
+                EnableCursor();
+        }
         this->_window->BeginDrawing();
         this->_window->ClearBackground(this->clearScreenColor);
     }
@@ -57,5 +59,10 @@ namespace RType {
             fps = this->fps;
             this->_window->SetTargetFPS(this->fps);
         }
+    }
+
+    bool Window::shouldClose()
+    {
+        return _window->ShouldClose();
     }
 } // namespace RType
