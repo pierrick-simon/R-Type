@@ -39,10 +39,13 @@ server and client, and a proof-of-concept program (`Poc`) that tests the ECS.
 | Area | What the engine provides | Library |
 |---|---|---|
 | **ECS** | Generational entities, components stored in sparse sets, systems run in creation order, views (`each`, `getVector`), structural changes deferred to the end of the frame | `engine-system` |
-| **Basic components** | `Position2D`, `Velocity2D`, `GravityField2D`, `Friction2D`, `Clock`, `Origin2D`, `Size2D` | `engine-system` |
-| **Rendering and audio** | `Window`, `Texture2D`, `Sprite2D`, `SpriteSheet2D` (animations), `Font`, `Text2D`, `Sound` | `engine-graphical` (raylib) |
-| **Input** | `KeyboardManager` (AZERTY and QWERTY), `MouseManager`, `Keybind` (key rebinding) | `engine-graphical` (raylib) |
+| **Basic components** | `Position2D`, `Position3D`, `Clock`, `Origin2D`, `Size2D` | `engine-system` |
+| **Physics** | `Velocity2D`/`3D`, `Friction2D`/`3D`, `GravityField2D`/`3D`, `Rotation2D`/`3D`, `AngularVelocity2D`/`3D` | `engine-physics` |
+| **2D rendering and input** | `Window`, `Texture2D`, `Sprite2D`, `SpriteSheet2D` (animations), `Font`, `Text2D`, `KeyboardManager` (AZERTY and QWERTY), `MouseManager`, `Keybind` (key rebinding) | `engine-graphical2D` (raylib) |
+| **3D rendering** | `Model3D`, `ModelAnimation3D`, `Sprite3D`, `SpriteSheet3D` (animations), `Camera3D`, `CameraAngle`, `CameraMouseControl` (mouse look) | `engine-graphical3D` (raylib) |
+| **Audio** | `Sound` (2D spatial sound), `Listener` | `engine-audio` (miniaudio) |
 | **Networking** | UDP client and server with Asio, in-house connection and presence check (in progress) | `engine-network` |
+| **Lua games** | The `game` executable runs a game written in Lua: a `config.conf` file and scripts, no C++ | `game` (sol2, Lua 5.4) |
 
 Components with a behavior come with their own system function (`systemXxx`),
 to register with `GameManager::createSystem`; pure data components
@@ -57,8 +60,12 @@ to register with `GameManager::createSystem`; pure data components
 R-Type/
 ├── Engine/                  # Reusable engine, independent from any game
 │   ├── System/              # ECS (GameManager) and basic components -> `engine-system`
-│   ├── Graphical/           # Window, sprites, text, sound, input (raylib) -> `engine-graphical`
-│   └── Network/             # Networking (Asio) -> `engine-network`
+│   ├── Physics/             # Movement, friction, gravity, rotation -> `engine-physics`
+│   ├── Graphical2D/         # Window, sprites, text, input (raylib) -> `engine-graphical2D`
+│   ├── Graphical3D/         # Models, 3D sprites, camera (raylib) -> `engine-graphical3D`
+│   ├── Audio/               # Sounds and listener (miniaudio) -> `engine-audio`
+│   ├── Network/             # Networking (Asio) -> `engine-network`
+│   └── Game/                # Lua game runner -> `game` executable
 ├── Games/
 │   ├── R-Type/
 │   │   ├── Client/          # `r-type_client` executable
@@ -68,10 +75,13 @@ R-Type/
 └── script/                  # Format and lint scripts
 ```
 
-- **`Engine`** doesn't depend on any game code: it exposes three reusable
-  shared libraries (`engine-system`, `engine-graphical`, `engine-network`)
-  consumed by `Games`, and it's the one that depends on **raylib**, **Asio**
-  and **plf::colony**.
+- **`Engine`** doesn't depend on any game code: it exposes six reusable
+  shared libraries (`engine-system`, `engine-physics`, `engine-graphical2D`,
+  `engine-graphical3D`, `engine-audio`, `engine-network`) consumed by `Games`,
+  and the `game` executable that runs Lua games. It's the one that depends on
+  **raylib**, **miniaudio**, **Asio**, **plf::colony**, **sol2** and **Lua**.
+- Each library can be left out of the build with its CMake option
+  (`-DRTYPE_BUILD_NETWORK=OFF`, ...); `engine-system` is always built.
 - **`Games/R-Type`** contains the client and the server, both of which rely on
   the engine, each with its own sources, headers and tests.
 - **`Games/Poc`** checks the behavior of the ECS (more than 200 tests, built
@@ -97,8 +107,8 @@ sudo apt install libgl1-mesa-dev libx11-dev libxrandr-dev libxi-dev \
 ```
 
 The engine's libraries are **downloaded automatically** by CMake
-(`FetchContent`) on the first configuration, at pinned versions: there is
-nothing to install by hand.
+(`FetchContent`) on the first configuration, at pinned versions, when they are
+not already installed on the system: there is nothing to install by hand.
 
 | Dependency | Version | Role |
 |---|---|---|
@@ -106,6 +116,9 @@ nothing to install by hand.
 | [raylib-cpp](https://github.com/RobLoach/raylib-cpp) | 5.5.0 | C++ wrapper for raylib |
 | [Asio](https://think-async.com/Asio/) (standalone) | 1.34.2 | UDP/TCP sockets, asynchronous I/O |
 | [plf::colony](https://github.com/mattreecebentley/plf_colony) | pinned commit | Component storage with stable references |
+| [miniaudio](https://github.com/mackron/miniaudio) | 0.11.22 | Audio playback and spatial sound |
+| [Lua](https://www.lua.org/) | 5.4.7 | Scripting language of the games run by `game` |
+| [sol2](https://github.com/ThePhD/sol2) | 3.5.0 | C++ binding between the engine and Lua |
 
 ---
 
@@ -145,8 +158,8 @@ cmake --install build --config Release
 ```
 
 This copies the `game` executable into `bin/` and the engine's libraries
-(`engine-system`, `engine-graphical2D`, `engine-graphical3D`, `engine-network`,
-`engine-audio`) into `lib/`, under the install prefix: `/usr/local` on Linux,
+(`engine-system`, `engine-physics`, `engine-graphical2D`, `engine-graphical3D`,
+`engine-network`, `engine-audio`) into `lib/`, under the install prefix: `/usr/local` on Linux,
 `C:\Program Files\R-Type` on Windows.
 
 To install somewhere else, for example in your home folder without `sudo`,
@@ -165,6 +178,15 @@ cmake --install build --prefix ~/.local
 ./Games/r-type_client
 ./Games/r-type_poc       # runs the ECS test suite
 ```
+
+To run a game written in Lua, start `game` from the game's folder, the one
+that holds its `config.conf`:
+
+```sh
+cd Games/MyGame && ../game
+```
+
+See the [running a game guide](docs/ENGINE_GAME.en.md) to set one up.
 
 ---
 
@@ -199,7 +221,7 @@ Every document exists in French and English.
 | **Accessibility** | What the engine offers for accessibility (rebinding, layouts, input, text, tint), why it helps and who for | [EN](docs/ACCESSIBILITY.en.md) · [FR](docs/ACCESSIBILITY.fr.md) |
 | **Comparative studies** | Why Windows and Linux, C++, CMake, an ECS, raylib, Asio, `plf::colony`, sparse sets, `FetchContent`, UDP, Criterion | [EN](docs/comparative-studies/en/README.md) · [FR](docs/comparative-studies/fr/README.md) |
 
-The engine's headers (`Engine/System/include`, `Engine/Graphical/include`) also
+The engine's headers (the `include` folder of each library in `Engine/`) also
 carry Doxygen comments for every class and component.
 
 ---
