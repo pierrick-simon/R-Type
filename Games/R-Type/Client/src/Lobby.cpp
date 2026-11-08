@@ -15,8 +15,8 @@
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Login.hpp"
-#include "Settings.hpp"
 #include "Menu.hpp"
+#include "Settings.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Texture2D.hpp"
 

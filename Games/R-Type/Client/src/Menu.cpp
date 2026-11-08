@@ -15,10 +15,10 @@
 #include "LobbyProtocol.hpp"
 #include "Login.hpp"
 #include "Menu.hpp"
+#include "Settings.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
-#include "Settings.hpp"
 
 namespace RType::Client {
 

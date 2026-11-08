@@ -26,13 +26,13 @@
 #include "Metric.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Settings.hpp"
 #include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Velocity2D.hpp"
 #include "Window.hpp"
-#include "Settings.hpp"
 
 namespace RType::Client {
     namespace {

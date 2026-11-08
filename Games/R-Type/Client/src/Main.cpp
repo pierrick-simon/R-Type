@@ -12,10 +12,10 @@
 #include "GameManager.hpp"
 #include "Login.hpp"
 #include "Menu.hpp"
+#include "Settings.hpp"
 #include "Setup.hpp"
 #include "Sound.hpp"
 #include "Texture2D.hpp"
-#include "Settings.hpp"
 
 int main()
 {

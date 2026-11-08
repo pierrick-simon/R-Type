@@ -497,7 +497,6 @@ namespace RType::Client {
             return ::MeasureTextEx(font, str.c_str(), size, 1.f).x;
         };
 
-
         if (state->lobbies.empty()) {
             const std::string empty = state->received
                 ? "No lobby yet, create one"

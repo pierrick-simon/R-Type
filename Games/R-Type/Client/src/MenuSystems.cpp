@@ -16,11 +16,11 @@
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
+#include "Settings.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
 #include "Texture2D.hpp"
-#include "Settings.hpp"
 
 namespace RType::Client {
 
@@ -138,9 +138,9 @@ namespace RType::Client {
                 const bool blink =
                     activeField == f.id && (f.elapsed.count() / 400) % 2 == 0;
                 const std::string &value = fieldValue(f.id);
-                button.label = (f.id == Field::Password
-                                       ? std::string(value.size(), '*')
-                                       : value) +
+                button.label =
+                    (f.id == Field::Password ? std::string(value.size(), '*')
+                                             : value) +
                     (blink ? "_" : "");
                 button.error = f.id == Field::Ip && ipInvalid;
             });

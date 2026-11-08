@@ -92,7 +92,8 @@ namespace RType::Client {
                     false,
                     volumeButtonDisabled(step)});
             gm.addComponent<Position2D>(e, x, y);
-            SpriteSheet2D sheet(Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, 1.f, false);
+            SpriteSheet2D sheet(
+                Size2D {1, 3}, BUTTON_TILE_NORMAL, 0, 1.f, false);
 
             sheet.assetId = asset;
             gm.addComponent<SpriteSheet2D>(e, sheet);
@@ -164,7 +165,8 @@ namespace RType::Client {
                     KeyBindings::actionName(action),
                     30.f,
                     TextAnchor {1.f, 0.5f});
-                const Entity button = addButton(gm,
+                const Entity button = addButton(
+                    gm,
                     buttonX,
                     y,
                     KeyBindings::keyName(_keyBindings.at(i)),
@@ -177,8 +179,8 @@ namespace RType::Client {
             }
             const Entity reset = addButton(gm,
                 buttonX,
-                SETTINGS_FIRST_Y + static_cast<float>(ACTION_COUNT) * KEY_ROW_STEP +
-                    10.f,
+                SETTINGS_FIRST_Y +
+                    static_cast<float>(ACTION_COUNT) * KEY_ROW_STEP + 10.f,
                 "Reset",
                 resetKeys,
                 KEY_BUTTON_WIDTH);
@@ -188,7 +190,8 @@ namespace RType::Client {
 
         void createSettingsPage(GameManager &gm)
         {
-            addSettingsText(gm, SETTINGS_TITLE_Y, "Settings", SETTINGS_TITLE_SIZE);
+            addSettingsText(
+                gm, SETTINGS_TITLE_Y, "Settings", SETTINGS_TITLE_SIZE);
             // Left column: display and sound.
             const Entity modeText = addText(gm,
                 SETTINGS_LEFT_X,
@@ -224,7 +227,8 @@ namespace RType::Client {
             createKeyRows(gm);
             // Bottom right, like the other "Back" buttons.
             addSettingsButton(gm,
-                static_cast<float>(WINDOW_WIDTH) - BUTTON_WIDTH - BUTTON_GAP * 2,
+                static_cast<float>(WINDOW_WIDTH) - BUTTON_WIDTH -
+                    BUTTON_GAP * 2,
                 static_cast<float>(WINDOW_HEIGTH) - BUTTON_HEIGHT * 2 -
                     BUTTON_GAP,
                 "Back",
@@ -279,10 +283,11 @@ namespace RType::Client {
         if (_waitingKey) {
             std::optional<Key::Value> pressed;
 
-            gm.view<KeyboardManager>().each([&pressed](Entity, KeyboardManager &k) {
-                if (!k.keyPressed.empty())
-                    pressed = k.keyPressed.front();
-            });
+            gm.view<KeyboardManager>().each(
+                [&pressed](Entity, KeyboardManager &k) {
+                    if (!k.keyPressed.empty())
+                        pressed = k.keyPressed.front();
+                });
             // Escape cancels; Enter, Tab and Backspace stay for the menus.
             if (pressed && *pressed != Key::Value::Escape &&
                 *pressed != Key::Value::Enter && *pressed != Key::Value::Tab &&
@@ -297,8 +302,8 @@ namespace RType::Client {
             [](Entity, KeyBindButton &key, Button &button) {
                 button.label = _waitingKey == key.action
                     ? "Press a key"
-                    : KeyBindings::keyName(
-                          _keyBindings.at(static_cast<std::size_t>(key.action)));
+                    : KeyBindings::keyName(_keyBindings.at(
+                          static_cast<std::size_t>(key.action)));
                 button.selected = _waitingKey == key.action;
             });
     }

@@ -24,7 +24,10 @@ namespace RType {
 
     /** @brief Key of each action expected by the server (ZQSD + Space). */
     inline constexpr std::array<Key::Value, ACTION_COUNT> DEFAULT_KEYS = {
-        Key::Value::Z, Key::Value::Q, Key::Value::S, Key::Value::D,
+        Key::Value::Z,
+        Key::Value::Q,
+        Key::Value::S,
+        Key::Value::D,
         Key::Value::Space};
 
     /**
