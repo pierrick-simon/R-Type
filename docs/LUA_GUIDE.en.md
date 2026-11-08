@@ -354,7 +354,7 @@ end
 | `kb:isDown(key)` / `mouse:isDown(button)` | the key or button is **held** |
 | `kb:isReleased(key)` / `mouse:isReleased(button)` | the key or button was released **during this frame** |
 
-- `mouse.x` and `mouse.y` give the cursor's position in the window, and `mouse.wheel` the wheel's movement. They are read-only.
+- `mouse.x` and `mouse.y` give the cursor's position in the window, `mouse.deltaX` and `mouse.deltaY` how far it moved since the previous frame, and `mouse.wheel` the wheel's movement. They are read-only.
 - The keys are in the `Key` table: the letters (`Key.A` to `Key.Z`), the digits (`Key.Num0` to `Key.Num9`), the arrows (`Key.Left`, `Key.Right`, `Key.Up`, `Key.Down`), `Key.Space`, `Key.Enter`, `Key.Escape`, `Key.Tab`, `Key.Backspace`, `Key.LShift`, `Key.LControl`, `Key.LAlt`, the numpad (`Key.Numpad0` to `Key.Numpad9`) and the function keys (`Key.F1` to `Key.F15`).
 - The buttons are in the `MouseButton` table: `Left`, `Right`, `Middle`, `Side`, `Extra`, `Forward`, `Back`.
 - The keyboard and the mouse belong to their module: a script cannot create other ones.
@@ -602,7 +602,7 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
 | `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `Audio` to the `modules` of `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder the game is started from |
-| `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y` or `mouse.wheel` | only read them |
+| `sol: cannot write to a readonly property` | a script writes `mouse.x`, `mouse.y`, `mouse.deltaX`, `mouse.deltaY` or `mouse.wheel` | only read them |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` or `gm:addSystem` called from a system | create the system in `start`, and stop it or keep it idle with a variable of the script |
 | `Camera can be created only once` | a second `Camera3D` | keep one camera and move it with its `Position3D` |
 | `Invalid arguments for Position2D: no field 'z'` | the table gives a field the component does not have | remove or rename the field |
@@ -665,6 +665,6 @@ The special cases (nested fields, methods, enums, components built from a file),
 | `gm:destroySystem(id)` | stops a system, with the id returned by `createSystem` or `addSystem` |
 | `gm:hasSystem(id)` | whether the system exists |
 | `gm:keyboard()` | the keyboard: `isPressed`, `isDown`, `isReleased` with a `Key` value |
-| `gm:mouse()` | the mouse: `isPressed`, `isDown`, `isReleased` with a `MouseButton` value, and `x`, `y`, `wheel` |
+| `gm:mouse()` | the mouse: `isPressed`, `isDown`, `isReleased` with a `MouseButton` value, and `x`, `y`, `deltaX`, `deltaY`, `wheel` |
 | `gm:elapsed()` | the milliseconds of the previous frame, by the game's clock |
 | `for e, components... in gm:view({names}) do` | loops over the entities that have the components |

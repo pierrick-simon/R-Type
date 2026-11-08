@@ -354,7 +354,7 @@ end
 | `kb:isDown(touche)` / `mouse:isDown(bouton)` | la touche ou le bouton est **tenu** |
 | `kb:isReleased(touche)` / `mouse:isReleased(bouton)` | la touche ou le bouton a été relâché **pendant cette frame** |
 
-- `mouse.x` et `mouse.y` donnent la position du curseur dans la fenêtre, et `mouse.wheel` le mouvement de la molette. Ils sont en lecture seule.
+- `mouse.x` et `mouse.y` donnent la position du curseur dans la fenêtre, `mouse.deltaX` et `mouse.deltaY` de combien il a bougé depuis la frame précédente, et `mouse.wheel` le mouvement de la molette. Ils sont en lecture seule.
 - Les touches sont dans la table `Key` : les lettres (`Key.A` à `Key.Z`), les chiffres (`Key.Num0` à `Key.Num9`), les flèches (`Key.Left`, `Key.Right`, `Key.Up`, `Key.Down`), `Key.Space`, `Key.Enter`, `Key.Escape`, `Key.Tab`, `Key.Backspace`, `Key.LShift`, `Key.LControl`, `Key.LAlt`, le pavé numérique (`Key.Numpad0` à `Key.Numpad9`) et les touches de fonction (`Key.F1` à `Key.F15`).
 - Les boutons sont dans la table `MouseButton` : `Left`, `Right`, `Middle`, `Side`, `Extra`, `Forward`, `Back`.
 - Le clavier et la souris appartiennent à leur module : un script ne peut pas en créer d'autres.
@@ -602,7 +602,7 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
 | `Sound needs the Audio module` | un `Sound` sans le module `Audio` | ajouter `Audio` aux `modules` de `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier depuis lequel le jeu est lancé |
-| `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y` ou `mouse.wheel` | ne faire que les lire |
+| `sol: cannot write to a readonly property` | un script écrit `mouse.x`, `mouse.y`, `mouse.deltaX`, `mouse.deltaY` ou `mouse.wheel` | ne faire que les lire |
 | `gm:createSystem cannot be called from a system, only from start` | `gm:createSystem` ou `gm:addSystem` appelé depuis un système | créer le système dans `start`, et l'arrêter ou le laisser sans effet avec une variable du script |
 | `Camera can be created only once` | une deuxième `Camera3D` | garder une seule caméra et la déplacer avec sa `Position3D` |
 | `Invalid arguments for Position2D: no field 'z'` | la table donne un champ que le composant n'a pas | enlever ou renommer le champ |
@@ -665,6 +665,6 @@ Les cas particuliers (champs imbriqués, méthodes, enums, composants construits
 | `gm:destroySystem(id)` | arrête un système, avec l'id que renvoie `createSystem` ou `addSystem` |
 | `gm:hasSystem(id)` | si le système existe |
 | `gm:keyboard()` | le clavier : `isPressed`, `isDown`, `isReleased` avec une valeur de `Key` |
-| `gm:mouse()` | la souris : `isPressed`, `isDown`, `isReleased` avec une valeur de `MouseButton`, et `x`, `y`, `wheel` |
+| `gm:mouse()` | la souris : `isPressed`, `isDown`, `isReleased` avec une valeur de `MouseButton`, et `x`, `y`, `deltaX`, `deltaY`, `wheel` |
 | `gm:elapsed()` | les millisecondes de la frame précédente, selon l'horloge du jeu |
 | `for e, composants... in gm:view({noms}) do` | parcourt les entités qui ont les composants |
