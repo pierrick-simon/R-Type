@@ -186,19 +186,39 @@ Everything a script can do is in [the Lua scripting guide](LUA_GUIDE.en.md).
 
 ## 6. Debug mode
 
-When the engine is built with the `__DEBUG__` macro, it creates the `GameManager` in debug mode: every operation is written to `std::clog`.
+When the engine is built with the `__DEBUG__` macro, the game runs in debug mode:
 
 ```sh
 cmake -S . -B build -DCMAKE_CXX_FLAGS="-D__DEBUG__"
 cmake --build build --target game -j
 ```
 
+**Every operation of the `GameManager` is written to a log file**, `log/<date>_<time>.log`, in the folder the game is started from:
+
 ```
 [GameManager] debug mode enabled
 [GameManager] createEntity -> entity 0
-[GameManager] addComponent<RType::MasterClock> on entity 0
-[GameManager] createSystem with ( RType::MasterClock ) -> system 0
+[GameManager] addComponent<RType::Window> on entity 0
+[GameManager] createSystem with ( RType::Window ) -> system 0
 ```
+
+**The terminal becomes a console**: while the game runs, it shows a `>` prompt and runs one command per line, at the start of the next frame.
+
+| Command | Does |
+|---|---|
+| `help` | lists the commands and their arguments |
+| `createEntity` | creates an entity and prints it as `#<index> (<generation>)` |
+| `destroyEntity <index> <generation>` | destroys an entity; entity `0 0` (the window) is refused |
+| `addComponent <index> <generation> <component> [{fields}]` | adds a component, with the same table as `gm:addComponent`: `addComponent 2 0 Position2D {x = 10}` |
+| `removeComponent <index> <generation> <component>` | removes a component |
+| `enableSystem <system>` | adds one of [the engine's systems](LUA_GUIDE.en.md#the-engines-systems) and prints its id |
+| `disableSystem <id>` | stops a system, from its id |
+| `pause` | pauses the game, or resumes it: while paused, no system runs, and the clocks do not count the time spent paused |
+| `exit` | stops the game, like `gm:stop()` |
+| `exitConsole` | closes the console, and lets the game run on |
+
+- A command with missing arguments prints its usage, and an unknown command `Unknown command: <name>`.
+- An error in a command (an unknown component, a wrong field...) is printed, and the game keeps running.
 
 ---
 

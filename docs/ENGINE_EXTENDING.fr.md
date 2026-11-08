@@ -39,6 +39,7 @@ Dans `game`, tout est dans le namespace `RType::Game`, une classe par rôle :
 | `ConfigBuilder` | la lecture de `config.conf`, qui met à jour `GameConfig` |
 | `Modules` | les modules que le jeu peut demander |
 | `Scripts` | le chargement des scripts et la conversion de leurs erreurs |
+| `Console` | la console du mode debug : lit des commandes dans le terminal et les exécute avec les fonctions `gm:` |
 | `GameManagerBinding` | expose le `GameManager`, les entités et `gm:stop`, puis appelle les autres bindings |
 | `ComponentBinding` | le registre des composants utilisables depuis Lua |
 | `SystemBinding` | `gm:createSystem`, `gm:addSystem`, `gm:destroySystem`, `gm:hasSystem` |

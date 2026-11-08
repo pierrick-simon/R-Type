@@ -186,19 +186,39 @@ Tout ce qu'un script peut faire est dans [le guide du scripting Lua](LUA_GUIDE.f
 
 ## 6. Le mode debug
 
-Quand le moteur est compilé avec la macro `__DEBUG__`, il crée le `GameManager` en mode debug : chaque opération est écrite sur `std::clog`.
+Quand le moteur est compilé avec la macro `__DEBUG__`, le jeu tourne en mode debug :
 
 ```sh
 cmake -S . -B build -DCMAKE_CXX_FLAGS="-D__DEBUG__"
 cmake --build build --target game -j
 ```
 
+**Chaque opération du `GameManager` est écrite dans un fichier de log**, `log/<date>_<heure>.log`, dans le dossier depuis lequel le jeu est lancé :
+
 ```
 [GameManager] debug mode enabled
 [GameManager] createEntity -> entity 0
-[GameManager] addComponent<RType::MasterClock> on entity 0
-[GameManager] createSystem with ( RType::MasterClock ) -> system 0
+[GameManager] addComponent<RType::Window> on entity 0
+[GameManager] createSystem with ( RType::Window ) -> system 0
 ```
+
+**Le terminal devient une console** : pendant que le jeu tourne, il affiche une invite `>` et exécute une commande par ligne, au début de la frame suivante.
+
+| Commande | Effet |
+|---|---|
+| `help` | liste les commandes et leurs arguments |
+| `createEntity` | crée une entité et l'affiche sous la forme `#<index> (<génération>)` |
+| `destroyEntity <index> <generation>` | détruit une entité ; l'entité `0 0` (la fenêtre) est refusée |
+| `addComponent <index> <generation> <component> [{champs}]` | ajoute un composant, avec la même table que `gm:addComponent` : `addComponent 2 0 Position2D {x = 10}` |
+| `removeComponent <index> <generation> <component>` | enlève un composant |
+| `enableSystem <system>` | ajoute un des [systèmes du moteur](LUA_GUIDE.fr.md#les-systèmes-du-moteur) et affiche son id |
+| `disableSystem <id>` | arrête un système, à partir de son id |
+| `pause` | met le jeu en pause, ou le relance : pendant la pause, aucun système ne tourne, et les horloges ne comptent pas le temps passé en pause |
+| `exit` | arrête le jeu, comme `gm:stop()` |
+| `exitConsole` | ferme la console, et laisse le jeu tourner |
+
+- Une commande à laquelle il manque des arguments affiche son usage, et une commande inconnue `Unknown command: <nom>`.
+- Une erreur dans une commande (un composant inconnu, un mauvais champ…) est affichée, et le jeu continue de tourner.
 
 ---
 
