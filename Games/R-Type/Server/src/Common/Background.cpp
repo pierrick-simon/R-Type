@@ -11,7 +11,6 @@
 
 #include "Assets.hpp"
 #include "Config.hpp"
-#include "SoundInfo.hpp"
 #include "Sprite2D.hpp"
 #include "UpdateClientEntity.hpp"
 #include "UpdatePosition2D.hpp"
@@ -71,24 +70,11 @@ namespace RType::Server {
             gm.addComponent<Position2D>(
                 background, static_cast<float>(i) * BACKGROUND_PERIOD, 0.f);
             gm.addComponent<Velocity2D>(background, -BACKGROUND_SPEED, 0.f);
-            if (i == 0) {
-                SoundInfo music;
-
-                music.state = SoundInfo::PLAY;
-                music.loop = true;
-                gm.addComponent<SoundInfo>(background, music);
-                gm.addComponent<UpdateClientEntity>(background,
-                    EntityType::SPRITE,
-                    Asset::LEVEL1_BACKGROUND,
-                    gm,
-                    background,
-                    Asset::FIRST_LEVEL_MUSIC);
-            } else
-                gm.addComponent<UpdateClientEntity>(background,
-                    EntityType::SPRITE,
-                    Asset::LEVEL1_BACKGROUND,
-                    gm,
-                    background);
+            gm.addComponent<UpdateClientEntity>(background,
+                EntityType::SPRITE,
+                Asset::LEVEL1_BACKGROUND,
+                gm,
+                background);
         }
     }
 

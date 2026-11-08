@@ -97,12 +97,13 @@ namespace RType::Asset {
                 "R-Type/sprites/Weapons/LaserMuzzle.png",
                 Texture2D::TYPE},
 
-            {GUNSHOT_SOUND, "R-Type/sprites/gunshot.mp3", Decoder::TYPE},
-            {EXPLOSION_SOUND, "R-Type/sprites/explosion.mp3", Decoder::TYPE},
-
-            {FIRST_LEVEL_MUSIC,
-                "R-Type/sprites/Sound/Music/level1.mp3",
+            {GUNSHOT_SOUND, "R-Type/Sound/Gameplay/gunshot.mp3", Decoder::TYPE},
+            {EXPLOSION_SOUND,
+                "R-Type/Sound/Gameplay/explosion.mp3",
                 Decoder::TYPE},
+
+            {FIRST_LEVEL_MUSIC, "R-Type/Sound/Music/Stage1.mp3", Decoder::TYPE},
+            {BOSS_MUSIC, "R-Type/Sound/Music/Boss1.mp3", Decoder::TYPE},
 
             {FONT, "R-Type/sprites/Fonts/r-type.otf", Font::TYPE},
 

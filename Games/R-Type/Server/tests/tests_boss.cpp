@@ -8,6 +8,7 @@
 #include <criterion/criterion.h>
 
 #include "Common/Background.hpp"
+#include "Common/Music.hpp"
 #include "Common/Terrain.hpp"
 #include "Enemies/EnemySystems.hpp"
 #include "Enemies/EnemyVisuals.hpp"
@@ -303,4 +304,25 @@ Test(enemy, hurt_flash_shows_the_white_frames)
     gm.getComponent<Health>(scout).hurtTimer = 0.f;
     systemEnemyHurtBlink(gm);
     cr_assert_eq(sheet.currentTile, std::size_t(3));
+}
+
+Test(music, follows_the_level_scroll)
+{
+    GameManager gm;
+    std::vector<AssetId> tracks;
+
+    cr_assert_not(Server::levelMusic(gm).has_value());
+    addBackgrounds(gm, 0.f);
+    cr_assert_eq(*Server::levelMusic(gm), Asset::FIRST_LEVEL_MUSIC);
+    Server::musicSystem(gm);
+    for (auto [_, background, pos] :
+        gm.view<Server::Background, Position2D>().getVector())
+        pos.x += Server::LEVEL_END_X - 1.f;
+    cr_assert_eq(*Server::levelMusic(gm), Asset::BOSS_MUSIC);
+    Server::musicSystem(gm);
+    Server::musicSystem(gm);
+    for (auto [_, music] : gm.view<Server::Music>().getVector())
+        tracks.push_back(music.track);
+    cr_assert_eq(tracks.size(), std::size_t(1));
+    cr_assert_eq(tracks[0], Asset::BOSS_MUSIC);
 }
