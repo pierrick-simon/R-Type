@@ -24,6 +24,15 @@ namespace RType::Client {
 
     namespace {
 
+        const std::string &lobbyPlayerName()
+        {
+            return _account.loggedIn ? _account.username : _clInfos._username;
+        }
+
+    } // namespace
+
+    namespace {
+
         const raylib::Color COLOR_INFO(200, 205, 225, 255);
         const raylib::Color COLOR_READY(90, 230, 120, 255);
         const raylib::Color COLOR_NOT_READY(255, 95, 95, 255);
@@ -108,7 +117,7 @@ namespace RType::Client {
             gm.view<ClientManager, LobbyClient>().each(
                 [](Entity, ClientManager &c, LobbyClient &l) {
                     l.ready = !l.ready;
-                    LobbyProtocol::sendInfo(c, _clInfos._username, l.ready);
+                    LobbyProtocol::sendInfo(c, lobbyPlayerName(), l.ready);
                     l.lastInfo = std::chrono::steady_clock::now();
                 });
         }
@@ -347,7 +356,7 @@ namespace RType::Client {
 
                 if (c.isConnected() &&
                     now - lobby.lastInfo >= LOBBY_RESEND_RATE) {
-                    LobbyProtocol::sendInfo(c, _clInfos._username, lobby.ready);
+                    LobbyProtocol::sendInfo(c, lobbyPlayerName(), lobby.ready);
                     lobby.lastInfo = now;
                 }
                 if (!state.received)

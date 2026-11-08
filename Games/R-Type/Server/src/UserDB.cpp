@@ -9,6 +9,7 @@
 
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -228,6 +229,40 @@ namespace RType::Server {
         file.flush();
         _users[username] = user;
         return true;
+    }
+
+    bool UserDB::recordScore(const std::string &username, long score)
+    {
+        const auto it = _users.find(username);
+
+        if (it == _users.end() || score <= it->second.highestScore)
+            return false;
+        it->second.highestScore = score;
+        save();
+        return true;
+    }
+
+    void UserDB::save() const
+    {
+        const std::string tmp = _path + ".tmp";
+        {
+            std::ofstream file(tmp, std::ios::trunc);
+
+            if (!file) {
+                std::cerr << "[Master] Cannot write " << tmp << std::endl;
+                return;
+            }
+            for (const auto &[name, user] : _users)
+                file << name << '\n'
+                     << user.passwordHash << '\n'
+                     << user.highestScore << '\n';
+        }
+        std::error_code ec;
+
+        std::filesystem::rename(tmp, _path, ec);
+        if (ec)
+            std::cerr << "[Master] Cannot replace " << _path << ": "
+                      << ec.message() << std::endl;
     }
 
     namespace {

@@ -13,6 +13,7 @@
 #include "Common/Background.hpp"
 #include "Components.hpp"
 #include "Config.hpp"
+#include "Connexion/InstanceLink.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "LobbyProtocol.hpp"
 #include "Player/Destroy.hpp"
@@ -56,14 +57,12 @@ namespace RType::Server {
 
             clearEnemies(gm);
             pauseLevel(gm);
-            // The clients draw the menu background in its place.
             for (auto [background, tag] : gm.view<Background>().getVector())
                 backgrounds.push_back(background);
             for (const Entity background : backgrounds)
                 destroyNetworked(gm, background);
         }
 
-        /** @brief The survivors leave the screen to the scores. */
         void hideSurvivors(GameManager &gm)
         {
             for (auto [entity, player, sheet] :
@@ -98,6 +97,7 @@ namespace RType::Server {
     {
         endScreen = EndScreen::GameOver;
         fadeLeft = 0.f;
+        reportScores(gm);
         clearLevel(gm);
     }
 
@@ -105,6 +105,7 @@ namespace RType::Server {
     {
         endScreen = EndScreen::Victory;
         fadeLeft = VICTORY_FADE_SECONDS;
+        reportScores(gm);
         pauseLevel(gm);
     }
 
@@ -137,7 +138,6 @@ namespace RType::Server {
 
     void systemGameState(GameManager &gm, const MasterClock &clock)
     {
-        // The level stays on screen while the clients fade it to black.
         if (fadeLeft > 0.f) {
             fadeLeft -= elapsedSeconds(clock);
             if (fadeLeft <= 0.f) {

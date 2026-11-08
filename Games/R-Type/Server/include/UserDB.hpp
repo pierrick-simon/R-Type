@@ -35,10 +35,20 @@ namespace RType::Server {
 
         bool add(const std::string &username, const std::string &password);
 
+        /**
+         * @brief Keep the best score of an account.
+         *
+         * Rewrites the file when @p score beats the saved one.
+         *
+         * @return true if the best score changed.
+         */
+        bool recordScore(const std::string &username, long score);
+
     private:
         static std::string hashPassword(
             const std::string &username, const std::string &password);
         void load();
+        void save() const;
 
         std::string _path;
         std::unordered_map<std::string, User> _users;

@@ -15,7 +15,9 @@
 #include "Assets.hpp"
 #include "Client.hpp"
 #include "KeyboardManager.hpp"
+#include "Lobby.hpp"
 #include "Menu.hpp"
+#include "MouseManager.hpp"
 #include "Position2D.hpp"
 #include "Sound.hpp"
 #include "SpriteSheet2D.hpp"
@@ -44,16 +46,32 @@ namespace RType::Client {
         const std::array<const char *, ACTION_COUNT> ACTION_IDS = {
             "up", "left", "down", "right", "shoot"};
 
-        /** @brief One "name value" per line: "volume 7", "up 20"... (keys
-         *         saved as their Key::Value number). */
+        /** @brief The next input pressed is captured only from the frame
+         *         after the click on the key button (not that click). */
+        bool captureArmed = false;
+
+        /** @brief One "name value" per line: "volume 7", "up 20", and
+         *         "shoot mouse 0" for a mouse button (keys saved as their
+         *         Key::Value number, buttons as their MouseButton::Value). */
         void saveSettings()
         {
             std::ofstream file(SETTINGS_PATH, std::ios::trunc);
 
             file << "volume " << _volumeLevel << '\n';
-            for (std::size_t i = 0; i < ACTION_COUNT; i++)
-                file << ACTION_IDS.at(i) << ' '
-                     << static_cast<int>(_keyBindings.at(i)) << '\n';
+            for (std::size_t i = 0; i < ACTION_COUNT; i++) {
+                const Input &input = _keyBindings.at(i);
+
+                file << ACTION_IDS.at(i) << (input.mouse ? " mouse " : " ")
+                     << input.code << '\n';
+            }
+        }
+
+        void startCapture(Action action)
+        {
+            if (_waitingKey == action)
+                return;
+            _waitingKey = action;
+            captureArmed = false;
         }
 
         float volumeBarX()
@@ -169,8 +187,8 @@ namespace RType::Client {
                     gm,
                     buttonX,
                     y,
-                    KeyBindings::keyName(_keyBindings.at(i)),
-                    [action](GameManager &) { _waitingKey = action; },
+                    KeyBindings::inputName(_keyBindings.at(i)),
+                    [action](GameManager &) { startCapture(action); },
                     KEY_BUTTON_WIDTH);
 
                 gm.addComponent<SettingsItem>(name);
@@ -223,9 +241,7 @@ namespace RType::Client {
                 SETTINGS_VOLUME_Y,
                 1,
                 Asset::MENU_VOLUME_UP);
-            // Right column: the keys.
             createKeyRows(gm);
-            // Bottom right, like the other "Back" buttons.
             addSettingsButton(gm,
                 static_cast<float>(WINDOW_WIDTH) - BUTTON_WIDTH -
                     BUTTON_GAP * 2,
@@ -260,49 +276,111 @@ namespace RType::Client {
         while (std::getline(file, line)) {
             std::istringstream in(line);
             std::string name;
+            std::string word;
             int value = 0;
+            bool mouse = false;
 
-            if (!(in >> name >> value))
+            if (!(in >> name >> word))
                 continue;
+            if (word == "mouse") {
+                mouse = true;
+                if (!(in >> word))
+                    continue;
+            }
+            try {
+                value = std::stoi(word);
+            } catch (const std::exception &) {
+                continue;
+            }
             if (name == "volume") {
                 _volumeLevel = std::clamp(value, 0, VOLUME_STEPS);
                 continue;
             }
+            const int count = mouse
+                ? static_cast<int>(MouseButton::Value::MouseButtonCount)
+                : static_cast<int>(Key::Value::KeyCount);
+
+            if (value < 0 || value >= count)
+                continue;
             for (std::size_t i = 0; i < ACTION_COUNT; i++)
-                if (name == ACTION_IDS.at(i) && value >= 0 &&
-                    value < static_cast<int>(Key::Value::KeyCount))
-                    KeyBindings::bind(
-                        static_cast<Action>(i), static_cast<Key::Value>(value));
+                if (name == ACTION_IDS.at(i))
+                    KeyBindings::bind(static_cast<Action>(i),
+                        mouse ? Input::button(
+                                    static_cast<MouseButton::Value>(value))
+                              : Input::key(static_cast<Key::Value>(value)));
         }
+    }
+
+    void systemKeybind(GameManager &gm, Keybind &bind)
+    {
+        static std::optional<std::array<Input, ACTION_COUNT>> applied;
+        static bool appliedPlaying = false;
+        bool playing = false;
+
+        gm.view<LobbyClient>().each([&playing](Entity, LobbyClient &l) {
+            playing = playing || (l.inGame && !l.gameOverShown);
+        });
+        if (applied == _keyBindings && appliedPlaying == playing)
+            return;
+        if (playing) {
+            KeyBindings::fillKeybind(bind);
+        } else {
+            bind._keyToKey.clear();
+            bind._keyToMouseButton.clear();
+            bind._mouseButtonToKey.clear();
+            bind._mouseButtonToMouseButton.clear();
+        }
+        applied = _keyBindings;
+        appliedPlaying = playing;
     }
 
     void systemSettings(GameManager &gm)
     {
         if (gm.view<SettingsItem>().getVector().empty())
             return;
-        if (_waitingKey) {
-            std::optional<Key::Value> pressed;
+        if (_waitingKey && !captureArmed) {
+            captureArmed = true;
+        } else if (_waitingKey) {
+            std::optional<Input> pressed;
 
             gm.view<KeyboardManager>().each(
                 [&pressed](Entity, KeyboardManager &k) {
                     if (!k.keyPressed.empty())
-                        pressed = k.keyPressed.front();
+                        pressed = Input::key(k.keyPressed.front());
                 });
-            // Escape cancels; Enter, Tab and Backspace stay for the menus.
-            if (pressed && *pressed != Key::Value::Escape &&
-                *pressed != Key::Value::Enter && *pressed != Key::Value::Tab &&
-                *pressed != Key::Value::Backspace) {
+            gm.view<MouseManager>().each([&pressed](Entity, MouseManager &m) {
+                if (!pressed && !m.buttonPressed.empty())
+                    pressed = Input::button(m.buttonPressed.front());
+            });
+            const bool refused = pressed && !pressed->mouse &&
+                (pressed->code == static_cast<int>(Key::Value::Escape) ||
+                    pressed->code == static_cast<int>(Key::Value::Enter) ||
+                    pressed->code == static_cast<int>(Key::Value::Tab) ||
+                    pressed->code == static_cast<int>(Key::Value::Backspace));
+
+            if (pressed && !refused) {
                 KeyBindings::bind(*_waitingKey, *pressed);
                 saveSettings();
             }
             if (pressed)
                 _waitingKey.reset();
         }
+        gm.view<SettingsItem, Button>().each(
+            [&gm](Entity e, SettingsItem &, Button &button) {
+                if (gm.hasComponent<KeyBindButton>(e))
+                    return;
+                if (gm.hasComponent<VolumeButton>(e))
+                    button.disabled = _waitingKey.has_value() ||
+                        volumeButtonDisabled(
+                            gm.getComponent<VolumeButton>(e).step);
+                else
+                    button.disabled = _waitingKey.has_value();
+            });
         gm.view<KeyBindButton, Button>().each(
             [](Entity, KeyBindButton &key, Button &button) {
                 button.label = _waitingKey == key.action
                     ? "Press a key"
-                    : KeyBindings::keyName(_keyBindings.at(
+                    : KeyBindings::inputName(_keyBindings.at(
                           static_cast<std::size_t>(key.action)));
                 button.selected = _waitingKey == key.action;
             });
@@ -313,8 +391,6 @@ namespace RType::Client {
         const float volume =
             static_cast<float>(_volumeLevel) / static_cast<float>(VOLUME_STEPS);
 
-        // Every sound, every frame: the sounds created during the game
-        // (shots, explosions, music) get the volume too.
         gm.view<Sound>().each(
             [volume](Entity, Sound &sound) { sound.setVolume(volume); });
     }
@@ -332,7 +408,6 @@ namespace RType::Client {
             static_cast<float>(VOLUME_STEPS);
         const Rectangle frame {x, y, VOLUME_BAR_WIDTH, BUTTON_HEIGHT};
 
-        // Same look as the buttons: dark panel, thin border.
         ::DrawRectangleRec(frame, Color {16, 22, 30, 200});
         ::DrawRectangleLinesEx(frame, 1.f, Color {170, 195, 215, 90});
         for (int i = 0; i < VOLUME_STEPS; i++) {

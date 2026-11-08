@@ -22,6 +22,7 @@ set(SRCS
     src/Settings.cpp
     src/GameOver.cpp
     src/Metric.cpp
+    src/KeyBindings.cpp
 )
 
 add_executable(r-type_client ${MAIN} ${SRCS})

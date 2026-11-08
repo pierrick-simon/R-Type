@@ -5,9 +5,10 @@
 ** Setup
 */
 
-#include "Setup.hpp"
 #include <algorithm>
 #include <limits>
+
+#include "Setup.hpp"
 #include "AssetManager.hpp"
 #include "Assets.hpp"
 #include "ClientManager.hpp"
@@ -18,6 +19,7 @@
 #include "GameOver.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "Keybind.hpp"
 #include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
@@ -92,6 +94,10 @@ namespace RType::Client {
             KeyboardManager::systemKeyboardManager);
         gm.addComponent<MouseManager>(c);
         gm.createSystem<MouseManager>(MouseManager::systemMouseManager);
+        gm.addComponent<Keybind>(c);
+        gm.createSystem<Keybind>(systemKeybind);
+        gm.createSystem<Keybind, MouseManager, KeyboardManager>(
+            Keybind::systemUpdateKeybind);
         return c;
     }
 
@@ -163,7 +169,6 @@ namespace RType::Client {
         gm.createSystem<>(systemSettings);
         gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
-        // Over everything, right before the end of the drawing.
         gm.createSystem<LobbyClient>(
             systemDrawFade, std::numeric_limits<int>::max() - 1);
     }

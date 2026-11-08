@@ -11,6 +11,7 @@
 
 #include "Connexion/Instance.hpp"
 #include "Connexion/InstanceLink.hpp"
+#include "UserDB.hpp"
 
 namespace RType::Server {
 
@@ -29,7 +30,7 @@ namespace RType::Server {
             }
         }
 
-        void readMessages(LinkedInstance &instance)
+        void readMessages(LinkedInstance &instance, UserDB &db)
         {
             while (auto message = instance.connection.nextMessage()) {
                 const auto &p = message->payload;
@@ -37,6 +38,15 @@ namespace RType::Server {
                 if (message->type == LINK_HELLO && p.size() == 2) {
                     instance.port = get16(p.data());
                     instance.since = std::chrono::steady_clock::now();
+                }
+                if (message->type == LINK_SCORE && !p.empty() &&
+                    p.size() == 1u + p[0] + 4u) {
+                    const std::string user(p.begin() + 1, p.begin() + 1 + p[0]);
+                    const long score = get32(p.data() + 1 + p[0]);
+
+                    if (db.recordScore(user, score))
+                        std::cout << "[Master] New best score for " << user
+                                  << ": " << score << std::endl;
                 }
                 if (message->type == LINK_STATUS && p.size() == 2) {
                     instance.players = p[0];
@@ -73,12 +83,13 @@ namespace RType::Server {
 
     void systemMasterLink(GameManager &gm)
     {
-        gm.view<MasterLink, InstanceManager>().each(
-            [](Entity, MasterLink &link, InstanceManager &threads) {
+        gm.view<MasterLink, InstanceManager, UserDB>().each(
+            [](Entity, MasterLink &link, InstanceManager &threads,
+                UserDB &db) {
                 acceptInstances(link);
                 for (auto &instance : link.instances) {
                     instance.connection.poll();
-                    readMessages(instance);
+                    readMessages(instance, db);
                     if (shouldClose(instance)) {
                         std::cout << "[Master] Lobby " << instance.port
                                   << " is empty, closing it" << std::endl;
