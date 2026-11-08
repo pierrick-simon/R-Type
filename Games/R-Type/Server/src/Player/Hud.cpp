@@ -26,16 +26,34 @@
 
 namespace RType::Server {
 
+    float hudRowY(std::size_t slot)
+    {
+        return HUD_MARGIN + float(slot) * (LIFE_ICON_HEIGHT + HUD_SPACING);
+    }
+
     Position2D lifeIconPosition(std::size_t slot, int index)
     {
         return {HUD_MARGIN + float(index) * (LIFE_ICON_WIDTH + HUD_SPACING),
-            HUD_MARGIN + float(slot) * (LIFE_ICON_HEIGHT + HUD_SPACING)};
+            hudRowY(slot)};
+    }
+
+    Position2D playerScorePosition(std::size_t slot)
+    {
+        return {SCORE_X,
+            hudRowY(slot) + (LIFE_ICON_HEIGHT - SCORE_FONT_SIZE) / 2.f};
+    }
+
+    Position2D teamScorePosition(const Text2D &text)
+    {
+        return {
+            WINDOW_WIDTH - HUD_MARGIN - float(text.str.size()) * text.fontSize,
+            TEAM_SCORE_Y};
     }
 
     void spawnLifeIcons(GameManager &gm, Entity player, const Player &state)
     {
         const AssetId sheet =
-            Asset::PLAYER_SHEET_1 + AssetId(state.slot % PLAYER_COLORS);
+            Asset::LIFE_ICON_1 + AssetId(state.slot % PLAYER_COLORS);
 
         for (int i = 0; i < PLAYER_LIVES; ++i) {
             auto icon = gm.createEntity();
@@ -101,11 +119,15 @@ namespace RType::Server {
 
     void spawnTeamScore(GameManager &gm)
     {
+        Text2D text;
+
+        text.fontSize = SCORE_FONT_SIZE;
+        text.str = formatScore("SCORE", 0);
         spawnScoreLabel(gm,
             std::nullopt,
-            {HUD_MARGIN, SCORE_Y},
+            teamScorePosition(text),
             raylib::Color::White(),
-            formatScore("SCORE", 0));
+            text.str);
     }
 
     void spawnPlayerScore(GameManager &gm, Entity player, const Player &state)
@@ -114,7 +136,7 @@ namespace RType::Server {
 
         spawnScoreLabel(gm,
             player,
-            {SCORE_PLAYERS_X + float(state.slot) * SCORE_SPACING, SCORE_Y},
+            playerScorePosition(state.slot),
             raylib::Color(rgb[0], rgb[1], rgb[2], 255),
             formatScore(playerLabel(state), 0));
     }
@@ -125,13 +147,13 @@ namespace RType::Server {
     }
 
     /** @brief On the game over screen, the team score is big and centered,
-     * the players' are listed under it. Along the bottom otherwise. */
+     * the players' are listed under it. Next to the lives otherwise. */
     void layoutTeamScore(Text2D &text, Position2D &pos)
     {
         if (!isEndScreenReady()) {
             text.fontSize = SCORE_FONT_SIZE;
             text.color = raylib::Color::White();
-            pos = {HUD_MARGIN, SCORE_Y};
+            pos = teamScorePosition(text);
             return;
         }
         text.fontSize = GAME_OVER_SCORE_SIZE;
@@ -144,7 +166,7 @@ namespace RType::Server {
     {
         if (!isEndScreenReady()) {
             text.fontSize = SCORE_FONT_SIZE;
-            pos = {SCORE_PLAYERS_X + float(slot) * SCORE_SPACING, SCORE_Y};
+            pos = playerScorePosition(slot);
             return;
         }
         text.fontSize = GAME_OVER_PLAYER_SIZE;

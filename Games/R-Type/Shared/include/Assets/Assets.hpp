@@ -53,6 +53,8 @@ namespace RType::Asset {
     inline constexpr AssetId HELIX_LASER = 126;
     inline constexpr AssetId RING_LASER = 127;
     inline constexpr AssetId LASER_MUZZLE = 128;
+    inline constexpr AssetId LIFE_ICON_1 = 129;
+    inline constexpr AssetId LIFE_ICON_5 = 133;
 
     inline constexpr AssetId EXPLOSION_SOUND = 1000;
     inline constexpr AssetId GUNSHOT_SOUND = 1001;

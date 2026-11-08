@@ -54,6 +54,43 @@ namespace RType::Client {
             ::SetMouseScale(1.f / zoom, 1.f / zoom);
             return {offset, {0.f, 0.f}, 0.f, zoom};
         }
+
+        struct ShipOnTop {
+            unsigned char alpha = 255;
+        };
+
+        bool isShip(const SpriteSheet2D &sheet)
+        {
+            return sheet.assetId && *sheet.assetId >= Asset::PLAYER_SHEET_1 &&
+                *sheet.assetId <= Asset::PLAYER_SHEET_5;
+        }
+
+        void systemHideShips(GameManager &gm)
+        {
+            for (auto [ship, sheet] : gm.view<SpriteSheet2D>().getVector()) {
+                if (!isShip(sheet))
+                    continue;
+                if (!gm.hasComponent<ShipOnTop>(ship)) {
+                    gm.addComponent<ShipOnTop>(ship);
+                    continue;
+                }
+                gm.getComponent<ShipOnTop>(ship).alpha = sheet.color.a;
+                sheet.color.a = 0;
+            }
+        }
+
+        void systemDrawShips(GameManager &gm, Assets &assets)
+        {
+            for (auto [_, sheet, top, pos] :
+                gm.view<SpriteSheet2D, ShipOnTop, Position2D>().getVector()) {
+                auto texture = assets.get<Texture2D>(*sheet.assetId);
+
+                sheet.color.a = top.alpha;
+                if (texture)
+                    SpriteSheet2D::systemDrawSpriteSheet2D(
+                        sheet, texture->get(), pos);
+            }
+        }
     } // namespace
 
     Entity createWindow(GameManager &gm)
@@ -162,10 +199,12 @@ namespace RType::Client {
         gm.createSystem<Assets>(systemDrawLobbyList);
         gm.createSystem<>(systemDrawLoginPopup);
         gm.createSystem<>(systemDrawSettings);
+        gm.createSystem<>(systemHideShips);
         gm.createSystem<Assets>(SpriteSheet2D::
                 systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(
             Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(systemDrawShips);
         gm.createSystem<>(systemSettings);
         gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
