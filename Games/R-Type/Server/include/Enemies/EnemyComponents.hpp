@@ -91,7 +91,6 @@ namespace RType {
         float fireTimer = 0.f;
         int stage = 0;
         int explosions = 0;
-        float hurtTimer = 0.f;
     };
 
     struct Enemy {
@@ -103,6 +102,7 @@ namespace RType {
     struct Health {
         int hp = 1;
         int maxHp = 1;
+        float hurtTimer = 0.f;
     };
 
     struct Hitbox {

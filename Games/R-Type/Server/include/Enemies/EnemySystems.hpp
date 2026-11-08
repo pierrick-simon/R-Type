@@ -19,6 +19,8 @@ namespace RType {
 
     constexpr float pi = 3.14159265358979323846f;
 
+    void systemHurtTimer(Health &health, const MasterClock &clock);
+
     void systemEnemyPattern(MovementPattern &pattern, Velocity2D &velocity,
         const MasterClock &clock);
 
