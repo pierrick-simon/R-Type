@@ -39,6 +39,8 @@ namespace RType {
             OpcodeRType::LOBBY_LIST, MasterProtocol::manageLobbyList);
         addContextManage(
             OpcodeRType::ACCOUNT_RESULT, AccountProtocol::manageResult);
+        addContextManage(
+            OpcodeRType::LEADERBOARD, AccountProtocol::manageLeaderboard);
     }
 
     void ClientManager::systemClientReceived(

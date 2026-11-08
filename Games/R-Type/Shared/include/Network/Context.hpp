@@ -36,7 +36,9 @@ namespace RType {
         LOBBY_LIST = 42,
         JOIN_LOBBY = 43,
         ACCOUNT_REQUEST = 44,
-        ACCOUNT_RESULT = 45
+        ACCOUNT_RESULT = 45,
+        LEADERBOARD_REQUEST = 46,
+        LEADERBOARD = 47
     };
 
     struct Context {

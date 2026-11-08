@@ -11,6 +11,9 @@
 #include <string>
 #include <unordered_map>
 
+#include <optional>
+#include <vector>
+#include "AccountProtocol.hpp"
 #include "GameManager.hpp"
 
 namespace RType::Server {
@@ -35,10 +38,33 @@ namespace RType::Server {
 
         bool add(const std::string &username, const std::string &password);
 
+        /**
+         * @brief Keep the best score of an account.
+         *
+         * Rewrites the file when @p score beats the saved one.
+         *
+         * @return true if the best score changed.
+         */
+        bool recordScore(const std::string &username, long score);
+
+        /**
+         * @brief The @p count best accounts, best first.
+         *
+         * Sorted by score, highest first; equal scores by username. Equal
+         * scores share the same rank (1, 2, 2, 4...).
+         */
+        [[nodiscard]] std::vector<LeaderboardEntry> top(
+            std::size_t count) const;
+
+        /** @brief Rank and score of one account, if it exists. */
+        [[nodiscard]] std::optional<LeaderboardEntry> entryOf(
+            const std::string &username) const;
+
     private:
         static std::string hashPassword(
             const std::string &username, const std::string &password);
         void load();
+        void save() const;
 
         std::string _path;
         std::unordered_map<std::string, User> _users;

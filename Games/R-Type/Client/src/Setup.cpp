@@ -16,8 +16,10 @@
 #include "FinishingSound.hpp"
 #include "Friction2D.hpp"
 #include "GameOver.hpp"
+#include "Keybind.hpp"
 #include "KeyboardManager.hpp"
 #include "KeyboardProtocol.hpp"
+#include "Leaderboard.hpp"
 #include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
@@ -92,6 +94,11 @@ namespace RType::Client {
             KeyboardManager::systemKeyboardManager);
         gm.addComponent<MouseManager>(c);
         gm.createSystem<MouseManager>(MouseManager::systemMouseManager);
+        // Remapping of the player's keys, right after the raw input is read.
+        gm.addComponent<Keybind>(c);
+        gm.createSystem<Keybind>(systemKeybind);
+        gm.createSystem<Keybind, MouseManager, KeyboardManager>(
+            Keybind::systemUpdateKeybind);
         return c;
     }
 
@@ -139,6 +146,7 @@ namespace RType::Client {
         gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
         gm.createSystem<>(systemLogin);
+        gm.createSystem<>(systemLeaderboard);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
