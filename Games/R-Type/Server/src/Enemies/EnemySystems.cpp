@@ -15,6 +15,8 @@
 #include <cmath>
 #include <memory>
 #include <optional>
+#include <random>
+#include <vector>
 
 namespace RType {
 
@@ -154,11 +156,10 @@ namespace RType {
                 !bossExposed(gm.getComponent<Boss>(enemy));
         }
 
-        void hurt(GameManager &gm, Entity enemy, Health &health, int damage)
+        void hurt(Health &health, int damage)
         {
             health.hp -= damage;
-            if (gm.hasComponent<Boss>(enemy))
-                gm.getComponent<Boss>(enemy).hurtTimer = BOSS_HURT_FLASH;
+            health.hurtTimer = ENEMY_HURT_FLASH;
         }
 
         void awardScore(GameManager &gm, EnemyDirector &director,
@@ -224,7 +225,7 @@ namespace RType {
                                 !overlap(contactRect, rectOf(ep, eb)))
                                 return;
                             contact.timer = contact.cooldown;
-                            hurt(gm, enemy, health, contact.damage);
+                            hurt(health, contact.damage);
                             if (health.hp > 0)
                                 return;
                             awardScore(
@@ -673,7 +674,6 @@ namespace RType {
         const float stagesTime = BOSS_DEF.stageTime * float(BOSS_STAGES - 1);
 
         boss.timer += delta;
-        boss.hurtTimer = std::max(0.f, boss.hurtTimer - delta);
         velocity = {0.f, 0.f};
         switch (boss.state) {
             case BossState::Enter:
@@ -717,6 +717,125 @@ namespace RType {
         }
     }
 
+    namespace {
+
+        bool inScoutZone(float levelX)
+        {
+            return std::ranges::any_of(SCOUT_ZONES, [levelX](const auto &zone) {
+                return levelX >= zone.start && levelX <= zone.end;
+            });
+        }
+
+        struct ScoutSpawn {
+            Position2D pos;
+            MovementPattern motion;
+        };
+
+        constexpr float scoutMaxSwing()
+        {
+            return SCOUT_DEF.maxSwingSpeed * SCOUT_DEF.maxSwingTime;
+        }
+
+        bool scoutPathClear(GameManager &gm, const ScoutSpawn &scout)
+        {
+            const SheetInfo &sheet = *enemyDef(EnemyType::Scout).sheet;
+            const float width = float(sheet.cellW) * SPRITE_SCALE;
+            const float height = float(sheet.cellH) * SPRITE_SCALE;
+            const float speed = -scout.motion.horizontalVelocity;
+            const float swing = scout.motion.amplitude * scout.motion.period;
+            const float travel = (speed - Server::BACKGROUND_SPEED) *
+                (scout.pos.x + width) / speed;
+
+            return !Server::rectTouchesTerrain(gm,
+                scout.pos.x - travel,
+                scout.pos.y - swing,
+                width + travel,
+                height + 2.f * swing);
+        }
+
+        MovementPattern scoutMotion(std::mt19937 &rng)
+        {
+            std::uniform_real_distribution<float> swingSpeed(
+                SCOUT_DEF.minSwingSpeed, SCOUT_DEF.maxSwingSpeed);
+            std::uniform_real_distribution<float> swingTime(
+                SCOUT_DEF.minSwingTime, SCOUT_DEF.maxSwingTime);
+            std::uniform_real_distribution<float> speed(
+                1.f - SCOUT_DEF.speedJitter, 1.f + SCOUT_DEF.speedJitter);
+            std::uniform_real_distribution<float> phase(0.f, 1.f);
+            std::bernoulli_distribution up(0.5);
+            MovementPattern motion;
+
+            motion.type = PatternType::ZigZag;
+            motion.horizontalVelocity =
+                -enemyDef(EnemyType::Scout).speed * speed(rng);
+            motion.amplitude = swingSpeed(rng);
+            motion.period = swingTime(rng);
+            motion.elapsed = motion.period * phase(rng);
+            motion.zigZagDirection = up(rng) ? -1.f : 1.f;
+            return motion;
+        }
+
+        std::vector<ScoutSpawn> scoutGroup(GameManager &gm, std::mt19937 &rng)
+        {
+            const float minY = scoutMaxSwing();
+            const float maxY = SCREEN_HEIGHT -
+                float(enemyDef(EnemyType::Scout).sheet->cellH) * SPRITE_SCALE -
+                scoutMaxSwing();
+            std::uniform_int_distribution<int> size(
+                SCOUT_DEF.minGroup, SCOUT_DEF.maxGroup);
+            std::uniform_real_distribution<float> height(minY, maxY);
+            std::uniform_real_distribution<float> offset(
+                -SCOUT_DEF.spread, SCOUT_DEF.spread);
+            std::uniform_real_distribution<float> jitter(
+                0.f, SCOUT_DEF.spacing / 2.f);
+            const int count = size(rng);
+
+            for (int tries = 0; tries < SCOUT_DEF.spawnTries; ++tries) {
+                const float anchor = height(rng);
+                std::vector<ScoutSpawn> group;
+
+                for (int i = 0; i < count; ++i) {
+                    const ScoutSpawn scout {
+                        .pos = {SCREEN_WIDTH + SPAWN_MARGIN +
+                                float(i) * SCOUT_DEF.spacing + jitter(rng),
+                            std::clamp(anchor + offset(rng), minY, maxY)},
+                        .motion = scoutMotion(rng)};
+
+                    if (!scoutPathClear(gm, scout))
+                        break;
+                    group.push_back(scout);
+                }
+                if (int(group.size()) == count)
+                    return group;
+            }
+            return {};
+        }
+
+        void spawnScouts(GameManager &gm, EnemyDirector &director, float delta,
+            const EnemyHooks &hooks)
+        {
+            const float levelX =
+                (SCREEN_WIDTH + SPAWN_MARGIN - Server::levelScroll(gm)) /
+                LEVEL_SCALE;
+            std::uniform_real_distribution<float> interval(
+                SCOUT_DEF.minInterval, SCOUT_DEF.maxInterval);
+
+            director.scoutTimer -= delta;
+            if (director.scoutTimer > 0.f || !inScoutZone(levelX))
+                return;
+            director.scoutTimer = interval(director.rng);
+            for (const auto &scout : scoutGroup(gm, director.rng))
+                spawnEnemy(gm,
+                    EnemyType::Scout,
+                    scout.pos.x,
+                    scout.pos.y,
+                    hooks,
+                    1,
+                    scout.motion);
+        }
+
+    } // namespace
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks)
     {
@@ -740,6 +859,7 @@ namespace RType {
             director.bossSpawned = true;
             return;
         }
+        spawnScouts(gm, director, delta, hooks);
         if (director.timeline.empty())
             return;
         director.elapsed += delta;
@@ -807,7 +927,7 @@ namespace RType {
                                 return;
                             }
                             const int hp = health.hp;
-                            hurt(gm, enemy, health, shot.damage);
+                            hurt(health, shot.damage);
                             shot.damage -= hp;
                             consumed = !shot.piercing || shot.damage <= 0;
                             if (health.hp > 0)
@@ -866,10 +986,20 @@ namespace RType {
         contactDamage(gm, director, hooks);
     }
 
+    void systemHurtTimer(Health &health, const MasterClock &clock)
+    {
+        health.hurtTimer =
+            std::max(0.f, health.hurtTimer - elapsedSeconds(clock));
+    }
+
     void registerEnemySystems(GameManager &gm, EnemyHooks hooks)
     {
         const auto h = std::make_shared<const EnemyHooks>(std::move(hooks));
 
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            g.view<Health>().each(
+                [&c](Entity, Health &health) { systemHurtTimer(health, c); });
+        });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<MovementPattern, Velocity2D>().each(
                 [&c](Entity, MovementPattern &m, Velocity2D &v) {

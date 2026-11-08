@@ -51,6 +51,10 @@ namespace RType::Client {
         AssetId asset;
     };
 
+    struct MenuMusic {
+        AssetId track = 0;
+    };
+
     struct TextAnchor {
         float x = 0.5f;
         float y = 0.5f;
@@ -112,6 +116,7 @@ namespace RType::Client {
     void systemButtonVisuals(GameManager &gm, Assets &assets);
     void systemTextAnchor(Text2D &text, Font &font, const TextAnchor &anchor);
     void systemMenuBackground(GameManager &gm);
+    void systemMenuMusic(GameManager &gm, Assets &assets);
     void systemConnecting(GameManager &gm);
     void systemServerLost(GameManager &gm);
     void systemTextFields(GameManager &gm);

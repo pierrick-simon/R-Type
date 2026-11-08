@@ -22,6 +22,7 @@
 #include "GameState.hpp"
 #include "KeyboardManager.hpp"
 #include "Player/Hud.hpp"
+#include "SoundInfo.hpp"
 #include "UpdateClientEntity.hpp"
 #include "Weapons/Force.hpp"
 #include "Weapons/Laser.hpp"
@@ -77,11 +78,13 @@ namespace RType::Server {
         gm.addComponent<PlayOnce>(explosion);
         gm.addComponent<PlayerExplosion>(
             explosion, PlayerExplosion {PLAYER_DEATH_DURATION});
+        gm.addComponent<SoundInfo>(explosion, SoundInfo::PLAY);
         gm.addComponent<UpdateClientEntity>(explosion,
             EntityType::SPRITESHEET,
             Asset::PLAYER_EXPLOSION,
             gm,
-            explosion);
+            explosion,
+            Asset::EXPLOSION_SOUND);
     }
 
     void makeInvincible(GameManager &gm, Entity player)

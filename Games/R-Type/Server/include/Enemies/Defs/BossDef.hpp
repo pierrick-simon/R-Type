@@ -41,8 +41,6 @@ namespace RType {
     inline constexpr float BOSS_WIDTH = float(BOSS_SHEET.cellW) * LEVEL_SCALE;
     inline constexpr float BOSS_HEIGHT = float(BOSS_SHEET.cellH) * LEVEL_SCALE;
 
-    // Entrance of the hole through the back wall, in level pixels from the
-    // level's right edge: the boss's back, in BOSS_SHEET pixels, stands on it.
     inline constexpr float ROOM_HOLE_X = 127.f;
     inline constexpr float ROOM_HOLE_Y = 119.f;
     inline constexpr float BOSS_BACK_X = 147.f;

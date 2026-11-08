@@ -17,6 +17,7 @@ namespace RType::Server {
     void createBackground(GameManager &gm);
     void resetBackground(GameManager &gm);
     void backgroundScroll(GameManager &gm);
+    [[nodiscard]] float levelScroll(GameManager &gm);
     [[nodiscard]] bool levelEnded(GameManager &gm);
 } // namespace RType::Server
 

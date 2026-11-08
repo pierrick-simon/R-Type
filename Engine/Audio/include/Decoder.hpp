@@ -11,75 +11,51 @@
 #include <memory>
 #include <miniaudio.h>
 #include <string>
+#include <string_view>
+#include <vector>
 #include "GameManager.hpp"
 
 namespace RType {
-    /**
-     * @brief Audio decoder component, thin wrapper around a miniaudio
-     *        ma_decoder.
-     *
-     * Owns a decoder initialised from an audio file, so the same decoded
-     * source can be shared by one or several Sound components.
-     *
-     * Move-only: the underlying ma_decoder lives on the heap, so it can be
-     * moved into the component manager safely. It is automatically
-     * uninitialised when the Decoder is destroyed.
-     *
-     * @warning Every Sound created from this Decoder must be destroyed
-     *          before it. See unload().
-     *
-     * @see Sound
-     */
     class Decoder {
     public:
         static constexpr std::string_view TYPE = "sound";
 
         /**
-         * @brief Create a decoder and initialise it.
-         *
-         * @param path Path of the audio file to load.
-         *
-         * @throw EngineException If the sound cannot be loaded.
+         * @param path Audio file to decode fully in memory (float32).
+         * @param sampleRate Target sample rate. Pass the engine's rate
+         * (ma_engine_get_sample_rate) so no resampling
+         * is needed. 0 keeps the file's native rate.
          */
         Decoder(const std::string &path);
 
-        /**
-         * @brief Unload every entity linked to a decoder.
-         *
-         * Releases all the entities that use a Decoder, so the underlying
-         * ma_decoder can be safely uninitialised afterwards.
-         *
-         * @param gm The GameManager holding the entities and components.
-         */
         static void unload(GameManager &gm);
 
-        /**
-         * @brief Get the underlying miniaudio decoder.
-         *
-         * @return A reference to the @c ma_decoder owned by this component.
-         *
-         * @warning The reference is only valid as long as the Decoder is
-         *          alive.
-         */
-        [[nodiscard]] ma_decoder &getDecoder()
+        using Pcm = std::shared_ptr<const std::vector<float>>;
+
+        [[nodiscard]] Pcm getPcm() const
         {
-            return *_decoder;
+            return _pcm;
+        }
+
+        [[nodiscard]] ma_uint32 getChannels() const
+        {
+            return _channels;
+        }
+
+        [[nodiscard]] ma_uint32 getSampleRate() const
+        {
+            return _sampleRate;
+        }
+
+        [[nodiscard]] ma_uint64 getFrameCount() const
+        {
+            return _channels ? _pcm->size() / _channels : 0;
         }
 
     private:
-        /**
-         * @brief Custom deleter uninitialising the miniaudio decoder.
-         */
-        struct DecoderDeleter {
-            /**
-             * @brief Call @c ma_decoder_uninit on the decoder.
-             *
-             * @param s The decoder to uninitialise.
-             */
-            void operator()(ma_decoder *d) const;
-        };
-
-        std::unique_ptr<ma_decoder, DecoderDeleter> _decoder;
+        Pcm _pcm;
+        ma_uint32 _channels = 0;
+        ma_uint32 _sampleRate = 0;
     };
 } // namespace RType
 

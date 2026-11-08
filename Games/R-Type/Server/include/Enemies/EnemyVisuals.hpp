@@ -15,7 +15,10 @@ namespace RType {
     struct SpriteSheet2D;
 
     EnemyHooks makeEnemyVisualHooks();
-    void systemBossAnimation(const Boss &boss, SpriteSheet2D &sheet);
+    SpriteSheet2D makeSheet(const SheetInfo &info);
+    void systemEnemyHurtBlink(GameManager &gm);
+    void systemBossAnimation(
+        const Boss &boss, const Health &health, SpriteSheet2D &sheet);
     void registerEnemyVisualSystems(GameManager &gm);
 
 } // namespace RType

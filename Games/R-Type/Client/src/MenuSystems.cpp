@@ -11,12 +11,15 @@
 #include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
+#include "Leaderboard.hpp"
+#include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
 #include "Settings.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -247,6 +250,56 @@ namespace RType::Client {
         text.origin.y = size.y * anchor.y;
     }
 
+    namespace {
+
+        std::optional<AssetId> menuTrack(GameManager &gm)
+        {
+            std::optional<AssetId> track = Asset::MENU_MUSIC;
+
+            gm.view<LobbyState, LobbyClient>().each(
+                [&track](Entity, LobbyState &state, LobbyClient &l) {
+                    if (l.inGame && !l.gameOverShown)
+                        track = std::nullopt;
+                    else if (l.inGame)
+                        track = state.victory ? Asset::VICTORY_MUSIC
+                                              : Asset::GAME_OVER_MUSIC;
+                });
+            return track;
+        }
+
+    } // namespace
+
+    void systemMenuMusic(GameManager &gm, Assets &assets)
+    {
+        const std::optional<AssetId> track = menuTrack(gm);
+        std::vector<Entity> stale;
+        bool playing = false;
+
+        gm.view<MenuMusic>().each([&](Entity e, MenuMusic &music) {
+            if (track && music.track == *track)
+                playing = true;
+            else
+                stale.push_back(e);
+        });
+        for (const Entity e : stale)
+            gm.destroyEntity(e);
+        if (!track || playing)
+            return;
+        auto decoder = assets.get<Decoder>(*track);
+
+        if (!decoder)
+            return;
+        for (auto [_, listener] : gm.view<Listener>().getVector()) {
+            const Entity music = gm.createEntity();
+            SoundInfo info;
+
+            info.state = SoundInfo::PLAY;
+            info.loop = *track == Asset::MENU_MUSIC;
+            gm.addComponent<MenuMusic>(music, MenuMusic {*track});
+            gm.addComponent<Sound>(music, listener, decoder->get(), info);
+        }
+    }
+
     void systemMenuBackground(GameManager &gm)
     {
         bool inGame = false;
@@ -267,7 +320,8 @@ namespace RType::Client {
         else if (lobbyPage)
             wanted = Asset::MENU_BACK_SIDE;
         else if (!gm.view<ConnectingText>().getVector().empty() ||
-            !gm.view<SettingsItem>().getVector().empty())
+            !gm.view<SettingsItem>().getVector().empty() ||
+            !gm.view<LeaderboardItem>().getVector().empty())
             wanted = Asset::MENU_BACK;
         bool upToDate = false;
 

@@ -74,6 +74,18 @@ namespace RType::Client {
      *         labels of the key buttons. */
     void systemSettings(GameManager &gm);
 
+    /**
+     * @brief Keep the engine Keybind in sync with the bindings.
+     *
+     * Refills the Keybind when the bindings change. It is only filled while
+     * the player controls the ship (in game, not on the game over screen):
+     * everywhere else it stays empty, so the menus get the real keys and
+     * clicks (a click bound to "shoot" must still press the buttons).
+     *
+     * @warning Must run before Keybind::systemUpdateKeybind.
+     */
+    void systemKeybind(GameManager &gm, Keybind &bind);
+
     /** @brief Applies _volumeLevel to every Sound (music and effects). */
     void systemVolume(GameManager &gm);
 

@@ -37,12 +37,10 @@ namespace RType::Server {
         int index = 0;
     };
 
-    /** @brief The player's name, above its ship. */
     struct NameTag {
         Entity owner {0};
     };
 
-    /** @brief Bottom HUD score, of the team when it has no player. */
     struct ScoreLabel {
         std::optional<Entity> player;
     };
@@ -89,7 +87,6 @@ namespace RType::Server {
         int bounces = 0;
     };
 
-    /** @brief Enemy shot that left the walls it was fired from. */
     struct ClearOfTerrain {};
 
     struct RingShot {};

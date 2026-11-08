@@ -19,8 +19,10 @@ namespace RType {
 
     SpriteSheet2D makeSheet(const SheetInfo &info)
     {
+        const int rows = info.flashFrames ? info.rows * 2 : info.rows;
+
         return SpriteSheet2D(
-            {info.rows, info.frames / info.rows}, info.frameMs, info.scale);
+            {rows, info.frames / info.rows}, info.frameMs, info.scale);
     }
 
     void systemWalkerAnimation(const Walker &walker, SpriteSheet2D &sheet)
@@ -53,13 +55,34 @@ namespace RType {
         sheet.flip = !alien.facingLeft;
     }
 
-    void systemBossAnimation(const Boss &boss, SpriteSheet2D &sheet)
+    bool isHurtBlinking(const Health &health)
+    {
+        return health.hurtTimer > 0.f &&
+            int(health.hurtTimer / ENEMY_HURT_BLINK) % 2 == 0;
+    }
+
+    void systemEnemyHurtBlink(GameManager &gm)
+    {
+        gm.view<Enemy, Health, SpriteSheet2D>().each(
+            [](Entity, Enemy &enemy, Health &health, SpriteSheet2D &sheet) {
+                const SheetInfo &info = *enemyDef(enemy.type).sheet;
+
+                if (!info.flashFrames)
+                    return;
+                const auto frames = std::size_t(info.frames);
+
+                sheet.currentTile = sheet.currentTile % frames +
+                    (isHurtBlinking(health) ? frames : 0);
+            });
+    }
+
+    void systemBossAnimation(
+        const Boss &boss, const Health &health, SpriteSheet2D &sheet)
     {
         const bool flash =
             boss.state == BossState::Dying && int(boss.timer / 0.08f) % 2 != 0;
 
-        const bool hurt = boss.hurtTimer > 0.f &&
-            int(boss.hurtTimer / BOSS_HURT_BLINK) % 2 == 0;
+        const bool hurt = isHurtBlinking(health);
 
         // The row is how far the belly is open, the columns an idle loop.
         sheet.currentTile = std::size_t(boss.stage * BOSS_IDLE_FRAMES) +
@@ -185,7 +208,8 @@ namespace RType {
     {
         gm.createSystem<Walker, SpriteSheet2D>(systemWalkerAnimation);
         gm.createSystem<Alien, SpriteSheet2D>(systemAlienAnimation);
-        gm.createSystem<Boss, SpriteSheet2D>(systemBossAnimation);
+        gm.createSystem<Boss, Health, SpriteSheet2D>(systemBossAnimation);
+        gm.createSystem<>(systemEnemyHurtBlink);
         gm.createSystem<>(systemAlienCharge);
     }
 

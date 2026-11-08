@@ -45,7 +45,6 @@ namespace RType {
         hide<Sprite2D>(gm, entity);
         hide<SpriteSheet2D>(gm, entity);
         hide<Text2D>(gm, entity);
-        hide<Text2D>(gm, entity);
         if (gm.hasComponent<Sound>(entity)) {
             const Sound &sound = gm.getComponent<Sound>(entity);
 

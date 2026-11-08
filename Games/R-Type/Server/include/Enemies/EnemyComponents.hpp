@@ -91,7 +91,6 @@ namespace RType {
         float fireTimer = 0.f;
         int stage = 0;
         int explosions = 0;
-        float hurtTimer = 0.f;
     };
 
     struct Enemy {
@@ -103,6 +102,7 @@ namespace RType {
     struct Health {
         int hp = 1;
         int maxHp = 1;
+        float hurtTimer = 0.f;
     };
 
     struct Hitbox {
@@ -126,7 +126,6 @@ namespace RType {
         std::optional<Entity> owner = std::nullopt;
     };
 
-    /** @brief Earns the points of the enemies killed by what it owns. */
     struct Scorer {
         int score = 0;
     };
@@ -141,10 +140,8 @@ namespace RType {
         float remaining = 0.f;
     };
 
-    /** @brief Destroys the enemy projectiles that touch it. */
     struct ShotBlocker {};
 
-    /** @brief Hurts the enemies it touches, at most once per cooldown. */
     struct ContactDamage {
         int damage = 1;
         float cooldown = 0.f;
