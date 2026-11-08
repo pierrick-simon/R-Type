@@ -48,7 +48,7 @@ Pour chaque fonctionnalité, ce document cite la recommandation à laquelle elle
 
 ### 3.1 Réassigner les touches et les boutons (`Keybind`)
 
-**Ce que c'est.** Le composant `Keybind` (`Engine/Graphical/include/Keybind.hpp`) réécrit les entrées du clavier et de la souris **avant** que le jeu ne les lise. Il gère quatre types de correspondances :
+**Ce que c'est.** Le composant `Keybind` (`Engine/Graphical2D/include/Keybind.hpp`) réécrit les entrées du clavier et de la souris **avant** que le jeu ne les lise. Il gère quatre types de correspondances :
 
 | Correspondance | Membre | Exemple |
 |---|---|---|
