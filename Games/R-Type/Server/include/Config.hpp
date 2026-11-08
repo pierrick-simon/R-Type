@@ -70,7 +70,7 @@ namespace RType::Server {
     inline constexpr float HUD_MARGIN = 20.f;
     inline constexpr float HUD_SPACING = 8.f;
 
-    inline constexpr float NAME_TAG_SIZE = 22.f;
+    inline constexpr float NAME_TAG_SIZE = 18.f;
     inline constexpr float NAME_TAG_GAP = 6.f;
 
     inline constexpr float SCORE_FONT_SIZE = 28.f;

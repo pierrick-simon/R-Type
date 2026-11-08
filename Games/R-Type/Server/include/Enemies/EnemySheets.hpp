@@ -74,8 +74,8 @@ namespace RType {
     inline constexpr int BOSS_IDLE_FRAMES = 4;
     inline constexpr std::size_t BOSS_FLASH_OFFSET =
         std::size_t(BOSS_STAGES) * std::size_t(BOSS_IDLE_FRAMES);
-    inline constexpr float BOSS_HURT_FLASH = 0.15f;
-    inline constexpr float BOSS_HURT_BLINK = 0.05f;
+    inline constexpr float ENEMY_HURT_FLASH = 0.15f;
+    inline constexpr float ENEMY_HURT_BLINK = 0.05f;
 
     inline constexpr SheetInfo EXPLOSION_SHEET = {
         Asset::ENEMY_EXPLOSION, 6, 32, 31, 67, 0, 0};

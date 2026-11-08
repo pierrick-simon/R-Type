@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include "AccountProtocol.hpp"
 #include "Connexion/Instance.hpp"
 #include "Connexion/InstanceLink.hpp"
 #include "Connexion/MasterLink.hpp"
@@ -17,6 +18,7 @@
 #include "MasterProtocol.hpp"
 #include "MouseManager.hpp"
 #include "ServerManager.hpp"
+#include "UserDB.hpp"
 
 namespace RType::Server {
 
@@ -94,13 +96,12 @@ namespace RType::Server {
         gm.addComponent<InstanceManager>(master);
         gm.addComponent<MasterLink>(master);
         gm.addComponent<LobbyListBroadcast>(master);
+        gm.addComponent<UserDB>(master);
         gm.createSystem<ServerManager>(ServerManager::systemServerReceived);
+        gm.createSystem<>(systemMasterAccounts);
         gm.createSystem<>(systemMasterRequests);
         gm.createSystem<>(systemMasterLink);
         gm.createSystem<>(systemMasterLobbyList);
-        /*std::cout << "[Master] Listening on port " << LOGIN_SERVER_PORT
-                  << " (UDP, clients) and " << MASTER_LINK_PORT
-                  << " (TCP, instances)" << std::endl;*/
         return master;
     }
 
@@ -111,8 +112,25 @@ namespace RType::Server {
                 ServerManager &server,
                 InstanceManager &instances,
                 MasterLink &link) {
-                gm.view<DefaulClient, LobbyRequest>().each(
-                    [&](Entity, DefaulClient &client, LobbyRequest &request) {
+                gm.view<DefaulClient, LobbyRequest, AccountRequest>().each(
+                    [&](Entity,
+                        DefaulClient &client,
+                        LobbyRequest &request,
+                        AccountRequest &account) {
+                        if (account.loggedUser.empty() &&
+                            (request.createRequested ||
+                                request.joinPort != 0)) {
+                            request.createRequested = false;
+                            request.joinPort = 0;
+                            try {
+                                MasterProtocol::sendLobbyPort(
+                                    server, client.getId(), 0);
+                            } catch (const std::exception &e) {
+                                std::cerr << "[Master] " << e.what()
+                                          << std::endl;
+                            }
+                            return;
+                        }
                         if (request.createRequested) {
                             request.createRequested = false;
                             answerRequest(server,

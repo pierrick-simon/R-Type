@@ -21,6 +21,7 @@
 #include "Player/Destroy.hpp"
 #include "Player/Hud.hpp"
 #include "ServerManager.hpp"
+#include "UpdateClientEntity.hpp"
 
 namespace RType::Server {
 

@@ -35,7 +35,7 @@ namespace RType::Game {
         /**
          * @brief Finds the component a module created, such as the
          * KeyboardManager of the Keyboard module, for gm:keyboard,
-         * gm:mouse, gm:elapsed and gm:windowShouldClose.
+         * gm:mouse, gm:elapsed and the window functions.
          * @param function The Lua function the script called, for the
          * error message.
          * @param module The module that creates the component.

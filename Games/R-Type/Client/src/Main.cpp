@@ -10,7 +10,9 @@
 #include "Assets.hpp"
 #include "Font.hpp"
 #include "GameManager.hpp"
+#include "Login.hpp"
 #include "Menu.hpp"
+#include "Settings.hpp"
 #include "Setup.hpp"
 #include "Sound.hpp"
 #include "Texture2D.hpp"
@@ -30,8 +32,11 @@ int main()
         auto am = RType::Client::createAssetManager(gm);
 
         RType::Client::createSystems(gm);
-        RType::Client::createMenu(gm);
-        while (!WindowShouldClose() && !RType::Client::quitRequested)
+        RType::Client::loadSettings();
+        RType::Client::loadSavedServer();
+        RType::Client::createServerPage(gm);
+        while (!RType::Client::shouldWindowClose(gm, w) &&
+            !RType::Client::quitRequested)
             gm.update();
         if (gm.hasComponent<RType::Assets>(am)) {
             auto &assets = gm.getComponent<RType::Assets>(am);

@@ -144,7 +144,7 @@ namespace RType::Client {
         const Entity background = gm.createEntity();
 
         gm.addComponent<GameOverItem>(background);
-        gm.addComponent<Sprite2D>(background, Asset::MENU_BACKGROUND);
+        gm.addComponent<Sprite2D>(background, Asset::MENU_BACK);
         gm.addComponent<Position2D>(background, 0.f, 0.f);
         const Entity title = addText(
             gm, center, GAME_OVER_TITLE_Y, "", TITLE_SIZE, {}, COLOR_TITLE);

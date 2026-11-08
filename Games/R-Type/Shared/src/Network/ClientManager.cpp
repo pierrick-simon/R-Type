@@ -6,6 +6,7 @@
 */
 
 #include "ClientManager.hpp"
+#include "AccountProtocol.hpp"
 #include "CreateProtocol.hpp"
 #include "CreatedProtocol.hpp"
 #include "DestroyProtocol.hpp"
@@ -36,6 +37,8 @@ namespace RType {
             OpcodeRType::LOBBY_PORT, MasterProtocol::manageLobbyPort);
         addContextManage(
             OpcodeRType::LOBBY_LIST, MasterProtocol::manageLobbyList);
+        addContextManage(
+            OpcodeRType::ACCOUNT_RESULT, AccountProtocol::manageResult);
     }
 
     void ClientManager::systemClientReceived(

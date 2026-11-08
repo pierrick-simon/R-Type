@@ -161,7 +161,7 @@ An R-Type adds and removes many components (bullets created and destroyed every 
 
 **What we accept:**
 
-- **A learning curve**, offset by the guide, its documented pitfalls and the 200+ tests of the Poc.
+- **A learning curve**, offset by the guide, its documented pitfalls and the 200+ engine unit tests.
 - **An object's logic is spread over several systems.** The order of systems must be documented and thought through ([game making guide](../../GAME_GUIDE.en.md#5-the-order-of-systems)).
 - **An engine to maintain:** every feature (views, frame systems, `getVector()`) is written and tested by the team.
 

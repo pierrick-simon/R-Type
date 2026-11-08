@@ -48,7 +48,7 @@ For each feature, this document quotes the recommendation it meets, with its ori
 
 ### 3.1 Rebinding keys and buttons (`Keybind`)
 
-**What it is.** The `Keybind` component (`Engine/Graphical/include/Keybind.hpp`) rewrites keyboard and mouse input **before** the game reads it. It handles four kinds of mappings:
+**What it is.** The `Keybind` component (`Engine/Graphical2D/include/Keybind.hpp`) rewrites keyboard and mouse input **before** the game reads it. It handles four kinds of mappings:
 
 | Mapping | Member | Example |
 |---|---|---|

@@ -5,10 +5,7 @@ add_library(engine-system SHARED
     src/Entity.cpp
     src/ComponentManager.cpp
     src/SystemManager.cpp
-    src/BuiltIn/Clock.cpp
-    src/BuiltIn/Velocity2D.cpp
-    src/BuiltIn/Friction2D.cpp
-    src/BuiltIn/GravityField2D.cpp
+    src/Clock.cpp
 )
 
 target_include_directories(engine-system PUBLIC

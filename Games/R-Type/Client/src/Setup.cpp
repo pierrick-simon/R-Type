@@ -13,6 +13,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Decoder.hpp"
+#include "FinishingSound.hpp"
 #include "Friction2D.hpp"
 #include "GameOver.hpp"
 #include "KeyboardManager.hpp"
@@ -20,10 +21,12 @@
 #include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
+#include "Login.hpp"
 #include "Menu.hpp"
 #include "Metric.hpp"
 #include "MouseManager.hpp"
 #include "MouseProtocol.hpp"
+#include "Settings.hpp"
 #include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
@@ -135,25 +138,27 @@ namespace RType::Client {
         gm.createSystem<Assets>(systemLobby);
         gm.createSystem<>(systemGameOver);
         gm.createSystem<>(systemLobbyListPage);
+        gm.createSystem<>(systemLogin);
         gm.createSystem<>(systemServerLost);
         gm.createSystem<Clock>(Clock::systemClock);
         gm.createSystem<>(systemButtons);
         gm.createSystem<>(systemTextFields);
         gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
-        gm.createSystem<Assets>(systemDrawLobbyList);
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Assets>(
             systemTextAnchorManager<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(
             Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
+        gm.createSystem<Assets>(systemDrawLobbyList);
+        gm.createSystem<>(systemDrawLoginPopup);
+        gm.createSystem<>(systemDrawSettings);
         gm.createSystem<Assets>(SpriteSheet2D::
                 systemDrawManagerSpriteSheet2D<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(
             Text2D::systemDrawManagerText2D<Font, Texture2D, Decoder>);
+        gm.createSystem<>(systemSettings);
+        gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
         gm.createSystem<LobbyClient>(
             systemDrawFade, std::numeric_limits<int>::max() - 1);
@@ -164,6 +169,15 @@ namespace RType::Client {
         Entity s = gm.createEntity();
         gm.addComponent<Listener>(s);
         return s;
+    }
+
+    bool shouldWindowClose(GameManager &gm, Entity w)
+    {
+        if (gm.hasComponent<Window>(w)) {
+            auto &window = gm.getComponent<Window>(w);
+            return window.shouldClose();
+        }
+        return true;
     }
 
 } // namespace RType::Client

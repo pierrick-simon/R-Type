@@ -15,6 +15,7 @@ set(SRCS_NETWORK
     src/Network/ServerManager.cpp
     src/Network/ClientManager.cpp
     src/Network/Protocol/KeyboardProtocol.cpp
+    src/Network/Protocol/KeyBindings.cpp
     src/Network/Protocol/MouseProtocol.cpp
     src/Network/Protocol/CreateProtocol.cpp
     src/Network/Protocol/CreatedProtocol.cpp
@@ -23,6 +24,7 @@ set(SRCS_NETWORK
     src/Network/Protocol/DestroyProtocol.cpp
     src/Network/Protocol/LobbyProtocol.cpp
     src/Network/Protocol/MasterProtocol.cpp
+    src/Network/Protocol/AccountProtocol.cpp
     src/Network/Protocol/Update/SetProtocol.cpp
     src/Network/Protocol/Update/UpdateClientEntity.cpp
     src/Network/Protocol/Update/UpdatePosition2D.cpp
@@ -47,7 +49,7 @@ set(INCLUDE_SHARED
 add_library(${SHARED_LIB_NAME} STATIC ${SRCS_NETWORK} ${SRCS_ASSETS})
 add_library(r-type::shared ALIAS ${SHARED_LIB_NAME})
 target_include_directories(${SHARED_LIB_NAME} PUBLIC ${INCLUDE_SHARED})
-target_link_libraries(${SHARED_LIB_NAME} PUBLIC engine-system engine-graphical2D engine-network engine-audio)
+target_link_libraries(${SHARED_LIB_NAME} PUBLIC engine-system engine-graphical2D engine-network engine-audio engine-physics)
 
 if (MSVC)
     target_compile_options(${SHARED_LIB_NAME} PRIVATE /W4 /permissive- /wd4251)

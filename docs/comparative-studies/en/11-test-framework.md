@@ -15,10 +15,9 @@ The project uses **Criterion**: it is already integrated into the build and cont
 
 Current state of the repository:
 
-- **The client and the server** each have a Criterion test target (`client_tests_run`, `server_tests_run`), with code coverage (`--coverage`).
+- **The engine, the client and the server** each have a Criterion test target (`engine_tests_run`, `client_tests_run`, `server_tests_run`). The engine one holds the 200+ ECS tests, built with the sanitizers; the client and server ones have code coverage (`--coverage`).
 - **The root `CMakeLists.txt`** looks for a Criterion installation already present on the machine (`find_library`), and **only outside Windows** (`if (NOT WIN32 ...)`).
 - **Continuous integration** installs Criterion with `apt-get install libcriterion-dev`.
-- **The Poc** (`Games/Poc`) has its own test runner, with more than 200 dependency-free tests. It is a validation program for the ECS: it is not affected by this choice.
 
 Tests will become essential with networking ([study 10](10-network-protocol.md)): reading and writing headers, connection, presence checks. This code must be tested **on Windows as well as on Linux**, because that is where differences between systems and compilers (type sizes, socket behavior) show up.
 
@@ -141,7 +140,7 @@ All four are actively maintained: Criterion published its latest release this mo
 
 - **Depends on Boost**, which the project deliberately avoided ([study 06](06-network-library.md)).
 
-### An in-house runner (like the Poc)
+### An in-house runner
 
 **Strengths**
 
@@ -149,7 +148,7 @@ All four are actively maintained: Criterion published its latest release this mo
 
 **Weaknesses**
 
-- **Everything must be written:** reports, filters, `ctest` and IDE integration, fixtures. Enough for the Poc, not for the whole project.
+- **Everything must be written:** reports, filters, `ctest` and IDE integration, fixtures.
 
 ---
 
@@ -178,8 +177,6 @@ All four are actively maintained: Criterion published its latest release this mo
 3. **Add a Windows build to continuous integration**, which builds Criterion the way its own continuous integration does, then runs the tests.
 
 **What we accept:** a heavier installation on Windows than for a framework fetchable with `FetchContent`, and a framework less widespread than GoogleTest.
-
-**The Poc keeps its in-house runner:** it is a demonstration and validation program for the ECS, self-contained by design.
 
 ---
 

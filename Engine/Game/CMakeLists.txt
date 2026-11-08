@@ -21,12 +21,14 @@ add_executable(game
     src/InputBinding.cpp
     src/TimeBinding.cpp
     src/WindowBinding.cpp
+    src/AudioBinding.cpp
     src/EngineBindings.cpp
+    src/Console.cpp
 )
 
 target_include_directories(game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(game PRIVATE
-    engine-system engine-graphical2D engine-graphical3D engine-audio
+    engine-system engine-graphical2D engine-graphical3D engine-audio engine-physics
     sol2::sol2 rtype::lua
 )
 

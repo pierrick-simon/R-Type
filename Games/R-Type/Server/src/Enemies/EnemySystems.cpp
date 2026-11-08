@@ -156,11 +156,10 @@ namespace RType {
                 !bossExposed(gm.getComponent<Boss>(enemy));
         }
 
-        void hurt(GameManager &gm, Entity enemy, Health &health, int damage)
+        void hurt(Health &health, int damage)
         {
             health.hp -= damage;
-            if (gm.hasComponent<Boss>(enemy))
-                gm.getComponent<Boss>(enemy).hurtTimer = BOSS_HURT_FLASH;
+            health.hurtTimer = ENEMY_HURT_FLASH;
         }
 
         void awardScore(GameManager &gm, EnemyDirector &director,
@@ -226,7 +225,7 @@ namespace RType {
                                 !overlap(contactRect, rectOf(ep, eb)))
                                 return;
                             contact.timer = contact.cooldown;
-                            hurt(gm, enemy, health, contact.damage);
+                            hurt(health, contact.damage);
                             if (health.hp > 0)
                                 return;
                             awardScore(
@@ -675,7 +674,6 @@ namespace RType {
         const float stagesTime = BOSS_DEF.stageTime * float(BOSS_STAGES - 1);
 
         boss.timer += delta;
-        boss.hurtTimer = std::max(0.f, boss.hurtTimer - delta);
         velocity = {0.f, 0.f};
         switch (boss.state) {
             case BossState::Enter:
@@ -929,7 +927,7 @@ namespace RType {
                                 return;
                             }
                             const int hp = health.hp;
-                            hurt(gm, enemy, health, shot.damage);
+                            hurt(health, shot.damage);
                             shot.damage -= hp;
                             consumed = !shot.piercing || shot.damage <= 0;
                             if (health.hp > 0)
@@ -988,10 +986,20 @@ namespace RType {
         contactDamage(gm, director, hooks);
     }
 
+    void systemHurtTimer(Health &health, const MasterClock &clock)
+    {
+        health.hurtTimer =
+            std::max(0.f, health.hurtTimer - elapsedSeconds(clock));
+    }
+
     void registerEnemySystems(GameManager &gm, EnemyHooks hooks)
     {
         const auto h = std::make_shared<const EnemyHooks>(std::move(hooks));
 
+        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
+            g.view<Health>().each(
+                [&c](Entity, Health &health) { systemHurtTimer(health, c); });
+        });
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<MovementPattern, Velocity2D>().each(
                 [&c](Entity, MovementPattern &m, Velocity2D &v) {

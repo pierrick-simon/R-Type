@@ -187,32 +187,34 @@ Test(boss, flashes_white_when_hurt)
     EnemyDirector director;
     const Entity boss = spawnBoss(gm);
     auto &state = gm.getComponent<Boss>(boss);
+    auto &health = gm.getComponent<Health>(boss);
 
     shootBoss(gm, boss, 1);
     systemEnemyCombat(gm, director, {});
-    cr_assert_float_eq(state.hurtTimer, 0.f, 0.001f);
+    cr_assert_float_eq(health.hurtTimer, 0.f, 0.001f);
     state.state = BossState::Open;
     shootBoss(gm, boss, 1);
     systemEnemyCombat(gm, director, {});
-    cr_assert_float_eq(state.hurtTimer, BOSS_HURT_FLASH, 0.001f);
+    cr_assert_float_eq(health.hurtTimer, ENEMY_HURT_FLASH, 0.001f);
 }
 
 Test(boss, hurt_flash_blinks_on_the_white_frames)
 {
+    Health heath;
     Boss boss;
     SpriteSheet2D sheet(
         {BOSS_SHEET.rows, BOSS_SHEET.frames / BOSS_SHEET.rows}, 120, 1.f);
 
     boss.stage = 2;
-    boss.hurtTimer = BOSS_HURT_FLASH - 0.01f;
-    systemBossAnimation(boss, sheet);
+    heath.hurtTimer = ENEMY_HURT_FLASH - 0.01f;
+    systemBossAnimation(boss, heath, sheet);
     cr_assert_eq(sheet.currentTile,
         BOSS_FLASH_OFFSET + std::size_t(2 * BOSS_IDLE_FRAMES));
-    boss.hurtTimer = BOSS_HURT_BLINK + 0.01f;
-    systemBossAnimation(boss, sheet);
+    heath.hurtTimer = ENEMY_HURT_BLINK + 0.01f;
+    systemBossAnimation(boss, heath, sheet);
     cr_assert_eq(sheet.currentTile, std::size_t(2 * BOSS_IDLE_FRAMES));
-    boss.hurtTimer = 0.f;
-    systemBossAnimation(boss, sheet);
+    heath.hurtTimer = 0.f;
+    systemBossAnimation(boss, heath, sheet);
     cr_assert_eq(sheet.currentTile, std::size_t(2 * BOSS_IDLE_FRAMES));
 }
 
