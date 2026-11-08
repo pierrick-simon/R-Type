@@ -11,7 +11,7 @@ This guide explains how to **make a game** on top of the engine: where to put th
 Throughout the guide, we build a small shoot'em up: a ship that moves with the keyboard and shoots, enemies coming from the right, collisions and a score.
 
 > [!TIP]
-> Every example in this guide was compiled against the current engine. The game logic (collisions, off-screen destruction, score) was also run without a window.
+> Every example in this guide was compiled against the current engine, and the complete game was run with them.
 
 ---
 
@@ -32,36 +32,40 @@ Throughout the guide, we build a small shoot'em up: a ship that moves with the k
 
 ## 1. What the engine provides
 
-The engine (`Engine/`) is split into three libraries:
+The engine (`Engine/`) is split into several libraries:
 
 | Library | Contents | Header folder |
 |---|---|---|
-| `engine-system` | The ECS (`GameManager`) and the basic components: position, velocity, gravity, clock… | `Engine/System/include/` (and its `BuiltIn/`, `Components/`, `System/` subfolders) |
-| `engine-graphical` | Window, images, animations, text, sound, keyboard, mouse (based on raylib) | `Engine/Graphical/include/` |
-| `engine-network` | Networking: **not implemented yet** | `Engine/Network/include/` |
+| `engine-system` | The ECS (`GameManager`) and the basic components: position, clock… | `Engine/System/include/` (and its `BuiltIn/`, `Components/`, `System/` subfolders) |
+| `engine-physics` | Velocity, friction, gravity and rotation, in 2D and 3D | `Engine/Physics/include/` |
+| `engine-graphical2D` | Window, images, animations, text, keyboard, mouse (based on raylib) | `Engine/Graphical2D/include/` |
+| `engine-graphical3D` | 3D models, 3D sprites and the camera (based on raylib) | `Engine/Graphical3D/include/` |
+| `engine-audio` | Sounds and the point that hears them (based on miniaudio) | `Engine/Audio/include/` |
+| `engine-network` | Networking: UDP client and server (based on Asio) | `Engine/Network/include/` |
 
 Each feature is a **component** to attach to an entity, usually along with a **static `systemXxx` function** to register as a system. The engine registers no system by itself: the game has to do it, in the right order (see [section 5](#5-the-order-of-systems)).
 
 | Component | Library | Role | Provided system (requested components) |
 |---|---|---|---|
 | `Position2D` | system | Position in pixels, `(0, 0)` at the top-left | — |
-| `Velocity2D` | system | Velocity in pixels per second | `Velocity2D::systemVelocity2D` (`Velocity2D, Position2D, Clock`) |
-| `GravityField2D` | system | Acceleration applied to the velocity (`x`, `y` = direction, `g` = strength in pixels/s²) | `GravityField2D::systemGravityField2D` (`GravityField2D, Velocity2D, Clock`) |
-| `Friction2D` | system | Friction applied to the velocity | `Friction2D::systemFriction2D` (`Friction2D, Velocity2D, Clock`) |
-| `Clock` | system | Time elapsed since the previous frame | `Clock::systemClock` (`Clock`) |
+| `MasterClock` | system | The game's clock: time elapsed since the previous frame, one for the whole game | `MasterClock::systemMasterClock` (`MasterClock`) |
+| `Clock` | system | An entity's own clock, to slow it down or speed it up alone | `Clock::systemClock` (`Clock`) |
 | `Origin2D` | system | Pivot point of a drawable (used in `Sprite2D`, `SpriteSheet2D`, `Text2D`) | — |
 | `Size2D` | system | Integer size, **in the order `{height, width}`** | — |
-| `Window` | graphical | The window, and the audio device | `Window::systemClearWindow` (`Window`) |
-| `Texture2D` | graphical | An image loaded from a file | — |
-| `Sprite2D` | graphical | Draws a whole texture | `Sprite2D::systemDrawSprite2D` (`Sprite2D, Texture2D, Position2D`) |
-| `SpriteSheet2D` | graphical | Draws one tile of an animation sheet, and moves to the next one | `SpriteSheet2D::systemAnimateSpriteSheet2D` (`SpriteSheet2D, Clock`) and `SpriteSheet2D::systemDrawSpriteSheet2D` (`SpriteSheet2D, Texture2D, Position2D`) |
-| `Font` | graphical | A font loaded from a file | — |
-| `Text2D` | graphical | A text to draw | `Text2D::systemDrawText2D` (`Text2D, Font, Position2D`) |
-| `Sound` | graphical | A sound loaded from a file | `Sound::systemSound` (`Sound`) |
-| `KeyboardManager` | graphical | The keyboard state (pressed, held and released keys) | `KeyboardManager::systemKeyboardManager` (`KeyboardManager`) |
-| `MouseManager` | graphical | The mouse state (buttons, position, wheel) | `MouseManager::systemMouseManager` (`MouseManager`) |
-| `Keyboard`, `Mouse` | graphical | A link to the `KeyboardManager` or `MouseManager`, for the entities that react to input | — |
-| `Keybind` | graphical | Rebinds keys and buttons | `Keybind::systemUpdateKeybind` (`Keybind, MouseManager, KeyboardManager`) |
+| `Velocity2D` | physics | Velocity in pixels per second | `Velocity2D::systemMasterVelocity2D` (`MasterClock`), or `Velocity2D::systemVelocity2D` (`Velocity2D, Position2D, Clock`) |
+| `GravityField2D` | physics | Acceleration applied to the velocity (`x`, `y` = direction, `g` = strength in pixels/s²) | `GravityField2D::systemMasterGravityField2D` (`MasterClock`), or `GravityField2D::systemGravityField2D` (`GravityField2D, Velocity2D, Clock`) |
+| `Friction2D` | physics | Friction applied to the velocity | `Friction2D::systemMasterFriction2D` (`MasterClock`), or `Friction2D::systemFriction2D` (`Friction2D, Velocity2D, Clock`) |
+| `Window` | graphical2D | The window | its `beginDrawing()` and `endDrawing()` methods, around the drawing systems (see [section 5](#5-the-order-of-systems)) |
+| `Texture2D` | graphical2D | An image loaded from a file | — |
+| `Sprite2D` | graphical2D | Draws a whole texture | `Sprite2D::systemDrawSprite2D` (`Sprite2D, Texture2D, Position2D`) |
+| `SpriteSheet2D` | graphical2D | Draws one tile of an animation sheet, and moves to the next one | `SpriteSheet2D::systemMasterAnimateSpriteSheet2D` (`MasterClock`) and `SpriteSheet2D::systemDrawSpriteSheet2D` (`SpriteSheet2D, Texture2D, Position2D`) |
+| `Font` | graphical2D | A font loaded from a file | — |
+| `Text2D` | graphical2D | A text to draw | `Text2D::systemDrawText2D` (`Text2D, Font, Position2D`) |
+| `KeyboardManager` | graphical2D | The keyboard state (pressed, held and released keys) | `KeyboardManager::systemKeyboardManager` (`KeyboardManager`) |
+| `MouseManager` | graphical2D | The mouse state (buttons, position, wheel) | `MouseManager::systemMouseManager` (`MouseManager`) |
+| `Keybind` | graphical2D | Rebinds keys and buttons | `Keybind::systemUpdateKeybind` (`Keybind, MouseManager, KeyboardManager`) |
+| `Listener` | audio | The point that hears the sounds, one for the whole game: every `Sound` is created from it | — |
+| `Sound` | audio | A sound loaded from a file | `Sound::systemSound` (`Sound`) |
 
 All these types live in the `RType` namespace. Their full documentation (Doxygen) is in their header.
 
@@ -71,7 +75,7 @@ All these types live in the `RType` namespace. Their full documentation (Doxygen
 
 ### The layout
 
-A game lives in its own folder under `Games/`, next to the R-Type and the Poc:
+A game lives in its own folder under `Games/`, next to the R-Type:
 
 ```
 Games/
@@ -105,13 +109,13 @@ set(SRCS
 
 add_executable(my_game ${SRCS})
 target_include_directories(my_game PRIVATE include)
-target_link_libraries(my_game PRIVATE engine-system engine-graphical)
+target_link_libraries(my_game PRIVATE engine-system engine-physics engine-graphical2D engine-audio)
 target_compile_definitions(my_game PRIVATE
         ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/"
 )
 ```
 
-- **`engine-system`** provides the ECS and the basic components, **`engine-graphical`** everything that is drawn, heard or read from the keyboard. A server that draws nothing only needs `engine-system`.
+- **`engine-system`** provides the ECS and the basic components, **`engine-physics`** the movement, **`engine-graphical2D`** everything that is drawn or read from the keyboard and the mouse, **`engine-audio`** the sounds. A server that draws nothing does not need `engine-graphical2D` nor `engine-audio`.
 - **`ASSETS_DIR`** is the absolute path of the `assets/` folder. File paths are relative to the folder the binary is launched from: with `ASSETS_DIR "player.png"`, the game finds its images wherever it is launched from.
 
 Then add the folder to `Games/CMakeLists.txt`:
@@ -138,13 +142,15 @@ The binary is placed directly in `Games/`, like `r-type_client` and `r-type_serv
 
 ```cpp
 #include <iostream>
-#include "Components.hpp"
+#include "Clock.hpp"
 #include "Exceptions.hpp"
 #include "GameManager.hpp"
 #include "KeyboardManager.hpp"
+#include "Listener.hpp"
 #include "MouseManager.hpp"
 #include "Spawn.hpp"
 #include "Systems.hpp"
+#include "Texture2D.hpp"
 #include "Window.hpp"
 
 int main()
@@ -152,7 +158,7 @@ int main()
     try {
         RType::GameManager gm;
 
-        // 1. The window first: textures, fonts and sounds need it.
+        // 1. The window first: textures and fonts need it.
         RType::Entity screen = gm.createEntity();
         gm.addComponent<RType::Window>(screen, 1280, 720, "My game");
 
@@ -161,16 +167,27 @@ int main()
         gm.addComponent<RType::KeyboardManager>(input);
         gm.addComponent<RType::MouseManager>(input);
 
-        // 3. Every system, before the loop.
+        // 3. The game's clock and the point that hears the sounds.
+        RType::Entity world = gm.createEntity();
+        gm.addComponent<RType::MasterClock>(world);
+        gm.addComponent<RType::Listener>(world);
+
+        // 4. Every system, before the loop.
         registerSystems(gm);
 
-        // 4. The starting entities.
-        spawnPlayer(gm, gm.getComponent<RType::KeyboardManager>(input));
+        // 5. The starting entities.
+        spawnBackground(gm);
+        spawnPlayer(gm, gm.getComponent<RType::Listener>(world));
         spawnScore(gm);
+        spawnSpawner(gm);
 
-        // 5. The loop: one frame per turn, until the window is closed.
-        while (!WindowShouldClose())
+        // 6. The loop: one frame per turn, until the window is closed.
+        RType::Window &window = gm.getComponent<RType::Window>(screen);
+        while (!window.shouldClose())
             gm.update();
+
+        // 7. The textures before the window: raylib needs it to free them.
+        RType::Texture2D::unloadTextures2D(gm);
     } catch (const RType::EngineException &e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 84;
@@ -181,10 +198,12 @@ int main()
 
 The key points:
 
-- **The window is created first.** `Texture2D`, `Font` and `Sound` need the window (and its audio device) to load. And since `addComponent` constructs the component right away, the order of the lines matters.
-- **Input has its own entity**, with a single `KeyboardManager` and a single `MouseManager`. The entities that react to the keyboard get a `Keyboard` component, a simple link to that `KeyboardManager` (see [Reading the keyboard and mouse](#reading-the-keyboard-and-mouse)).
+- **The window is created first.** `Texture2D` and `Font` need it to load. And since `addComponent` constructs the component right away, the order of the lines matters.
+- **Input has its own entity**, with a single `KeyboardManager` and a single `MouseManager`. The systems that react to the keyboard receive that `KeyboardManager` (see [Reading the keyboard and mouse](#reading-the-keyboard-and-mouse)).
+- **The game's clock and the `Listener` are created once.** `MasterClock` gives every system the time of the frame, and the `Listener` is the point that hears the sounds: every `Sound` is created from it.
 - **Every system is created before the loop**, never during `update()` (see [pitfall 2](ECS_GUIDE.en.md#pitfall-2-creating-a-system-during-update)).
-- **`WindowShouldClose()`** is the raylib function that detects the window being closed (close button or `Escape`). `Window` does not provide it yet (see [section 9](#9-current-engine-limitations)).
+- **`window.shouldClose()`** becomes true when the window is closed (close button or `Escape`).
+- **`Texture2D::unloadTextures2D(gm)` runs before the end of `main`.** It destroys the entities that hold a texture while the window still exists: without it, the game crashes when it quits.
 - **Every engine error derives from `RType::EngineException`**: a single `catch` clause is enough. The details are in [error handling](ECS_GUIDE.en.md#6-error-handling).
 
 ---
@@ -234,18 +253,17 @@ Each "kind" of entity is created by a `spawnXxx` function, which attaches all it
 
 ```cpp
 // src/Spawn.cpp
-RType::Entity spawnPlayer(RType::GameManager &gm, RType::KeyboardManager &keyboard)
+RType::Entity spawnPlayer(RType::GameManager &gm, RType::Listener &listener)
 {
     RType::Entity player = gm.createEntity();
 
     gm.addComponent<Player>(player);
     gm.addComponent<RType::Position2D>(player, 100.f, 300.f);
     gm.addComponent<RType::Velocity2D>(player);
-    gm.addComponent<RType::Clock>(player);
     gm.addComponent<Hitbox>(player, 64.f, 32.f);
     gm.addComponent<RType::Texture2D>(player, ASSETS_DIR "player.png");
     gm.addComponent<RType::Sprite2D>(player);
-    gm.addComponent<RType::Keyboard>(player, keyboard);
+    gm.addComponent<RType::Sound>(player, listener, ASSETS_DIR "shot.mp3");
     return player;
 }
 
@@ -256,7 +274,6 @@ RType::Entity spawnBullet(RType::GameManager &gm, RType::Position2D pos)
     gm.addComponent<Bullet>(bullet);
     gm.addComponent<RType::Position2D>(bullet, pos);
     gm.addComponent<RType::Velocity2D>(bullet, 800.f, 0.f);
-    gm.addComponent<RType::Clock>(bullet);
     gm.addComponent<Hitbox>(bullet, 16.f, 8.f);
     gm.addComponent<DestroyOffScreen>(bullet);
     gm.addComponent<RType::Texture2D>(bullet, ASSETS_DIR "bullet.png");
@@ -280,31 +297,38 @@ Systems run **in the order they were created**. That order decides what each sys
 ```cpp
 void registerSystems(RType::GameManager &gm)
 {
-    // 1. Input: read the keyboard and mouse
+    // 1. Start the frame: frame rate, then clear the screen
+    gm.createSystem<RType::Window>(
+        [](RType::Window &window) {
+            window.setTargetFps();
+            window.beginDrawing();
+        },
+        std::numeric_limits<int>::min());
+
+    // 2. Input: read the keyboard and mouse
     gm.createSystem<RType::KeyboardManager>(RType::KeyboardManager::systemKeyboardManager);
     gm.createSystem<RType::MouseManager>(RType::MouseManager::systemMouseManager);
 
-    // 2. Time: update every clock
-    gm.createSystem<RType::Clock>(RType::Clock::systemClock);
+    // 3. Time: advance the game's clock
+    gm.createSystem<RType::MasterClock>(RType::MasterClock::systemMasterClock);
 
-    // 3. Game logic
-    gm.createSystem<Player, RType::Velocity2D, RType::Keyboard>(steerPlayer);
-    gm.createSystem(shoot);
-    gm.createSystem<Spawner, RType::Clock>(spawnEnemies);
+    // 4. Game logic
+    gm.createSystem<RType::KeyboardManager>(steerPlayer);
+    gm.createSystem<RType::KeyboardManager>(shoot);
+    gm.createSystem<RType::MasterClock>(spawnEnemies);
     gm.createSystem(collisions);
     gm.createSystem(destroyOffScreen);
     gm.createSystem<Score, RType::Text2D>(showScore);
 
-    // 4. Physics: apply velocities
-    gm.createSystem<RType::Velocity2D, RType::Position2D, RType::Clock>(
-        RType::Velocity2D::systemVelocity2D);
+    // 5. Physics: apply velocities
+    gm.createSystem<RType::MasterClock>(RType::Velocity2D::systemMasterVelocity2D);
 
-    // 5. Animation
-    gm.createSystem<RType::SpriteSheet2D, RType::Clock>(
-        RType::SpriteSheet2D::systemAnimateSpriteSheet2D);
+    // 6. Animation
+    gm.createSystem<RType::MasterClock>(
+        RType::SpriteSheet2D::systemMasterAnimateSpriteSheet2D);
 
-    // 6. Rendering: clear the screen, then draw
-    gm.createSystem<RType::Window>(RType::Window::systemClearWindow);
+    // 7. Rendering: background first, then sprites, sheets and texts on top
+    gm.createSystem<Background, RType::Texture2D, RType::Position2D>(drawBackground);
     gm.createSystem<RType::Sprite2D, RType::Texture2D, RType::Position2D>(
         RType::Sprite2D::systemDrawSprite2D);
     gm.createSystem<RType::SpriteSheet2D, RType::Texture2D, RType::Position2D>(
@@ -312,14 +336,21 @@ void registerSystems(RType::GameManager &gm)
     gm.createSystem<RType::Text2D, RType::Font, RType::Position2D>(
         RType::Text2D::systemDrawText2D);
 
-    // 7. Sound
+    // 8. Sound
     gm.createSystem<RType::Sound>(RType::Sound::systemSound);
+
+    // 9. End the frame: show what was drawn
+    gm.createSystem<RType::Window>(
+        [](RType::Window &window) { window.endDrawing(); },
+        std::numeric_limits<int>::max());
 }
 ```
 
 - **The engine's systems are registered like yours**: `gm.createSystem<Components...>(Class::systemXxx)`, with the components in the same order as the function's parameters. `const` parameters are accepted.
-- **`KeyboardManager::systemKeyboardManager` and `Clock::systemClock` must run exactly once per frame**, before any system that reads the keyboard or the time.
-- **The drawing order follows the order of systems**: sprites are drawn, then animated sheets, then texts on top. Within a single system, the order of entities is not guaranteed (see [A background](#a-background)).
+- **Every drawing happens between `beginDrawing()` and `endDrawing()`.** The second argument of `createSystem` is the system's layer: systems run by layer, then in creation order. `std::numeric_limits<int>::min()` puts the start of the frame before everything, and `std::numeric_limits<int>::max()` its end after everything, wherever the other systems are created.
+- **The `Master…` systems take the `MasterClock`**: `Velocity2D::systemMasterVelocity2D` moves every entity that has a `Position2D` and a `Velocity2D`, and `SpriteSheet2D::systemMasterAnimateSpriteSheet2D` animates every `SpriteSheet2D`. They run once per frame, because there is a single `MasterClock`.
+- **`KeyboardManager::systemKeyboardManager` and `MasterClock::systemMasterClock` must run exactly once per frame**, before any system that reads the keyboard or the time.
+- **The drawing order follows the order of systems**: the background is drawn, then sprites, animated sheets, and texts on top. Within a single system, the order of entities is not guaranteed (see [A background](#a-background)).
 
 ---
 
@@ -349,7 +380,6 @@ A sprite sheet is an image split into a grid of tiles of the same size. `SpriteS
 ```cpp
 RType::Entity enemy = gm.createEntity();
 gm.addComponent<RType::Position2D>(enemy, 1100.f, 300.f);
-gm.addComponent<RType::Clock>(enemy);
 gm.addComponent<RType::Texture2D>(enemy, ASSETS_DIR "enemy.png");
 
 RType::SpriteSheet2D sheet;
@@ -359,7 +389,7 @@ gm.addComponent<RType::SpriteSheet2D>(enemy, sheet);
 ```
 
 - **`recNb` is a `Size2D`, whose order is `{height, width}`**: `{1, 4}` means 1 row and 4 columns. Neither value may be 0.
-- **The animation needs a `Clock` on the same entity.** `animation = false` freezes the current tile, and `currentTile` selects the tile shown.
+- **`SpriteSheet2D::systemMasterAnimateSpriteSheet2D` animates it** with the game's clock. `animation = false` freezes the current tile, and `currentTile` selects the tile shown.
 
 ### Moving an entity
 
@@ -368,21 +398,28 @@ gm.addComponent<RType::SpriteSheet2D>(enemy, sheet);
 ```cpp
 gm.addComponent<RType::Position2D>(bullet, 100.f, 300.f);
 gm.addComponent<RType::Velocity2D>(bullet, 800.f, 0.f);   // 800 px/s to the right
-gm.addComponent<RType::Clock>(bullet);
 ```
 
-- **Every moving entity needs a `Clock`**, on top of `Velocity2D` and `Position2D`. Without it, the system does not see the entity, and it stays still without any error.
+- **`Velocity2D::systemMasterVelocity2D` moves it** with the game's clock ([section 5](#5-the-order-of-systems)).
 - **The coordinate system is raylib's**: `(0, 0)` at the top-left, `x` to the right, `y` downward.
 - **For gravity**, add `GravityField2D` and its system (before the `Velocity2D` one). Its fields are `x`, `y` (the direction, downward by default) and `g`, the strength **in pixels/s²**. The default value (`9.80665`) is therefore barely visible on screen: use a few hundred instead.
 
 ```cpp
 gm.addComponent<RType::GravityField2D>(player, 0.f, 1.f, 900.f);   // downward, 900 px/s²
 
-gm.createSystem<RType::GravityField2D, RType::Velocity2D, RType::Clock>(
-    RType::GravityField2D::systemGravityField2D);
+gm.createSystem<RType::MasterClock>(
+    RType::GravityField2D::systemMasterGravityField2D);
 ```
 
-- **`Clock::speed`** multiplies the time seen by the entity: `0` freezes it (movement and animation), `2` makes it go twice as fast. It is an integer: no slow motion.
+- **To slow down or speed up some entities only**, give them their own `Clock` and use the systems that take it, instead of the `Master…` ones. `Clock::speed` multiplies the time the entity sees: `0` freezes it (movement and animation), `2` makes it go twice as fast. It is an integer: no slow motion.
+
+```cpp
+gm.addComponent<RType::Clock>(bullet);
+
+gm.createSystem<RType::Clock>(RType::Clock::systemClock);
+gm.createSystem<RType::Velocity2D, RType::Position2D, RType::Clock>(
+    RType::Velocity2D::systemVelocity2D);
+```
 
 ### Reading the keyboard and mouse
 
@@ -394,16 +431,9 @@ The `KeyboardManager` and `MouseManager` of the input entity (see [section 3](#3
 | `keyDown` / `buttonDown` | The keys and buttons **held** |
 | `keyReleased` / `buttonReleased` | The keys and buttons released **during this frame** |
 
-The `MouseManager` also provides `getPos()` (the cursor position, as a `Position2D`) and `getWheel()` (the wheel).
+The `MouseManager` also provides `getPos()` (the cursor position, as a `Position2D`), `getDelta()` (its movement since the previous frame) and `getWheel()` (the wheel).
 
-The entities that react to input do not read the input entity directly: they get a **`Keyboard`** (or **`Mouse`**) component, which holds a reference to the manager.
-
-```cpp
-gm.addComponent<RType::Keyboard>(player, gm.getComponent<RType::KeyboardManager>(input));
-gm.addComponent<RType::Mouse>(cursor, gm.getComponent<RType::MouseManager>(input));
-```
-
-The member is called `manager` in `Keyboard` (`kb.manager.keyDown`) and `mouse` in `Mouse` (`m.mouse.getPos()`).
+A system reads them by asking for the manager: `gm.createSystem<RType::KeyboardManager>(steerPlayer)` calls `steerPlayer(gm, keyboard)` once per frame, since there is a single `KeyboardManager`. The system then goes through the entities it moves with a view ([Controlling the player](#controlling-the-player)).
 
 Keys are `RType::Key::Value`s (`Key::Value::Space`, `Key::Value::Left`…). The default layout is AZERTY; for a QWERTY keyboard: `gm.addComponent<RType::KeyboardManager>(input, RType::Key::Layout::QWERTY)`.
 
@@ -421,7 +451,7 @@ gm.createSystem<RType::Keybind, RType::MouseManager, RType::KeyboardManager>(
 
 ### Controlling the player
 
-A system on `Player`, `Velocity2D` and `Keyboard` turns the held keys into a velocity. The movement itself is done by the `Velocity2D` system.
+A system on the `KeyboardManager` turns the held keys into a velocity for every `Player`. The movement itself is done by the `Velocity2D` system.
 
 ```cpp
 static bool contains(const std::vector<RType::Key::Value> &keys, RType::Key::Value key)
@@ -429,67 +459,72 @@ static bool contains(const std::vector<RType::Key::Value> &keys, RType::Key::Val
     return std::ranges::find(keys, key) != keys.end();
 }
 
-void steerPlayer(const Player &player, RType::Velocity2D &vel, const RType::Keyboard &kb)
+void steerPlayer(RType::GameManager &gm, const RType::KeyboardManager &keyboard)
 {
-    const auto &down = kb.manager.keyDown;
+    const auto &down = keyboard.keyDown;
 
-    vel = {0.f, 0.f};
-    if (contains(down, RType::Key::Value::Left))
-        vel.x -= player.speed;
-    if (contains(down, RType::Key::Value::Right))
-        vel.x += player.speed;
-    if (contains(down, RType::Key::Value::Up))
-        vel.y -= player.speed;
-    if (contains(down, RType::Key::Value::Down))
-        vel.y += player.speed;
+    for (auto &[e, player, vel] : gm.view<Player, RType::Velocity2D>().getVector()) {
+        vel = {0.f, 0.f};
+        if (contains(down, RType::Key::Value::Left))
+            vel.x -= player.speed;
+        if (contains(down, RType::Key::Value::Right))
+            vel.x += player.speed;
+        if (contains(down, RType::Key::Value::Up))
+            vel.y -= player.speed;
+        if (contains(down, RType::Key::Value::Down))
+            vel.y += player.speed;
+    }
 }
 
-gm.createSystem<Player, RType::Velocity2D, RType::Keyboard>(steerPlayer);
+gm.createSystem<RType::KeyboardManager>(steerPlayer);
 ```
 
 ### Shooting: creating entities during the game
 
-A frame system iterates over the players with `getVector()` (see [Iterating over a view in a system](ECS_GUIDE.en.md#iterating-over-a-view-in-a-system-getvector)) and creates a bullet when `Space` has just been pressed:
+The same way, a system on the `KeyboardManager` creates a bullet and plays the player's sound when `Space` has just been pressed. It iterates over the players with `getVector()` (see [Iterating over a view in a system](ECS_GUIDE.en.md#iterating-over-a-view-in-a-system-getvector)):
 
 ```cpp
-void shoot(RType::GameManager &gm)
+void shoot(RType::GameManager &gm, const RType::KeyboardManager &keyboard)
 {
-    for (auto &[e, player, pos, kb] :
-        gm.view<Player, RType::Position2D, RType::Keyboard>().getVector()) {
-        if (contains(kb.manager.keyPressed, RType::Key::Value::Space))
-            spawnBullet(gm, {pos.x + 64.f, pos.y + 12.f});
+    if (!contains(keyboard.keyPressed, RType::Key::Value::Space))
+        return;
+    for (auto &[e, player, pos, sound] :
+        gm.view<Player, RType::Position2D, RType::Sound>().getVector()) {
+        spawnBullet(gm, {pos.x + 64.f, pos.y + 12.f});
+        sound.state = RType::Sound::State::PLAY;
     }
 }
 
-gm.createSystem(shoot);
+gm.createSystem<RType::KeyboardManager>(shoot);
 ```
 
 We use `keyPressed`, not `keyDown`: otherwise a bullet would be fired every frame while the key is held.
 
 ### Spawning enemies at regular intervals
 
-A "spawner" entity holds a `Spawner` and a `Clock`. Its system receives the `GameManager` as its first parameter, so that it can create entities:
+A "spawner" entity holds a `Spawner`. A system on the `MasterClock` adds the frame's time to it, and creates an enemy when the delay is reached:
 
 ```cpp
-void spawnEnemies(RType::GameManager &gm, Spawner &spawner, const RType::Clock &clock)
+void spawnEnemies(RType::GameManager &gm, const RType::MasterClock &clock)
 {
     static std::mt19937 rng(std::random_device {}());
     std::uniform_real_distribution<float> y(0.f, 720.f - 48.f);
 
-    spawner.elapsed += clock.getElapsed();
-    if (spawner.elapsed < spawner.every)
-        return;
-    spawner.elapsed = std::chrono::milliseconds(0);
-    spawnEnemy(gm, {1280.f, y(rng)});
+    for (auto &[e, spawner] : gm.view<Spawner>().getVector()) {
+        spawner.elapsed += clock.getElapsed();
+        if (spawner.elapsed < spawner.every)
+            continue;
+        spawner.elapsed = std::chrono::milliseconds(0);
+        spawnEnemy(gm, {1280.f, y(rng)});
+    }
 }
 
 // in main
 RType::Entity spawner = gm.createEntity();
 gm.addComponent<Spawner>(spawner);
-gm.addComponent<RType::Clock>(spawner);
 
 // in registerSystems
-gm.createSystem<Spawner, RType::Clock>(spawnEnemies);
+gm.createSystem<RType::MasterClock>(spawnEnemies);
 ```
 
 `spawnEnemy` follows the `spawnBullet` model, with `Enemy`, a `Velocity2D` to the left (`-150.f, 0.f`) and a `SpriteSheet2D`.
@@ -555,10 +590,14 @@ RType::Entity score = gm.createEntity();
 gm.addComponent<Score>(score);
 gm.addComponent<RType::Position2D>(score, 20.f, 20.f);
 gm.addComponent<RType::Font>(score, ASSETS_DIR "font.ttf");
-gm.addComponent<RType::Text2D>(score, 32.f, "Score: 0");   // size, text
+
+RType::Text2D text;
+text.fontSize = 32.f;
+text.str = "Score: 0";
+gm.addComponent<RType::Text2D>(score, text);
 ```
 
-For a changing text, a system updates `str` from the game data:
+`Text2D` also holds `color`, `rotation`, `spacing` and `origin`. For a changing text, a system updates `str` from the game data:
 
 ```cpp
 void showScore(const Score &score, RType::Text2D &text)
@@ -571,10 +610,10 @@ gm.createSystem<Score, RType::Text2D>(showScore);
 
 ### Playing a sound
 
-`Sound` is driven by its `state` field, which `Sound::systemSound` applies on its next run:
+A `Sound` is created from the game's `Listener` (see [section 3](#3-the-main-window-input-loop)), then driven by its `state` field, which `Sound::systemSound` applies on its next run:
 
 ```cpp
-gm.addComponent<RType::Sound>(player, ASSETS_DIR "shot.wav");          // loop = false by default
+gm.addComponent<RType::Sound>(player, listener, ASSETS_DIR "shot.mp3");   // loop = false by default
 
 // in a system
 sound.state = RType::Sound::State::PLAY;     // play from the start
@@ -583,7 +622,14 @@ sound.state = RType::Sound::State::START;    // resume after a pause
 sound.state = RType::Sound::State::STOP;     // stop
 ```
 
-For background music, pass `true` as the second argument (`loop`), then, at startup, set `state` to `PLAY` right after adding it: `gm.getComponent<RType::Sound>(music).state = RType::Sound::State::PLAY;`.
+For background music, pass a `SoundInfo` with `loop = true` as the third argument, then set `state` to `PLAY` right after adding it:
+
+```cpp
+gm.addComponent<RType::Sound>(music, listener, ASSETS_DIR "music.mp3", RType::SoundInfo {.loop = true});
+gm.getComponent<RType::Sound>(music).state = RType::Sound::State::PLAY;
+```
+
+`sound.setVolume(v)` and `sound.setPitch(p)` change the volume and the pitch (`1` by default).
 
 ### A background
 
@@ -598,7 +644,7 @@ void drawBackground(const Background &, const RType::Texture2D &texture,
     RType::Sprite2D::systemDrawSprite2D(RType::Sprite2D {}, texture, pos);
 }
 
-// in registerSystems, right after Window::systemClearWindow
+// in registerSystems, before the other drawing systems
 gm.createSystem<Background, RType::Texture2D, RType::Position2D>(drawBackground);
 ```
 
@@ -606,14 +652,17 @@ gm.createSystem<Background, RType::Texture2D, RType::Position2D>(drawBackground)
 
 ## 7. Do
 
-- **Create the window first**, before any `Texture2D`, `Font` or `Sound`.
-- **Create every system at startup**, in a single function (`registerSystems`), in the order input → time → logic → physics → animation → rendering → sound ([section 5](#5-the-order-of-systems)).
-- **Put a `Clock` on every entity that moves or is animated.**
+- **Create the window first**, before any `Texture2D` or `Font`.
+- **Create a single `MasterClock` and a single `Listener`** at startup, and create the sounds from that `Listener`.
+- **Create every system at startup**, in a single function (`registerSystems`), in the order frame start → input → time → logic → physics → animation → rendering → sound → frame end ([section 5](#5-the-order-of-systems)).
+- **Put the start and the end of the frame on the lowest and the highest layer** (`std::numeric_limits<int>::min()` and `max()`), so that every drawing happens between them.
+- **Use the `Master…` systems** to move and animate with the game's clock, and a `Clock` only on the entities that must have their own time.
 - **Write small components**, each with a single role, and **use tags** (empty structs) to sort entities. `Bullet` + `DestroyOffScreen` is better than a `Bullet` that does everything.
 - **Create each kind of entity in a `spawnXxx` function**: the same code is used at startup and during the game.
 - **Keep the game state in components** (score, lives, level): systems find it with a view, and it goes away with its entity.
 - **Iterate over views with `getVector()` in frame systems**, and build a list used in a nested loop only once ([collisions](#collisions)).
 - **Keep the `Entity` values you need later**, and check `gm.hasEntity(e)` before using one: the entity may have been destroyed in the meantime ([pitfall 4](ECS_GUIDE.en.md#pitfall-4-keeping-a-pointer-or-reference-to-another-entitys-component), [projectile recipe](ECS_GUIDE.en.md#a-projectile-aiming-at-a-target-that-may-be-destroyed)).
+- **Call `Texture2D::unloadTextures2D(gm)` at the end of `main`**, before the window goes away.
 - **Catch `RType::EngineException` in `main`** and return `84`.
 - **Pass file paths through `ASSETS_DIR`** ([section 2](#the-cmakeliststxt)).
 - **Test the logic without a window**: systems that only use game components and `engine-system` (collisions, score, destruction) can be tested with a plain `GameManager`, without raylib, for instance in the Criterion tests.
@@ -624,15 +673,16 @@ gm.createSystem<Background, RType::Texture2D, RType::Position2D>(drawBackground)
 ## 8. Don't
 
 - **Don't use `EntityManager`, `ComponentManager` or `SystemManager`**: everything goes through the `GameManager`.
-- **Don't load a texture, font or sound before the window**: loading fails or crashes.
-- **Don't create two `Window`s**: the second constructor throws an `EngineException`. Likewise, **a single `KeyboardManager` and a single `MouseManager`** for the whole game.
-- **Don't destroy the input entity**: the `Keyboard` and `Mouse` components keep a reference to its managers, which would become invalid.
+- **Don't load a texture or a font before the window**: loading fails or crashes.
+- **Don't create two `Window`s or two `Listener`s**: the second constructor throws an `EngineException`. Likewise, **a single `KeyboardManager`, a single `MouseManager` and a single `MasterClock`** for the whole game.
+- **Don't destroy the `Listener` before the sounds**: every `Sound` uses it until it is destroyed.
+- **Don't draw outside `beginDrawing()` and `endDrawing()`**: keep the start and the end of the frame on the extreme layers ([section 5](#5-the-order-of-systems)).
 - **Don't create a system during `update()`** ([pitfall 2](ECS_GUIDE.en.md#pitfall-2-creating-a-system-during-update)): every system at startup. To disable a behavior, remove a component or use a tag ([recipe](ECS_GUIDE.en.md#pausing-an-entity-without-destroying-a-system)).
 - **Don't call `gm.update()` from a system**: the call does nothing.
 - **Don't read a component right after adding it inside a system**: it only exists at the end of the frame ([pitfall 7](ECS_GUIDE.en.md#pitfall-7-reading-a-component-right-after-adding-it-inside-a-system)).
 - **Don't put logic or calls to the `GameManager` in a component**: logic goes in systems ([pitfall 1](ECS_GUIDE.en.md#pitfall-1-calling-the-gamemanager-from-a-components-constructor-or-destructor)).
 - **Don't swap `Size2D`**: it is `{height, width}`, not `{width, height}`.
-- **Don't forget the `Clock`**: an entity with `Velocity2D` but no `Clock` does not move, and nothing reports it.
+- **Don't register a `Master…` system and the matching system with a `Clock` for the same entities**: they would be moved twice per frame.
 - **Don't rely on the order of entities in a system**: for a drawing order, use separate systems ([background](#a-background)).
 - **Don't leave useless entities alive**: off-screen bullets, finished explosions… Every forgotten entity keeps being updated and drawn.
 - **Don't change the engine for a game-specific need**: write a component and a system on the game side. If the engine needs to change, discuss it with the engine team.
@@ -646,12 +696,9 @@ What the engine does not do yet, and what to do in the meantime:
 
 | Limitation | In the meantime |
 |---|---|
-| `Window` does not tell whether the window should close | Call raylib's `WindowShouldClose()` in the loop |
-| A texture is not shared between entities: each `Texture2D` reloads its file | Fine for a few entities per second. If creating bullets becomes slow, report it to the engine team |
 | No drawing order (depth) within a system | One drawing system per "layer" ([background](#a-background)) |
 | No collisions | A `Hitbox` component and a game-side system ([collisions](#collisions)) |
 | `Clock::speed` is an integer | No slow motion; `0` to freeze, `1` for normal speed |
-| Networking (`engine-network`) is empty | — |
 
 ---
 
@@ -669,5 +716,5 @@ What the engine does not do yet, and what to do in the meantime:
 | [ECS design notes](ECS_DESIGN.en.md) | The why behind the engine's architecture |
 | [Accessibility](ACCESSIBILITY.en.md) | What the engine offers for accessibility, why it helps and who for |
 | [Comparative studies](comparative-studies/en/README.md) | The project's technical choices and their alternatives: language, build, ECS, raylib, networking, protocol, tests… |
-| `Engine/System/include/BuiltIn/`, `Engine/Graphical/include/` | The Doxygen documentation of each provided component |
-| `Games/Poc/` | The ECS tests: a usage example for every behavior |
+| `Engine/*/include/` | The Doxygen documentation of each provided component |
+| `tests/engine/` | The ECS unit tests: a usage example for every behavior |

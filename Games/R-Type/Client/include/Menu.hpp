@@ -24,8 +24,9 @@ namespace RType::Client {
     constexpr float BUTTON_HEIGHT = 90.f;
     constexpr float BUTTON_GAP = 40.f;
     constexpr int TITLE_SIZE = 120;
-    constexpr int LABEL_SIZE = 48;
+    constexpr int LABEL_SIZE = 40;
     constexpr std::size_t USERNAME_MAX_LENGTH = 16;
+    constexpr std::size_t PASSWORD_MAX_LENGTH = 32;
     constexpr std::size_t IP_MAX_LENGTH = 15;
     constexpr std::size_t LOBBY_NAME_MAX_LENGTH = 16;
     constexpr float IP_BUTTON_WIDTH = 400.f;
@@ -34,7 +35,9 @@ namespace RType::Client {
     constexpr std::size_t BUTTON_TILE_NORMAL = 0;
     constexpr std::size_t BUTTON_TILE_HOVERED = 1;
     constexpr std::size_t BUTTON_TILE_DISABLED = 2;
-    constexpr float BUTTON_TEXT_PADDING = 30.f;
+    /** @brief Keeps the labels away from the details of the button sprite
+     *         (corners, marker on the left, arrow on the right). */
+    constexpr float BUTTON_TEXT_PADDING = 45.f;
 
     struct MenuItem {};
 
@@ -42,7 +45,11 @@ namespace RType::Client {
 
     constexpr float SERVER_LABEL_SIZE = 32.f;
 
-    struct MenuBackground {};
+    /** @brief Full-screen background of the current page (see
+     *         systemMenuBackground for which page uses which sprite). */
+    struct MenuBackground {
+        AssetId asset;
+    };
 
     struct TextAnchor {
         float x = 0.5f;
@@ -57,7 +64,7 @@ namespace RType::Client {
         std::chrono::milliseconds elapsed {0};
     };
 
-    enum class Field { None, Username, Ip, LobbyName };
+    enum class Field { None, Username, Password, Ip, LobbyName };
 
     struct TextField {
         Field id;
@@ -71,6 +78,8 @@ namespace RType::Client {
         bool hovered = false;
         bool error = false;
         bool disabled = false;
+        /** @brief Shown as hovered while true (selected toggle button). */
+        bool selected = false;
     };
 
     inline bool quitRequested = false;
@@ -78,7 +87,8 @@ namespace RType::Client {
     inline bool ipInvalid = false;
 
     struct ClientInfos {
-        std::string _username = "Player";
+        std::string _username = "Player1";
+        std::string _password;
         std::string _ip = "127.0.0.1";
         std::string _lobbyName;
         std::string _lobbyNameDefault = "Lobby 1";

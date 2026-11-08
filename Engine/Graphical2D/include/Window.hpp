@@ -43,6 +43,8 @@ namespace RType {
         raylib::Color clearScreenColor = raylib::Color::Black();
 
         int fps = 60;
+        bool fullScreen = false;
+        bool hideCursor = false;
 
         /**
          * @brief System handling the window each frame.
@@ -53,11 +55,13 @@ namespace RType {
          *          frame in which the drawing systems (Sprite2D, SpriteSheet2D,
          *          Text2D) are expected to run.
          */
-        static void systemClearWindow(const Window &w);
+        static void systemClearWindow(Window &w);
 
         void beginDrawing();
         void endDrawing();
         void setTargetFps();
+
+        bool shouldClose();
 
     private:
         std::unique_ptr<raylib::Window> _window;

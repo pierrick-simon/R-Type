@@ -1,0 +1,44 @@
+/*
+** EPITECH PROJECT, 2026
+** R-Type
+** File description:
+** GameOver
+*/
+
+#ifndef CLIENT_GAMEOVER_HPP_
+#define CLIENT_GAMEOVER_HPP_
+
+#include "GameManager.hpp"
+#include "Lobby.hpp"
+
+namespace RType::Client {
+
+    inline constexpr float GAME_OVER_TITLE_Y = 380.f;
+    // The server lists the scores between the title and the status.
+    inline constexpr float GAME_OVER_STATUS_Y = 810.f;
+    inline constexpr float GAME_OVER_STATUS_SIZE = 30.f;
+    inline constexpr float GAME_OVER_BUTTONS_Y = 850.f;
+    // After the fade to black, the screen stays black while the server clears
+    // the level, then the scores fade in.
+    inline constexpr float VICTORY_HOLD_SECONDS = 0.5f;
+    inline constexpr float VICTORY_FADE_IN_SECONDS = 0.5f;
+
+    struct GameOverItem {};
+
+    struct GameOverButton {
+        GameOverChoice choice;
+    };
+
+    struct GameOverStatus {};
+
+    /** @brief "GAME OVER" or "VICTORY", from the lobby state. */
+    struct GameOverTitle {};
+
+    void createGameOver(GameManager &gm);
+    void destroyGameOver(GameManager &gm);
+    void systemGameOver(GameManager &gm);
+    void systemDrawFade(LobbyClient &lobby);
+
+} // namespace RType::Client
+
+#endif /* !CLIENT_GAMEOVER_HPP_ */

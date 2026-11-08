@@ -22,31 +22,43 @@ set(SRCS_GFX
 )
 
 set(GAME_SRCS
-        src/Animation.cpp
-        src/Background.cpp
-        src/Bullet.cpp
-        src/Instance.cpp
-        src/InstanceLink.cpp
-        src/Lobby.cpp
-        src/MasterLink.cpp
-        src/MasterServer.cpp
-        src/Player.cpp
+        src/Common/Animation.cpp
+        src/Common/Background.cpp
+        src/Common/Bullet.cpp
+        src/Common/Terrain.cpp
+        src/Connexion/Instance.cpp
+        src/Connexion/InstanceLink.cpp
+        src/Connexion/Lobby.cpp
+        src/Connexion/MasterLink.cpp
+        src/Connexion/MasterServer.cpp
+        src/Connexion/TcpConnection.cpp
+        src/GameState.cpp
+        src/Player/Hud.cpp
+        src/Player/Player.cpp
         src/Setup.cpp
-        src/TcpConnection.cpp
-        src/Terrain.cpp
+        src/UserDB.cpp
+        src/Weapons/Force.cpp
+        src/Weapons/Laser.cpp
+        src/Weapons/PowerUp.cpp
 )
 
 add_executable(r-type_server ${MAIN} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
 target_include_directories(r-type_server PRIVATE include)
 find_package(Threads REQUIRED)
-target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical2D engine-network Threads::Threads)
+target_link_libraries(r-type_server PRIVATE r-type::shared engine-system engine-graphical2D engine-network Threads::Threads engine-physics)
 
 if (TARGET criterion)
-    set(SRCS_TESTS tests/tests_init.cpp)
+    set(SRCS_TESTS
+            tests/tests_init.cpp
+            tests/tests_boss.cpp
+            tests/tests_lives.cpp
+            tests/tests_score.cpp
+            tests/tests_weapons.cpp
+    )
 
     add_executable(server_tests_run_bin EXCLUDE_FROM_ALL ${SRCS_TESTS} ${SRCS} ${GAME_SRCS} ${SRCS_GFX})
     target_include_directories(server_tests_run_bin PRIVATE include)
-    target_link_libraries(server_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical2D)
+    target_link_libraries(server_tests_run_bin PRIVATE criterion r-type::shared engine-system engine-network engine-graphical2D engine-physics)
 
     # --coverage and `find` are GCC/Clang + Unix only
     if (NOT MSVC)

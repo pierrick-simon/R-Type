@@ -58,6 +58,34 @@ namespace RType {
         gm.getComponent<LobbyMember>(it->second).startRequested = true;
     }
 
+    void LobbyProtocol::manageRestart(
+        const Header &header, const std::vector<uint8_t> &, Context &ctx)
+    {
+        if (!ctx.gm)
+            return;
+        auto it = ctx.clients.find(header.senderId);
+        if (it == ctx.clients.end())
+            return;
+        auto &gm = ctx.gm->get();
+        if (!gm.hasComponent<LobbyMember>(it->second))
+            return;
+        gm.getComponent<LobbyMember>(it->second).restartRequested = true;
+    }
+
+    void LobbyProtocol::manageReturn(
+        const Header &header, const std::vector<uint8_t> &, Context &ctx)
+    {
+        if (!ctx.gm)
+            return;
+        auto it = ctx.clients.find(header.senderId);
+        if (it == ctx.clients.end())
+            return;
+        auto &gm = ctx.gm->get();
+        if (!gm.hasComponent<LobbyMember>(it->second))
+            return;
+        gm.getComponent<LobbyMember>(it->second).returnRequested = true;
+    }
+
     void LobbyProtocol::manageState(
         const Header &, const std::vector<uint8_t> &payload, Context &ctx)
     {
@@ -87,12 +115,23 @@ namespace RType {
         c.send(OpcodeRType::LOBBY_START, {});
     }
 
+    void LobbyProtocol::sendRestart(ClientManager &c)
+    {
+        c.send(OpcodeRType::LOBBY_RESTART, {});
+    }
+
+    void LobbyProtocol::sendReturn(ClientManager &c)
+    {
+        c.send(OpcodeRType::LOBBY_RETURN, {});
+    }
+
     std::vector<uint8_t> LobbyProtocol::serializeState(const LobbyState &s)
     {
         std::vector<uint8_t> out(4);
         const std::size_t count = std::min<std::size_t>(s.players.size(), 255);
 
-        out[0] = s.started ? 1 : 0;
+        // 0 lobby, 1 playing, 2 game over, 3 victory
+        out[0] = s.victory ? 3 : (s.gameOver ? 2 : (s.started ? 1 : 0));
         put16(&out[1], s.hostId);
         out[3] = static_cast<uint8_t>(count);
         for (std::size_t i = 0; i < count; i++) {
@@ -102,7 +141,7 @@ namespace RType {
 
             out.resize(at + 4 + name.size());
             put16(&out[at], p.id);
-            out[at + 2] = p.ready ? 1 : 0;
+            out[at + 2] = (p.ready ? 1 : 0) | (p.replay ? 2 : 0);
             out[at + 3] = static_cast<uint8_t>(name.size());
             std::copy(name.begin(), name.end(), out.begin() + long(at + 4));
         }
@@ -127,6 +166,8 @@ namespace RType {
 
         s.received = true;
         s.started = payload[0] != 0;
+        s.gameOver = payload[0] >= 2;
+        s.victory = payload[0] == 3;
         s.hostId = get16(&payload[1]);
         for (std::size_t i = 0; i < count; i++) {
             if (payload.size() < at + 4)
@@ -135,7 +176,8 @@ namespace RType {
             const std::size_t len = payload[at + 3];
 
             p.id = get16(&payload[at]);
-            p.ready = payload[at + 2] != 0;
+            p.ready = (payload[at + 2] & 1) != 0;
+            p.replay = (payload[at + 2] & 2) != 0;
             if (payload.size() < at + 4 + len)
                 return std::nullopt;
             p.name.assign(payload.begin() + long(at + 4),

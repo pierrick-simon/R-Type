@@ -1,0 +1,1231 @@
+R-Type Project Group                                           Epitech
+Request for Comments: 4242                               November 2026
+Category: Informational
+
+
+
+                    R-Type Network Protocol (RTNP)
+           UDP Game Protocol and TCP Master-Instance Link
+
+Status of This Memo
+
+   This memo describes the network protocol used by the R-Type project:
+   the protocol spoken over UDP between game clients and servers, and
+   the protocol spoken over TCP between the master server and the game
+   instances it starts. It is published for the information of the
+   project's developers and of anyone writing a compatible client or
+   server. Distribution of this memo is unlimited.
+
+Abstract
+
+   R-Type is a networked, horizontally scrolling shoot'em up for up to
+   five players per game. A single master server, reached on a
+   well-known UDP port, authenticates players, lists the running games
+   ("lobbies") and creates new ones. Every lobby is served by its own
+   game instance, which listens on a dedicated UDP port, runs the
+   simulation authoritatively and replicates the entities to the
+   clients. Instances report their state to the master over a local TCP
+   connection.
+
+   This document specifies the datagram format, the session layer
+   (login, health checks, logout), every game message and its payload,
+   the lobby and account messages, the TCP link, the expected behaviour
+   of each party, and the known limits of the protocol.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                    [Page 1]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+Table of Contents
+
+   1.  Introduction .................................................. 3
+      1.1.  Requirements Language .................................... 3
+      1.2.  Terminology .............................................. 3
+   2.  Architecture .................................................. 4
+   3.  Conventions ................................................... 4
+      3.1.  Byte Order and Integer Types ............................. 4
+      3.2.  Strings .................................................. 5
+      3.3.  Message Notation ......................................... 5
+   4.  UDP Transport ................................................. 5
+      4.1.  Datagram Format .......................................... 5
+      4.2.  Datagram Size ............................................ 6
+      4.3.  Delivery ................................................. 6
+   5.  Session Layer ................................................. 6
+      5.1.  LOGIN (1) ................................................ 7
+      5.2.  Message Filtering ........................................ 7
+      5.3.  HEALTH (3) ............................................... 7
+      5.4.  LOGOUT (2) ............................................... 7
+      5.5.  Opcode Registry .......................................... 8
+   6.  Game Instance Protocol ........................................ 8
+      6.1.  Input Messages ........................................... 8
+      6.2.  Entity Replication ....................................... 9
+      6.3.  Replication Rules ....................................... 11
+      6.4.  Lobby Messages .......................................... 12
+   7.  Master Server Protocol ....................................... 14
+      7.1.  Accounts ................................................ 14
+      7.2.  CREATE_LOBBY (40) and LOBBY_PORT (41) ................... 15
+      7.3.  LOBBY_LIST (42) ......................................... 16
+      7.4.  JOIN_LOBBY (43) ......................................... 16
+      7.5.  Returning to the Master ................................. 16
+   8.  Master-Instance Link (TCP) ................................... 16
+      8.1.  Connection .............................................. 16
+      8.2.  Framing ................................................. 17
+      8.3.  LINK_HELLO (1), Instance to Master ...................... 17
+      8.4.  LINK_STATUS (2), Instance to Master ..................... 17
+      8.5.  LINK_STOP (3), Master to Instance ....................... 17
+      8.6.  End of the Link ......................................... 18
+   9.  Example Exchanges ............................................ 18
+      9.1.  From Launch to a Running Game ........................... 19
+      9.2.  Lifetime of One Entity for One Client ................... 20
+   10.  Constants ................................................... 20
+   11.  Error Handling .............................................. 20
+   12.  Security Considerations ..................................... 21
+   13.  References .................................................. 22
+   Author's Address ................................................. 22
+
+
+
+
+
+R-Type Group                   Informational                    [Page 2]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+1.  Introduction
+
+   The R-Type client is a thin client: it never simulates the game. It
+   sends the state of the player's inputs, and the server sends back
+   what must be drawn and played: sprites, sprite sheets, texts and
+   sounds, with their positions and properties. The same UDP protocol is
+   used to talk to the master server (accounts, lobby list) and to a
+   game instance (lobby, game).
+
+   All messages share a 9-byte header defined by the engine's network
+   layer. The message type ("opcode") selects the payload format.
+   Opcodes 1 to 9 are reserved for the session layer of the engine;
+   opcodes 10 and above are defined by the game.
+
+1.1.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY" and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119.
+
+1.2.  Terminology
+
+   - Client: the program run by a player. It renders the scene, plays
+     the sounds and sends the inputs.
+
+   - Master server (or master): the process started first. It listens on
+     UDP port 4242 and on TCP port 4240 of the loopback interface.
+
+   - Instance: a game server serving one lobby. Instances run as threads
+     of the master process, each with its own UDP socket and its own
+     entity component system.
+
+   - Lobby: the group of players connected to one instance, and the
+     waiting room shown before a game starts.
+
+   - Host: the player of a lobby with the lowest client identifier. Only
+     the host can start the game or bring the lobby back from the game
+     over screen.
+
+   - Client identifier (client ID): a 16-bit number given by a server to
+     a client at login. It is local to that server: the same player gets
+     a different identifier from the master and from each instance.
+
+   - Network ID: a 32-bit number naming a replicated entity. It is
+     chosen by the instance and is unique within the process.
+
+   - Asset ID: a 16-bit number naming a texture, font or sound known by
+     both the client and the server (shared asset table).
+
+
+
+R-Type Group                   Informational                    [Page 3]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+2.  Architecture
+
+                   +------------------------------------+
+                   |          Master process            |
+                   |                                    |
+  +--------+  UDP  |  +--------------+  TCP 127.0.0.1   |
+  | Client |<----->|  |    Master    |<------+  :4240   |
+  +--------+ :4242 |  |  (accounts,  |       |          |
+      |            |  | lobby list)  |       |          |
+      |            |  +--------------+       |          |
+      |            |       | starts          |          |
+      |            |       v (thread)        |          |
+      |      UDP   |  +--------------+       |          |
+      +----------->|  | Instance #1  |-------+          |
+         :4243     |  |  (lobby +    |                  |
+                   |  |   game)      |    ...           |
+                   |  +--------------+                  |
+                   |  +--------------+                  |
+                   |  | Instance #n  |---- TCP          |
+                   |  +--------------+  (one per        |
+                   |    UDP :4243 to    instance)       |
+                   |        :6767                       |
+                   +------------------------------------+
+
+   A client first connects to the master (Section 7). Once logged in, it
+   asks the master to create a lobby or to join a listed one. The master
+   answers with the UDP port of the instance. The client then closes its
+   master session and opens a new session with the instance (Section 6).
+   When the player leaves the lobby, the client reconnects to the master
+   and logs in again with the credentials it kept.
+
+   Each instance opens a TCP connection to the master when it starts and
+   keeps it open for its whole life (Section 8). The master uses it to
+   know the number of players and the state of every lobby, and to stop
+   the instances that became empty.
+
+3.  Conventions
+
+3.1.  Byte Order and Integer Types
+
+   All multi-byte integers are transmitted in network byte order
+   (big-endian), on both transports. The following notation is used in
+   this document:
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                    [Page 4]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   u8     unsigned 8-bit integer
+   i8     signed 8-bit integer (two's complement)
+   u16    unsigned 16-bit integer, big-endian
+   i16    signed 16-bit integer, big-endian, two's complement
+   u32    unsigned 32-bit integer, big-endian
+   i32    signed 32-bit integer, sent as the u32 with the same
+          bits (two's complement)
+   f32    IEEE 754 single precision float, sent as the u32 with
+          the same bits
+
+3.2.  Strings
+
+   A string is sent as a u8 length followed by that many bytes, without
+   a terminating NUL byte, unless a u16 length is stated (TEXT message).
+   Player names and lobby names are made of printable ASCII characters
+   (codes 32 to 125 inclusive) and are at most 16 bytes long. A sender
+   MUST remove any other character and truncate longer names; a receiver
+   MUST NOT rely on the sender having done so.
+
+3.3.  Message Notation
+
+   Payloads are described as tables of offsets in bytes, relative to the
+   first byte after the header. A payload whose size does not match the
+   size computed from its own fields MUST be ignored by the receiver,
+   unless stated otherwise.
+
+4.  UDP Transport
+
+4.1.  Datagram Format
+
+   Every UDP datagram carries exactly one message: a 9-byte header
+   followed by the payload.
+
+    0                   1                   2                   3
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |          Payload Size         |               |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+               +
+   |                        Sequence Number                        |
+   +               +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |               |           Sender ID           |   Payload    ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Type (u8): the opcode, see Section 5.4
+   1       2     Payload Size (u16): number of payload bytes
+   3       4     Sequence Number (u32)
+   7       2     Sender ID (u16)
+   9       n     Payload
+
+R-Type Group                   Informational                    [Page 5]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   Type: selects the handler of the message. A receiver MUST ignore a
+   message whose type it does not know.
+
+   Payload Size: MUST be equal to the size of the datagram minus 9. A
+   datagram shorter than 9 bytes, or whose Payload Size does not match
+   its length, MUST be dropped.
+
+   Sequence Number: a counter incremented by one for every message sent.
+   A client keeps one counter for its session; a server keeps one
+   counter per client it sends to. The counter starts at 0 and wraps
+   around. Receivers do not currently use it for ordering or duplicate
+   detection; it is RESERVED for that use and senders MUST still fill
+   it.
+
+   Sender ID: for a message sent by a server, 0. For a message sent by a
+   client, the client ID received at login, or 0 before the login is
+   complete.
+
+4.2.  Datagram Size
+
+   Implementations use a 1024-byte receive buffer. A sender MUST NOT
+   send a datagram larger than 1024 bytes (header included), that is a
+   payload larger than 1015 bytes. Every message defined in this
+   document fits within this limit for the limits given in Section 10;
+   the TEXT message is the only one whose size depends on free content,
+   and its text MUST be kept short enough.
+
+4.3.  Delivery
+
+   UDP gives no guarantee of delivery or ordering, and this protocol
+   does not add a generic acknowledgement mechanism. Instead, each
+   message falls into one of three classes:
+
+   - State messages, sent again periodically by their sender (HEALTH,
+     LOBBY_INFO, LOBBY_STATE, LOBBY_LIST). Losing one only delays the
+     information.
+
+   - Requests sent again until their effect is observed (LOGIN,
+     ACCOUNT_REQUEST, CREATE_LOBBY, JOIN_LOBBY, LOBBY_START,
+     LOBBY_RESTART, LOBBY_RETURN). Their handlers are written so that
+     receiving the same request several times has the same effect as
+     receiving it once.
+
+   - Replication messages (CREATE, SET, TEXT, MOVE, DESTROY). Their
+     reliability rules are described in Section 6.3.
+
+5.  Session Layer
+
+   The session layer is implemented by the engine and is the same for
+   the master and for the instances.
+
+R-Type Group                   Informational                    [Page 6]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+5.1.  LOGIN (1)
+
+   A client opens a session by sending LOGIN with an empty payload and a
+   Sender ID of 0. The server creates a new client entry bound to the
+   source address and port of the datagram, and answers with LOGIN:
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       2     Client ID (u16), assigned by the server
+
+   Client identifiers are given in increasing order, starting at 1. As
+   long as it has not received an identifier, the client MUST send LOGIN
+   again every 2 seconds. Every LOGIN received creates a new client
+   entry; an entry created for a LOGIN whose answer was lost is never
+   used and is removed by the timeout of Section 5.3.
+
+   When the server is a game server, creating a client entry also
+   creates the client's entity, which receives the components that store
+   its inputs, its lobby information and its account state.
+
+5.2.  Message Filtering
+
+   Except for LOGIN, a server MUST drop any message whose Sender ID is
+   not a known client ID, or whose source endpoint (address and port) is
+   not the one recorded for that ID at login. Every accepted message
+   updates the "last seen" time of the client.
+
+5.3.  HEALTH (3)
+
+   Every 2 seconds, the server sends HEALTH, with an empty payload, to
+   all its clients. A client answers HEALTH with HEALTH, with an empty
+   payload.
+
+   The server removes a client that sent nothing for 10 seconds, as if
+   it had sent LOGOUT. A client considers the session lost when it has
+   received nothing for 10 seconds.
+
+5.4.  LOGOUT (2)
+
+   A client sends LOGOUT, with an empty payload, when it closes its
+   session. The server removes the client entry, the client's entity and
+   every reference to the client in the replication lists. A server that
+   shuts down sends LOGOUT to all its clients; a client receiving LOGOUT
+   considers the session closed by the server.
+
+
+
+
+
+
+
+R-Type Group                   Informational                    [Page 7]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+5.5.  Opcode Registry
+
+   Value  Name                   Direction   Server    Section
+   -----  ---------------------  ----------  --------  -------
+     1    LOGIN                  C->S, S->C  all       5.1
+     2    LOGOUT                 C->S, S->C  all       5.4
+     3    HEALTH                 C->S, S->C  all       5.3
+    10    KEY_PRESSED            C->S        instance  6.1
+    11    KEY_RELEASED           C->S        instance  6.1
+    12    MOUSE_BUTTON_PRESSED   C->S        instance  6.1
+    13    MOUSE_BUTTON_RELEASED  C->S        instance  6.1
+    20    CREATE                 S->C        instance  6.2.1
+    20    CREATE (ack)           C->S        instance  6.2.2
+    21    MOVE                   S->C        instance  6.2.4
+    22    SET                    S->C        instance  6.2.5
+    23    TEXT                   S->C        instance  6.2.6
+    27    DESTROY                S->C        instance  6.2.3
+    28    MOVE_VELOCITY          -           -         reserved
+    30    LOBBY_INFO             C->S        instance  6.4.1
+    31    LOBBY_START            C->S        instance  6.4.2
+    32    LOBBY_STATE            S->C        instance  6.4.3
+    33    LOBBY_RESTART          C->S        instance  6.4.4
+    34    LOBBY_RETURN           C->S        instance  6.4.4
+    40    CREATE_LOBBY           C->S        master    7.2
+    41    LOBBY_PORT             S->C        master    7.2
+    42    LOBBY_LIST             S->C        master    7.3
+    43    JOIN_LOBBY             C->S        master    7.4
+    44    ACCOUNT_REQUEST        C->S        master    7.1
+    45    ACCOUNT_RESULT         S->C        master    7.1
+
+   Values 4 to 9 are reserved for the session layer. Values 24 to 26 and
+   29 are unassigned. All other values are unassigned and MUST be
+   ignored.
+
+6.  Game Instance Protocol
+
+6.1.  Input Messages
+
+   The client sends the changes of the player's keyboard and mouse. The
+   server stores them in the client's entity, where the game systems
+   read them as if they were local inputs.
+
+   KEY_PRESSED (10) and KEY_RELEASED (11):
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Key (u8): ordinal of the engine's Key::Value
+
+   The key codes are the positions of the keys in the engine's key
+   enumeration. Relevant values are: A to Z = 0 to 25, Num0 to Num9 = 26
+
+R-Type Group                   Informational                    [Page 8]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   to 35, Escape = 36, Space = 57, Enter = 58, Left = 71, Right = 72, Up
+   = 73, Down = 74.
+
+   The server only knows the default bindings: up = Z (25), left = Q
+   (16), down = S (18), right = D (3), shoot = Space (57). Key remapping
+   is done by the client alone, which translates each key before sending
+   it:
+
+   - a key bound to an action is sent as the default key of that action.
+     For example, if "up" is bound to the Up arrow, pressing Up sends 25
+     (Z);
+
+   - a default key that is no longer bound to its action is not sent at
+     all, so that it cannot trigger that action;
+
+   - any other key is sent unchanged.
+
+   MOUSE_BUTTON_PRESSED (12) and MOUSE_BUTTON_RELEASED (13):
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Button (u8): Left = 0, Right = 1, Middle = 2,
+                 Side = 3, Extra = 4, Forward = 5, Back = 6
+
+   While the game is not running, the instance discards the inputs of
+   the clients that have no ship, so that keys pressed in the lobby have
+   no effect once the game starts.
+
+6.2.  Entity Replication
+
+   The instance owns every entity. An entity that must be shown is given
+   a Network ID and a type (sprite, sprite sheet, text or sound). The
+   server tells each client to create it, waits for the client's
+   acknowledgement, then sends its full state and, afterwards, only its
+   changes.
+
+6.2.1.  CREATE (20), Server to Client
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       4     Network ID (u32)
+   4       1     Entity Type (u8): SPRITE = 0, SPRITESHEET = 1,
+                 SOUND = 2, TEXT = 3
+   5       2     Asset ID (u16): texture, sound or font
+   7       4     Position X (i32), in pixels
+   11      4     Position Y (i32), in pixels
+                                                  (15 bytes)
+
+   On receipt, the client creates a local entity with the components
+   matching the type (sprite, sprite sheet, text with its font, or
+
+R-Type Group                   Informational                    [Page 9]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   sound), records the mapping from the Network ID to the local entity,
+   and acknowledges with CREATE (Section 6.2.2).
+
+   A client that already knows the Network ID MUST NOT create a second
+   entity; it ignores the message and does not acknowledge again. The
+   only exception is the SOUND type: an entity of another type may carry
+   a sound, in which case the server sends a second CREATE with the same
+   Network ID and the type SOUND. The client attaches the sound to the
+   existing entity and acknowledges it.
+
+6.2.2.  CREATE (20), Client to Server
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       4     Network ID (u32) of the created entity
+                                                   (4 bytes)
+
+   This acknowledgement tells the server that the entity exists on the
+   client. The server then sends the whole state of the entity to that
+   client only: one SET per property, a TEXT for a text entity, and, if
+   the entity carries a sound that was not sent yet, the CREATE of type
+   SOUND. Once the state is sent, the client is added to the list of
+   clients receiving the changes of the entity.
+
+6.2.3.  DESTROY (27)
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       4     Network ID (u32)
+                                                   (4 bytes)
+
+   Sent once to every client that received the CREATE of the entity,
+   whether it acknowledged it or not. The client destroys the local
+   entity and forgets the mapping. A sound that is still playing is not
+   cut: the client keeps it alive until it ends.
+
+6.2.4.  MOVE (21)
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       4     Network ID (u32)
+   4       4     Position X (i32), in pixels, rounded
+   8       4     Position Y (i32), in pixels, rounded
+   12      4     Velocity X (i32), in pixels per second, rounded
+   16      4     Velocity Y (i32), in pixels per second, rounded
+                                                  (20 bytes)
+
+   Sent when the position of the entity changed during the frame. The
+   velocity is 0 for an entity without a velocity. The client sets the
+
+
+R-Type Group                   Informational                   [Page 10]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   position and MAY use the velocity to move the entity between two
+   updates.
+
+6.2.5.  SET (22)
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       4     Network ID (u32)
+   4       1     Property (u8), see the table below
+   5       n     Value, encoded as given for the property
+
+   Id  Property        Value          Meaning
+   --  --------------  -------------  ----------------------------
+    0  SCALE           f32            scale factor
+    1  FONT_SIZE       f32            text size in pixels
+    2  ROTATION        f32            degrees
+    3  FLIP            u8             flip flags
+    4  COLOR           u32            RGBA, 8 bits per channel
+    5  LAYER           i8             drawing layer
+    6  VISIBLE         u8             0 hidden, 1 shown
+    7  ORIGIN          i16 x, i16 y   origin of the drawing
+    8  FRAME           u16            current tile of the sheet
+    9  FRAME_DURATION  u16            milliseconds per tile
+   10  SPACING         f32            text letter spacing
+   11  VOLUME          f32            0.0 to 1.0
+   12  PITCH           f32            playback pitch
+   13  LOOP            u8             0 once, 1 loop
+   14  REC_NB          i16 w, i16 h   sheet tiles (columns, rows)
+   15  SOUND_STATE     u8             PLAY 0, PLAYING 1, PAUSED 2,
+                                      START 3, STOP 4
+
+   The size of the value follows from the property; a SET whose size
+   does not match MUST be ignored. A client MUST ignore a SET, TEXT or
+   MOVE for an unknown Network ID.
+
+6.2.6.  TEXT (23)
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       4     Network ID (u32)
+   4       2     Length (u16)
+   6       n     Text (Length bytes, no terminator)
+
+   Sets the string of a text entity. Sent at initialisation and every
+   time the string changes.
+
+6.3.  Replication Rules
+
+   For each replicated entity, the instance keeps three lists of client
+   IDs:
+
+R-Type Group                   Informational                   [Page 11]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   - "create": clients that must receive the CREATE. A client is added
+     when it logs in (for every existing entity) and when the entity is
+     created (for every connected client).
+
+   - "inits": clients that received the CREATE but have not acknowledged
+     it yet.
+
+   - "links": clients that acknowledged it and receive its changes.
+
+   Every frame, the instance removes from "create" the clients already
+   in "inits" or "links" and the clients no longer connected, removes
+   duplicates, sends one CREATE to the remaining clients and moves them
+   to "inits". When a CREATE acknowledgement arrives, the client is
+   moved from "inits" to "links" after its initial state is sent.
+   Changes (SET, TEXT, MOVE) are only sent to the "links" list.
+
+   The CREATE is not sent again: if a CREATE or its acknowledgement is
+   lost, the entity stays invisible for that client until it is
+   destroyed. Likewise, a lost SET or TEXT is not repeated, but most of
+   the properties that change during the game (position, frame, text of
+   the score) are sent again at their next change. An implementation
+   wishing to make the replication reliable SHOULD send the CREATE
+   again, at a fixed interval, to the clients still in "inits". Its
+   clients MUST then acknowledge again a CREATE for a Network ID they
+   already know, still without creating a second entity, since the first
+   acknowledgement may be the message that was lost.
+
+6.4.  Lobby Messages
+
+6.4.1.  LOBBY_INFO (30), Client to Server
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Ready (u8): 0 not ready, 1 ready
+   1       1     Name Length (u8), at most 16
+   2       n     Player Name
+
+   Sent every 500 ms by a client connected to an instance, for the whole
+   session. A change of the ready state is therefore seen by the server
+   within 500 ms. The server stores the name (sanitised as in Section
+   3.2) and the ready flag in the client's entity.
+
+6.4.2.  LOBBY_START (31)
+
+   Empty payload. Sent by the host every 500 ms after the player pressed
+   "Start", as long as the game has not started, the player is still the
+   host and all players are ready. The server starts the game only when
+   all three conditions hold on its side; otherwise the request is
+   ignored.
+
+
+R-Type Group                   Informational                   [Page 12]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+6.4.3.  LOBBY_STATE (32), Server to Client
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Status (u8): 0 waiting, 1 in game,
+                 2 game over screen
+   1       2     Host ID (u16): client ID of the host,
+                 0 if the lobby is empty
+   3       1     Player Count (u8), at most 5
+   4       ...   Player Count times:
+                   2  Client ID (u16)
+                   1  Flags (u8): bit 0 ready, bit 1 replay vote
+                   1  Name Length (u8)
+                   n  Player Name
+   ...     1     Lobby Name Length (u8)
+   ...     n     Lobby Name
+
+   The players are sorted by increasing client ID; the first one is the
+   host. A player that never sent LOBBY_INFO is shown as "Player <id>".
+   The instance broadcasts LOBBY_STATE to all its clients every time its
+   content changes and at least every 250 ms, during the lobby, the game
+   and the game over screen.
+
+   The client uses it to show the lobby page while the status is 0, to
+   hide it and show the game when it becomes 1, and to show the game
+   over choices when it is 2.
+
+6.4.4.  LOBBY_RESTART (33) and LOBBY_RETURN (34)
+
+   Empty payloads. Both are only valid while the game over screen is
+   shown (status 2).
+
+   LOBBY_RESTART is the vote of a player to play again. The vote is
+   shown in the replay bit of LOBBY_STATE. When every connected player
+   has voted, the server restarts the game and clears the votes. The
+   client sends it every 500 ms until its own replay bit is set.
+
+   LOBBY_RETURN asks to go back to the lobby. It is only honoured for
+   the host. The server then stops the level (destroys the enemies,
+   bullets, background, score labels and effects) and the status becomes
+   0. The client sends it every 500 ms until the status changes.
+
+
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                   [Page 13]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+6.4.5.  Lobby State Machine
+
+                 LOBBY_START (host, all ready)
+     +---------+ ------------------------------> +---------+
+     | Waiting |                                 | In game |
+     |   (0)   | <------------------------------ |   (1)   |
+     +---------+    every player left            +---------+
+          ^                                           |
+          |                         all players dead  |
+          |  LOBBY_RETURN (host)                      v
+          |                                     +-----------+
+          +------------------------------------ | Game over |
+                                                |    (2)    |
+             LOBBY_RESTART (all players) ------>+-----------+
+                        back to In game (1)
+
+7.  Master Server Protocol
+
+   The master listens on UDP port 4242 and uses the session layer of
+   Section 5. It does not replicate entities; it only handles the
+   messages below. Requests are handled at most once per frame (60
+   frames per second).
+
+7.1.  Accounts
+
+   ACCOUNT_REQUEST (44), Client to Server:
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Mode (u8): LOGIN 0, CREATE 1, LOGOUT 2
+   1       1     Username Length (u8)
+   2       n     Username
+   2+n     1     Password Length (u8)
+   3+n     m     Password (clear text)
+
+   ACCOUNT_RESULT (45), Server to Client:
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Mode (u8): mode of the request answered
+   1       1     Status (u8):
+                   0  OK
+                   1  WRONG_CREDENTIALS
+                   2  USERNAME_TAKEN
+                   3  INVALID_USERNAME
+                   4  INVALID_PASSWORD
+
+   A valid username is 3 to 16 characters among letters, digits and "_".
+   A valid password is 4 to 32 printable ASCII characters other than
+   space (codes 33 to 126).
+
+R-Type Group                   Informational                   [Page 14]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   - LOGIN: OK if the account exists and the password matches;
+     WRONG_CREDENTIALS otherwise, including when the username is not
+     valid.
+
+   - CREATE: INVALID_USERNAME, INVALID_PASSWORD or USERNAME_TAKEN if the
+     corresponding check fails; otherwise the account is saved and the
+     answer is OK. A successful CREATE also logs the client in.
+
+   - LOGOUT: the client is logged out. No answer is sent; LOGOUT for a
+     client that is not logged in has no effect.
+
+   The client sends the request every 500 ms until it receives an
+   ACCOUNT_RESULT with the same mode. The server keeps the last request
+   and its answer for each client: a request equal to the last one (same
+   mode, username and password) gets the same status again without being
+   processed again, so that a CREATE received twice does not answer
+   USERNAME_TAKEN to its own author.
+
+   The master stores the accounts in the file "userDB.txt", three lines
+   per account: the username, the SHA-256 digest in hexadecimal of the
+   string "<username>:<password>", and the best score.
+
+7.2.  CREATE_LOBBY (40) and LOBBY_PORT (41)
+
+   CREATE_LOBBY, Client to Server:
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Name Length (u8), at most 16
+   1       n     Lobby Name (empty means "Lobby")
+
+   LOBBY_PORT, Server to Client:
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       2     Port (u16): UDP port of the instance,
+                 0 if the request is refused
+
+   If the client is not logged in, the server answers 0. Otherwise it
+   starts a new instance on the first free UDP port of the range 4243 to
+   6767, searching from the port after the last one used, records it for
+   this client, and answers its port. A second CREATE_LOBBY from the
+   same client session returns the same port without starting another
+   instance; this makes the request safe to repeat. If no port is free,
+   no answer is sent.
+
+   The client sends CREATE_LOBBY every 500 ms until it receives
+   LOBBY_PORT. On a non-zero port, it closes its master session (LOGOUT)
+   and logs in to the instance on that port, using the address of the
+   master.
+
+R-Type Group                   Informational                   [Page 15]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+7.3.  LOBBY_LIST (42)
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Lobby Count (u8), at most 40
+   1       ...   Lobby Count times:
+                   2  Port (u16)
+                   1  Player Count (u8)
+                   1  Started (u8): 0 waiting, 1 in game
+                   1  Name Length (u8)
+                   n  Lobby Name
+
+   Broadcast by the master to all its clients, logged in or not, every
+   time the list changes and at least every 500 ms. The list contains
+   the instances that announced their port (LINK_HELLO) and were not
+   asked to stop, sorted by port. An instance that has just been started
+   is listed once its LINK_HELLO is received.
+
+7.4.  JOIN_LOBBY (43)
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       2     Port (u16) of a listed lobby
+
+   The server answers LOBBY_PORT with the same port if the client is
+   logged in, the lobby is listed and has fewer than 5 players;
+   otherwise it answers 0. The client sends JOIN_LOBBY every 500 ms
+   until it receives LOBBY_PORT, then behaves as in Section 7.2.
+
+   The player count used for this check is the last one reported by the
+   instance, so two clients joining at the same time may both be
+   accepted. An instance does not refuse logins by itself.
+
+7.5.  Returning to the Master
+
+   When a player leaves a lobby, the client sends LOGOUT to the
+   instance, logs in to the master again (Section 5.1), and, if it has
+   credentials, sends ACCOUNT_REQUEST with mode LOGIN without showing
+   the login page. Master and instance sessions are independent: the
+   master does not know in which lobby a client is.
+
+8.  Master-Instance Link (TCP)
+
+8.1.  Connection
+
+   The master listens on TCP port 4240 of the loopback address
+   (127.0.0.1) only. Every instance connects to it when it starts,
+   before running its first frame, and keeps the connection until it
+   stops. Both sides use non-blocking sockets with Nagle's algorithm
+   disabled (TCP_NODELAY) and poll them once per frame.
+
+R-Type Group                   Informational                   [Page 16]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+8.2.  Framing
+
+   TCP is a byte stream: messages are framed with a 3-byte header.
+
+    0                   1                   2
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Type      |             Size              |  Data ...
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Type (u8)
+   1       2     Size (u16): number of data bytes
+   3       n     Data
+
+   A receiver accumulates the bytes it reads and extracts a message only
+   once its header and its data are complete. Messages of an unknown
+   type, or whose size does not match their type, are ignored.
+
+8.3.  LINK_HELLO (1), Instance to Master
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       2     Port (u16): UDP port of the instance
+
+   First message of the connection. Until it is received, the master
+   does not list the instance and never stops it. Its reception restarts
+   the "empty lobby" timer of Section 8.5.
+
+8.4.  LINK_STATUS (2), Instance to Master
+
+   Offset  Size  Field
+   ------  ----  ---------------------------------------------
+   0       1     Players (u8): number of connected clients
+   1       1     Started (u8): 0 waiting, 1 in game
+
+   Sent at the first frame and every time one of the two values changes.
+   The master uses it for the lobby list and for the JOIN_LOBBY check.
+
+8.5.  LINK_STOP (3), Master to Instance
+
+   Empty data. The master sends it once, then stops listing the
+   instance, when the instance has announced its port, has no player,
+   and either had at least one player before or was created more than 30
+   seconds ago (the creator never joined). On receipt, the instance
+   stops at the end of its frame and closes its UDP socket and the TCP
+   connection.
+
+
+
+R-Type Group                   Informational                   [Page 17]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+8.6.  End of the Link
+
+   When the master sees the connection closed, it waits for the end of
+   the instance's thread, forgets its port and its name, and frees the
+   port for a later lobby. When an instance sees the connection closed
+   without having received LINK_STOP, it considers the master gone and
+   stops as well. When the master process stops, it asks all instances
+   to stop and waits for them.
+
+9.  Example Exchanges
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                   [Page 18]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+9.1.  From Launch to a Running Game
+
+   Client                     Master                Instance
+     |  LOGIN (sender 0)        |                       |
+     |------------------------->|                       |
+     |  LOGIN (id = 7)          |                       |
+     |<-------------------------|                       |
+     |  ACCOUNT_REQUEST LOGIN   |                       |
+     |------------------------->|                       |
+     |  ACCOUNT_RESULT OK       |                       |
+     |<-------------------------|                       |
+     |  LOBBY_LIST (periodic)   |                       |
+     |<-------------------------|                       |
+     |  CREATE_LOBBY "Alpha"    |                       |
+     |------------------------->|  start thread :4243   |
+     |  LOBBY_PORT 4243         |- - - - - - - - - - - >|
+     |<-------------------------|  LINK_HELLO 4243      |
+     |                          |<======================|
+     |                          |  LINK_STATUS 0, 0     |
+     |                          |<======================|
+     |  LOGOUT                  |                       |
+     |------------------------->|                       |
+     |  LOGIN (sender 0)                                |
+     |------------------------------------------------->|
+     |  LOGIN (id = 1)                                  |
+     |<-------------------------------------------------|
+     |  CREATE ... (existing entities)                  |
+     |<-------------------------------------------------|
+     |  CREATE acks, LOBBY_INFO (every 500 ms)          |
+     |------------------------------------------------->|
+     |  SET/TEXT (initial state), LOBBY_STATE (0)       |
+     |<-------------------------------------------------|
+     |                          |  LINK_STATUS 1, 0     |
+     |                          |<======================|
+     |  LOBBY_INFO ready = 1, LOBBY_START               |
+     |------------------------------------------------->|
+     |  LOBBY_STATE (1), CREATE/MOVE/SET ...            |
+     |<-------------------------------------------------|
+     |  KEY_PRESSED / KEY_RELEASED                      |
+     |------------------------------------------------->|
+
+   -----  UDP       =====  TCP link       - - -  thread start
+
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                   [Page 19]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+9.2.  Lifetime of One Entity for One Client
+
+   Instance                                     Client
+     | CREATE id=812 SPRITESHEET asset=12 x y     |
+     |------------------------------------------->| entity created
+     |                       CREATE (ack) id=812  |
+     |<-------------------------------------------|
+     | SET 812 SCALE, SET 812 REC_NB, SET ...     | initial state
+     |------------------------------------------->|
+     | MOVE 812 ... (each frame it moves)         |
+     |------------------------------------------->|
+     | SET 812 FRAME (each animation step)        |
+     |------------------------------------------->|
+     | DESTROY 812                                |
+     |------------------------------------------->| entity removed
+
+10.  Constants
+
+   Name                       Value     Used by
+   -------------------------  --------  ----------------------------
+   UDP header size            9 bytes   all
+   Maximum datagram size      1024 B    all
+   Master UDP port            4242      master
+   Master link TCP port       4240      master, 127.0.0.1 only
+   First instance port        4243      master
+   Last instance port         6767      master
+   LOGIN retry interval       2 s       client
+   HEALTH interval            2 s       server
+   Session timeout            10 s      client and server
+   Server frame rate          60 Hz     master and instances
+   LOBBY_STATE refresh        250 ms    instance
+   LOBBY_LIST refresh         500 ms    master
+   Client request retry       500 ms    client (Sections 6.4, 7)
+   Empty lobby timeout        30 s      master
+   Players per lobby          5         master (JOIN_LOBBY)
+   Lobbies listed             40        master (LOBBY_LIST)
+   Name length                16        player and lobby names
+   Username length            3 to 16   accounts
+   Password length            4 to 32   accounts
+
+   With these limits, the largest LOBBY_LIST is 841 bytes of payload and
+   the largest LOBBY_STATE is 121 bytes, both below the limit of Section
+   4.2.
+
+11.  Error Handling
+
+   - Malformed messages (wrong size, unknown type, unknown Network ID)
+     are silently ignored. No error message exists in the protocol.
+
+
+
+R-Type Group                   Informational                   [Page 20]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   - A refused lobby request is answered by LOBBY_PORT 0. The client
+     shows an error and stays on the lobby list.
+
+   - An account error is answered by its status. The client shows the
+     matching text on the login page.
+
+   - An instance that cannot reach the master at start-up throws and
+     stops at once; the client that asked for it will then time out on
+     its LOGIN and go back to the master.
+
+   - A client whose session is lost (10 seconds without data) goes back
+     to the server page if the lost session is the master's, and to the
+     main menu if it is an instance's.
+
+12.  Security Considerations
+
+   This protocol was designed for a school project played on a local
+   network and offers little protection. Implementers deploying it
+   elsewhere should be aware of the following points.
+
+   - No encryption. Every message, including the passwords of
+     ACCOUNT_REQUEST, travels in clear text and can be read by anyone on
+     the path. The client also stores the credentials in clear text in
+     "credentials.txt" for the automatic login.
+
+   - Weak password storage. The account file stores an unsalted SHA-256
+     digest of "<username>:<password>". The username acts as a weak
+     salt, but the digest is fast to compute and does not resist a
+     dictionary attack on a stolen file.
+
+   - No authentication of datagrams. A session is only bound to the
+     source endpoint of the LOGIN. An attacker able to spoof that
+     endpoint can inject inputs or log the client out. The 16-bit client
+     IDs are sequential and easy to guess.
+
+   - Instances do not check accounts. Logging in is only enforced by the
+     master before it gives a port. Anyone who knows or scans the port
+     of an instance can join it directly, bypassing both the login and
+     the limit of 5 players.
+
+   - Amplification and exhaustion. Every LOGIN creates a client entry
+     for 10 seconds, and a CREATE_LOBBY from a new session starts a new
+     instance (a thread and a UDP port) until the range of 2525 ports is
+     exhausted; the 30-second timeout is the only limit. The master
+     SHOULD rate-limit LOGIN and CREATE_LOBBY per source address before
+     being exposed to an untrusted network.
+
+   - Same account several times. The master does not prevent the same
+     account from being logged in from several clients at once.
+
+
+R-Type Group                   Informational                   [Page 21]
+
+RFC 4242              R-Type Network Protocol              November 2026
+
+
+   - The TCP link only listens on the loopback interface, so it cannot
+     be reached from another machine. It carries no authentication: any
+     local process can connect to it and announce a port.
+
+13.  References
+
+   [RFC768] Postel, J., "User Datagram Protocol", STD 6, RFC 768, August
+   1980.
+
+   [RFC793] Postel, J., "Transmission Control Protocol", RFC 793,
+   September 1981.
+
+   [RFC2119] Bradner, S., "Key words for use in RFCs to Indicate
+   Requirement Levels", BCP 14, RFC 2119, March 1997.
+
+   [IEEE754] IEEE, "IEEE Standard for Floating-Point Arithmetic", IEEE
+   Std 754-2019.
+
+   [FIPS180] NIST, "Secure Hash Standard (SHS)", FIPS PUB 180-4, August
+   2015.
+
+Author's Address
+
+   R-Type Project Group
+   Epitech
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+R-Type Group                   Informational                   [Page 22]

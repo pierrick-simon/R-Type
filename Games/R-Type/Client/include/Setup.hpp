@@ -19,6 +19,7 @@ namespace RType::Client {
     Entity createMetric(GameManager &gm);
     Entity createAssetManager(GameManager &gm);
     void createSystems(GameManager &gm);
+    bool shouldWindowClose(GameManager &gm, Entity w);
 } // namespace RType::Client
 
 #endif /* !SETUP_HPP_ */

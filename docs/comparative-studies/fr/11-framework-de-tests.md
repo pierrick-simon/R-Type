@@ -15,10 +15,9 @@ Le projet utilise **Criterion** : il est déjà intégré au build et à l'inté
 
 État actuel du dépôt :
 
-- **Le client et le serveur** ont chacun une cible de tests Criterion (`client_tests_run`, `server_tests_run`), avec la couverture de code (`--coverage`).
+- **Le moteur, le client et le serveur** ont chacun une cible de tests Criterion (`engine_tests_run`, `client_tests_run`, `server_tests_run`). Celle du moteur contient les plus de 200 tests de l'ECS, compilés avec les sanitizers ; celles du client et du serveur ont la couverture de code (`--coverage`).
 - **Le `CMakeLists.txt` racine** cherche une installation de Criterion déjà présente sur la machine (`find_library`), et **seulement hors Windows** (`if (NOT WIN32 ...)`).
 - **L'intégration continue** installe Criterion avec `apt-get install libcriterion-dev`.
-- **Le Poc** (`Games/Poc`) a son propre lanceur de tests, plus de 200 tests sans dépendance. C'est un programme de validation de l'ECS : il n'est pas concerné par ce choix.
 
 Les tests vont devenir indispensables avec le réseau ([étude 10](10-protocole-reseau.md)) : lecture et écriture des en-têtes, connexion, contrôle de présence. Ce code doit être testé **sous Windows comme sous Linux**, car c'est là qu'apparaissent les différences entre systèmes et compilateurs (taille des types, comportement des sockets).
 
@@ -141,7 +140,7 @@ Les quatre sont maintenus activement : Criterion a publié sa dernière version 
 
 - **Dépend de Boost**, que le projet a justement évité ([étude 06](06-bibliotheque-reseau.md)).
 
-### Un lanceur maison (comme le Poc)
+### Un lanceur maison
 
 **Points forts**
 
@@ -149,7 +148,7 @@ Les quatre sont maintenus activement : Criterion a publié sa dernière version 
 
 **Points faibles**
 
-- **Tout est à écrire :** rapports, filtres, intégration à `ctest` et aux IDE, fixtures. Suffisant pour le Poc, pas pour tout le projet.
+- **Tout est à écrire :** rapports, filtres, intégration à `ctest` et aux IDE, fixtures.
 
 ---
 
@@ -178,8 +177,6 @@ Les quatre sont maintenus activement : Criterion a publié sa dernière version 
 3. **Ajouter une compilation Windows à l'intégration continue**, qui compile Criterion comme le fait sa propre intégration continue, puis lance les tests.
 
 **Ce que l'on accepte :** une installation plus lourde sous Windows que celle d'un framework récupérable par `FetchContent`, et un framework moins répandu que GoogleTest.
-
-**Le Poc garde son lanceur maison :** c'est un programme de démonstration et de validation de l'ECS, autonome par conception.
 
 ---
 

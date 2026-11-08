@@ -42,15 +42,34 @@ namespace RType::Asset {
     inline constexpr AssetId ENEMY_ALIEN = 115;
     inline constexpr AssetId ALIEN_BEAM = 116;
     inline constexpr AssetId ALIEN_CHARGE = 117;
+    inline constexpr AssetId PLAYER_CHARGE = 118;
+    inline constexpr AssetId PLAYER_CHARGED_SHOT = 119;
+    inline constexpr AssetId ENEMY_BOSS = 120;
+    inline constexpr AssetId BOSS_BULLET = 121;
+    inline constexpr AssetId BOSS_EXPLOSION = 122;
+    inline constexpr AssetId POWER_UP = 123;
+    inline constexpr AssetId FORCE = 124;
+    inline constexpr AssetId REFLECT_LASER = 125;
+    inline constexpr AssetId HELIX_LASER = 126;
+    inline constexpr AssetId RING_LASER = 127;
+    inline constexpr AssetId LASER_MUZZLE = 128;
 
     inline constexpr AssetId EXPLOSION_SOUND = 1000;
     inline constexpr AssetId GUNSHOT_SOUND = 1001;
+
+    inline constexpr AssetId FIRST_LEVEL_MUSIC = 2001;
 
     inline constexpr AssetId FONT = 200;
 
     inline constexpr AssetId MENU_BACKGROUND = 300;
     inline constexpr AssetId MENU_BUTTON = 301;
     inline constexpr AssetId MENU_PLAYER_BACK = 302;
+    inline constexpr AssetId MENU_BACK = 303;
+    inline constexpr AssetId MENU_BACK_SIDE = 304;
+    inline constexpr AssetId MENU_LIST_FRAME = 305;
+    inline constexpr AssetId MENU_VOLUME_DOWN = 306;
+    inline constexpr AssetId MENU_VOLUME_UP = 307;
+    inline constexpr AssetId MENU_LOBBY_ROW = 308;
 
     [[nodiscard]] AssetList makeAssetList();
 } // namespace RType::Asset

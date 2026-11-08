@@ -68,7 +68,7 @@ L'équipe sécurité de Chromium (navigateur écrit en C++) indique qu'« *envir
 
 ### Les versions du C++
 
-Selon l'enquête JetBrains 2025 sur 1 800 développeurs C++, les standards les plus utilisés sont **C++20 (43 %)** et **C++23 (34 %)**, le C++26 étant à 7 % ([JetBrains, *The State of C++ 2025*](https://lp.jetbrains.com/the-state-of-cpp-2025/)). Ce sont les valeurs du tableau du rapport : son texte cite des chiffres décalés d'une ligne. Le projet compile en **C++20** (`CMAKE_CXX_STANDARD 20`), un standard complet et bien supporté par GCC, Clang et MSVC. Le Poc passe en C++23 sous GCC 14, uniquement pour `std::stacktrace` dans ses rapports d'erreur.
+Selon l'enquête JetBrains 2025 sur 1 800 développeurs C++, les standards les plus utilisés sont **C++20 (43 %)** et **C++23 (34 %)**, le C++26 étant à 7 % ([JetBrains, *The State of C++ 2025*](https://lp.jetbrains.com/the-state-of-cpp-2025/)). Ce sont les valeurs du tableau du rapport : son texte cite des chiffres décalés d'une ligne. Le projet compile en **C++20** (`CMAKE_CXX_STANDARD 20`), un standard complet et bien supporté par GCC, Clang et MSVC.
 
 ---
 
@@ -157,7 +157,7 @@ Selon l'enquête JetBrains 2025 sur 1 800 développeurs C++, les standards les p
 - **RAII partout :** les ressources (fenêtre, textures, sons) sont libérées par des destructeurs, et la fenêtre raylib est tenue par un `std::unique_ptr`.
 - **Des handles plutôt que des pointeurs :** une `Entity` est un couple *(index, génération)*. Un handle périmé est détecté par `hasEntity` au lieu de désigner une autre entité ([notes de conception](../../ECS_DESIGN.fr.md#entity-et-entitymanager)).
 - **Des références stables :** les composants ne changent jamais d'adresse tant qu'ils existent ([étude 07](07-stockage-des-composants.md)).
-- **Les sanitizers :** le Poc est compilé par défaut avec AddressSanitizer et UndefinedBehaviorSanitizer (`POC_SANITIZE`), qui détectent à l'exécution les accès mémoire invalides et les comportements indéfinis.
+- **Les sanitizers :** les tests du moteur sont compilés par défaut avec AddressSanitizer et UndefinedBehaviorSanitizer (`ENGINE_TESTS_SANITIZE`), qui détectent à l'exécution les accès mémoire invalides et les comportements indéfinis.
 - **L'analyse statique :** `clang-tidy` tourne dans l'intégration continue (action cpp-linter), et en local avec `script/lint.sh`.
 
 **Ce que l'on accepte :** des temps de compilation plus longs et des erreurs de templates parfois obscures. Pour les limiter, l'API publique (`GameManager`) reste simple et ses erreurs de type sont documentées.

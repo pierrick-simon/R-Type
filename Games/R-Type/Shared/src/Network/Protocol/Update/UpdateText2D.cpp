@@ -18,7 +18,9 @@ namespace RType {
                 update._update.push_back(prop);
         };
 
-        update._updateText = syncField(update.str, text.str);
+        // Stays set until sent: the entity does not send on every frame.
+        if (syncField(update.str, text.str))
+            update._updateText = true;
 
         track(&Text2D::fontSize, Property::FONT_SIZE);
         track(&Text2D::rotation, Property::ROTATION);
