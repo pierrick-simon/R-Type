@@ -88,7 +88,7 @@ A module is an engine feature the game turns on by its name. Each one creates it
 | `Window` | an entity with a `Window` (size and title from `config.conf`), and the system that clears and refreshes it each frame; scripts know whether it should close with `gm:shouldClose()`, and set its frames per second, full screen and cursor ([setting up the window](LUA_GUIDE.en.md#setting-up-the-window)) | |
 | `Keyboard` | an entity with a `KeyboardManager`, and the system that reads the keys; scripts read it with `gm:keyboard()` | `Window` |
 | `Mouse` | an entity with a `MouseManager`, and the system that reads the mouse; scripts read it with `gm:mouse()` | `Window` |
-| `Audio` | an entity with the point that hears the sounds, and the system that plays the `Sound`s | |
+| `Audio` | an entity with the point that hears the sounds, and the system that plays the `Sound`s; scripts move that point with `gm:setListenerPosition(x, y)` | |
 | `Clock` | an entity with the `MasterClock`, and the system that moves it forward; scripts read its time with `gm:elapsed()` | always loaded |
 
 - **`Clock` is always loaded**, even if `modules` does not list it: the engine's movement and animation systems rely on it.

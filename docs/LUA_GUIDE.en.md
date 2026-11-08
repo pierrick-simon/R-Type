@@ -136,6 +136,8 @@ gm:countComponents('Position2D')            -- number of entities that have one
 | `Size2D` | `width` (0), `height` (0) | size in pixels |
 | `Friction2D` | `f` (0) | slows a `Velocity2D` down |
 | `GravityField2D` | `x` (0), `y` (1), `g` (9.80665) | pulls a `Velocity2D` in a direction |
+| `Rotation2D` | `angle` (0) | orientation, in radians |
+| `AngularVelocity2D` | `w` (0) | turns a `Rotation2D`, in radians per second |
 | `Clock` | `speed` (1), method `elapsed()` | an entity's own clock |
 | `Texture2D` | `path` (**required**) | an image, loaded from `path` |
 | `Sprite2D` | `scale` (1), `rotation` (0), `flip` (false) | draws the entity's `Texture2D` |
@@ -143,11 +145,19 @@ gm:countComponents('Position2D')            -- number of entities that have one
 | `Font` | `path` (**required**) | a font, loaded from `path` |
 | `Text2D` | `str` ("Hello World"), `fontSize` (10), `rotation` (0), `spacing` (0) | draws a text with the entity's `Font` |
 | `Position3D` | `x` (0), `y` (0), `z` (0) | position in 3D space |
+| `Velocity3D` | `x` (0), `y` (0), `z` (0) | speed in units per second |
+| `Friction3D` | `f` (0) | slows a `Velocity3D` down |
+| `GravityField3D` | `x` (0), `y` (-1), `z` (0), `g` (9.80665) | pulls a `Velocity3D` in a direction |
+| `Rotation3D` | `x` (0), `y` (0), `z` (0), `w` (1) | orientation, as a quaternion |
+| `AngularVelocity3D` | `x` (0), `y` (0), `z` (0) | turns a `Rotation3D` around each axis, in radians per second |
 | `Model3D` | `path` (**required**) | a 3D model, loaded from `path` |
 | `ModelAnimation3D` | `path` (**required**) | the animations of a 3D model |
 | `Sprite3D` | `scale` (1) | draws the entity's `Model3D` |
 | `SpriteSheet3D` | `index` (0), `frameDuration` (100, in ms), `animation` (true), `scale` (1) | plays an animation of the `Model3D` |
 | `Camera3D` | `targetX` (0), `targetY` (0.4), `targetZ` (0), `upX` (0), `upY` (1), `upZ` (0), `fovy` (45), `projection` (`CameraProjection.PERSPECTIVE`), `updateMode` (`CameraMode.CUSTOM`) | the 3D camera, placed at the entity's `Position3D` and looking at the target point (see [the camera](#the-camera)) |
+| `CameraAngle` | `yaw` (0), `pitch` (0), `minPitch` (-89°), `maxPitch` (89°), in radians | points the `Camera3D` from its `Position3D` along these angles |
+| `CameraAngleInput` | `yaw` (0), `pitch` (0), in radians | the turn to add to the `CameraAngle` this frame |
+| `CameraMouseControl` | `sensitivity` (0.0025), `invertY` (false) | turns the mouse movement into a `CameraAngleInput` |
 | `Sound` | `path` (**required**), `state` (`SoundState.STOP`), `loop` (false), `stereo` (false), `attenuation` (`Attenuation.INVERSE`), `minDistance` (1), `maxDistance` (very large), methods `setVolume(v)` and `setPitch(p)` | a sound, loaded from `path` (see [sounds](#sounds)) |
 
 The five components marked **required** are built from a file, then given the table's other fields: `gm:addComponent(e, 'Texture2D', {path = 'sprites/ship.png'})`.
@@ -205,6 +215,16 @@ end
 | `Friction2D` | `Friction2D`, `Velocity2D`, `Clock` | slows them down, with their own clock |
 | `MasterGravityField2D` | `Velocity2D`, `GravityField2D` | applies the gravity, with the game's clock |
 | `GravityField2D` | `GravityField2D`, `Velocity2D`, `Clock` | applies the gravity, with their own clock |
+| `MasterAngularVelocity2D` | `Rotation2D`, `AngularVelocity2D` | turns them, with the game's clock |
+| `AngularVelocity2D` | `AngularVelocity2D`, `Rotation2D`, `Clock` | turns them, with their own clock |
+| `MasterVelocity3D` | `Position3D`, `Velocity3D` | moves them, with the game's clock |
+| `Velocity3D` | `Velocity3D`, `Position3D`, `Clock` | moves them, with their own clock |
+| `MasterFriction3D` | `Velocity3D`, `Friction3D` | slows them down, with the game's clock |
+| `Friction3D` | `Friction3D`, `Velocity3D`, `Clock` | slows them down, with their own clock |
+| `MasterGravityField3D` | `Velocity3D`, `GravityField3D` | applies the gravity, with the game's clock |
+| `GravityField3D` | `GravityField3D`, `Velocity3D`, `Clock` | applies the gravity, with their own clock |
+| `MasterAngularVelocity3D` | `Rotation3D`, `AngularVelocity3D` | turns them, with the game's clock |
+| `AngularVelocity3D` | `AngularVelocity3D`, `Rotation3D`, `Clock` | turns them, with their own clock |
 | `Clock` | `Clock` | advances their own clock |
 | `DrawSprite2D` | `Sprite2D`, `Texture2D`, `Position2D` | draws them |
 | `DrawSpriteSheet2D` | `SpriteSheet2D`, `Texture2D`, `Position2D` | draws their current tile |
@@ -217,6 +237,9 @@ end
 | `AnimateSpriteSheet3D` | `SpriteSheet3D`, `Model3D`, `ModelAnimation3D`, `Clock` | animates them, with their own clock |
 | `UpdateCamera` | `Camera3D`, `Position3D` | moves the camera to its entity's `Position3D` |
 | `Draw3D` | `Camera3D` | draws the `Sprite3D` and `SpriteSheet3D` as the camera sees them |
+| `CameraMouseControl` | the mouse | adds the mouse movement to the `CameraAngleInput` of the entities that have a `CameraMouseControl` |
+| `CameraAngleInput` | `CameraAngle`, `CameraAngleInput` | adds the input to the angle, then empties the input |
+| `CameraAngle` | `Camera3D`, `Position3D`, `CameraAngle` | points the camera along its angle |
 | `Sound2D` | `Sound`, `Position2D` | puts the `stereo` sounds at their entity's position |
 | `KeyboardManagerClear` | the keyboard | empties the keys read this frame |
 
@@ -393,7 +416,7 @@ end
 - `loop = true` plays the sound again and again, for instance for a music.
 - `sound:setVolume(v)` sets the volume (`1` by default) and `sound:setPitch(p)` the pitch (`1` by default).
 - A `stereo = true` sound is placed in space: with the `Sound2D` system, it follows its entity's `Position2D`, and its volume drops with the distance according to `attenuation` (`Attenuation.NONE`, `INVERSE`, `LINEAR` or `EXPONENTIAL`), between `minDistance` and `maxDistance`.
-- The point that hears the sounds belongs to the module: a script cannot create another one.
+- The point that hears the sounds belongs to the module: a script cannot create another one. It is at (0, 0), and `gm:setListenerPosition(x, y)` moves it, for instance to follow the player.
 
 ### The camera
 
@@ -423,6 +446,29 @@ end
 - `projection` is `CameraProjection.PERSPECTIVE` or `CameraProjection.ORTHOGRAPHIC`.
 - `updateMode` is `CameraMode.CUSTOM` by default: the camera moves only with its `Position3D` and its target. `FREE`, `ORBITAL`, `FIRST_PERSON` and `THIRD_PERSON` are raylib's camera modes.
 - A game has only one camera: a second `Camera3D` stops the game with `Camera can be created only once`.
+
+To turn the camera with the mouse, as in a first-person game, give it a `CameraAngle`, a `CameraAngleInput` and a `CameraMouseControl`. This needs the `Mouse` module:
+
+```lua
+function start(gm)
+    local camera = gm:createEntity()
+    gm:addComponent(camera, 'Position3D', {y = 2, z = 6})
+    gm:addComponent(camera, 'Camera3D')
+    gm:addComponent(camera, 'CameraAngle')
+    gm:addComponent(camera, 'CameraAngleInput')
+    gm:addComponent(camera, 'CameraMouseControl', {sensitivity = 0.003})
+
+    gm:setHideCursor(true)              -- the cursor stays in the window
+    gm:addSystem('CameraMouseControl')  -- mouse -> CameraAngleInput
+    gm:addSystem('CameraAngleInput')    -- CameraAngleInput -> CameraAngle
+    gm:addSystem('UpdateCamera')
+    gm:addSystem('CameraAngle')         -- CameraAngle -> where the camera looks
+    gm:addSystem('Draw3D')
+end
+```
+
+- `CameraAngle` replaces the target fields: the camera looks from its `Position3D` along `yaw` (left and right) and `pitch` (up and down), and `pitch` stays between `minPitch` and `maxPitch`.
+- A script can turn the camera without the mouse by adding to `CameraAngleInput`, for instance with the arrow keys.
 
 ---
 
@@ -552,6 +598,7 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `Unknown component: Postion2D` | the name is not one of [the components](#the-components) | correct the name (case sensitive) |
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
 | `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()`, or a window function such as `gm:shouldClose()`, without the matching module | add `Keyboard`, `Mouse` or `Window` to the `modules` of `config.conf` |
+| `gm:setListenerPosition needs the Audio module` | `gm:setListenerPosition()` without the `Audio` module | add `Audio` to the `modules` of `config.conf` |
 | `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
 | `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `Audio` to the `modules` of `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder the game is started from |
@@ -606,6 +653,7 @@ The special cases (nested fields, methods, enums, components built from a file),
 | `gm:fps()`, `gm:setFps(n)` | reads or changes the window's frames per second |
 | `gm:fullScreen()`, `gm:setFullScreen(b)` | reads or changes whether the window is full screen |
 | `gm:hideCursor()`, `gm:setHideCursor(b)` | reads or changes whether the cursor is hidden and kept in the window |
+| `gm:setListenerPosition(x, y)` | moves the point that hears the sounds |
 | `gm:addComponent(e, name [, fields])` | adds a component, built from the table |
 | `gm:getComponent(e, name)` | the real component |
 | `gm:hasComponent(e, name)` | whether the entity has the component |
