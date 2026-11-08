@@ -73,11 +73,13 @@ namespace RType::Server {
             std::size_t(level - 1) * CHARGED_SHOT_FRAMES,
             CHARGED_SHOT_FRAME_MS,
             SHOT_SCALE);
+        gm.addComponent<SoundInfo>(shot, SoundInfo::PLAY);
         gm.addComponent<UpdateClientEntity>(shot,
             EntityType::SPRITESHEET,
             Asset::PLAYER_CHARGED_SHOT,
             gm,
-            shot);
+            shot,
+            Asset::CHARGED_SHOT_SOUND);
     }
 
     Position2D chargeEffectPosition(const Position2D &player)

@@ -11,6 +11,7 @@
 #include <concepts>
 #include <optional>
 #include <variant>
+#include <vector>
 #include "Clock.hpp"
 #include "CreateProtocol.hpp"
 #include "Network.hpp"
@@ -23,11 +24,11 @@ namespace RType {
             Sound(int asset) :
                 asset(asset) {};
             int asset;
-            bool set = false;
+            std::vector<uint32_t> sent;
         };
 
         UpdateClientEntity(EntityType type, int asset, GameManager &gm,
-            Entity entity, std::optional<Sound> sound = std::nullopt);
+            Entity entity, const std::optional<Sound> &sound = std::nullopt);
 
         std::vector<uint32_t> create;
 

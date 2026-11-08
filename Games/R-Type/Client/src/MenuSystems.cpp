@@ -11,12 +11,14 @@
 #include "Assets.hpp"
 #include "ClientManager.hpp"
 #include "Clock.hpp"
+#include "Listener.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
 #include "Menu.hpp"
 #include "MouseManager.hpp"
 #include "Settings.hpp"
+#include "Sound.hpp"
 #include "Sprite2D.hpp"
 #include "SpriteSheet2D.hpp"
 #include "Text2D.hpp"
@@ -245,6 +247,38 @@ namespace RType::Client {
 
         text.origin.x = size.x * anchor.x;
         text.origin.y = size.y * anchor.y;
+    }
+
+    void systemMenuMusic(GameManager &gm, Assets &assets)
+    {
+        bool wanted = true;
+        std::vector<Entity> playing;
+
+        gm.view<LobbyClient>().each([&wanted](Entity, LobbyClient &l) {
+            wanted = wanted && (!l.inGame || l.gameOverShown);
+        });
+        gm.view<MenuMusic>().each(
+            [&playing](Entity e, MenuMusic &) { playing.push_back(e); });
+        if (!wanted) {
+            for (const Entity e : playing)
+                gm.destroyEntity(e);
+            return;
+        }
+        if (!playing.empty())
+            return;
+        auto decoder = assets.get<Decoder>(Asset::MENU_MUSIC);
+
+        if (!decoder)
+            return;
+        for (auto [_, listener] : gm.view<Listener>().getVector()) {
+            const Entity music = gm.createEntity();
+            SoundInfo info;
+
+            info.state = SoundInfo::PLAY;
+            info.loop = true;
+            gm.addComponent<MenuMusic>(music);
+            gm.addComponent<Sound>(music, listener, decoder->get(), info);
+        }
     }
 
     void systemMenuBackground(GameManager &gm)

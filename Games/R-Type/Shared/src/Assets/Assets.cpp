@@ -98,12 +98,16 @@ namespace RType::Asset {
                 Texture2D::TYPE},
 
             {GUNSHOT_SOUND, "R-Type/Sound/Gameplay/gunshot.mp3", Decoder::TYPE},
+            {CHARGED_SHOT_SOUND,
+                "R-Type/Sound/Gameplay/Chargeshot.mp3",
+                Decoder::TYPE},
             {EXPLOSION_SOUND,
                 "R-Type/Sound/Gameplay/explosion.mp3",
                 Decoder::TYPE},
 
             {FIRST_LEVEL_MUSIC, "R-Type/Sound/Music/Stage1.mp3", Decoder::TYPE},
             {BOSS_MUSIC, "R-Type/Sound/Music/Boss1.mp3", Decoder::TYPE},
+            {MENU_MUSIC, "R-Type/Sound/Music/LobbyTheme.mp3", Decoder::TYPE},
 
             {FONT, "R-Type/sprites/Fonts/r-type.otf", Font::TYPE},
 
