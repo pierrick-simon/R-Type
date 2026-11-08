@@ -42,7 +42,7 @@ Le `main` se trouve dans [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cp
 5. fait tourner la boucle, à `windowFPS` images par seconde, **jusqu'à ce qu'un script appelle `gm:stop()`** (voir [le guide Lua](LUA_GUIDE.fr.md#arrêter-le-jeu)) ;
 6. si une `RType::EngineException` remonte, du moteur ou d'un script, affiche son message et quitte avec le code `84`.
 
-- **Seul un script arrête le jeu.** Fermer la fenêtre ne suffit pas : un jeu qui ne vérifie pas `gm:windowShouldClose()` pour appeler `gm:stop()` continue de tourner après un clic sur la croix.
+- **Seul un script arrête le jeu.** Fermer la fenêtre ne suffit pas : un jeu qui ne vérifie pas `gm:shouldClose()` pour appeler `gm:stop()` continue de tourner après un clic sur la croix.
 - **Tout est cherché par rapport au dossier depuis lequel le jeu est lancé** : `config.conf`, le dossier des scripts, et les chemins que donnent les scripts (images, polices, sons…).
 
 ---
@@ -62,7 +62,7 @@ modules = Window, Keyboard, Mouse, Audio
 
 | Clé | Rôle | Valeur par défaut |
 |---|---|---|
-| `windowFPS` | Images par seconde de la boucle | `60` |
+| `windowFPS` | Images par seconde de la boucle ; un script peut les baisser avec `gm:setFps` | `60` |
 | `windowWidth`, `windowHeight` | Taille de la fenêtre, en pixels, utilisée par le module `Window` | `800` × `600` |
 | `windowName` | Titre de la fenêtre, utilisé par le module `Window` | `My Game` |
 | `srcDirectory` | Le dossier des scripts Lua, par rapport au dossier depuis lequel le jeu est lancé | `.` (le dossier de lancement lui-même) |
@@ -85,7 +85,7 @@ Un module est une fonctionnalité du moteur que le jeu active par son nom. Chacu
 
 | Module | Ce qu'il crée | A besoin de |
 |---|---|---|
-| `Window` | une entité avec une `Window` (taille et titre pris dans `config.conf`), et le système qui l'efface et la rafraîchit à chaque frame ; les scripts savent si elle doit se fermer avec `gm:windowShouldClose()` | |
+| `Window` | une entité avec une `Window` (taille et titre pris dans `config.conf`), et le système qui l'efface et la rafraîchit à chaque frame ; les scripts savent si elle doit se fermer avec `gm:shouldClose()`, et règlent ses images par seconde, le plein écran et le curseur ([régler la fenêtre](LUA_GUIDE.fr.md#régler-la-fenêtre)) | |
 | `Keyboard` | une entité avec un `KeyboardManager`, et le système qui lit les touches ; les scripts le lisent avec `gm:keyboard()` | `Window` |
 | `Mouse` | une entité avec un `MouseManager`, et le système qui lit la souris ; les scripts la lisent avec `gm:mouse()` | `Window` |
 | `Audio` | une entité avec le point qui entend les sons, et le système qui joue les `Sound` | |
@@ -155,7 +155,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:windowShouldClose() then gm:stop() end
+    if gm:shouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -201,8 +201,8 @@ cmake --build build --target game -j
 
 ### À faire
 
-- **Mettre `Window` dans `modules`** dès que le jeu dessine quelque chose, lit le clavier ou la souris, ou appelle `gm:windowShouldClose()`.
-- **Avoir un système qui appelle `gm:stop()`** quand `gm:windowShouldClose()` renvoie `true` : sans lui, la fenêtre ne se ferme pas.
+- **Mettre `Window` dans `modules`** dès que le jeu dessine quelque chose, lit le clavier ou la souris, ou appelle une de ses fonctions `gm:`, comme `gm:shouldClose()`.
+- **Avoir un système qui appelle `gm:stop()`** quand `gm:shouldClose()` renvoie `true` : sans lui, la fenêtre ne se ferme pas.
 - **Lancer le jeu depuis son dossier**, celui qui contient `config.conf`.
 - **Écrire les chemins des scripts par rapport à ce dossier.**
 
@@ -264,5 +264,5 @@ Engine Error: Module Keyboard requires module Window
 
 ### La fenêtre ne se ferme pas
 
-**Cause :** aucun script n'appelle `gm:stop()` : la croix et `Échap` ne font rien d'autre que rendre `gm:windowShouldClose()` vrai.
+**Cause :** aucun script n'appelle `gm:stop()` : la croix et `Échap` ne font rien d'autre que rendre `gm:shouldClose()` vrai.
 **Solution :** ajouter le système `quit` du [jeu complet](#5-un-jeu-complet).

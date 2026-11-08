@@ -44,7 +44,7 @@ In `game`, everything is in the `RType::Game` namespace, one class per role:
 | `ViewBinding` | `gm:view` |
 | `InputBinding` | `gm:keyboard`, `gm:mouse`, the `Key` and `MouseButton` tables |
 | `TimeBinding` | `gm:elapsed` |
-| `WindowBinding` | `gm:windowShouldClose` |
+| `WindowBinding` | `gm:shouldClose`, `gm:fps`, `gm:setFps`, `gm:fullScreen`, `gm:setFullScreen`, `gm:hideCursor`, `gm:setHideCursor` |
 | **`EngineBindings.cpp`** | **the lists of the engine's components and systems usable from Lua: the file to edit to add one** |
 
 ---

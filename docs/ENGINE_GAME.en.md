@@ -42,7 +42,7 @@ The `main` lives in [`Engine/Game/src/Main.cpp`](../Engine/Game/src/Main.cpp) an
 5. runs the loop, at `windowFPS` frames per second, **until a script calls `gm:stop()`** (see [the Lua guide](LUA_GUIDE.en.md#stopping-the-game));
 6. if an `RType::EngineException` comes up, from the engine or from a script, prints its message and exits with code `84`.
 
-- **Only a script stops the game.** Closing the window is not enough: a game that does not check `gm:windowShouldClose()` to call `gm:stop()` keeps running after a click on the close button.
+- **Only a script stops the game.** Closing the window is not enough: a game that does not check `gm:shouldClose()` to call `gm:stop()` keeps running after a click on the close button.
 - **Everything is looked for relative to the directory the game is started from**: `config.conf`, the scripts folder, and the paths the scripts give (images, fonts, sounds…).
 
 ---
@@ -62,7 +62,7 @@ modules = Window, Keyboard, Mouse, Audio
 
 | Key | Role | Default |
 |---|---|---|
-| `windowFPS` | Frames per second of the loop | `60` |
+| `windowFPS` | Frames per second of the loop; a script can lower it with `gm:setFps` | `60` |
 | `windowWidth`, `windowHeight` | Window size, in pixels, used by the `Window` module | `800` × `600` |
 | `windowName` | Window title, used by the `Window` module | `My Game` |
 | `srcDirectory` | The folder of the Lua scripts, relative to the directory the game is started from | `.` (the start directory itself) |
@@ -85,7 +85,7 @@ A module is an engine feature the game turns on by its name. Each one creates it
 
 | Module | What it creates | Needs |
 |---|---|---|
-| `Window` | an entity with a `Window` (size and title from `config.conf`), and the system that clears and refreshes it each frame; scripts know whether it should close with `gm:windowShouldClose()` | |
+| `Window` | an entity with a `Window` (size and title from `config.conf`), and the system that clears and refreshes it each frame; scripts know whether it should close with `gm:shouldClose()`, and set its frames per second, full screen and cursor ([setting up the window](LUA_GUIDE.en.md#setting-up-the-window)) | |
 | `Keyboard` | an entity with a `KeyboardManager`, and the system that reads the keys; scripts read it with `gm:keyboard()` | `Window` |
 | `Mouse` | an entity with a `MouseManager`, and the system that reads the mouse; scripts read it with `gm:mouse()` | `Window` |
 | `Audio` | an entity with the point that hears the sounds, and the system that plays the `Sound`s | |
@@ -155,7 +155,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:windowShouldClose() then gm:stop() end
+    if gm:shouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -201,8 +201,8 @@ cmake --build build --target game -j
 
 ### Do
 
-- **List `Window` in `modules`** as soon as the game draws something, reads the keyboard or the mouse, or calls `gm:windowShouldClose()`.
-- **Have a system that calls `gm:stop()`** when `gm:windowShouldClose()` returns `true`: without it, the window does not close.
+- **List `Window` in `modules`** as soon as the game draws something, reads the keyboard or the mouse, or calls one of its `gm:` functions, such as `gm:shouldClose()`.
+- **Have a system that calls `gm:stop()`** when `gm:shouldClose()` returns `true`: without it, the window does not close.
 - **Start the game from its folder**, the one that holds `config.conf`.
 - **Write the scripts' paths relative to that folder.**
 
@@ -264,5 +264,5 @@ Engine Error: Module Keyboard requires module Window
 
 ### The window does not close
 
-**Cause:** no script calls `gm:stop()`: the close button and `Escape` do nothing but make `gm:windowShouldClose()` true.
+**Cause:** no script calls `gm:stop()`: the close button and `Escape` do nothing but make `gm:shouldClose()` true.
 **Fix:** add the `quit` system of [the complete game](#5-a-complete-game).

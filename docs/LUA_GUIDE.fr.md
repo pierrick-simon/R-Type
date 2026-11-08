@@ -258,7 +258,7 @@ end
 
 ```lua
 local function quit(gm)
-    if gm:windowShouldClose() then
+    if gm:shouldClose() then
         gm:stop()                     -- la croix ou Échap quittent le jeu
     end
 end
@@ -270,8 +270,36 @@ end
 
 - Les systèmes qui suivent dans la même frame tournent encore, et les changements de la frame sont appliqués.
 - Appeler `gm:stop()` plusieurs fois ne fait rien de plus.
-- `gm:windowShouldClose()` renvoie `true` quand le bouton de fermeture de la fenêtre ou `Échap` a été pressé. Il a besoin du module `Window`.
+- `gm:shouldClose()` renvoie `true` quand le bouton de fermeture de la fenêtre ou `Échap` a été pressé. Il a besoin du module `Window`.
 - Un jeu qui veut quitter avec une autre touche lit le clavier ([plus bas](#lire-le-clavier-et-la-souris)) et appelle `gm:stop()` de la même façon.
+
+### Régler la fenêtre
+
+La fenêtre du module `Window` a trois réglages, qu'un script lit et change avec des fonctions `gm:` :
+
+```lua
+local function fullScreen(gm)
+    if gm:keyboard():isPressed(Key.F11) then
+        gm:setFullScreen(not gm:fullScreen())   -- F11 passe en plein écran et en sort
+    end
+end
+
+function start(gm)
+    gm:setHideCursor(true)
+    gm:setFps(30)
+    gm:createSystem(fullScreen)
+end
+```
+
+| Lire | Changer | Réglage | Par défaut |
+|---|---|---|---|
+| `gm:fps()` | `gm:setFps(n)` | les images par seconde de la fenêtre | `60` |
+| `gm:fullScreen()` | `gm:setFullScreen(b)` | si la fenêtre est en plein écran | `false` |
+| `gm:hideCursor()` | `gm:setHideCursor(b)` | si le curseur de la souris est caché et gardé dans la fenêtre | `false` |
+
+- Un changement est appliqué au début de la frame suivante : celui fait dans `start` est là dès la première frame.
+- `gm:setFps` peut ralentir le jeu, pas l'accélérer : la boucle ne va jamais plus vite que `windowFPS` de [`config.conf`](ENGINE_GAME.fr.md#2-le-fichier-configconf).
+- Ces fonctions ont besoin du module `Window`.
 
 ### Lire le clavier et la souris
 
@@ -439,7 +467,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:windowShouldClose() then gm:stop() end
+    if gm:shouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -465,7 +493,7 @@ end
 ### À faire
 
 - **Définir `start` dans chaque script.**
-- **Avoir un système qui appelle `gm:stop()`** quand `gm:windowShouldClose()` renvoie `true` ([arrêter le jeu](#arrêter-le-jeu)).
+- **Avoir un système qui appelle `gm:stop()`** quand `gm:shouldClose()` renvoie `true` ([arrêter le jeu](#arrêter-le-jeu)).
 - **Créer les entités et les systèmes dans `start`**, et mettre ce qui tourne à chaque frame dans des systèmes.
 - **Donner à un système la liste des composants sur lesquels il travaille**, plutôt que boucler avec une vue dans un système appelé une fois par frame : le moteur choisit alors les entités pour vous.
 - **Préférer les systèmes `Master…` du moteur**, sauf si certaines entités ont besoin de leur propre horloge.
@@ -491,7 +519,7 @@ Chaque erreur arrête le jeu avec le code de sortie `84` et un message `Engine E
 | `scripts/a.lua:1: ')' expected near 'end'` | une erreur de syntaxe Lua, à ce fichier et cette ligne | corriger la syntaxe |
 | `Unknown component: Postion2D` | le nom n'est pas un des [composants](#les-composants) | corriger le nom (la casse compte) |
 | `Unknown system: DrawSprit2D` | le nom n'est pas un des [systèmes du moteur](#les-systèmes-du-moteur) | corriger le nom |
-| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()` ou `gm:windowShouldClose()` sans le module correspondant | ajouter `Keyboard`, `Mouse` ou `Window` aux `modules` de `config.conf` |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()`, ou une fonction de la fenêtre comme `gm:shouldClose()`, sans le module correspondant | ajouter `Keyboard`, `Mouse` ou `Window` aux `modules` de `config.conf` |
 | `Unknown component: KeyboardManager` | un script essaie de créer un clavier ou une souris | utiliser `gm:keyboard()` ou `gm:mouse()` |
 | `Sound needs the Audio module` | un `Sound` sans le module `Audio` | ajouter `Audio` aux `modules` de `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | le fichier du son n'existe pas à ce chemin | corriger le chemin, écrit par rapport au dossier depuis lequel le jeu est lancé |
@@ -541,7 +569,10 @@ Les cas particuliers (champs imbriqués, méthodes, enums, composants construits
 | `gm:destroyEntity(e)` | détruit une entité et ses composants |
 | `gm:hasEntity(e)` | si l'entité existe |
 | `gm:stop()` | arrête le jeu après la frame en cours |
-| `gm:windowShouldClose()` | si le bouton de fermeture ou `Échap` a été pressé |
+| `gm:shouldClose()` | si le bouton de fermeture ou `Échap` a été pressé |
+| `gm:fps()`, `gm:setFps(n)` | lit ou change les images par seconde de la fenêtre |
+| `gm:fullScreen()`, `gm:setFullScreen(b)` | lit ou change si la fenêtre est en plein écran |
+| `gm:hideCursor()`, `gm:setHideCursor(b)` | lit ou change si le curseur est caché et gardé dans la fenêtre |
 | `gm:addComponent(e, nom [, champs])` | ajoute un composant, construit à partir de la table |
 | `gm:getComponent(e, nom)` | le vrai composant |
 | `gm:hasComponent(e, nom)` | si l'entité a le composant |

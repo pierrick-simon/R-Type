@@ -258,7 +258,7 @@ end
 
 ```lua
 local function quit(gm)
-    if gm:windowShouldClose() then
+    if gm:shouldClose() then
         gm:stop()                     -- the close button or Escape quit the game
     end
 end
@@ -270,8 +270,36 @@ end
 
 - The systems that come next in the same frame still run, and the frame's changes are applied.
 - Calling `gm:stop()` more than once does nothing more.
-- `gm:windowShouldClose()` returns `true` when the window's close button or `Escape` was pressed. It needs the `Window` module.
+- `gm:shouldClose()` returns `true` when the window's close button or `Escape` was pressed. It needs the `Window` module.
 - A game that quits with another key reads the keyboard ([below](#reading-the-keyboard-and-the-mouse)) and calls `gm:stop()` the same way.
+
+### Setting up the window
+
+The window of the `Window` module has three settings that a script reads and changes with `gm:` functions:
+
+```lua
+local function fullScreen(gm)
+    if gm:keyboard():isPressed(Key.F11) then
+        gm:setFullScreen(not gm:fullScreen())   -- F11 switches full screen on and off
+    end
+end
+
+function start(gm)
+    gm:setHideCursor(true)
+    gm:setFps(30)
+    gm:createSystem(fullScreen)
+end
+```
+
+| Read | Change | Setting | Default |
+|---|---|---|---|
+| `gm:fps()` | `gm:setFps(n)` | the window's frames per second | `60` |
+| `gm:fullScreen()` | `gm:setFullScreen(b)` | whether the window is full screen | `false` |
+| `gm:hideCursor()` | `gm:setHideCursor(b)` | whether the mouse cursor is hidden and kept inside the window | `false` |
+
+- A change is applied at the start of the next frame: one made in `start` is there from the first frame.
+- `gm:setFps` can slow the game down, not speed it up: the loop never runs faster than `windowFPS` from [`config.conf`](ENGINE_GAME.en.md#2-the-configconf-file).
+- These functions need the `Window` module.
 
 ### Reading the keyboard and the mouse
 
@@ -439,7 +467,7 @@ local function bounce(gm, e, pos, vel)
 end
 
 local function quit(gm)
-    if gm:windowShouldClose() then gm:stop() end
+    if gm:shouldClose() then gm:stop() end
 end
 
 function start(gm)
@@ -465,7 +493,7 @@ Each frame: `quit` stops the game if the window should close, `bounce` turns the
 ### Do
 
 - **Define `start` in every script.**
-- **Have a system that calls `gm:stop()`** when `gm:windowShouldClose()` returns `true` ([stopping the game](#stopping-the-game)).
+- **Have a system that calls `gm:stop()`** when `gm:shouldClose()` returns `true` ([stopping the game](#stopping-the-game)).
 - **Create the entities and the systems in `start`**, and put what runs every frame in systems.
 - **Give a system the list of components it works on**, rather than looping with a view inside a once-per-frame system: the engine then picks the entities for you.
 - **Prefer the `Master…` engine systems**, unless some entities need their own clock.
@@ -491,7 +519,7 @@ Every error stops the game with exit code `84` and a message `Engine Error: Scri
 | `scripts/a.lua:1: ')' expected near 'end'` | a Lua syntax error, at this file and line | fix the syntax |
 | `Unknown component: Postion2D` | the name is not one of [the components](#the-components) | correct the name (case sensitive) |
 | `Unknown system: DrawSprit2D` | the name is not one of [the engine's systems](#the-engines-systems) | correct the name |
-| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()` or `gm:windowShouldClose()` without the matching module | add `Keyboard`, `Mouse` or `Window` to the `modules` of `config.conf` |
+| `gm:keyboard needs the Keyboard module` | `gm:keyboard()`, `gm:mouse()`, or a window function such as `gm:shouldClose()`, without the matching module | add `Keyboard`, `Mouse` or `Window` to the `modules` of `config.conf` |
 | `Unknown component: KeyboardManager` | a script tries to create a keyboard or a mouse | use `gm:keyboard()` or `gm:mouse()` |
 | `Sound needs the Audio module` | a `Sound` without the `Audio` module | add `Audio` to the `modules` of `config.conf` |
 | `Cannot load sound sounds/shot.mp3: Resource does not exist` | the sound file does not exist at this path | correct the path, written relative to the folder the game is started from |
@@ -541,7 +569,10 @@ The special cases (nested fields, methods, enums, components built from a file),
 | `gm:destroyEntity(e)` | destroys an entity and its components |
 | `gm:hasEntity(e)` | whether the entity exists |
 | `gm:stop()` | stops the game after the current frame |
-| `gm:windowShouldClose()` | whether the close button or `Escape` was pressed |
+| `gm:shouldClose()` | whether the close button or `Escape` was pressed |
+| `gm:fps()`, `gm:setFps(n)` | reads or changes the window's frames per second |
+| `gm:fullScreen()`, `gm:setFullScreen(b)` | reads or changes whether the window is full screen |
+| `gm:hideCursor()`, `gm:setHideCursor(b)` | reads or changes whether the cursor is hidden and kept in the window |
 | `gm:addComponent(e, name [, fields])` | adds a component, built from the table |
 | `gm:getComponent(e, name)` | the real component |
 | `gm:hasComponent(e, name)` | whether the entity has the component |
