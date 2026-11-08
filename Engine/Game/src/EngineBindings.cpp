@@ -289,6 +289,44 @@ namespace RType::Game {
             &AngularVelocity3D::y,
             "z",
             &AngularVelocity3D::z);
+        lua.new_enum<CameraProjection>("CameraProjection",
+            {
+                {"PERSPECTIVE", CAMERA_PERSPECTIVE},
+                {"ORTHOGRAPHIC", CAMERA_ORTHOGRAPHIC},
+            });
+        lua.new_enum<CameraMode>("CameraMode",
+            {
+                {"CUSTOM", CAMERA_CUSTOM},
+                {"FREE", CAMERA_FREE},
+                {"ORBITAL", CAMERA_ORBITAL},
+                {"FIRST_PERSON", CAMERA_FIRST_PERSON},
+                {"THIRD_PERSON", CAMERA_THIRD_PERSON},
+            });
+        bindComponent<Camera3D>(lua,
+            "Camera3D",
+            "targetX",
+            nested<Camera3D, ::Vector3, float>(
+                &Camera3D::target, &::Vector3::x),
+            "targetY",
+            nested<Camera3D, ::Vector3, float>(
+                &Camera3D::target, &::Vector3::y),
+            "targetZ",
+            nested<Camera3D, ::Vector3, float>(
+                &Camera3D::target, &::Vector3::z),
+            "upX",
+            nested<Camera3D, ::Vector3, float>(&Camera3D::up, &::Vector3::x),
+            "upY",
+            nested<Camera3D, ::Vector3, float>(&Camera3D::up, &::Vector3::y),
+            "upZ",
+            nested<Camera3D, ::Vector3, float>(&Camera3D::up, &::Vector3::z),
+            "fovy",
+            sol::property([](const Camera3D &c) { return c.fovy; },
+                [](Camera3D &c, float fovy) { c.fovy = fovy; }),
+            "projection",
+            sol::property([](const Camera3D &c) { return c.projection; },
+                [](Camera3D &c, int projection) { c.projection = projection; }),
+            "updateMode",
+            &Camera3D::updateMode);
         bindComponent<CameraAngleInput>(lua,
             "CameraAngleInput",
             "yaw",
