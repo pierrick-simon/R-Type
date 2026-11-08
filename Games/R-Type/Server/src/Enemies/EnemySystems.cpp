@@ -12,10 +12,12 @@
 #include "Player/Destroy.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <memory>
 #include <optional>
 #include <random>
+#include <utility>
 #include <vector>
 
 namespace RType {
@@ -189,6 +191,37 @@ namespace RType {
             if (hooks.onEnemyLoot)
                 hooks.onEnemyLoot(gm, centerX, centerY);
             destroyNetworked(gm, enemy);
+        }
+
+        bool hitsBossTail(GameManager &gm, const Rect &shot)
+        {
+            bool hit = false;
+
+            gm.view<BossTail, Position2D, Hitbox>().each(
+                [&](Entity, BossTail &, Position2D &pos, Hitbox &box) {
+                    hit = hit || overlap(shot, rectOf(pos, box));
+                });
+            return hit;
+        }
+
+        void bossTailContact(GameManager &gm)
+        {
+            gm.view<BossTail, Position2D, Hitbox>().each(
+                [&gm](Entity, BossTail &, Position2D &sp, Hitbox &sb) {
+                    const Rect part = rectOf(sp, sb);
+
+                    gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
+                        [&](Entity target,
+                            EnemyTarget &,
+                            Health &health,
+                            Position2D &tp,
+                            Hitbox &tb) {
+                            if (health.hp > 0 &&
+                                !gm.hasComponent<Invincible>(target) &&
+                                overlap(part, rectOf(tp, tb)))
+                                health.hp = 0;
+                        });
+                });
         }
 
         bool blockedByShield(GameManager &gm, const Rect &shot)
@@ -615,29 +648,175 @@ namespace RType {
             boss.timer = 0.f;
         }
 
-        void bossVolley(
-            GameManager &gm, const Position2D &pos, const EnemyHooks &hooks)
+        std::optional<std::pair<float, float>> targetCenter(
+            GameManager &gm, Entity target)
+        {
+            if (!gm.hasComponent<EnemyTarget>(target) ||
+                !gm.hasComponent<Health>(target) ||
+                gm.getComponent<Health>(target).hp <= 0)
+                return std::nullopt;
+            const auto &pos = gm.getComponent<Position2D>(target);
+            const auto &box = gm.getComponent<Hitbox>(target);
+
+            return std::pair {pos.x + box.offsetX + box.width / 2.f,
+                pos.y + box.offsetY + box.height / 2.f};
+        }
+
+        std::optional<Entity> pickLineTarget(GameManager &gm, int line)
+        {
+            std::vector<Entity> targets;
+
+            gm.view<EnemyTarget, Health>().each(
+                [&targets](Entity e, EnemyTarget &, Health &health) {
+                    if (health.hp > 0)
+                        targets.push_back(e);
+                });
+            if (targets.empty())
+                return std::nullopt;
+            return targets[std::size_t(line) % targets.size()];
+        }
+
+        void fireRing(GameManager &gm, const Position2D &pos, Entity target,
+            const EnemyHooks &hooks)
         {
             const auto [x, y] = bossMuzzle(pos);
-            float targetX = 0.f;
-            float targetY = 0.f;
+            const auto aim = targetCenter(gm, target);
+            const float angle =
+                aim ? std::atan2(aim->second - y, aim->first - x) : pi;
+            const Entity ring = fireEnemyBullet(gm,
+                x,
+                y,
+                std::cos(angle) * BOSS_DEF.bulletSpeed,
+                std::sin(angle) * BOSS_DEF.bulletSpeed,
+                BOSS_DEF.bulletDamage,
+                hooks,
+                BOSS_BULLET_SHEET);
 
-            if (!findClosestTarget(gm, y, targetX, targetY))
+            gm.addComponent<Homing>(ring,
+                Homing {target, BOSS_LINE.turnRate, BOSS_LINE.homingTime});
+        }
+
+        void bossLines(GameManager &gm, Boss &boss, const Position2D &pos,
+            const EnemyHooks &hooks)
+        {
+            if (boss.lineShots == 0) {
+                if (boss.fireTimer < BOSS_DEF.fireCooldown)
+                    return;
+                boss.lineTarget = pickLineTarget(gm, boss.lines++);
+                if (!boss.lineTarget)
+                    return;
+                boss.lineShots = BOSS_LINE.length;
+                boss.fireTimer = BOSS_LINE.interval;
+            }
+            if (boss.fireTimer < BOSS_LINE.interval)
                 return;
-            const float aim = std::atan2(targetY - y, targetX - x);
+            boss.fireTimer = 0.f;
+            --boss.lineShots;
+            fireRing(gm, pos, *boss.lineTarget, hooks);
+        }
 
-            for (int i = 0; i < BOSS_DEF.burst; ++i) {
-                const int offset = i - BOSS_DEF.burst / 2;
-                const float angle = aim + BOSS_DEF.spread * float(offset);
+        struct TailJoint {
+            float x = 0.f;
+            float y = 0.f;
+            float angle = 0.f;
+        };
 
-                fireEnemyBullet(gm,
-                    x,
-                    y,
-                    std::cos(angle) * BOSS_DEF.bulletSpeed,
-                    std::sin(angle) * BOSS_DEF.bulletSpeed,
-                    BOSS_DEF.bulletDamage,
-                    hooks,
-                    BOSS_BULLET_SHEET);
+        float tailPartSize(int index)
+        {
+            const SheetInfo &sheet = bossTailSheet(index);
+
+            return float(sheet.cellW) * sheet.scale;
+        }
+
+        std::array<TailJoint, BOSS_TAIL_SEGMENTS> tailJoints(
+            const Position2D &boss, float time)
+        {
+            std::array<TailJoint, BOSS_TAIL_SEGMENTS> joints {};
+            float x = boss.x + BOSS_TAIL.anchorX * LEVEL_SCALE;
+            float y = boss.y + BOSS_TAIL.anchorY * LEVEL_SCALE;
+
+            joints[0] = {x, y, pi + BOSS_TAIL.tilt};
+            for (int i = 1; i < BOSS_TAIL_SEGMENTS; ++i) {
+                const float angle = pi + BOSS_TAIL.tilt +
+                    BOSS_TAIL.sweep * std::sin(BOSS_TAIL.sweepSpeed * time) +
+                    BOSS_TAIL.sway *
+                        std::sin(BOSS_TAIL.swaySpeed * time -
+                            BOSS_TAIL.waveStep * float(i));
+                const float step = (tailPartSize(i - 1) + tailPartSize(i)) /
+                    2.f * BOSS_TAIL.overlap;
+
+                x += std::cos(angle) * step;
+                y += std::sin(angle) * step;
+                joints[std::size_t(i)] = {x, y, angle};
+            }
+            return joints;
+        }
+
+        Position2D tailPartPosition(const TailJoint &joint, int index)
+        {
+            const SheetInfo &sheet = bossTailSheet(index);
+
+            return {joint.x - float(sheet.cellW) * sheet.scale / 2.f,
+                joint.y - float(sheet.cellH) * sheet.scale / 2.f};
+        }
+
+        Hitbox tailPartHitbox(int index)
+        {
+            const SheetInfo &sheet = bossTailSheet(index);
+
+            return {.width = float(sheet.hitboxW) * sheet.scale,
+                .height = float(sheet.hitboxH) * sheet.scale,
+                .offsetX =
+                    float(sheet.cellW - sheet.hitboxW) * sheet.scale / 2.f,
+                .offsetY =
+                    float(sheet.cellH - sheet.hitboxH) * sheet.scale / 2.f};
+        }
+
+        TailJoint tailJointAt(
+            const std::array<TailJoint, BOSS_TAIL_SEGMENTS> &joints, float slot)
+        {
+            const float clamped =
+                std::clamp(slot, 0.f, float(BOSS_TAIL_SEGMENTS - 1));
+            const auto i = std::size_t(clamped);
+
+            if (i + 1 >= joints.size())
+                return joints[i];
+            const float f = clamped - float(i);
+            const TailJoint &a = joints[i];
+            const TailJoint &b = joints[i + 1];
+
+            return {a.x + (b.x - a.x) * f,
+                a.y + (b.y - a.y) * f,
+                a.angle + (b.angle - a.angle) * f};
+        }
+
+        TailJoint tailPartJoint(
+            const Boss &boss, const Position2D &bossPos, int index)
+        {
+            const float slot =
+                float(index) - (float(BOSS_TAIL_SEGMENTS) - boss.tailGrowth);
+
+            return tailJointAt(tailJoints(bossPos, boss.tailClock), slot);
+        }
+
+        void growBossTail(GameManager &gm, Entity entity, Boss &boss,
+            const Position2D &pos, const EnemyHooks &hooks)
+        {
+            while (boss.tailParts < BOSS_TAIL_SEGMENTS &&
+                boss.tailGrowth >= float(boss.tailParts + 1)) {
+                const int index = BOSS_TAIL_SEGMENTS - 1 - boss.tailParts;
+                const TailJoint joint = tailPartJoint(boss, pos, index);
+                const Entity part = gm.createEntity();
+
+                gm.addComponent<BossTail>(
+                    part, BossTail {entity, index, joint.angle});
+                gm.addComponent<Position2D>(
+                    part, tailPartPosition(joint, index));
+                gm.addComponent<Velocity2D>(part);
+                gm.addComponent<Hitbox>(part, tailPartHitbox(index));
+                if (hooks.onBossPartSpawn)
+                    hooks.onBossPartSpawn(gm, part, bossTailSheet(index));
+                ++boss.tailParts;
             }
         }
 
@@ -674,38 +853,51 @@ namespace RType {
         const float stagesTime = BOSS_DEF.stageTime * float(BOSS_STAGES - 1);
 
         boss.timer += delta;
+        boss.tailClock += delta;
         velocity = {0.f, 0.f};
+        growBossTail(gm, entity, boss, pos, hooks);
         switch (boss.state) {
             case BossState::Enter:
                 velocity.x = -BOSS_DEF.enterSpeed;
                 if (pos.x <= BOSS_DEF.x) {
                     pos.x = BOSS_DEF.x;
                     velocity.x = 0.f;
-                    setBossState(boss, BossState::Closed);
+                    setBossState(boss, BossState::GrowTail);
+                }
+                break;
+            case BossState::GrowTail:
+                boss.tailGrowth = std::min(float(BOSS_TAIL_SEGMENTS),
+                    boss.tailGrowth + delta / BOSS_TAIL.growInterval);
+                if (boss.tailGrowth >= float(BOSS_TAIL_SEGMENTS)) {
+                    boss.fireTimer = BOSS_DEF.fireCooldown;
+                    setBossState(boss, BossState::Opening);
                 }
                 break;
             case BossState::Closed:
+                boss.fireTimer += delta;
                 if (boss.timer >= BOSS_DEF.closedTime)
                     setBossState(boss, BossState::Opening);
                 break;
             case BossState::Opening:
+                boss.fireTimer += delta;
                 boss.stage = std::min(
                     BOSS_STAGES - 1, int(boss.timer / BOSS_DEF.stageTime));
-                if (boss.timer >= stagesTime) {
-                    boss.fireTimer = 0.f;
+                if (boss.timer >= stagesTime)
                     setBossState(boss, BossState::Open);
-                }
                 break;
             case BossState::Open:
                 boss.fireTimer += delta;
-                if (boss.fireTimer >= BOSS_DEF.fireCooldown) {
+                bossLines(gm, boss, pos, hooks);
+                if (boss.timer < BOSS_DEF.openTime)
+                    break;
+                if (boss.lineShots > 0) {
+                    boss.lineShots = 0;
                     boss.fireTimer = 0.f;
-                    bossVolley(gm, pos, hooks);
                 }
-                if (boss.timer >= BOSS_DEF.openTime)
-                    setBossState(boss, BossState::Closing);
+                setBossState(boss, BossState::Closing);
                 break;
             case BossState::Closing:
+                boss.fireTimer += delta;
                 boss.stage = std::max(
                     0, BOSS_STAGES - 1 - int(boss.timer / BOSS_DEF.stageTime));
                 if (boss.timer >= stagesTime)
@@ -836,6 +1028,66 @@ namespace RType {
 
     } // namespace
 
+    void systemBossTail(
+        GameManager &gm, const MasterClock &clock, const EnemyHooks &hooks)
+    {
+        const float delta = elapsedSeconds(clock);
+
+        for (auto [part, tail, pos, velocity] :
+            gm.view<BossTail, Position2D, Velocity2D>().getVector()) {
+            if (!gm.hasComponent<Boss>(tail.boss)) {
+                destroyNetworked(gm, part);
+                continue;
+            }
+            const Boss &boss = gm.getComponent<Boss>(tail.boss);
+            const TailJoint joint = tailPartJoint(
+                boss, gm.getComponent<Position2D>(tail.boss), tail.index);
+
+            if (boss.state == BossState::Dying) {
+                if (hooks.onEnemyDeath)
+                    hooks.onEnemyDeath(gm, joint.x, joint.y);
+                destroyNetworked(gm, part);
+                continue;
+            }
+            const Position2D next = tailPartPosition(joint, tail.index);
+            const Position2D last {
+                pos.x - velocity.x * delta, pos.y - velocity.y * delta};
+
+            velocity = delta > 0.f ? Velocity2D {(next.x - last.x) / delta,
+                                         (next.y - last.y) / delta}
+                                   : Velocity2D {};
+            pos = next;
+            tail.angle = joint.angle;
+        }
+    }
+
+    void systemHoming(GameManager &gm, const MasterClock &clock)
+    {
+        const float delta = elapsedSeconds(clock);
+
+        for (auto [shot, homing, velocity, pos, box] :
+            gm.view<Homing, Velocity2D, Position2D, Hitbox>().getVector()) {
+            homing.timeLeft -= delta;
+            if (homing.timeLeft <= 0.f)
+                continue;
+            const auto target = targetCenter(gm, homing.target);
+
+            if (!target)
+                continue;
+            const float speed = std::hypot(velocity.x, velocity.y);
+            const float current = std::atan2(velocity.y, velocity.x);
+            const float wanted = std::atan2(
+                target->second - (pos.y + box.offsetY + box.height / 2.f),
+                target->first - (pos.x + box.offsetX + box.width / 2.f));
+            const float limit = homing.turnRate * delta;
+            const float turn = std::clamp(
+                std::remainder(wanted - current, 2.f * pi), -limit, limit);
+
+            velocity = {std::cos(current + turn) * speed,
+                std::sin(current + turn) * speed};
+        }
+    }
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks)
     {
@@ -912,7 +1164,13 @@ namespace RType {
                 const Rect bulletRect = rectOf(bp, bb);
                 bool consumed = false;
 
-                if (shot.fromPlayer) {
+                const bool blocked = shot.fromPlayer
+                    ? hitsBossTail(gm, bulletRect)
+                    : blockedByShield(gm, bulletRect);
+
+                if (blocked) {
+                    consumed = true;
+                } else if (shot.fromPlayer) {
                     gm.view<Enemy, Health, Position2D, Hitbox>().each(
                         [&](Entity enemy,
                             Enemy &info,
@@ -936,8 +1194,6 @@ namespace RType {
                                 gm, director, shot.owner, info.scoreValue);
                             killEnemy(gm, hooks, enemy, ep, eb);
                         });
-                } else if (blockedByShield(gm, bulletRect)) {
-                    consumed = true;
                 } else {
                     gm.view<EnemyTarget, Health, Position2D, Hitbox>().each(
                         [&](Entity target,
@@ -983,6 +1239,7 @@ namespace RType {
                     killEnemy(gm, hooks, enemy, ep, eb);
                 });
         });
+        bossTailContact(gm);
         contactDamage(gm, director, hooks);
     }
 
@@ -1048,6 +1305,9 @@ namespace RType {
                     systemBoss(g, e, b, v, p, c, *h);
                 });
         });
+        gm.createSystem<MasterClock>(
+            [h](GameManager &g, MasterClock &c) { systemBossTail(g, c, *h); });
+        gm.createSystem<MasterClock>(systemHoming);
         gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
             g.view<EnemyDirector>().each([&g, &c](Entity, EnemyDirector &d) {
                 systemEnemyCleanup(g, d, c);

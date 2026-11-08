@@ -140,7 +140,10 @@ Test(score, team_score_is_big_on_the_game_over_screen)
     for (auto [_, label, text, pos] :
         gm.view<ScoreLabel, Text2D, Position2D>().getVector()) {
         cr_assert_float_eq(text.fontSize, SCORE_FONT_SIZE, 0.01f);
-        cr_assert_float_eq(pos.y, SCORE_Y, 0.01f);
+        cr_assert_float_eq(pos.y, TEAM_SCORE_Y, 0.01f);
+        cr_assert_float_eq(pos.x + float(text.str.size()) * SCORE_FONT_SIZE,
+            WINDOW_WIDTH - HUD_MARGIN,
+            0.01f);
     }
 }
 

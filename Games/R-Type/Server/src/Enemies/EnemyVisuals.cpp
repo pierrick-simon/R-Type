@@ -8,6 +8,8 @@
 #include "Enemies/EnemyVisuals.hpp"
 
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 
 #include "Components.hpp"
 #include "Player/Destroy.hpp"
@@ -90,6 +92,19 @@ namespace RType {
             (hurt ? BOSS_FLASH_OFFSET : 0);
         sheet.color =
             flash ? raylib::Color {255, 90, 90, 255} : raylib::Color::White();
+    }
+
+    void systemBossTailAnimation(const BossTail &tail, SpriteSheet2D &sheet)
+    {
+        constexpr float step = std::numbers::pi_v<float> / 8.f;
+
+        if (tail.index != BOSS_TAIL_SEGMENTS - 1)
+            return;
+        const auto frame = int(
+            std::lround((tail.angle - std::numbers::pi_v<float> / 2.f) / step));
+
+        sheet.currentTile = std::size_t(
+            std::clamp(frame, BOSS_TAIL_TIP_DOWN, BOSS_TAIL_TIP_UP));
     }
 
     struct AlienCharge {
@@ -186,6 +201,7 @@ namespace RType {
                 gm.addComponent<UpdateClientEntity>(
                     e, EntityType::SPRITESHEET, info.asset, gm, e);
             };
+        hooks.onBossPartSpawn = hooks.onBulletSpawn;
         hooks.onEnemyDeath = [](GameManager &gm, float x, float y) {
             spawnExplosion(gm, EXPLOSION_SHEET, x, y);
         };
@@ -208,6 +224,7 @@ namespace RType {
     {
         gm.createSystem<Walker, SpriteSheet2D>(systemWalkerAnimation);
         gm.createSystem<Alien, SpriteSheet2D>(systemAlienAnimation);
+        gm.createSystem<BossTail, SpriteSheet2D>(systemBossTailAnimation);
         gm.createSystem<Boss, Health, SpriteSheet2D>(systemBossAnimation);
         gm.createSystem<>(systemEnemyHurtBlink);
         gm.createSystem<>(systemAlienCharge);

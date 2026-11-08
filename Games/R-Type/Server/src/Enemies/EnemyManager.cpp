@@ -155,6 +155,7 @@ namespace RType {
     void clearEnemies(GameManager &gm)
     {
         destroyAll<Enemy>(gm);
+        destroyAll<BossTail>(gm);
         destroyAll<Projectile>(gm);
         destroyAll<Lifetime>(gm);
     }

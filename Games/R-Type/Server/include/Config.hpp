@@ -75,16 +75,15 @@ namespace RType::Server {
 
     inline constexpr float SCORE_FONT_SIZE = 28.f;
     inline constexpr std::size_t SCORE_DIGITS = 6;
-    inline constexpr float SCORE_Y =
-        WINDOW_HEIGHT - HUD_MARGIN - SCORE_FONT_SIZE;
-    inline constexpr float SCORE_PLAYERS_X = 400.f;
+    inline constexpr float SCORE_X = HUD_MARGIN +
+        float(PLAYER_LIVES) * (LIFE_ICON_WIDTH + HUD_SPACING) + HUD_SPACING;
+    inline constexpr float TEAM_SCORE_Y = HUD_MARGIN;
 
     inline constexpr float GAME_OVER_SCORE_SIZE = 64.f;
     inline constexpr float GAME_OVER_SCORE_Y = 450.f;
     inline constexpr float GAME_OVER_PLAYER_SIZE = 36.f;
     inline constexpr float GAME_OVER_PLAYERS_Y = 540.f;
     inline constexpr float GAME_OVER_PLAYER_SPACING = 46.f;
-    inline constexpr float SCORE_SPACING = 300.f;
 
     inline constexpr std::array<std::array<unsigned char, 3>, PLAYER_COLORS>
         PLAYER_SCORE_COLORS = {{

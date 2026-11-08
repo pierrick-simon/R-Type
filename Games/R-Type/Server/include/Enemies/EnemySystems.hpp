@@ -44,6 +44,11 @@ namespace RType {
         Velocity2D &velocity, Position2D &pos, const MasterClock &clock,
         const EnemyHooks &hooks);
 
+    void systemBossTail(
+        GameManager &gm, const MasterClock &clock, const EnemyHooks &hooks);
+
+    void systemHoming(GameManager &gm, const MasterClock &clock);
+
     void systemEnemyDirector(GameManager &gm, EnemyDirector &director,
         const MasterClock &clock, const EnemyHooks &hooks);
 
