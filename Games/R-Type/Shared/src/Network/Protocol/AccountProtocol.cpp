@@ -127,8 +127,8 @@ namespace RType {
             pos += 5;
             if (pos + length + 4 > p.size())
                 return std::nullopt;
-            e.name = std::string(p.begin() + long(pos),
-                p.begin() + long(pos + length));
+            e.name = std::string(
+                p.begin() + long(pos), p.begin() + long(pos + length));
             pos += length;
             e.score = get32(p.data() + pos);
             pos += 4;

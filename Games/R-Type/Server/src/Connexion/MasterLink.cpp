@@ -84,8 +84,7 @@ namespace RType::Server {
     void systemMasterLink(GameManager &gm)
     {
         gm.view<MasterLink, InstanceManager, UserDB>().each(
-            [](Entity, MasterLink &link, InstanceManager &threads,
-                UserDB &db) {
+            [](Entity, MasterLink &link, InstanceManager &threads, UserDB &db) {
                 acceptInstances(link);
                 for (auto &instance : link.instances) {
                     instance.connection.poll();

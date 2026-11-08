@@ -75,8 +75,7 @@ namespace RType::Client {
                 row == 0 ? "Loading..." : "",
                 LEADERBOARD_TEXT_SIZE);
 
-            gm.addComponent<LeaderboardRowText>(
-                text, LeaderboardRowText {row});
+            gm.addComponent<LeaderboardRowText>(text, LeaderboardRowText {row});
         }
 
         void showRow(GameManager &gm, const std::size_t row,

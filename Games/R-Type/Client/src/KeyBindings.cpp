@@ -117,4 +117,4 @@ namespace RType::Client {
         }
     }
 
-} // namespace RType
+} // namespace RType::Client

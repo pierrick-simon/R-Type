@@ -295,9 +295,8 @@ namespace RType::Server {
             return std::nullopt;
         const long score = it->second.highestScore;
         // Rank = 1 + number of accounts with a strictly better score.
-        const auto better = std::count_if(_users.begin(),
-            _users.end(),
-            [score](const auto &user) {
+        const auto better = std::count_if(
+            _users.begin(), _users.end(), [score](const auto &user) {
                 return user.second.highestScore > score;
             });
 

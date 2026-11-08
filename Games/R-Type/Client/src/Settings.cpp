@@ -29,11 +29,10 @@ namespace RType::Client {
 
         struct FullscreenButton {};
 
-                std::string windowModeLabel()
+        std::string windowModeLabel()
         {
-            return ::IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE)
-                ? "Fullscreen"
-                : "Windowed";
+            return ::IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE) ? "Fullscreen"
+                                                                  : "Windowed";
         }
 
         void changeFullScreen(GameManager &gm)
