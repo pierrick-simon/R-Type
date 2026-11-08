@@ -19,6 +19,7 @@ namespace RType {
     void systemEnemyHurtBlink(GameManager &gm);
     void systemBossAnimation(
         const Boss &boss, const Health &health, SpriteSheet2D &sheet);
+    void systemBossTailAnimation(const BossTail &tail, SpriteSheet2D &sheet);
     void registerEnemyVisualSystems(GameManager &gm);
 
 } // namespace RType

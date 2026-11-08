@@ -78,6 +78,7 @@ namespace RType {
 
     enum class BossState : std::uint8_t {
         Enter,
+        GrowTail,
         Closed,
         Opening,
         Open,
@@ -91,6 +92,24 @@ namespace RType {
         float fireTimer = 0.f;
         int stage = 0;
         int explosions = 0;
+        int lineShots = 0;
+        int lines = 0;
+        std::optional<Entity> lineTarget = std::nullopt;
+        float tailClock = 0.f;
+        float tailGrowth = 0.f;
+        int tailParts = 0;
+    };
+
+    struct BossTail {
+        Entity boss {0};
+        int index = 0;
+        float angle = 0.f;
+    };
+
+    struct Homing {
+        Entity target {0};
+        float turnRate = 0.f;
+        float timeLeft = 0.f;
     };
 
     struct Enemy {
