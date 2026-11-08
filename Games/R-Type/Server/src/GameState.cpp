@@ -13,6 +13,7 @@
 #include "Common/Background.hpp"
 #include "Components.hpp"
 #include "Config.hpp"
+#include "Connexion/InstanceLink.hpp"
 #include "Enemies/EnemyManager.hpp"
 #include "LobbyProtocol.hpp"
 #include "Player/Destroy.hpp"
@@ -96,6 +97,7 @@ namespace RType::Server {
     {
         endScreen = EndScreen::GameOver;
         fadeLeft = 0.f;
+        reportScores(gm);
         clearLevel(gm);
     }
 
@@ -103,6 +105,7 @@ namespace RType::Server {
     {
         endScreen = EndScreen::Victory;
         fadeLeft = VICTORY_FADE_SECONDS;
+        reportScores(gm);
         pauseLevel(gm);
     }
 

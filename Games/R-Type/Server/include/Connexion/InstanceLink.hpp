@@ -22,6 +22,7 @@ namespace RType::Server {
         LINK_HELLO = 1,
         LINK_STATUS = 2,
         LINK_STOP = 3,
+        LINK_SCORE = 4,
     };
 
     struct InstanceLink {
@@ -38,6 +39,8 @@ namespace RType::Server {
     };
 
     void systemInstanceLink(GameManager &gm);
+
+    void reportScores(GameManager &gm);
 
 } // namespace RType::Server
 

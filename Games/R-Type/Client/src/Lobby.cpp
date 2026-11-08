@@ -11,6 +11,7 @@
 #include "Assets.hpp"
 #include "Client.hpp"
 #include "ClientManager.hpp"
+#include "Leaderboard.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
@@ -21,6 +22,17 @@
 #include "Texture2D.hpp"
 
 namespace RType::Client {
+
+    namespace {
+
+        /** @brief Name shown in the lobby, and used by the server to save
+         *         the score: the account the client is logged in with. */
+        const std::string &lobbyPlayerName()
+        {
+            return _account.loggedIn ? _account.username : _clInfos._username;
+        }
+
+    } // namespace
 
     namespace {
 
@@ -108,7 +120,7 @@ namespace RType::Client {
             gm.view<ClientManager, LobbyClient>().each(
                 [](Entity, ClientManager &c, LobbyClient &l) {
                     l.ready = !l.ready;
-                    LobbyProtocol::sendInfo(c, _clInfos._username, l.ready);
+                    LobbyProtocol::sendInfo(c, lobbyPlayerName(), l.ready);
                     l.lastInfo = std::chrono::steady_clock::now();
                 });
         }
@@ -311,6 +323,7 @@ namespace RType::Client {
             collect<LoginPopupItem>(gm, toDestroy);
             collect<ServerItem>(gm, toDestroy);
             collect<SettingsItem>(gm, toDestroy);
+            collect<LeaderboardItem>(gm, toDestroy);
             for (const Entity e : toDestroy)
                 gm.destroyEntity(e);
             activeField = Field::None;
@@ -347,7 +360,7 @@ namespace RType::Client {
 
                 if (c.isConnected() &&
                     now - lobby.lastInfo >= LOBBY_RESEND_RATE) {
-                    LobbyProtocol::sendInfo(c, _clInfos._username, lobby.ready);
+                    LobbyProtocol::sendInfo(c, lobbyPlayerName(), lobby.ready);
                     lobby.lastInfo = now;
                 }
                 if (!state.received)

@@ -12,6 +12,7 @@
 #include "ClientManager.hpp"
 #include "Clock.hpp"
 #include "Listener.hpp"
+#include "Leaderboard.hpp"
 #include "Lobby.hpp"
 #include "LobbyListPage.hpp"
 #include "LobbyProtocol.hpp"
@@ -319,7 +320,8 @@ namespace RType::Client {
         else if (lobbyPage)
             wanted = Asset::MENU_BACK_SIDE;
         else if (!gm.view<ConnectingText>().getVector().empty() ||
-            !gm.view<SettingsItem>().getVector().empty())
+            !gm.view<SettingsItem>().getVector().empty() ||
+            !gm.view<LeaderboardItem>().getVector().empty())
             wanted = Asset::MENU_BACK;
         bool upToDate = false;
 
