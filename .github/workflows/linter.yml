@@ -59,7 +59,7 @@ jobs:
           step-summary: 'true'
           tidy-review: 'true'
           format-review: 'true'
-          ignore: '.github|tests|build'
+          ignore: '.github|build|tests|Games/R-Type/Server/tests'
           version: '22'
 
       - name: Run cpp-linter (retry)
@@ -77,7 +77,7 @@ jobs:
           step-summary: 'true'
           tidy-review: 'true'
           format-review: 'true'
-          ignore: '.github|tests|build'
+          ignore: '.github|build|tests|Games/R-Type/Server/tests'
           version: '22'
 
       - name: Fail if linter found problems
