@@ -50,6 +50,9 @@ namespace RType {
         m._wheel = raylib::Mouse::GetWheelMove();
         m._pos.x = float(raylib::Mouse::GetX());
         m._pos.y = float(raylib::Mouse::GetY());
+        const auto delta = ::GetMouseDelta();
+        m._delta.x = delta.x;
+        m._delta.y = delta.y;
     }
 
     const std::unordered_map<int, MouseButton::Value>

@@ -24,7 +24,8 @@ Ce guide explique comment ajouter au moteur un composant, un système ou un modu
 
 | Bibliothèque | Dossier | Contenu |
 |---|---|---|
-| `engine-system` | [`Engine/System`](../Engine/System) | l'ECS, et les composants de base (`Position2D`, `Velocity2D`, `Clock`…) dans `include/BuiltIn` |
+| `engine-system` | [`Engine/System`](../Engine/System) | l'ECS, et les composants de base (`Position2D`, `Position3D`, `Clock`…) dans `include/BuiltIn` |
+| `engine-physics` | [`Engine/Physics`](../Engine/Physics) | le mouvement, le frottement, la gravité et la rotation, en 2D et en 3D (`Velocity2D`, `Rotation3D`…) |
 | `engine-graphical2D` | [`Engine/Graphical2D`](../Engine/Graphical2D) | la fenêtre, le clavier, la souris, les sprites et les textes 2D |
 | `engine-graphical3D` | [`Engine/Graphical3D`](../Engine/Graphical3D) | les modèles et la caméra 3D |
 | `engine-audio` | [`Engine/Audio`](../Engine/Audio) | les sons et le point qui les entend |
@@ -38,13 +39,15 @@ Dans `game`, tout est dans le namespace `RType::Game`, une classe par rôle :
 | `ConfigBuilder` | la lecture de `config.conf`, qui met à jour `GameConfig` |
 | `Modules` | les modules que le jeu peut demander |
 | `Scripts` | le chargement des scripts et la conversion de leurs erreurs |
+| `Console` | la console du mode debug : lit des commandes dans le terminal et les exécute avec les fonctions `gm:` |
 | `GameManagerBinding` | expose le `GameManager`, les entités et `gm:stop`, puis appelle les autres bindings |
 | `ComponentBinding` | le registre des composants utilisables depuis Lua |
 | `SystemBinding` | `gm:createSystem`, `gm:addSystem`, `gm:destroySystem`, `gm:hasSystem` |
 | `ViewBinding` | `gm:view` |
 | `InputBinding` | `gm:keyboard`, `gm:mouse`, les tables `Key` et `MouseButton` |
 | `TimeBinding` | `gm:elapsed` |
-| `WindowBinding` | `gm:windowShouldClose` |
+| `WindowBinding` | `gm:shouldClose`, `gm:fps`, `gm:setFps`, `gm:fullScreen`, `gm:setFullScreen`, `gm:hideCursor`, `gm:setHideCursor` |
+| `AudioBinding` | `gm:setListenerPosition` |
 | **`EngineBindings.cpp`** | **les listes des composants et des systèmes du moteur utilisables depuis Lua : c'est le fichier à modifier pour en ajouter un** |
 
 ---

@@ -153,12 +153,9 @@ namespace RType::Client {
         gm.createSystem<>(systemTextFields);
         gm.createSystem<Assets>(systemButtonVisuals);
         gm.createSystem<>(systemMenuBackground);
+        gm.createSystem<MasterClock>(Friction2D::systemMasterFriction2D);
         gm.createSystem<Assets>(
             systemTextAnchorManager<Font, Texture2D, Decoder>);
-        gm.createSystem<MasterClock>([](GameManager &g, MasterClock &c) {
-            for (auto [_, f, v] : g.view<Friction2D, Velocity2D>().getVector())
-                Friction2D::systemFriction2D(f, v, c);
-        });
         gm.createSystem<Assets>(
             Sprite2D::systemDrawManagerSprite2D<Font, Texture2D, Decoder>);
         gm.createSystem<Assets>(systemDrawLobbyList);
@@ -171,7 +168,6 @@ namespace RType::Client {
         gm.createSystem<>(systemSettings);
         gm.createSystem<>(systemVolume);
         gm.createSystem<Sound>(Sound::systemSound);
-        // Over everything, right before the end of the drawing.
         gm.createSystem<LobbyClient>(
             systemDrawFade, std::numeric_limits<int>::max() - 1);
     }
@@ -181,6 +177,15 @@ namespace RType::Client {
         Entity s = gm.createEntity();
         gm.addComponent<Listener>(s);
         return s;
+    }
+
+    bool shouldWindowClose(GameManager &gm, Entity w)
+    {
+        if (gm.hasComponent<Window>(w)) {
+            auto &window = gm.getComponent<Window>(w);
+            return window.shouldClose();
+        }
+        return true;
     }
 
 } // namespace RType::Client

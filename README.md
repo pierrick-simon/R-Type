@@ -45,9 +45,10 @@ server and client.
 | Area | What the engine provides | Library |
 |---|---|---|
 | **ECS** | Generational entities, components stored in sparse sets, systems run in creation order, views (`each`, `getVector`), structural changes deferred to the end of the frame | `engine-system` |
-| **Basic components** | `Position2D`, `Velocity2D`, `GravityField2D`, `Friction2D`, `Clock`, `Origin2D`, `Size2D` | `engine-system` |
+| **Basic components** | `Position2D`, `Position3D`, `Clock`, `Origin2D`, `Size2D` | `engine-system` |
+| **Physics** | `Velocity2D`/`3D`, `Friction2D`/`3D`, `GravityField2D`/`3D`, `Rotation2D`/`3D`, `AngularVelocity2D`/`3D` | `engine-physics` |
 | **2D rendering** | `Window`, `Texture2D`, `Sprite2D`, `SpriteSheet2D` (animations), `Font`, `Text2D` | `engine-graphical2D` (raylib) |
-| **3D rendering** | Camera, models, 3D sprites | `engine-graphical3D` (raylib) |
+| **3D rendering** | `Model3D`, `ModelAnimation3D`, `Sprite3D`, `SpriteSheet3D` (animations), `Camera3D`, `CameraAngle`, `CameraMouseControl` (mouse look) | `engine-graphical3D` (raylib) |
 | **Input** | `KeyboardManager` (AZERTY and QWERTY), `MouseManager`, `Keybind` (key rebinding) | `engine-graphical2D` (raylib) |
 | **Audio** | `Sound`, `Listener` | `engine-audio` (miniaudio) |
 | **Networking** | UDP client and server with Asio, in-house connection and presence check | `engine-network` |
@@ -66,6 +67,7 @@ to register with `GameManager::createSystem`; pure data components
 R-Type/
 ├── Engine/                  # Reusable engine, independent from any game
 │   ├── System/              # ECS (GameManager) and basic components -> `engine-system`
+│   ├── Physics/             # Movement, friction, gravity, rotation -> `engine-physics`
 │   ├── Graphical2D/         # Window, sprites, text, input (raylib) -> `engine-graphical2D`
 │   ├── Graphical3D/         # Camera, models, 3D sprites (raylib) -> `engine-graphical3D`
 │   ├── Audio/               # Sounds (miniaudio) -> `engine-audio`
@@ -84,10 +86,12 @@ R-Type/
 ```
 
 - **`Engine`** doesn't depend on any game code: it exposes reusable shared
-  libraries (`engine-system`, `engine-graphical2D`, `engine-graphical3D`,
-  `engine-audio`, `engine-network`) consumed by `Games`, and it's the one that
-  depends on **raylib**, **Asio**, **miniaudio**, **Lua**, **sol2** and
-  **plf::colony**.
+  libraries (`engine-system`, `engine-physics`, `engine-graphical2D`,
+  `engine-graphical3D`, `engine-audio`, `engine-network`) consumed by `Games`,
+  and it's the one that depends on **raylib**, **Asio**, **miniaudio**, **Lua**,
+  **sol2** and **plf::colony**.
+- Each library can be left out of the build with its CMake option
+  (`-DRTYPE_BUILD_NETWORK=OFF`, ...); `engine-system` is always built.
 - **`Games/R-Type`** contains the client and the server, both of which rely on
   the engine, each with its own sources, headers and tests.
 - **`tests/engine`** checks the behavior of the ECS (more than 200 unit tests,
@@ -193,8 +197,8 @@ cmake --install build --config Release
 ```
 
 This copies the `game` executable into `bin/` and the engine's libraries
-(`engine-system`, `engine-graphical2D`, `engine-graphical3D`, `engine-network`,
-`engine-audio`) into `lib/`, under the install prefix: `/usr/local` on Linux,
+(`engine-system`, `engine-physics`, `engine-graphical2D`, `engine-graphical3D`,
+`engine-network`, `engine-audio`) into `lib/`, under the install prefix: `/usr/local` on Linux,
 `C:\Program Files\R-Type` on Windows.
 
 To install somewhere else, for example in your home folder without `sudo`,
@@ -219,6 +223,15 @@ cd Games
 Each game started from a lobby runs as its own instance, on a port between
 4243 and 6767: open this range (UDP and TCP) on the server's firewall to play
 over a network.
+
+A game written in Lua is run by the `game` executable, started from the game's
+folder, the one that holds its `config.conf`:
+
+```sh
+cd Games/MyGame && ../game
+```
+
+See the [running a game guide](docs/ENGINE_GAME.en.md) to set one up.
 
 ---
 
@@ -293,7 +306,7 @@ Pick the guide that matches what you change:
 | Understand the ECS before touching it | [ECS guide](docs/ECS_GUIDE.en.md) and [ECS design notes](docs/ECS_DESIGN.en.md) |
 | Add a component, a system, a module, a `gm:` function or a `config.conf` setting | [Extending the engine](docs/ENGINE_EXTENDING.en.md) |
 | Write or change a game on top of the engine | [Game making guide](docs/GAME_GUIDE.en.md), [running a game](docs/ENGINE_GAME.en.md), [Lua scripting guide](docs/LUA_GUIDE.en.md) |
-| Change the network protocol | [Protocol specification](docs/ENGINE_PROTOCOL.txt), to keep in sync with the code |
+| Change the network protocol | [Protocol specification](docs/RTYPE_PROTOCOL.txt), to keep in sync with the code |
 | Know why a library or a tool was chosen | [Comparative studies](docs/comparative-studies/en/README.md) |
 
 Every guide also exists in French (`*.fr.md`). When you change one, update

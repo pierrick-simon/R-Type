@@ -12,11 +12,14 @@
 #include "ConfigBuilder.hpp"
 #include "Console.hpp"
 #include "Exceptions.hpp"
+#include "Font.hpp"
 #include "Game.hpp"
 #include "GameManagerBinding.hpp"
+#include "Model3D.hpp"
 #include "Modules.hpp"
 #include "Runner.hpp"
 #include "Scripts.hpp"
+#include "Texture2D.hpp"
 
 namespace RType::Game {
 
@@ -29,13 +32,14 @@ namespace RType::Game {
         lua.open_libraries(sol::lib::base, sol::lib::math);
         lua.set_exception_handler(&Scripts::handleException);
         GameManagerBinding::registerFunctions(lua);
+#if defined(__DEBUG__)
+        GameManager gm(true);
+#else
+        GameManager gm;
+#endif
+
         try {
             ConfigBuilder::build(GameConfig, "config.conf");
-#if defined(__DEBUG__)
-            GameManager gm(true);
-#else
-            GameManager gm;
-#endif
             std::list<std::string> modules = Modules::resolve();
 
             Modules::check(modules);
@@ -55,9 +59,19 @@ namespace RType::Game {
 #endif
         } catch (const EngineException &e) {
             std::cout << e.what() << std::endl;
+            unloadGraphics(gm);
             return 84;
         }
+        unloadGraphics(gm);
         return 0;
+    }
+
+    void Runner::unloadGraphics(GameManager &gm)
+    {
+        Texture2D::unloadTextures2D(gm);
+        Model3D::unloadModels3D(gm);
+        for (auto [e, _] : gm.view<Font>().getVector())
+            gm.destroyEntity(e);
     }
 
 } // namespace RType::Game

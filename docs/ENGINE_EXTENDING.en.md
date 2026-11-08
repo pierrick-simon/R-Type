@@ -24,7 +24,8 @@ This guide explains how to add a component, a system or a module to the engine, 
 
 | Library | Folder | Contents |
 |---|---|---|
-| `engine-system` | [`Engine/System`](../Engine/System) | the ECS, and the basic components (`Position2D`, `Velocity2D`, `Clock`…) in `include/BuiltIn` |
+| `engine-system` | [`Engine/System`](../Engine/System) | the ECS, and the basic components (`Position2D`, `Position3D`, `Clock`…) in `include/BuiltIn` |
+| `engine-physics` | [`Engine/Physics`](../Engine/Physics) | movement, friction, gravity and rotation, in 2D and 3D (`Velocity2D`, `Rotation3D`…) |
 | `engine-graphical2D` | [`Engine/Graphical2D`](../Engine/Graphical2D) | the window, the keyboard, the mouse, 2D sprites and texts |
 | `engine-graphical3D` | [`Engine/Graphical3D`](../Engine/Graphical3D) | 3D models and the camera |
 | `engine-audio` | [`Engine/Audio`](../Engine/Audio) | sounds and the point that hears them |
@@ -38,13 +39,15 @@ In `game`, everything is in the `RType::Game` namespace, one class per role:
 | `ConfigBuilder` | reading `config.conf`, which updates `GameConfig` |
 | `Modules` | the modules a game can ask for |
 | `Scripts` | loading the scripts and converting their errors |
+| `Console` | the console of the debug mode: reads commands from the terminal and runs them through the `gm:` functions |
 | `GameManagerBinding` | exposes the `GameManager`, the entities and `gm:stop`, then calls the other bindings |
 | `ComponentBinding` | the registry of the components usable from Lua |
 | `SystemBinding` | `gm:createSystem`, `gm:addSystem`, `gm:destroySystem`, `gm:hasSystem` |
 | `ViewBinding` | `gm:view` |
 | `InputBinding` | `gm:keyboard`, `gm:mouse`, the `Key` and `MouseButton` tables |
 | `TimeBinding` | `gm:elapsed` |
-| `WindowBinding` | `gm:windowShouldClose` |
+| `WindowBinding` | `gm:shouldClose`, `gm:fps`, `gm:setFps`, `gm:fullScreen`, `gm:setFullScreen`, `gm:hideCursor`, `gm:setHideCursor` |
+| `AudioBinding` | `gm:setListenerPosition` |
 | **`EngineBindings.cpp`** | **the lists of the engine's components and systems usable from Lua: the file to edit to add one** |
 
 ---
